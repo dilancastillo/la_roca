@@ -1,0 +1,19 @@
+{
+  "name": "configurador-dotaciones",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @app/web run dev",
+    "dev:api": "npm --workspace @app/api run dev",
+    "build:web": "npm --workspace @app/web run build",
+    "build:api": "npm --workspace @app/api run build",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.0"
+  }
+}
