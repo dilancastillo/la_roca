@@ -12,6 +12,7 @@ export type ConfiguratorState = {
 };
 
 type Action =
+  | { type: "INITIALIZE"; value: ConfiguratorState }
   | { type: "SET_BASE_COLOR"; value: string }
   | { type: "SET_NECK_MODEL"; value: string }
   | { type: "SET_CHEST_POCKET_MODEL"; value: string }
@@ -31,6 +32,9 @@ export function configuratorReducer(
   action: Action,
 ): ConfiguratorState {
   switch (action.type) {
+    case "INITIALIZE":
+      return action.value;
+
     case "SET_BASE_COLOR":
       return { ...state, baseColor: action.value };
 
