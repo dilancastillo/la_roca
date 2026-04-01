@@ -7,18 +7,21 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "echo build managed by wrangler",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "lint": "echo lint pendiente"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.2",
     "@repo/shared": "*",
-    "hono": "^4.0.0",
-    "jose": "^6.0.0",
-    "zod": "^4.0.0"
+    "hono": "^4.10.6",
+    "jose": "^6.1.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "vitest": "^4.0.0",
-    "wrangler": "^4.0.0"
+    "@cloudflare/workers-types": "^4.20260320.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2",
+    "wrangler": "^4.45.0"
   }
 }

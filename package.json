@@ -9,11 +9,11 @@
     "dev:web": "npm --workspace @app/web run dev",
     "dev:api": "npm --workspace @app/api run dev",
     "build:web": "npm --workspace @app/web run build",
-    "build:api": "npm --workspace @app/api run build",
+    "typecheck:web": "npm --workspace @app/web run typecheck",
+    "typecheck:api": "npm --workspace @app/api run typecheck",
+    "typecheck:shared": "npm --workspace @repo/shared run typecheck",
+    "typecheck": "npm run typecheck:shared && npm run typecheck:api && npm run typecheck:web",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
-  },
-  "devDependencies": {
-    "playwright": "^1.59.0"
   }
 }

@@ -24,7 +24,7 @@ export const configuratorSessionSchema = z.object({
   attributes: z.array(productAttributeSchema),
   exclusions: z.array(exclusionRuleSchema),
   graphicManifestKey: z.string().min(1),
-  existingDesignUrl: z.string().url().optional()
+  existingDesignUrl: z.string().url().optional(),
 });
 
 export type ConfiguratorSession = z.infer<typeof configuratorSessionSchema>;
@@ -32,7 +32,7 @@ export type ConfiguratorSession = z.infer<typeof configuratorSessionSchema>;
 export const saveDesignRequestSchema = z.object({
   saleOrderLineId: z.number(),
   filename: z.string().min(1).max(140),
-  imageBase64: z.string().min(1)
+  imageBase64: z.string().min(1),
 });
 
 export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;
