@@ -3,11 +3,16 @@ import { useState } from "react";
 import type { PropsWithChildren } from "react";
 
 export function AppProviders({ children }: PropsWithChildren) {
-  const [queryClient] = useState(() => new QueryClient());
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
   );
+
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

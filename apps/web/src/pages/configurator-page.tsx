@@ -1,223 +1,371 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useReducer, useState } from "react";
-import { useParams } from "react-router-dom";
-import { OptionCardGroup } from "../features/configurator/components/option-card-group";
-import { TrimSectionsEditor } from "../features/configurator/components/trim-sections-editor";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { logout } from "../features/auth/api";
+import { useAuthSession } from "../features/auth/hooks/use-auth-session";
+import { AttributeSection } from "../features/configurator/components/attribute-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
 import {
   computeDisabledValueIds,
-  createInitialConfiguratorState,
   deriveConfiguratorUi,
-  getSelectedValueIds,
 } from "../features/configurator/lib/derive-configurator-ui";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
 import { DesignPreviewCanvas } from "../features/preview/components/design-preview-canvas";
 import { saveDesign } from "../features/save-design/save-design";
 
-export function ConfiguratorPage() {
-  const { saleOrderLineId } = useParams();
-
-  const lineId = Number(saleOrderLineId);
-
-  if (!Number.isFinite(lineId) || lineId <= 0) {
-    return (
-      <main className="page-state">
-        <h1>Línea de venta inválida</h1>
-        <p>No se pudo abrir el configurador porque el identificador no es válido.</p>
-      </main>
-    );
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return "Aun no generado";
   }
 
-  const sessionQuery = useConfiguratorSession(lineId);
-  const [state, dispatch] = useReducer(configuratorReducer, { trimSections: {} });
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+export function ConfiguratorPage() {
+  const { saleOrderLineId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const authQuery = useAuthSession();
+  const lineId = Number(saleOrderLineId);
+
+  const [state, dispatch] = useReducer(configuratorReducer, {
+    selectedValueIds: {},
+  });
   const [currentBlob, setCurrentBlob] = useState<Blob | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
+  const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
 
-  const uiModel = useMemo(() => {
-    if (!sessionQuery.data) return null;
-    return deriveConfiguratorUi(sessionQuery.data);
-  }, [sessionQuery.data]);
+  const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
+  const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
 
   useEffect(() => {
-    if (!uiModel) return;
+    if (!sessionQuery.data) {
+      return;
+    }
 
     dispatch({
       type: "INITIALIZE",
-      value: createInitialConfiguratorState(uiModel),
+      value: sessionQuery.data.selectedValueIds,
     });
-  }, [uiModel]);
+  }, [sessionQuery.data]);
 
-  const selectedValueIds = useMemo(() => {
-    if (!uiModel) return new Set<number>();
-    return getSelectedValueIds(uiModel, state);
-  }, [uiModel, state]);
+  const uiModel = useMemo(() => {
+    if (!sessionQuery.data) {
+      return null;
+    }
+
+    return deriveConfiguratorUi(sessionQuery.data, state.selectedValueIds);
+  }, [sessionQuery.data, state.selectedValueIds]);
 
   const disabledValueIds = useMemo(() => {
-    if (!sessionQuery.data) return new Set<number>();
-    return computeDisabledValueIds(sessionQuery.data, selectedValueIds);
-  }, [sessionQuery.data, selectedValueIds]);
+    if (!sessionQuery.data) {
+      return new Set<number>();
+    }
+
+    return computeDisabledValueIds(sessionQuery.data, state.selectedValueIds);
+  }, [sessionQuery.data, state.selectedValueIds]);
+
+  useEffect(() => {
+    if (!uiModel || uiModel.groups.length === 0) {
+      return;
+    }
+
+    const firstIncompleteGroup =
+      uiModel.groups.find(
+        (group) =>
+          (state.selectedValueIds[String(group.attributeId)] ?? []).length === 0,
+      ) ?? uiModel.groups[0];
+
+    const expandedStillExists = uiModel.groups.some(
+      (group) => group.attributeId === expandedAttributeId,
+    );
+
+    if (!expandedStillExists) {
+      setExpandedAttributeId(firstIncompleteGroup?.attributeId ?? null);
+    }
+  }, [expandedAttributeId, state.selectedValueIds, uiModel]);
+
+  if (!Number.isFinite(lineId) || lineId <= 0) {
+    return (
+      <main className="page-state">
+        <h1>Linea invalida</h1>
+        <p>Verifica el enlace de la linea y vuelve a abrir el configurador.</p>
+      </main>
+    );
+  }
+
+  if (authQuery.isLoading) {
+    return (
+      <main className="page-state">
+        <h1>Preparando acceso</h1>
+        <p>Estamos validando tu sesion.</p>
+      </main>
+    );
+  }
+
+  if (authQuery.isError || !authQuery.data) {
+    return <Navigate to={nextUrl} replace />;
+  }
+
+  if (sessionQuery.isLoading || !uiModel || !sessionQuery.data) {
+    return (
+      <main className="page-state">
+        <h1>Cargando configurador</h1>
+        <p>Estamos reconstruyendo los atributos y el diseno de la linea.</p>
+      </main>
+    );
+  }
+
+  if (sessionQuery.isError) {
+    return (
+      <main className="page-state">
+        <h1>No se pudo cargar la linea</h1>
+        <p>Revisa la conexion con Odoo o valida que la linea siga disponible.</p>
+      </main>
+    );
+  }
+
+  const session = sessionQuery.data;
+  const ui = uiModel;
+  const isReadOnly = !session.status.canEdit || session.status.isLocked;
+  const completedGroups = ui.groups.filter(
+    (group) => (state.selectedValueIds[String(group.attributeId)] ?? []).length > 0,
+  ).length;
+  const hasNotices = session.warnings.length > 0 || isReadOnly;
+  const noticeHeadline = isReadOnly
+    ? "Modo lectura activo"
+    : session.warnings[0] ?? "Advertencias de sincronizacion";
+
+  function getSelectionLabel(attributeId: number) {
+    const group = ui.groups.find((item) => item.attributeId === attributeId);
+    if (!group) {
+      return "Sin seleccion";
+    }
+
+    const selectedIds = state.selectedValueIds[String(attributeId)] ?? [];
+
+    if (selectedIds.length === 0) {
+      return "Sin seleccion";
+    }
+
+    const selectedOptions = group.options.filter((option) =>
+      selectedIds.includes(option.id),
+    );
+
+    if (selectedOptions.length <= 2) {
+      return selectedOptions.map((option) => option.name).join(" · ");
+    }
+
+    const [first, second] = selectedOptions;
+    return `${first?.name ?? "Seleccionado"} · ${second?.name ?? ""} +${
+      selectedOptions.length - 2
+    }`.trim();
+  }
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setSaveMessage(null);
     setSaveError(null);
 
+    if (isReadOnly) {
+      setSaveError("La linea esta en modo lectura y no acepta nuevos cambios.");
+      return;
+    }
+
     if (!currentBlob) {
-      setSaveError("Aún no existe una previsualización lista para guardar.");
+      setSaveError("Aun no existe una imagen lista para guardar.");
       return;
     }
 
     try {
       setIsSaving(true);
-      await saveDesign(lineId, currentBlob);
-      setSaveMessage("Diseño guardado correctamente en la línea de venta.");
+      const result = await saveDesign(lineId, currentBlob, state.selectedValueIds);
+      await sessionQuery.refetch();
+      setSaveMessage(
+        `Diseno guardado correctamente. Version ${result.version} lista para Odoo.`,
+      );
     } catch (error) {
       setSaveError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo guardar el diseño.",
+        error instanceof Error ? error.message : "No se pudo guardar el diseno.",
       );
     } finally {
       setIsSaving(false);
     }
   }
 
-  function handleTrimToggle(sectionKey: string, enabled: boolean) {
-    dispatch({ type: "TOGGLE_TRIM", key: sectionKey, enabled });
-
-    if (enabled && !state.trimSections[sectionKey]?.color && uiModel?.baseColors[0]) {
-      dispatch({
-        type: "SET_TRIM_COLOR",
-        key: sectionKey,
-        color: uiModel.baseColors[0].name,
-      });
-    }
-  }
-
-  if (sessionQuery.isLoading) {
-    return (
-      <main className="page-state">
-        <h1>Cargando configurador</h1>
-        <p>Estamos preparando la sesión de diseño.</p>
-      </main>
-    );
-  }
-
-  if (sessionQuery.isError || !sessionQuery.data || !uiModel) {
-    return (
-      <main className="page-state">
-        <h1>No se pudo cargar el configurador</h1>
-        <p>
-          Verifica la línea de venta, la sesión de Odoo o la conectividad con la API.
-        </p>
-      </main>
-    );
+  async function handleLogout() {
+    await logout();
+    await queryClient.invalidateQueries({ queryKey: ["auth-session"] });
+    navigate(nextUrl, { replace: true });
   }
 
   return (
     <main className="configurator-page">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Configurador técnico visual</p>
-          <h1>{uiModel.productName}</h1>
-          <p className="page-subtitle">
-            Línea de venta #{lineId}. Configura atributos técnicos y genera la
-            previsualización frontal.
-          </p>
+      <header className="app-header">
+        <div className="app-header__title">
+          <p className="eyebrow">Configurador visual externo</p>
+          <h1>{session.productName}</h1>
+          <div className="app-header__subline">
+            <p className="page-subtitle">
+              Orden {session.orderName} · Linea #{session.saleOrderLineId}
+            </p>
+            <div className="header-chips" aria-label="Resumen rapido">
+              <span className="header-chip">V{session.status.version}</span>
+              <span className="header-chip">{formatDateTime(session.status.generatedAt)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-header__meta">
+          <div className="meta-pill meta-pill--compact">
+            <span>Usuario</span>
+            <strong>{authQuery.data.user.name}</strong>
+          </div>
+          <div className="meta-pill meta-pill--compact">
+            <span>Estado Odoo</span>
+            <strong>{session.status.orderState}</strong>
+          </div>
+          <button
+            type="button"
+            className="secondary-button secondary-button--compact"
+            onClick={handleLogout}
+          >
+            Cerrar sesion
+          </button>
         </div>
       </header>
 
-      <div className="configurator-layout">
-        <aside className="configurator-panel" aria-label="Panel de configuración">
-          <form className="configurator-form" onSubmit={handleSave}>
-            <OptionCardGroup
-              legend="Color de tela base"
-              name="baseColor"
-              options={uiModel.baseColors}
-              value={state.baseColor}
-              disabledValueIds={disabledValueIds}
-              onChange={(value) => dispatch({ type: "SET_BASE_COLOR", value })}
-              helpText="Selecciona la tela o color principal de la prenda."
-            />
+      {hasNotices ? (
+        <section className="notice-tray" aria-live="polite">
+          <div className="notice-tray__summary">
+            <span
+              className={[
+                "notice-tray__badge",
+                isReadOnly ? "notice-tray__badge--info" : "notice-tray__badge--warning",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {isReadOnly
+                ? "Solo lectura"
+                : `${session.warnings.length} alerta${
+                    session.warnings.length > 1 ? "s" : ""
+                  }`}
+            </span>
 
-            <OptionCardGroup
-              legend="Modelo de cuello"
-              name="neckModel"
-              options={uiModel.necks}
-              value={state.neckModel}
-              disabledValueIds={disabledValueIds}
-              onChange={(value) => dispatch({ type: "SET_NECK_MODEL", value })}
-              helpText="Este valor alimenta la ficha técnica visual."
-            />
+            <p className="notice-tray__headline">{noticeHeadline}</p>
 
-            <OptionCardGroup
-              legend="Bolsillo de pecho"
-              name="chestPocketModel"
-              options={uiModel.chestPockets}
-              value={state.chestPocketModel}
-              disabledValueIds={disabledValueIds}
-              onChange={(value) =>
-                dispatch({ type: "SET_CHEST_POCKET_MODEL", value })
-              }
-              helpText="Selecciona el modelo o ausencia de bolsillo de pecho."
-            />
+            <button
+              type="button"
+              className="notice-tray__toggle"
+              onClick={() => setAreNoticesExpanded((current) => !current)}
+            >
+              {areNoticesExpanded ? "Ocultar" : "Ver"}
+            </button>
+          </div>
 
-            <OptionCardGroup
-              legend="Bolsillos inferiores / auxiliares"
-              name="lowerPocketModel"
-              options={uiModel.lowerPockets}
-              value={state.lowerPocketModel}
-              disabledValueIds={disabledValueIds}
-              onChange={(value) =>
-                dispatch({ type: "SET_LOWER_POCKET_MODEL", value })
-              }
-              helpText="Selecciona el modelo general de bolsillo inferior."
-            />
-
-            <TrimSectionsEditor
-              sections={uiModel.trimSections}
-              trimStates={state.trimSections}
-              colorOptions={uiModel.baseColors}
-              onToggle={handleTrimToggle}
-              onChangeColor={(sectionKey, color) =>
-                dispatch({ type: "SET_TRIM_COLOR", key: sectionKey, color })
-              }
-            />
-
-            <div className="save-panel">
-              <p className="save-panel__help">
-                Al guardar, el diseño actual reemplazará la imagen anterior de esta línea.
-              </p>
-
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={isSaving}
-              >
-                {isSaving ? "Guardando..." : "Guardar diseño"}
-              </button>
-
-              {saveMessage ? (
-                <p className="success-banner" role="status">
-                  {saveMessage}
+          {areNoticesExpanded ? (
+            <div className="notice-tray__details">
+              {isReadOnly ? (
+                <p className="info-banner">
+                  La linea esta en modo lectura. Puedes revisar el diseno, pero no
+                  guardar cambios.
                 </p>
               ) : null}
 
-              {saveError ? (
-                <p className="error-banner" role="alert">
-                  {saveError}
+              {session.warnings.map((warning) => (
+                <p key={warning} className="warning-banner">
+                  {warning}
                 </p>
-              ) : null}
+              ))}
             </div>
-          </form>
+          ) : null}
+        </section>
+      ) : null}
+
+      <div className="configurator-layout">
+        <aside className="configurator-panel" aria-label="Panel de configuracion">
+          <div className="configurator-shell">
+            <form className="configurator-form" onSubmit={handleSave}>
+              <div className="configurator-form__scroll">
+                {ui.groups.map((group) => (
+                  <AttributeSection
+                    key={group.attributeId}
+                    group={group}
+                    selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
+                    disabledValueIds={disabledValueIds}
+                    disabled={isReadOnly}
+                    expanded={expandedAttributeId === group.attributeId}
+                    selectionLabel={getSelectionLabel(group.attributeId)}
+                    onExpandToggle={() =>
+                      setExpandedAttributeId((current) =>
+                        current === group.attributeId ? null : group.attributeId,
+                      )
+                    }
+                    onSelect={(valueId) =>
+                      dispatch({
+                        type: "SET_SINGLE",
+                        attributeId: group.attributeId,
+                        valueId,
+                      })
+                    }
+                    onToggle={(valueId) =>
+                      dispatch({
+                        type: "TOGGLE_MULTI",
+                        attributeId: group.attributeId,
+                        valueId,
+                      })
+                    }
+                  />
+                ))}
+              </div>
+
+              <div className="save-panel save-panel--sticky">
+                <div className="save-panel__topline">
+                  <div className="save-panel__summary">
+                    <strong>
+                      {completedGroups}/{ui.groups.length} listos
+                    </strong>
+                    <span>Canvas visible mientras editas</span>
+                  </div>
+                  <span className="save-panel__version">V{session.status.version}</span>
+                </div>
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={isSaving || isReadOnly}
+                >
+                  {isSaving ? "Guardando..." : isReadOnly ? "Solo lectura" : "Guardar diseno"}
+                </button>
+
+                {saveMessage ? (
+                  <p className="success-banner" role="status">
+                    {saveMessage}
+                  </p>
+                ) : null}
+
+                {saveError ? (
+                  <p className="error-banner" role="alert">
+                    {saveError}
+                  </p>
+                ) : null}
+              </div>
+            </form>
+          </div>
         </aside>
 
-        <section className="preview-panel" aria-label="Panel de previsualización">
+        <section className="preview-panel" aria-label="Panel de previsualizacion">
           <DesignPreviewCanvas
-            productName={uiModel.productName}
-            state={state}
+            scene={ui.previewScene}
+            readOnly={isReadOnly}
             onBlobReady={setCurrentBlob}
           />
         </section>

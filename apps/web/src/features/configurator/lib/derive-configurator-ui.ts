@@ -1,28 +1,43 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
-import type { ConfiguratorState } from "../reducers/configurator-reducer";
+import { getProductAssetCatalog } from "./asset-catalog";
 
-export type ConfiguratorOption = {
+export type UiOption = {
   id: number;
   name: string;
-  attributeName: string;
+  colorHex?: string | undefined;
+  imageSrc?: string | undefined;
 };
 
-export type TrimSectionDefinition = {
-  key: string;
+export type UiAttributeGroup = {
+  attributeId: number;
   label: string;
-  helpText: string;
+  helpText?: string | undefined;
+  controlType: "color" | "image" | "chips";
+  selectionMode: "single" | "multiple";
+  options: UiOption[];
+};
+
+export type PreviewScene = {
+  productName: string;
+  baseColorHex: string;
+  neckImageSrc?: string | undefined;
+  lowerPocketImageSrc?: string | undefined;
+  auxiliaryPocketImageSrc?: string | undefined;
+  chestPocketType?: string | undefined;
+  trimSections: Array<{
+    key: string;
+    label: string;
+    colorHex: string;
+  }>;
 };
 
 export type ConfiguratorUiModel = {
-  productName: string;
-  baseColors: ConfiguratorOption[];
-  necks: ConfiguratorOption[];
-  chestPockets: ConfiguratorOption[];
-  lowerPockets: ConfiguratorOption[];
-  trimSections: TrimSectionDefinition[];
+  groups: UiAttributeGroup[];
+  summary: Array<{ label: string; value: string }>;
+  previewScene: PreviewScene;
 };
 
-function normalizeLabel(value: string): string {
+function normalize(value: string) {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
@@ -30,203 +45,251 @@ function normalizeLabel(value: string): string {
     .toLowerCase();
 }
 
-function containsAny(value: string, candidates: string[]): boolean {
-  const normalized = normalizeLabel(value);
-  return candidates.some((candidate) => normalized.includes(normalizeLabel(candidate)));
-}
-
-function findAttribute(
-  session: ConfiguratorSession,
-  candidates: string[],
+function getSelectedOptions(
+  attribute: ConfiguratorSession["attributes"][number],
+  selectedValueIds: Record<string, number[]>,
 ) {
-  return session.attributes.find((attribute) =>
-    containsAny(attribute.name, candidates),
-  );
+  const ids = new Set(selectedValueIds[String(attribute.id)] ?? []);
+  return attribute.values.filter((value) => ids.has(value.id));
 }
 
-function mapAttributeOptions(
-  attribute:
-    | ConfiguratorSession["attributes"][number]
-    | undefined,
-  fallbackAttributeName: string,
-  fallbackValues: { id: number; name: string }[],
-): ConfiguratorOption[] {
-  if (attribute && attribute.values.length > 0) {
-    return attribute.values.map((value) => ({
-      id: value.id,
-      name: value.name,
-      attributeName: attribute.name,
-    }));
+function getHelpText(attributeName: string) {
+  const normalized = normalize(attributeName);
+
+  if (normalized.includes("cuello")) {
+    return "Selecciona el cuello que mejor representa la prenda.";
+  }
+  if (normalized.includes("bolsillo")) {
+    return "Ajusta la configuracion visual segun la necesidad del cliente.";
+  }
+  if (normalized.includes("color")) {
+    return "Usa los colores exactos configurados en Odoo para el prototipo.";
+  }
+  if (normalized.includes("vivo")) {
+    return "Estas selecciones controlan bordes y vivos visibles en la ilustracion.";
+  }
+  return undefined;
+}
+
+function getImageSource(
+  graphicManifestKey: string,
+  attributeName: string,
+  valueName: string,
+) {
+  const catalog = getProductAssetCatalog(graphicManifestKey);
+
+  if (!catalog) {
+    return undefined;
   }
 
-  return fallbackValues.map((value) => ({
-    id: value.id,
-    name: value.name,
-    attributeName: fallbackAttributeName,
-  }));
+  const normalizedAttribute = normalize(attributeName);
+
+  if (normalizedAttribute.includes("modelo de cuello")) {
+    return catalog.necks[valueName];
+  }
+
+  if (normalizedAttribute.includes("modelo bolsillo inferior")) {
+    return catalog.lowerPocketModels[valueName];
+  }
+
+  if (normalizedAttribute.includes("modelo bolsillo auxiliar")) {
+    return catalog.auxiliaryPocketModels[valueName];
+  }
+
+  return undefined;
 }
 
-function findOptionIdByName(
-  options: ConfiguratorOption[],
-  selectedName?: string,
-): number | undefined {
-  return options.find((option) => option.name === selectedName)?.id;
+function getControlType(
+  attribute: ConfiguratorSession["attributes"][number],
+  session: ConfiguratorSession,
+): UiAttributeGroup["controlType"] {
+  if (attribute.values.some((value) => value.colorHex)) {
+    return "color";
+  }
+
+  if (
+    attribute.values.some((value) =>
+      Boolean(getImageSource(session.graphicManifestKey, attribute.name, value.name)),
+    )
+  ) {
+    return "image";
+  }
+
+  return "chips";
+}
+
+function findAttributeByName(
+  session: ConfiguratorSession,
+  matcher: (normalizedName: string) => boolean,
+) {
+  return session.attributes.find((attribute) => matcher(normalize(attribute.name)));
+}
+
+function findSelectedValue(
+  attribute: ConfiguratorSession["attributes"][number] | undefined,
+  selectedValueIds: Record<string, number[]>,
+) {
+  if (!attribute) {
+    return undefined;
+  }
+
+  const selectedIds = new Set(selectedValueIds[String(attribute.id)] ?? []);
+  return attribute.values.find((value) => selectedIds.has(value.id));
+}
+
+function getSelectedTrimSections(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const sectionAttribute = findAttributeByName(session, (name) =>
+    name.includes("seccion de vivo"),
+  );
+
+  const colorAttributes = session.attributes.filter((attribute) =>
+    normalize(attribute.name).includes("color de vivo"),
+  );
+
+  if (!sectionAttribute) {
+    return [];
+  }
+
+  const enabledSections = getSelectedOptions(sectionAttribute, selectedValueIds);
+
+  if (enabledSections.length === 0) {
+    return [];
+  }
+
+  const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
+
+  return enabledSections.map((section) => {
+    const matchingColorAttribute = colorAttributes.find((attribute) =>
+      normalize(attribute.name).includes(normalize(section.name)),
+    );
+    const sectionColor =
+      findSelectedValue(matchingColorAttribute, selectedValueIds) ?? globalColor;
+
+    return {
+      key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
+      label: section.name,
+      colorHex: sectionColor?.colorHex ?? "#1d4ed8",
+    };
+  });
 }
 
 export function deriveConfiguratorUi(
   session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
 ): ConfiguratorUiModel {
-  const baseColorAttr = findAttribute(session, [
-    "color tela base",
-    "tela base",
-    "material y color de tela base",
-    "color base",
-    "color",
-  ]);
+  const groups = session.attributes.map((attribute) => ({
+    attributeId: attribute.id,
+    label: attribute.name,
+    helpText: getHelpText(attribute.name),
+    controlType: getControlType(attribute, session),
+    selectionMode: attribute.selectionMode,
+      options: attribute.values.map((value) => ({
+        id: value.id,
+        name: value.name,
+        ...(value.colorHex ? { colorHex: value.colorHex } : {}),
+        ...(getImageSource(session.graphicManifestKey, attribute.name, value.name)
+          ? {
+              imageSrc: getImageSource(
+                session.graphicManifestKey,
+                attribute.name,
+                value.name,
+              ),
+            }
+          : {}),
+      })),
+    }));
 
-  const neckAttr = findAttribute(session, ["cuello"]);
-  const chestPocketAttr = findAttribute(session, [
-    "bolsillo de pecho",
-    "bolsillo pecho",
-  ]);
+  const colorAttribute = findAttributeByName(session, (name) =>
+    name === "color" || name.includes("color de tela base") || name.includes("tela base"),
+  );
+  const neckAttribute = findAttributeByName(session, (name) =>
+    name.includes("modelo de cuello"),
+  );
+  const lowerPocketModelAttribute = findAttributeByName(session, (name) =>
+    name.includes("modelo bolsillo inferior"),
+  );
+  const auxiliaryPocketModelAttribute = findAttributeByName(session, (name) =>
+    name.includes("modelo bolsillo auxiliar"),
+  );
+  const chestPocketTypeAttribute = findAttributeByName(
+    session,
+    (name) => name.includes("bolsillo de pecho") && !name.includes("bordado"),
+  );
 
-  const lowerPocketAttr = findAttribute(session, [
-    "bolsillos inferiores",
-    "bolsillo inferior",
-    "auxiliares",
-    "auxiliar",
-  ]);
+  const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
+  const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
+  const selectedLowerPocketModel = findSelectedValue(
+    lowerPocketModelAttribute,
+    selectedValueIds,
+  );
+  const selectedAuxiliaryPocketModel = findSelectedValue(
+    auxiliaryPocketModelAttribute,
+    selectedValueIds,
+  );
+  const selectedChestPocketType = findSelectedValue(
+    chestPocketTypeAttribute,
+    selectedValueIds,
+  );
 
-  const baseColors = mapAttributeOptions(baseColorAttr, "Color base", [
-    { id: 10001, name: "Blanco" },
-    { id: 10002, name: "Azul rey" },
-    { id: 10003, name: "Gris perla" },
-    { id: 10004, name: "Verde quirófano" },
-  ]);
+  const summary = session.attributes.flatMap((attribute) => {
+    const selected = getSelectedOptions(attribute, selectedValueIds);
 
-  const necks = mapAttributeOptions(neckAttr, "Modelo de cuello", [
-    { id: 11001, name: "Cuello 1" },
-    { id: 11002, name: "Cuello 2" },
-    { id: 11003, name: "Cuello 3" },
-    { id: 11004, name: "Cuello 4" },
-  ]);
+    if (selected.length === 0) {
+      return [];
+    }
 
-  const chestPockets = mapAttributeOptions(chestPocketAttr, "Bolsillo de pecho", [
-    { id: 12001, name: "Sin bolsillo" },
-    { id: 12002, name: "Bolsillo A" },
-    { id: 12003, name: "Bolsillo B" },
-  ]);
-
-  const lowerPockets = mapAttributeOptions(lowerPocketAttr, "Bolsillos inferiores", [
-    { id: 13001, name: "Sin bolsillo inferior" },
-    { id: 13002, name: "Modelo 1" },
-    { id: 13003, name: "Modelo 2" },
-    { id: 13004, name: "Modelo 3" },
-  ]);
-
-  const trimSections: TrimSectionDefinition[] = [
-    {
-      key: "collar",
-      label: "Vivo en cuello",
-      helpText: "Aplica vivo sobre el contorno del cuello.",
-    },
-    {
-      key: "frontPlacket",
-      label: "Vivo frente central",
-      helpText: "Aplica vivo sobre la línea frontal.",
-    },
-    {
-      key: "chestPocket",
-      label: "Vivo bolsillo pecho",
-      helpText: "Aplica vivo alrededor del bolsillo de pecho.",
-    },
-    {
-      key: "lowerPockets",
-      label: "Vivos bolsillos inferiores",
-      helpText: "Aplica vivo en bolsillos inferiores o auxiliares.",
-    },
-  ];
+    return [
+      {
+        label: attribute.name,
+        value: selected.map((value) => value.name).join(", "),
+      },
+    ];
+  });
 
   return {
-    productName: session.productName,
-    baseColors,
-    necks,
-    chestPockets,
-    lowerPockets,
-    trimSections,
+    groups,
+    summary,
+    previewScene: {
+      productName: session.productName,
+      baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
+      neckImageSrc: selectedNeck
+        ? getImageSource(session.graphicManifestKey, neckAttribute?.name ?? "", selectedNeck.name)
+        : undefined,
+      lowerPocketImageSrc: selectedLowerPocketModel
+        ? getImageSource(
+            session.graphicManifestKey,
+            lowerPocketModelAttribute?.name ?? "",
+            selectedLowerPocketModel.name,
+          )
+        : undefined,
+      auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
+        ? getImageSource(
+            session.graphicManifestKey,
+            auxiliaryPocketModelAttribute?.name ?? "",
+            selectedAuxiliaryPocketModel.name,
+          )
+        : undefined,
+      chestPocketType: selectedChestPocketType?.name,
+      trimSections: getSelectedTrimSections(session, selectedValueIds),
+    },
   };
-}
-
-export function createInitialConfiguratorState(
-  ui: ConfiguratorUiModel,
-): ConfiguratorState {
-  const defaultColor = ui.baseColors[0]?.name;
-  const defaultNeck = ui.necks[0]?.name;
-  const defaultChestPocket = ui.chestPockets[0]?.name;
-  const defaultLowerPocket = ui.lowerPockets[0]?.name;
-
-  const state: ConfiguratorState = {
-    trimSections: Object.fromEntries(
-      ui.trimSections.map((section) => {
-        const trimState =
-          defaultColor !== undefined
-            ? {
-                enabled: false,
-                color: defaultColor,
-              }
-            : {
-                enabled: false,
-              };
-
-        return [section.key, trimState];
-      }),
-    ) as Record<string, { enabled: boolean; color?: string }>,
-  };
-
-  if (defaultColor !== undefined) {
-    state.baseColor = defaultColor;
-  }
-
-  if (defaultNeck !== undefined) {
-    state.neckModel = defaultNeck;
-  }
-
-  if (defaultChestPocket !== undefined) {
-    state.chestPocketModel = defaultChestPocket;
-  }
-
-  if (defaultLowerPocket !== undefined) {
-    state.lowerPocketModel = defaultLowerPocket;
-  }
-
-  return state;
-}
-
-export function getSelectedValueIds(
-  ui: ConfiguratorUiModel,
-  state: ConfiguratorState,
-): Set<number> {
-  const ids = [
-    findOptionIdByName(ui.baseColors, state.baseColor),
-    findOptionIdByName(ui.necks, state.neckModel),
-    findOptionIdByName(ui.chestPockets, state.chestPocketModel),
-    findOptionIdByName(ui.lowerPockets, state.lowerPocketModel),
-  ].filter((value): value is number => typeof value === "number");
-
-  return new Set(ids);
 }
 
 export function computeDisabledValueIds(
   session: ConfiguratorSession,
-  selectedValueIds: Set<number>,
-): Set<number> {
+  selectedValueIds: Record<string, number[]>,
+) {
+  const selected = new Set<number>(
+    Object.values(selectedValueIds).flatMap((valueIds) => valueIds),
+  );
   const disabled = new Set<number>();
 
-  for (const selectedId of selectedValueIds) {
-    for (const rule of session.exclusions) {
-      if (rule.sourceValueId === selectedId) {
-        disabled.add(rule.excludedValueId);
-      }
+  for (const rule of session.exclusions) {
+    if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
+      disabled.add(rule.excludedValueId);
     }
   }
 

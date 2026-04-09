@@ -22,26 +22,27 @@ export async function odooCall<T>(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
+  const baseUrl = env.ODOO_BASE_URL as string;
+  const db = env.ODOO_DB as string;
+  const apiKey = env.ODOO_API_KEY as string;
 
   try {
-    const response = await fetch(
-      `${env.ODOO_BASE_URL}/json/2/${model}/${method}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `bearer ${env.ODOO_API_KEY}`,
-          "X-Odoo-Database": env.ODOO_DB,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      },
-    );
+    const headers = new Headers();
+    headers.set("Authorization", `bearer ${apiKey}`);
+    headers.set("X-Odoo-Database", db);
+    headers.set("Content-Type", "application/json");
+
+    const response = await fetch(`${baseUrl}/json/2/${model}/${method}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
 
     if (!response.ok) {
       const text = await response.text();
       throw new Error(
-        `Odoo ${model}.${method} respondió ${response.status}: ${text}`,
+        `Odoo ${model}.${method} respondio ${response.status}: ${text}`,
       );
     }
 
@@ -72,4 +73,21 @@ export async function odooSearchRead<T>(
     fields,
     ...(order ? { order } : {}),
   });
+}
+
+export async function odooWrite(
+  env: OdooEnv,
+  model: string,
+  ids: number[],
+  vals: Record<string, unknown>,
+): Promise<boolean> {
+  return await odooCall<boolean>(env, model, "write", { ids, vals });
+}
+
+export async function odooCreate<T>(
+  env: OdooEnv,
+  model: string,
+  valsList: Record<string, unknown>[],
+): Promise<T> {
+  return await odooCall<T>(env, model, "create", { vals_list: valsList });
 }

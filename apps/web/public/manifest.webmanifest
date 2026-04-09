@@ -1,20 +1,20 @@
 {
-  "name": "Configurador de Dotaciones",
-  "short_name": "Configurador",
-  "start_url": "/app/configurator/0",
+  "name": "Configurador de Dotaciones La Roca",
+  "short_name": "La Roca",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0f172a",
+  "theme_color": "#005f73",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }

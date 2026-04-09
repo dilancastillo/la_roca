@@ -2,30 +2,43 @@ export async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
   let binary = "";
   const bytes = new Uint8Array(buffer);
-  for (const b of bytes) binary += String.fromCharCode(b);
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
   return btoa(binary);
 }
 
-export async function saveDesign(lineId: number, blob: Blob) {
+export async function saveDesign(
+  lineId: number,
+  blob: Blob,
+  selectedValueIds: Record<string, number[]>,
+) {
   const imageBase64 = await blobToBase64(blob);
 
-  const res = await fetch("/api/design/save", {
+  const response = await fetch("/api/design/save", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json"
+      Accept: "application/json",
     },
     credentials: "same-origin",
     body: JSON.stringify({
       saleOrderLineId: lineId,
       filename: `sale-line-${lineId}-design.png`,
-      imageBase64
-    })
+      imageBase64,
+      selectedValueIds,
+    }),
   });
 
-  if (!res.ok) {
-    throw new Error("No se pudo guardar el diseño.");
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      payload && typeof payload.error === "string"
+        ? payload.error
+        : "No se pudo guardar el diseno.",
+    );
   }
 
-  return await res.json();
+  return payload;
 }

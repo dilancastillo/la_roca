@@ -1,31 +1,11 @@
-export type TrimSectionState = {
-  enabled: boolean;
-  color?: string;
-};
-
 export type ConfiguratorState = {
-  baseColor?: string;
-  neckModel?: string;
-  chestPocketModel?: string;
-  lowerPocketModel?: string;
-  trimSections: Record<string, TrimSectionState>;
+  selectedValueIds: Record<string, number[]>;
 };
 
 type Action =
-  | { type: "INITIALIZE"; value: ConfiguratorState }
-  | { type: "SET_BASE_COLOR"; value: string }
-  | { type: "SET_NECK_MODEL"; value: string }
-  | { type: "SET_CHEST_POCKET_MODEL"; value: string }
-  | { type: "SET_LOWER_POCKET_MODEL"; value: string }
-  | { type: "TOGGLE_TRIM"; key: string; enabled: boolean }
-  | { type: "SET_TRIM_COLOR"; key: string; color: string };
-
-function getTrimSection(
-  trimSections: Record<string, TrimSectionState>,
-  key: string,
-): TrimSectionState {
-  return trimSections[key] ?? { enabled: false };
-}
+  | { type: "INITIALIZE"; value: Record<string, number[]> }
+  | { type: "SET_SINGLE"; attributeId: number; valueId: number }
+  | { type: "TOGGLE_MULTI"; attributeId: number; valueId: number };
 
 export function configuratorReducer(
   state: ConfiguratorState,
@@ -33,46 +13,32 @@ export function configuratorReducer(
 ): ConfiguratorState {
   switch (action.type) {
     case "INITIALIZE":
-      return action.value;
-
-    case "SET_BASE_COLOR":
-      return { ...state, baseColor: action.value };
-
-    case "SET_NECK_MODEL":
-      return { ...state, neckModel: action.value };
-
-    case "SET_CHEST_POCKET_MODEL":
-      return { ...state, chestPocketModel: action.value };
-
-    case "SET_LOWER_POCKET_MODEL":
-      return { ...state, lowerPocketModel: action.value };
-
-    case "TOGGLE_TRIM": {
-      const current = getTrimSection(state.trimSections, action.key);
-
       return {
-        ...state,
-        trimSections: {
-          ...state.trimSections,
-          [action.key]: {
-            ...current,
-            enabled: action.enabled,
-          },
+        selectedValueIds: action.value,
+      };
+
+    case "SET_SINGLE":
+      return {
+        selectedValueIds: {
+          ...state.selectedValueIds,
+          [String(action.attributeId)]: [action.valueId],
         },
       };
-    }
 
-    case "SET_TRIM_COLOR": {
-      const current = getTrimSection(state.trimSections, action.key);
+    case "TOGGLE_MULTI": {
+      const key = String(action.attributeId);
+      const current = new Set(state.selectedValueIds[key] ?? []);
+
+      if (current.has(action.valueId)) {
+        current.delete(action.valueId);
+      } else {
+        current.add(action.valueId);
+      }
 
       return {
-        ...state,
-        trimSections: {
-          ...state.trimSections,
-          [action.key]: {
-            ...current,
-            color: action.color,
-          },
+        selectedValueIds: {
+          ...state.selectedValueIds,
+          [key]: Array.from(current),
         },
       };
     }
