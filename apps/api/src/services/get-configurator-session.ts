@@ -8,7 +8,6 @@ type Env = {
 };
 
 type Many2one = [number, string] | false;
-type Many2many = number[];
 
 type SaleOrderLineRecord = {
   id: number;
@@ -30,13 +29,6 @@ type ProductTemplateAttributeValueRecord = {
   product_tmpl_id: Many2one;
   product_attribute_value_id: Many2one;
   ptav_active?: boolean;
-};
-
-type ProductTemplateAttributeExclusionRecord = {
-  id: number;
-  product_template_attribute_value_id: Many2one;
-  value_ids?: Many2many;
-  product_template_value_ids?: Many2many;
 };
 
 type ConfiguratorSession = {
@@ -114,7 +106,6 @@ function groupPtavsByAttribute(
       };
 
     bucket.values.push({
-      // IMPORTANTE: usamos PTAV ID, no PAV ID
       id: ptav.id,
       name: ptav.name,
       attributeName,
@@ -124,68 +115,6 @@ function groupPtavsByAttribute(
   }
 
   return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function readExclusions(
-  env: Env,
-  ptavs: ProductTemplateAttributeValueRecord[],
-): Promise<ConfiguratorSession["exclusions"]> {
-  const exclusionIds = ptavs.flatMap((ptav) => ptav.exclude_for ?? []);
-
-  if (exclusionIds.length === 0) {
-    return [];
-  }
-
-  // Variante A: muchas bases estándar exponen value_ids.
-  try {
-    const exclusions = await odooRead<ProductTemplateAttributeExclusionRecord>(
-      env,
-      "product.template.attribute.exclusion",
-      exclusionIds,
-      ["id", "product_template_attribute_value_id", "value_ids"],
-    );
-
-    return exclusions.flatMap((row) => {
-      const sourceValueId = toMany2oneId(
-        row.product_template_attribute_value_id,
-        "product_template_attribute_value_id",
-      );
-
-      return (row.value_ids ?? []).map((excludedValueId) => ({
-        sourceValueId,
-        excludedValueId,
-      }));
-    });
-  } catch {
-    // Variante B: algunas bases exponen product_template_value_ids.
-  }
-
-  try {
-    const exclusions = await odooRead<ProductTemplateAttributeExclusionRecord>(
-      env,
-      "product.template.attribute.exclusion",
-      exclusionIds,
-      ["id", "product_template_attribute_value_id", "product_template_value_ids"],
-    );
-
-    return exclusions.flatMap((row) => {
-      const sourceValueId = toMany2oneId(
-        row.product_template_attribute_value_id,
-        "product_template_attribute_value_id",
-      );
-
-      return (row.product_template_value_ids ?? []).map((excludedValueId) => ({
-        sourceValueId,
-        excludedValueId,
-      }));
-    });
-  } catch (error) {
-    console.warn(
-      "No se pudieron leer las exclusiones reales. Revisa /doc para confirmar el nombre exacto del campo Many2many del modelo product.template.attribute.exclusion.",
-      error,
-    );
-    return [];
-  }
 }
 
 export async function getConfiguratorSession(
@@ -200,7 +129,6 @@ export async function getConfiguratorSession(
     );
   }
 
-  // 1) Leer línea de venta
   const lines = await odooRead<SaleOrderLineRecord>(
     env,
     "sale.order.line",
@@ -215,7 +143,6 @@ export async function getConfiguratorSession(
   const line = lines[0];
   const productId = toMany2oneId(line.product_id, "product_id");
 
-  // 2) Leer product.product
   const products = await odooRead<ProductProductRecord>(
     env,
     "product.product",
@@ -232,13 +159,13 @@ export async function getConfiguratorSession(
     product.product_tmpl_id,
     "product_tmpl_id",
   );
+
   const productName =
     toMany2oneName(product.product_tmpl_id) ??
     product.display_name ??
     line.name ??
     `Producto ${productTemplateId}`;
 
-  // 3) Leer PTAVs reales del template
   const ptavs = await odooSearchRead<ProductTemplateAttributeValueRecord>(
     env,
     "product.template.attribute.value",
@@ -264,10 +191,8 @@ export async function getConfiguratorSession(
     );
   }
 
-  // 4) Agrupar PTAVs por atributo
   const attributes = groupPtavsByAttribute(ptavs);
 
-  // 5) Leer exclusiones reales
   const exclusions: ConfiguratorSession["exclusions"] = [];
 
   return {
