@@ -3,6 +3,7 @@ import type {
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client";
+import { toOdooDatetimeString } from "../lib/odoo-datetime";
 import { getConfiguratorSession } from "./get-configurator-session";
 
 type Env = {
@@ -138,13 +139,15 @@ export async function saveConfiguratorDesign(
   }
 
   const nextVersion = session.status.version + 1;
-  const generatedAt = new Date().toISOString();
+  const generatedAt = new Date();
+  const generatedAtIso = generatedAt.toISOString();
+  const generatedAtOdoo = toOdooDatetimeString(generatedAt);
 
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: matchingVariant.id,
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     x_product_design_image: payload.imageBase64,
-    x_product_design_generated_at: generatedAt,
+    x_product_design_generated_at: generatedAtOdoo,
     x_product_design_version: nextVersion,
   });
 
@@ -163,6 +166,6 @@ export async function saveConfiguratorDesign(
     attachmentId,
     productId: matchingVariant.id,
     version: nextVersion,
-    generatedAt,
+    generatedAt: generatedAtIso,
   };
 }
