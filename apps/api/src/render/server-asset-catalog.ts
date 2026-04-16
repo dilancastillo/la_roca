@@ -1,4 +1,4 @@
-export type ProductAssetCatalog = {
+export type ServerProductAssetCatalog = {
   necks: Record<string, string>;
   lowerPocketModels: Record<string, string>;
   auxiliaryPocketModels: Record<string, string>;
@@ -21,28 +21,28 @@ function buildIndexedAssetMap(
   );
 }
 
-const blusaAntifluidoAssets: ProductAssetCatalog = {
+const blusaAntifluidoAssets: ServerProductAssetCatalog = {
   necks: buildIndexedAssetMap(
     "Modelo",
     18,
     (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/necks/neck-model-${String(index).padStart(2, "0")}.png`,
+      `assets/catalog/blusa-antifluido-t180-24263/necks/neck-model-${String(index).padStart(2, "0")}.png`,
   ),
   lowerPocketModels: buildIndexedAssetMap(
     "Modelo",
     12,
     (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
+      `assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
   ),
   auxiliaryPocketModels: buildIndexedAssetMap(
     "Modelo",
     12,
     (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
+      `assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
   ),
 };
 
-export const productAssetCatalogs: Record<string, ProductAssetCatalog> = {
+const productAssetCatalogs: Record<string, ServerProductAssetCatalog> = {
   "blusa-antifluido-t180-24263": blusaAntifluidoAssets,
 };
 
@@ -65,7 +65,7 @@ function resolveCatalogKey(graphicManifestKey: string) {
   );
 }
 
-export function getProductAssetCatalog(graphicManifestKey: string) {
+export function getServerProductAssetCatalog(graphicManifestKey: string) {
   const resolvedKey = resolveCatalogKey(graphicManifestKey);
   return resolvedKey ? productAssetCatalogs[resolvedKey] : undefined;
 }
