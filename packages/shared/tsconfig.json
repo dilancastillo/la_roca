@@ -3,7 +3,13 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": "src",
-    "noEmit": true
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "noEmit": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "include": [
     "src"

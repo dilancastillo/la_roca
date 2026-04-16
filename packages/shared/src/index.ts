@@ -1,1 +1,1 @@
-export * from "./schemas/configurator";
+export * from "./schemas/configurator.js";
