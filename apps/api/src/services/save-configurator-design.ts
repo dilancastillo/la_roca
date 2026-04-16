@@ -21,13 +21,15 @@ function normalizeManyIds(value: unknown): number[] {
   return value.filter((item): item is number => typeof item === "number");
 }
 
-function parseSelectedValueIds(selectedValueIds: SaveDesignRequest["selectedValueIds"]) {
+function parseSelectedValueIds(
+  selectedValueIds: SaveDesignRequest["selectedValueIds"],
+): Record<number, number[]> {
   return Object.fromEntries(
     Object.entries(selectedValueIds).map(([key, values]) => [
       Number(key),
-      values.filter((value) => Number.isFinite(value)),
+      normalizeManyIds(values).filter((value) => Number.isFinite(value)),
     ]),
-  );
+  ) as Record<number, number[]>;
 }
 
 function setsMatch(left: number[], right: number[]) {
