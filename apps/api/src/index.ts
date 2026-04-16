@@ -7,15 +7,15 @@ import {
   loginRequestSchema,
   saveDesignRequestSchema,
 } from "@repo/shared/schemas/configurator";
-import { authenticateUser, createSessionToken } from "./lib/auth";
+import { authenticateUser, createSessionToken } from "./lib/auth.js";
 import {
   type AppEnv,
   type AppVariables,
   getAppEnv,
-} from "./lib/app-env";
-import { requireAppSession } from "./middleware/require-app-session";
-import { getConfiguratorSession } from "./services/get-configurator-session";
-import { saveConfiguratorDesign } from "./services/save-configurator-design";
+} from "./lib/app-env.js";
+import { requireAppSession } from "./middleware/require-app-session.js";
+import { getConfiguratorSession } from "./services/get-configurator-session.js";
+import { saveConfiguratorDesign } from "./services/save-configurator-design.js";
 const app = new Hono<{ Bindings: Partial<AppEnv>; Variables: AppVariables }>();
 
 function getCookieName(env: Partial<AppEnv>) {

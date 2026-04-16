@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
 import { appUserSchema } from "@repo/shared/schemas/configurator";
-import { fallbackDevUsers } from "../config/dev-users";
-import type { AuthEnv } from "./app-env";
+import { fallbackDevUsers } from "../config/dev-users.js";
+import type { AuthEnv } from "./app-env.js";
 
 const appUserRecordSchema = appUserSchema.extend({
   salt: z.string().min(1),

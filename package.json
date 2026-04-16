@@ -1,6 +1,7 @@
 {
   "name": "configurador-dotaciones",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"

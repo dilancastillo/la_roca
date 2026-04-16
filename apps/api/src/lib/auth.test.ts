@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authenticateUser } from "./auth";
+import { authenticateUser } from "./auth.js";
 
 describe("authenticateUser", () => {
   it("acepta las credenciales locales de desarrollo", async () => {

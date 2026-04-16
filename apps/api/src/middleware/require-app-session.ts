@@ -1,11 +1,11 @@
 import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
-import { verifySessionToken } from "../lib/auth";
+import { verifySessionToken } from "../lib/auth.js";
 import {
   type AppEnv,
   type AppVariables,
   getAppEnv,
-} from "../lib/app-env";
+} from "../lib/app-env.js";
 
 function getCookieName(env: Partial<AppEnv>) {
   return env.APP_COOKIE_NAME ?? "la_roca_session";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toOdooDatetimeString } from "./odoo-datetime";
+import { toOdooDatetimeString } from "./odoo-datetime.js";
 
 describe("toOdooDatetimeString", () => {
   it("convierte una fecha ISO al formato datetime que espera Odoo", () => {

@@ -1,6 +1,6 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
-import type { OdooEnv } from "../lib/app-env";
-import { odooRead, odooSearchRead } from "../lib/odoo-client";
+import type { OdooEnv } from "../lib/app-env.js";
+import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
 
 type Many2one = [number, string] | false;
 
@@ -255,9 +255,18 @@ export async function getConfiguratorSession(
     ).catch(() => []),
   ]);
 
-  const attributeMap = new Map(attributes.map((attribute) => [attribute.id, attribute]));
+  const attributeMap = new Map<number, ProductAttributeRecord>(
+    attributes.map(
+      (attribute): [number, ProductAttributeRecord] => [attribute.id, attribute],
+    ),
+  );
   const attributeValueMap = new Map(
-    attributeValues.map((attributeValue) => [attributeValue.id, attributeValue]),
+    attributeValues.map(
+      (attributeValue): [number, ProductAttributeValueRecord] => [
+        attributeValue.id,
+        attributeValue,
+      ],
+    ),
   );
 
   const currentValueIds = new Set<number>([
