@@ -146,6 +146,7 @@ export async function saveConfiguratorDesign(
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: matchingVariant.id,
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
+    product_custom_attribute_value_ids: [[5, 0, 0]],
     x_product_design_image: payload.imageBase64,
     x_product_design_generated_at: generatedAtOdoo,
     x_product_design_version: nextVersion,

@@ -26,12 +26,12 @@ export const overlayRegionPresets: Record<
   OverlayRegion[]
 > = {
   lowerPocketPair: [
-    { x: 165, y: 600, width: 165, height: 265 },
-    { x: 570, y: 600, width: 165, height: 265 },
+    { x: 146, y: 572, width: 196, height: 312 },
+    { x: 558, y: 572, width: 196, height: 312 },
   ],
   auxiliaryPocketPair: [
-    { x: 135, y: 540, width: 220, height: 320 },
-    { x: 545, y: 540, width: 220, height: 320 },
+    { x: 116, y: 518, width: 248, height: 356 },
+    { x: 536, y: 518, width: 248, height: 356 },
   ],
 };
 
@@ -370,9 +370,13 @@ function drawChestPocket(
 
 function drawTrimSections(
   context: CanvasRenderingContext2D,
-  trimSections: PreviewScene["trimSections"],
+  scene: PreviewScene,
 ) {
-  for (const section of trimSections) {
+  const hasChestPocket =
+    Boolean(scene.chestPocketType) &&
+    !normalize(scene.chestPocketType ?? "").includes("sin bolsillo");
+
+  for (const section of scene.trimSections) {
     const key = normalize(section.label || section.key);
     context.save();
     context.strokeStyle = section.colorHex;
@@ -395,20 +399,8 @@ function drawTrimSections(
       context.stroke();
     }
 
-    if (key.includes("pecho")) {
+    if (key.includes("pecho") && !hasChestPocket) {
       context.strokeRect(530, 362, 110, 128);
-    }
-
-    if (key.includes("inferior")) {
-      context.strokeRect(252, 636, 142, 158);
-      context.strokeRect(502, 636, 142, 158);
-    }
-
-    if (key.includes("auxiliar")) {
-      context.beginPath();
-      context.roundRect(220, 610, 118, 178, 22);
-      context.roundRect(562, 610, 118, 178, 22);
-      context.stroke();
     }
 
     context.restore();
@@ -594,16 +586,6 @@ async function drawOverlayInRegions(
   }
 }
 
-async function drawDetailOverlay(
-  context: CanvasRenderingContext2D,
-  sourceSrc: string,
-  baseSrc: string,
-  regions: OverlayRegion[],
-) {
-  const overlay = await createDetailOverlayCanvas(sourceSrc, baseSrc, regions);
-  context.drawImage(overlay, 0, 0);
-}
-
 export async function createTintedBaseCanvas(src: string, fillColor: string) {
   const processed = await getProcessedImage(src);
   const mask = await getInteriorMask(src);
@@ -665,7 +647,7 @@ export async function createDetailOverlayCanvas(
   sourceSrc: string,
   baseSrc: string,
   regions: OverlayRegion[],
-  inkRadius = 4,
+  inkRadius = 2,
 ) {
   return await getDetailOverlay(sourceSrc, baseSrc, regions, inkRadius);
 }
@@ -694,40 +676,22 @@ export async function composeDesign(
   drawChestPocket(context, scene.chestPocketType);
 
   if (scene.lowerPocketImageSrc) {
-    if (scene.neckImageSrc) {
-      await drawDetailOverlay(
-        context,
-        scene.lowerPocketImageSrc,
-        scene.neckImageSrc,
-        getOverlayRegionPreset("lowerPocketPair"),
-      );
-    } else {
-      await drawOverlayInRegions(
-        context,
-        scene.lowerPocketImageSrc,
-        getOverlayRegionPreset("lowerPocketPair"),
-      );
-    }
+    await drawOverlayInRegions(
+      context,
+      scene.lowerPocketImageSrc,
+      getOverlayRegionPreset("lowerPocketPair"),
+    );
   }
 
   if (scene.auxiliaryPocketImageSrc) {
-    if (scene.neckImageSrc) {
-      await drawDetailOverlay(
-        context,
-        scene.auxiliaryPocketImageSrc,
-        scene.neckImageSrc,
-        getOverlayRegionPreset("auxiliaryPocketPair"),
-      );
-    } else {
-      await drawOverlayInRegions(
-        context,
-        scene.auxiliaryPocketImageSrc,
-        getOverlayRegionPreset("auxiliaryPocketPair"),
-      );
-    }
+    await drawOverlayInRegions(
+      context,
+      scene.auxiliaryPocketImageSrc,
+      getOverlayRegionPreset("auxiliaryPocketPair"),
+    );
   }
 
-  drawTrimSections(context, scene.trimSections);
+  drawTrimSections(context, scene);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
