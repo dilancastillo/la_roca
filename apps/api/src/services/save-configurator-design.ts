@@ -2,10 +2,10 @@ import type {
   ConfiguratorSession,
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
-import type { OdooEnv } from "../lib/app-env";
-import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client";
-import { toOdooDatetimeString } from "../lib/odoo-datetime";
-import { getConfiguratorSession } from "./get-configurator-session";
+import type { OdooEnv } from "../lib/app-env.js";
+import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
+import { toOdooDatetimeString } from "../lib/odoo-datetime.js";
+import { getConfiguratorSession } from "./get-configurator-session.js";
 
 type ProductVariantRecord = {
   id: number;

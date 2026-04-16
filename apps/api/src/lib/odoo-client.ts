@@ -1,4 +1,4 @@
-import type { OdooEnv } from "./app-env";
+import type { OdooEnv } from "./app-env.js";
 
 function ensureOdooEnv(env: OdooEnv) {
   if (!env.ODOO_BASE_URL || !env.ODOO_DB || !env.ODOO_API_KEY) {
