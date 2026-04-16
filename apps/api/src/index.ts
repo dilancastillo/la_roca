@@ -16,7 +16,9 @@ import {
 import { requireAppSession } from "./middleware/require-app-session.js";
 import { getConfiguratorSession } from "./services/get-configurator-session.js";
 import { saveConfiguratorDesign } from "./services/save-configurator-design.js";
-const app = new Hono<{ Bindings: Partial<AppEnv>; Variables: AppVariables }>();
+const app = new Hono<{ Bindings: Partial<AppEnv>; Variables: AppVariables }>().basePath(
+  "/api",
+);
 
 function getCookieName(env: Partial<AppEnv>) {
   return env.APP_COOKIE_NAME ?? "la_roca_session";
@@ -26,14 +28,14 @@ function shouldUseSecureCookie(env: Partial<AppEnv>) {
   return env.APP_COOKIE_SECURE === "true";
 }
 
-app.get("/api/health", (c) => {
+app.get("/health", (c) => {
   return c.json({
     ok: true,
     service: "configurador-dotaciones-api",
   });
 });
 
-app.post("/api/auth/login", zValidator("json", loginRequestSchema), async (c) => {
+app.post("/auth/login", zValidator("json", loginRequestSchema), async (c) => {
   const appEnv = getAppEnv(c);
   const credentials = c.req.valid("json");
   const user = await authenticateUser(appEnv, credentials.email, credentials.password);
@@ -55,7 +57,7 @@ app.post("/api/auth/login", zValidator("json", loginRequestSchema), async (c) =>
   return c.json(authSessionSchema.parse({ user }));
 });
 
-app.post("/api/auth/logout", (c) => {
+app.post("/auth/logout", (c) => {
   const appEnv = getAppEnv(c);
 
   deleteCookie(c, getCookieName(appEnv), {
@@ -65,15 +67,15 @@ app.post("/api/auth/logout", (c) => {
   return c.json({ ok: true });
 });
 
-app.use("/api/auth/me", requireAppSession());
-app.use("/api/session/*", requireAppSession());
-app.use("/api/design/*", requireAppSession());
+app.use("/auth/me", requireAppSession());
+app.use("/session/*", requireAppSession());
+app.use("/design/*", requireAppSession());
 
-app.get("/api/auth/me", (c) => {
+app.get("/auth/me", (c) => {
   return c.json(authSessionSchema.parse({ user: c.get("user") }));
 });
 
-app.get("/api/session/:saleOrderLineId", async (c) => {
+app.get("/session/:saleOrderLineId", async (c) => {
   const appEnv = getAppEnv(c);
   const saleOrderLineId = Number(c.req.param("saleOrderLineId"));
 
@@ -98,7 +100,7 @@ app.get("/api/session/:saleOrderLineId", async (c) => {
 });
 
 app.post(
-  "/api/design/save",
+  "/design/save",
   zValidator("json", saveDesignRequestSchema),
   async (c) => {
     const appEnv = getAppEnv(c);

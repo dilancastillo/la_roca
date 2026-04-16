@@ -34,5 +34,5 @@ export type AppContext = Context<{
 }>;
 
 export function getAppEnv(c: AppContext): AppEnv {
-  return readRuntimeEnv<AppEnv>(c, "node");
+  return readRuntimeEnv<AppEnv>(c);
 }
