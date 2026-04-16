@@ -3,9 +3,9 @@ import type {
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
 import type { OdooEnv } from "../lib/app-env.js";
-import { odooSearchRead, odooWrite } from "../lib/odoo-client.js";
+import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
+import { toOdooDatetimeString } from "../lib/odoo-datetime.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
-import { storeDesignImage } from "./store-design-image.js";
 
 type ProductVariantRecord = {
   id: number;
@@ -135,19 +135,35 @@ export async function saveConfiguratorDesign(
     );
   }
 
+  const nextVersion = session.status.version + 1;
+  const generatedAt = new Date();
+  const generatedAtIso = generatedAt.toISOString();
+  const generatedAtOdoo = toOdooDatetimeString(generatedAt);
+
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: matchingVariant.id,
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     product_custom_attribute_value_ids: [[5, 0, 0]],
+    x_product_design_image: payload.imageBase64,
+    x_product_design_generated_at: generatedAtOdoo,
+    x_product_design_version: nextVersion,
   });
 
+  const attachmentId = await odooCreate<number>(env, "ir.attachment", [
+    {
+      name: `design-v${nextVersion}-${payload.filename}`,
+      datas: payload.imageBase64,
+      res_model: "sale.order.line",
+      res_id: payload.saleOrderLineId,
+      mimetype: "image/png",
+    },
+  ]);
+
   return {
-    ...(await storeDesignImage(env, {
-      saleOrderLineId: payload.saleOrderLineId,
-      filename: payload.filename,
-      imageBase64: payload.imageBase64,
-      currentVersion: session.status.version,
-    })),
+    ok: true,
+    attachmentId,
     productId: matchingVariant.id,
+    version: nextVersion,
+    generatedAt: generatedAtIso,
   };
 }

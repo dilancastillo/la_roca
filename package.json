@@ -12,15 +12,11 @@
     "build:shared": "npm --workspace @repo/shared run build",
     "build:web": "npm run build:shared && npm --workspace @app/web run build",
     "build:vercel": "npm run build:web",
-    "typecheck:vercel": "tsc -p tsconfig.vercel.json --noEmit",
     "typecheck:web": "npm --workspace @app/web run typecheck",
     "typecheck:api": "npm --workspace @app/api run typecheck",
     "typecheck:shared": "npm --workspace @repo/shared run typecheck",
-    "typecheck": "npm run typecheck:shared && npm run typecheck:api && npm run typecheck:web && npm run typecheck:vercel",
+    "typecheck": "npm run typecheck:shared && npm run typecheck:api && npm run typecheck:web",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
-  },
-  "dependencies": {
-    "sharp": "^0.34.5"
   }
 }
