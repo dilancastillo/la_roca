@@ -1,8 +1,4 @@
-type OdooEnv = {
-  ODOO_BASE_URL?: string;
-  ODOO_DB?: string;
-  ODOO_API_KEY?: string;
-};
+import type { OdooEnv } from "./app-env";
 
 function ensureOdooEnv(env: OdooEnv) {
   if (!env.ODOO_BASE_URL || !env.ODOO_DB || !env.ODOO_API_KEY) {

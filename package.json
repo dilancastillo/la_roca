@@ -9,6 +9,7 @@
     "dev:web": "npm --workspace @app/web run dev",
     "dev:api": "npm --workspace @app/api run dev",
     "build:web": "npm --workspace @app/web run build",
+    "build:vercel": "npm run build:web",
     "typecheck:web": "npm --workspace @app/web run typecheck",
     "typecheck:api": "npm --workspace @app/api run typecheck",
     "typecheck:shared": "npm --workspace @repo/shared run typecheck",

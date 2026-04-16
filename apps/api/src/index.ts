@@ -8,37 +8,21 @@ import {
   saveDesignRequestSchema,
 } from "@repo/shared/schemas/configurator";
 import { authenticateUser, createSessionToken } from "./lib/auth";
+import {
+  type AppEnv,
+  type AppVariables,
+  getAppEnv,
+} from "./lib/app-env";
 import { requireAppSession } from "./middleware/require-app-session";
 import { getConfiguratorSession } from "./services/get-configurator-session";
 import { saveConfiguratorDesign } from "./services/save-configurator-design";
+const app = new Hono<{ Bindings: Partial<AppEnv>; Variables: AppVariables }>();
 
-type Env = {
-  ODOO_BASE_URL?: string;
-  ODOO_DB?: string;
-  ODOO_API_KEY?: string;
-  APP_JWT_SECRET?: string;
-  APP_USERS_JSON?: string;
-  APP_COOKIE_NAME?: string;
-  APP_COOKIE_SECURE?: string;
-  ALLOW_DEV_BYPASS_ACCESS?: string;
-  DEV_SESSION_USER_EMAIL?: string;
-  DEV_SESSION_USER_NAME?: string;
-};
-
-type Variables = {
-  user: {
-    email: string;
-    name: string;
-  };
-};
-
-const app = new Hono<{ Bindings: Env; Variables: Variables }>();
-
-function getCookieName(env: Env) {
+function getCookieName(env: Partial<AppEnv>) {
   return env.APP_COOKIE_NAME ?? "la_roca_session";
 }
 
-function shouldUseSecureCookie(env: Env) {
+function shouldUseSecureCookie(env: Partial<AppEnv>) {
   return env.APP_COOKIE_SECURE === "true";
 }
 
@@ -50,19 +34,20 @@ app.get("/api/health", (c) => {
 });
 
 app.post("/api/auth/login", zValidator("json", loginRequestSchema), async (c) => {
+  const appEnv = getAppEnv(c);
   const credentials = c.req.valid("json");
-  const user = await authenticateUser(c.env, credentials.email, credentials.password);
+  const user = await authenticateUser(appEnv, credentials.email, credentials.password);
 
   if (!user) {
     return c.json({ error: "Credenciales invalidas" }, 401);
   }
 
-  const token = await createSessionToken(c.env, user);
+  const token = await createSessionToken(appEnv, user);
 
-  setCookie(c, getCookieName(c.env), token, {
+  setCookie(c, getCookieName(appEnv), token, {
     httpOnly: true,
     sameSite: "Lax",
-    secure: shouldUseSecureCookie(c.env),
+    secure: shouldUseSecureCookie(appEnv),
     path: "/",
     maxAge: 60 * 60 * 12,
   });
@@ -71,7 +56,9 @@ app.post("/api/auth/login", zValidator("json", loginRequestSchema), async (c) =>
 });
 
 app.post("/api/auth/logout", (c) => {
-  deleteCookie(c, getCookieName(c.env), {
+  const appEnv = getAppEnv(c);
+
+  deleteCookie(c, getCookieName(appEnv), {
     path: "/",
   });
 
@@ -87,6 +74,7 @@ app.get("/api/auth/me", (c) => {
 });
 
 app.get("/api/session/:saleOrderLineId", async (c) => {
+  const appEnv = getAppEnv(c);
   const saleOrderLineId = Number(c.req.param("saleOrderLineId"));
 
   if (!Number.isFinite(saleOrderLineId) || saleOrderLineId <= 0) {
@@ -94,7 +82,7 @@ app.get("/api/session/:saleOrderLineId", async (c) => {
   }
 
   try {
-    const session = await getConfiguratorSession(c.env, saleOrderLineId);
+    const session = await getConfiguratorSession(appEnv, saleOrderLineId);
     return c.json(configuratorSessionSchema.parse(session), 200, {
       "Cache-Control": "private, no-store",
     });
@@ -113,10 +101,11 @@ app.post(
   "/api/design/save",
   zValidator("json", saveDesignRequestSchema),
   async (c) => {
+    const appEnv = getAppEnv(c);
     const payload = c.req.valid("json");
 
     try {
-      const result = await saveConfiguratorDesign(c.env, payload);
+      const result = await saveConfiguratorDesign(appEnv, payload);
       return c.json(result, 200, {
         "Cache-Control": "no-store",
       });

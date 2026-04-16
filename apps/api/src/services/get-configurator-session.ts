@@ -1,11 +1,6 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import type { OdooEnv } from "../lib/app-env";
 import { odooRead, odooSearchRead } from "../lib/odoo-client";
-
-type Env = {
-  ODOO_BASE_URL?: string;
-  ODOO_DB?: string;
-  ODOO_API_KEY?: string;
-};
 
 type Many2one = [number, string] | false;
 
@@ -135,7 +130,7 @@ function normalizeVariantMode(value: string | false | undefined) {
 }
 
 export async function getConfiguratorSession(
-  env: Env,
+  env: OdooEnv,
   saleOrderLineId: number,
 ): Promise<ConfiguratorSession> {
   const lines = await odooRead<SaleOrderLineRecord>(

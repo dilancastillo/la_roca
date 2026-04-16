@@ -1,8 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2023", "WebWorker"],
-    "types": ["@cloudflare/workers-types"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "noEmit": true
   },
   "include": ["src"]

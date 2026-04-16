@@ -2,15 +2,10 @@ import type {
   ConfiguratorSession,
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
+import type { OdooEnv } from "../lib/app-env";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client";
 import { toOdooDatetimeString } from "../lib/odoo-datetime";
 import { getConfiguratorSession } from "./get-configurator-session";
-
-type Env = {
-  ODOO_BASE_URL?: string;
-  ODOO_DB?: string;
-  ODOO_API_KEY?: string;
-};
 
 type ProductVariantRecord = {
   id: number;
@@ -86,7 +81,7 @@ function validateSelections(
 }
 
 async function findExactVariant(
-  env: Env,
+  env: OdooEnv,
   session: ConfiguratorSession,
   variantValueIds: number[],
 ) {
@@ -106,7 +101,7 @@ async function findExactVariant(
 }
 
 export async function saveConfiguratorDesign(
-  env: Env,
+  env: OdooEnv,
   payload: SaveDesignRequest,
 ) {
   const session = await getConfiguratorSession(env, payload.saleOrderLineId);

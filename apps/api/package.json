@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "build": "echo build managed by wrangler",
+    "dev": "echo Usa 'vercel dev' desde la raiz del repositorio para simular Vercel",
+    "build": "tsc -p tsconfig.json --noEmit",
+    "deploy": "echo El despliegue se realiza desde Vercel",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "lint": "echo lint pendiente"
@@ -19,9 +19,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260320.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2",
-    "wrangler": "^4.45.0"
+    "vitest": "^4.1.2"
   }
 }

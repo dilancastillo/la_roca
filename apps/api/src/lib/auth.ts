@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
 import { appUserSchema } from "@repo/shared/schemas/configurator";
 import { fallbackDevUsers } from "../config/dev-users";
+import type { AuthEnv } from "./app-env";
 
 const appUserRecordSchema = appUserSchema.extend({
   salt: z.string().min(1),
@@ -10,11 +11,6 @@ const appUserRecordSchema = appUserSchema.extend({
 });
 
 type AppUserRecord = z.infer<typeof appUserRecordSchema>;
-
-type AuthEnv = {
-  APP_JWT_SECRET?: string;
-  APP_USERS_JSON?: string;
-};
 
 function getJwtSecret(env: AuthEnv): Uint8Array {
   const secret = env.APP_JWT_SECRET ?? "dev-la-roca-session-secret";
