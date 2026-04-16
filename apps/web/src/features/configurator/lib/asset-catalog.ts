@@ -4,6 +4,10 @@ export type ProductAssetCatalog = {
   auxiliaryPocketModels: Record<string, string>;
 };
 
+const productAssetCatalogAliases: Record<string, string> = {
+  "blusa-antifluido-t180": "blusa-antifluido-t180-24263",
+};
+
 function buildIndexedAssetMap(
   prefix: string,
   count: number,
@@ -42,6 +46,26 @@ export const productAssetCatalogs: Record<string, ProductAssetCatalog> = {
   "blusa-antifluido-t180-24263": blusaAntifluidoAssets,
 };
 
+function resolveCatalogKey(graphicManifestKey: string) {
+  const normalizedKey = graphicManifestKey.trim().toLowerCase();
+
+  if (productAssetCatalogs[normalizedKey]) {
+    return normalizedKey;
+  }
+
+  const aliasedKey = productAssetCatalogAliases[normalizedKey];
+  if (aliasedKey && productAssetCatalogs[aliasedKey]) {
+    return aliasedKey;
+  }
+
+  return Object.keys(productAssetCatalogs).find(
+    (catalogKey) =>
+      catalogKey.startsWith(`${normalizedKey}-`) ||
+      normalizedKey.startsWith(`${catalogKey}-`),
+  );
+}
+
 export function getProductAssetCatalog(graphicManifestKey: string) {
-  return productAssetCatalogs[graphicManifestKey];
+  const resolvedKey = resolveCatalogKey(graphicManifestKey);
+  return resolvedKey ? productAssetCatalogs[resolvedKey] : undefined;
 }
