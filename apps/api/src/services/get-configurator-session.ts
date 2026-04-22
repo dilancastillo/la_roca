@@ -36,6 +36,7 @@ type ProductTemplateAttributeValueRecord = {
   product_attribute_value_id: Many2one;
   product_tmpl_id: Many2one;
   ptav_active?: boolean;
+  excluded_value_ids?: number[];
 };
 
 type ProductAttributeRecord = {
@@ -55,12 +56,6 @@ type ProductAttributeValueRecord = {
   id: number;
   name: string;
   html_color?: string | false;
-};
-
-type ProductTemplateAttributeExclusionRecord = {
-  id: number;
-  product_template_attribute_value_id?: Many2one;
-  value_ids?: number[];
 };
 
 function toMany2oneId(value: Many2one, fieldName: string): number {
@@ -135,6 +130,61 @@ function normalizeVariantMode(value: string | false | undefined) {
   }
 }
 
+const productTemplateAttributeValueBaseFields = [
+  "id",
+  "name",
+  "attribute_id",
+  "product_attribute_value_id",
+  "product_tmpl_id",
+  "ptav_active",
+];
+
+async function loadProductTemplateAttributeValues(
+  env: OdooEnv,
+  productTemplateId: number,
+) {
+  try {
+    return {
+      ptavs: await odooSearchRead<ProductTemplateAttributeValueRecord>(
+        env,
+        "product.template.attribute.value",
+        [
+          ["product_tmpl_id", "=", productTemplateId],
+          ["ptav_active", "=", true],
+        ],
+        [
+          ...productTemplateAttributeValueBaseFields,
+          "excluded_value_ids",
+        ],
+        "attribute_id, id",
+      ),
+      warnings: [] as string[],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (!message.includes("excluded_value_ids")) {
+      throw error;
+    }
+
+    return {
+      ptavs: await odooSearchRead<ProductTemplateAttributeValueRecord>(
+        env,
+        "product.template.attribute.value",
+        [
+          ["product_tmpl_id", "=", productTemplateId],
+          ["ptav_active", "=", true],
+        ],
+        productTemplateAttributeValueBaseFields,
+        "attribute_id, id",
+      ),
+      warnings: [
+        "Odoo no devolvio el campo excluded_value_ids; las exclusiones no se aplicaron.",
+      ],
+    };
+  }
+}
+
 export async function getConfiguratorSession(
   env: OdooEnv,
   saleOrderLineId: number,
@@ -192,23 +242,8 @@ export async function getConfiguratorSession(
     product.display_name ??
     `Producto ${productTemplateId}`;
 
-  const ptavs = await odooSearchRead<ProductTemplateAttributeValueRecord>(
-    env,
-    "product.template.attribute.value",
-    [
-      ["product_tmpl_id", "=", productTemplateId],
-      ["ptav_active", "=", true],
-    ],
-    [
-      "id",
-      "name",
-      "attribute_id",
-      "product_attribute_value_id",
-      "product_tmpl_id",
-      "ptav_active",
-    ],
-    "attribute_id, id",
-  );
+  const { ptavs, warnings: exclusionWarnings } =
+    await loadProductTemplateAttributeValues(env, productTemplateId);
 
   if (ptavs.length === 0) {
     throw new Error(
@@ -236,8 +271,7 @@ export async function getConfiguratorSession(
     ),
   );
 
-  const [attributes, attributeLines, attributeValues, exclusionRecords] =
-    await Promise.all([
+  const [attributes, attributeLines, attributeValues] = await Promise.all([
     attributeIds.length > 0
       ? odooRead<ProductAttributeRecord>(
           env,
@@ -261,12 +295,6 @@ export async function getConfiguratorSession(
           ["id", "name", "html_color"],
         )
       : Promise.resolve([]),
-    odooSearchRead<ProductTemplateAttributeExclusionRecord>(
-      env,
-      "product.template.attribute.exclusion",
-      [["product_tmpl_id", "=", productTemplateId]],
-      ["id", "product_template_attribute_value_id", "value_ids"],
-    ).catch(() => []),
   ]);
 
   const attributeMap = new Map<number, ProductAttributeRecord>(
@@ -380,18 +408,15 @@ export async function getConfiguratorSession(
     selectedValueIds[String(attribute.id)] = selectedIds;
   }
 
-  const exclusions = exclusionRecords.flatMap((record) => {
-    const sourceValueId = Array.isArray(record.product_template_attribute_value_id)
-      ? record.product_template_attribute_value_id[0]
-      : null;
-    const excludedIds = normalizeManyIds(record.value_ids);
+  const exclusions = ptavs.flatMap((ptav) => {
+    const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
 
-    if (typeof sourceValueId !== "number" || excludedIds.length === 0) {
+    if (excludedIds.length === 0) {
       return [];
     }
 
     return excludedIds.map((excludedValueId) => ({
-      sourceValueId,
+      sourceValueId: ptav.id,
       excludedValueId,
     }));
   });
@@ -423,6 +448,6 @@ export async function getConfiguratorSession(
       typeof line.x_product_design_image === "string"
         ? line.x_product_design_image
         : null,
-    warnings: exclusionRecords.length === 0 ? ["No se pudieron cargar exclusiones desde Odoo."] : [],
+    warnings: exclusionWarnings,
   };
 }
