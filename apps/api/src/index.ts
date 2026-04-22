@@ -16,6 +16,11 @@ import {
 import { requireAppSession } from "./middleware/require-app-session.js";
 import { getConfiguratorSession } from "./services/get-configurator-session.js";
 import { saveConfiguratorDesign } from "./services/save-configurator-design.js";
+import {
+  extractSaleOrderLineIdFromWebhookPayload,
+  isValidAutomationToken,
+  shouldDryRunAutomation,
+} from "./services/automation-webhook.js";
 const app = new Hono<{ Bindings: Partial<AppEnv>; Variables: AppVariables }>().basePath(
   "/api",
 );
@@ -65,6 +70,55 @@ app.post("/auth/logout", (c) => {
   });
 
   return c.json({ ok: true });
+});
+
+app.post("/automation/render-line", async (c) => {
+  const appEnv = getAppEnv(c);
+  const token = c.req.query("token") ?? c.req.header("x-automation-token") ?? null;
+
+  if (!isValidAutomationToken(appEnv.APP_AUTOMATION_TOKEN, token)) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const payload = await c.req.json().catch(() => null);
+  const queryPayload = {
+    lineId: c.req.query("lineId"),
+    saleOrderLineId: c.req.query("saleOrderLineId"),
+    sale_order_line_id: c.req.query("sale_order_line_id"),
+  };
+  const saleOrderLineId =
+    extractSaleOrderLineIdFromWebhookPayload(payload) ??
+    extractSaleOrderLineIdFromWebhookPayload(queryPayload);
+  const dryRun = shouldDryRunAutomation(payload, c.req.query("dryRun") ?? null);
+
+  if (!saleOrderLineId) {
+    return c.json(
+      { error: "No se encontro un sale.order.line.id valido en el webhook." },
+      400,
+    );
+  }
+
+  try {
+    const { renderAutomationLine } = await import(
+      "./services/render-automation-line.js"
+    );
+    const result = await renderAutomationLine(appEnv, saleOrderLineId, { dryRun });
+
+    return c.json(result, 200, {
+      "Cache-Control": "no-store",
+    });
+  } catch (error) {
+    return c.json(
+      {
+        phase: "render_automation_line",
+        error:
+          error instanceof Error
+            ? error.message
+            : "No se pudo renderizar automaticamente la linea.",
+      },
+      500,
+    );
+  }
 });
 
 app.use("/auth/me", requireAppSession());

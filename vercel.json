@@ -3,15 +3,11 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "apps/web/dist",
   "functions": {
-    "api/automation-render-line.ts": {
+    "api/index.ts": {
       "includeFiles": "apps/web/public/assets/catalog/**"
     }
   },
   "rewrites": [
-    {
-      "source": "/api/automation/render-line",
-      "destination": "/api/automation-render-line"
-    },
     {
       "source": "/api/(.*)",
       "destination": "/api"
