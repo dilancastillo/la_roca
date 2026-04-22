@@ -45,6 +45,12 @@ type ProductAttributeRecord = {
   create_variant?: string | false;
 };
 
+type ProductTemplateAttributeLineRecord = {
+  id: number;
+  attribute_id: Many2one;
+  sequence?: number;
+};
+
 type ProductAttributeValueRecord = {
   id: number;
   name: string;
@@ -230,7 +236,8 @@ export async function getConfiguratorSession(
     ),
   );
 
-  const [attributes, attributeValues, exclusionRecords] = await Promise.all([
+  const [attributes, attributeLines, attributeValues, exclusionRecords] =
+    await Promise.all([
     attributeIds.length > 0
       ? odooRead<ProductAttributeRecord>(
           env,
@@ -239,6 +246,13 @@ export async function getConfiguratorSession(
           ["id", "name", "display_type", "create_variant"],
         )
       : Promise.resolve([]),
+    odooSearchRead<ProductTemplateAttributeLineRecord>(
+      env,
+      "product.template.attribute.line",
+      [["product_tmpl_id", "=", productTemplateId]],
+      ["id", "attribute_id", "sequence"],
+      "sequence, id",
+    ).catch(() => []),
     productAttributeValueIds.length > 0
       ? odooRead<ProductAttributeValueRecord>(
           env,
@@ -268,6 +282,22 @@ export async function getConfiguratorSession(
       ],
     ),
   );
+  const attributeLineOrder = new Map<number, { sequence: number; index: number }>();
+
+  attributeLines.forEach((line, index) => {
+    const attributeId = Array.isArray(line.attribute_id)
+      ? line.attribute_id[0]
+      : null;
+
+    if (typeof attributeId !== "number") {
+      return;
+    }
+
+    attributeLineOrder.set(attributeId, {
+      sequence: typeof line.sequence === "number" ? line.sequence : index,
+      index,
+    });
+  });
 
   const currentValueIds = new Set<number>([
     ...normalizeManyIds(line.product_template_attribute_value_ids),
@@ -316,8 +346,29 @@ export async function getConfiguratorSession(
     groupedAttributes.set(attributeId, group);
   }
 
-  const sortedAttributes = Array.from(groupedAttributes.values()).sort((left, right) =>
-    left.name.localeCompare(right.name),
+  const sortedAttributes = Array.from(groupedAttributes.values()).sort(
+    (left, right) => {
+      const leftOrder = attributeLineOrder.get(left.id);
+      const rightOrder = attributeLineOrder.get(right.id);
+
+      if (leftOrder && rightOrder) {
+        return (
+          leftOrder.sequence - rightOrder.sequence ||
+          leftOrder.index - rightOrder.index ||
+          left.id - right.id
+        );
+      }
+
+      if (leftOrder) {
+        return -1;
+      }
+
+      if (rightOrder) {
+        return 1;
+      }
+
+      return attributeIds.indexOf(left.id) - attributeIds.indexOf(right.id);
+    },
   );
 
   const selectedValueIds: Record<string, number[]> = {};
