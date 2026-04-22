@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AttributeSection } from "./attribute-section";
 
 function createProps() {
@@ -26,7 +26,31 @@ function createProps() {
   };
 }
 
+function createColorProps() {
+  return {
+    ...createProps(),
+    group: {
+      attributeId: 20,
+      label: "Color",
+      helpText: "Usa los colores exactos configurados en Odoo.",
+      controlType: "color" as const,
+      selectionMode: "single" as const,
+      options: [
+        { id: 1, name: "110601 - Blanco", colorHex: "#f8fafc" },
+        { id: 2, name: "146305 - Azul Aruba", colorHex: "#7bb6d6" },
+        { id: 3, name: "154225 - Rojo intenso", colorHex: "#c1121f" },
+      ],
+    },
+    selectedValueIds: [1],
+    selectionLabel: "110601 - Blanco",
+  };
+}
+
 describe("AttributeSection", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -47,5 +71,51 @@ describe("AttributeSection", () => {
     expect(screen.getByText("Selecciona una variante de cuello.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /modelo 2/i }));
     expect(baseProps.onSelect).toHaveBeenCalledWith(2);
+  });
+
+  it("filtra colores por codigo de cliente o nombre", () => {
+    const baseProps = createColorProps();
+    render(<AttributeSection {...baseProps} expanded />);
+
+    fireEvent.click(screen.getByRole("button", { name: /buscar en color/i }));
+    const searchInput = screen.getByLabelText(/buscar codigo o color en color/i);
+
+    fireEvent.change(searchInput, { target: { value: "146305" } });
+    let swatchGrid = screen.getByRole("list");
+    expect(
+      within(swatchGrid).getByRole("button", { name: /146305 - azul aruba/i }),
+    ).toBeTruthy();
+    expect(
+      within(swatchGrid).queryByRole("button", { name: /110601 - blanco/i }),
+    ).toBeNull();
+
+    fireEvent.change(searchInput, { target: { value: "rojo" } });
+    swatchGrid = screen.getByRole("list");
+    expect(
+      within(swatchGrid).getByRole("button", { name: /154225 - rojo intenso/i }),
+    ).toBeTruthy();
+    expect(
+      within(swatchGrid).queryByRole("button", { name: /146305 - azul aruba/i }),
+    ).toBeNull();
+  });
+
+  it("permite limpiar la busqueda de color", () => {
+    const baseProps = createColorProps();
+    render(<AttributeSection {...baseProps} expanded />);
+
+    fireEvent.click(screen.getByRole("button", { name: /buscar en color/i }));
+    const searchInput = screen.getByLabelText(/buscar codigo o color en color/i);
+
+    fireEvent.change(searchInput, { target: { value: "146305" } });
+    fireEvent.click(screen.getByRole("button", { name: /limpiar busqueda de color/i }));
+
+    expect((searchInput as HTMLInputElement).value).toBe("");
+    const swatchGrid = screen.getByRole("list");
+    expect(
+      within(swatchGrid).getByRole("button", { name: /110601 - blanco/i }),
+    ).toBeTruthy();
+    expect(
+      within(swatchGrid).getByRole("button", { name: /146305 - azul aruba/i }),
+    ).toBeTruthy();
   });
 });

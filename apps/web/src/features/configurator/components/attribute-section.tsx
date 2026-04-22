@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { UiAttributeGroup } from "../lib/derive-configurator-ui";
 
 type Props = {
@@ -23,6 +24,57 @@ export function AttributeSection({
   onExpandToggle,
   disabled = false,
 }: Props) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [colorSearchOpen, setColorSearchOpen] = useState(false);
+  const [colorQuery, setColorQuery] = useState("");
+  const isColorGroup = group.controlType === "color";
+  const normalizedColorQuery = normalizeSearchTerm(colorQuery);
+  const compactColorQuery = compactSearchTerm(normalizedColorQuery);
+  const visibleColorOptions = useMemo(() => {
+    if (!isColorGroup || !normalizedColorQuery) {
+      return group.options;
+    }
+
+    return group.options.filter((option) => {
+      const normalizedName = normalizeSearchTerm(option.name);
+      const compactName = compactSearchTerm(normalizedName);
+
+      return (
+        normalizedName.includes(normalizedColorQuery) ||
+        Boolean(compactColorQuery) && compactName.includes(compactColorQuery)
+      );
+    });
+  }, [compactColorQuery, group.options, isColorGroup, normalizedColorQuery]);
+
+  useEffect(() => {
+    if (expanded && colorSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [colorSearchOpen, expanded]);
+
+  useEffect(() => {
+    if (!expanded) {
+      setColorSearchOpen(false);
+      setColorQuery("");
+    }
+  }, [expanded]);
+
+  function handleColorSearchToggle() {
+    if (!expanded) {
+      onExpandToggle();
+      setColorSearchOpen(true);
+      return;
+    }
+
+    setColorSearchOpen((current) => {
+      if (current) {
+        setColorQuery("");
+      }
+
+      return !current;
+    });
+  }
+
   return (
     <section
       className={[
@@ -32,29 +84,48 @@ export function AttributeSection({
         .filter(Boolean)
         .join(" ")}
     >
-      <button
-        type="button"
-        className="config-section__header"
-        aria-expanded={expanded}
-        aria-controls={`attribute-section-${group.attributeId}`}
-        onClick={onExpandToggle}
-      >
-        <span className="config-section__header-main">
-          <span className="config-section__legend">{group.label}</span>
-          <span className="config-section__selection">{selectionLabel}</span>
-        </span>
-        <span
-          className={[
-            "config-section__caret",
-            expanded ? "config-section__caret--expanded" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          aria-hidden="true"
+      <div className="config-section__header">
+        <button
+          type="button"
+          className="config-section__header-button"
+          aria-expanded={expanded}
+          aria-controls={`attribute-section-${group.attributeId}`}
+          onClick={onExpandToggle}
         >
-          ^
-        </span>
-      </button>
+          <span className="config-section__header-main">
+            <span className="config-section__legend">{group.label}</span>
+            <span className="config-section__selection">{selectionLabel}</span>
+          </span>
+          <span
+            className={[
+              "config-section__caret",
+              expanded ? "config-section__caret--expanded" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-hidden="true"
+          >
+            ^
+          </span>
+        </button>
+
+        {isColorGroup ? (
+          <button
+            type="button"
+            className={[
+              "config-section__search-toggle",
+              colorSearchOpen ? "config-section__search-toggle--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label={`Buscar en ${group.label}`}
+            aria-pressed={colorSearchOpen}
+            onClick={handleColorSearchToggle}
+          >
+            <SearchIcon />
+          </button>
+        ) : null}
+      </div>
 
       {expanded ? (
         <div
@@ -63,6 +134,35 @@ export function AttributeSection({
         >
           {group.helpText ? (
             <p className="config-section__help">{group.helpText}</p>
+          ) : null}
+
+          {isColorGroup && colorSearchOpen ? (
+            <div className="color-search" role="search">
+              <span className="color-search__icon" aria-hidden="true">
+                <SearchIcon />
+              </span>
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={colorQuery}
+                placeholder="Buscar codigo o color..."
+                aria-label={`Buscar codigo o color en ${group.label}`}
+                onChange={(event) => setColorQuery(event.target.value)}
+              />
+              {colorQuery ? (
+                <button
+                  type="button"
+                  className="color-search__clear"
+                  aria-label="Limpiar busqueda de color"
+                  onClick={() => setColorQuery("")}
+                >
+                  x
+                </button>
+              ) : null}
+              <span className="color-search__count" aria-live="polite">
+                {visibleColorOptions.length}/{group.options.length}
+              </span>
+            </div>
           ) : null}
 
           {group.controlType === "image" ? (
@@ -102,40 +202,46 @@ export function AttributeSection({
               })}
             </div>
           ) : group.controlType === "color" ? (
-            <div className="swatch-grid" role="list">
-              {group.options.map((option) => {
-                const selected = selectedValueIds.includes(option.id);
-                const optionDisabled =
-                  disabled || (disabledValueIds.has(option.id) && !selected);
+            visibleColorOptions.length > 0 ? (
+              <div className="swatch-grid" role="list">
+                {visibleColorOptions.map((option) => {
+                  const selected = selectedValueIds.includes(option.id);
+                  const optionDisabled =
+                    disabled || (disabledValueIds.has(option.id) && !selected);
 
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={[
-                      "swatch-button",
-                      selected ? "swatch-button--selected" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    aria-pressed={selected}
-                    aria-label={option.name}
-                    title={option.name}
-                    disabled={optionDisabled}
-                    onClick={() =>
-                      group.selectionMode === "multiple"
-                        ? onToggle(option.id)
-                        : onSelect(option.id)
-                    }
-                  >
-                    <span
-                      className="swatch-button__dot"
-                      style={{ backgroundColor: option.colorHex ?? "#d1d5db" }}
-                    />
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={[
+                        "swatch-button",
+                        selected ? "swatch-button--selected" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      aria-pressed={selected}
+                      aria-label={option.name}
+                      title={option.name}
+                      disabled={optionDisabled}
+                      onClick={() =>
+                        group.selectionMode === "multiple"
+                          ? onToggle(option.id)
+                          : onSelect(option.id)
+                      }
+                    >
+                      <span
+                        className="swatch-button__dot"
+                        style={{ backgroundColor: option.colorHex ?? "#d1d5db" }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="color-search__empty" role="status">
+                No encontramos ese codigo o color.
+              </div>
+            )
           ) : (
             <div className="chip-grid" role="list">
               {group.options.map((option) => {
@@ -170,5 +276,34 @@ export function AttributeSection({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function normalizeSearchTerm(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function compactSearchTerm(value: string) {
+  return value.replace(/[^a-z0-9]+/g, "");
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      focusable="false"
+      className="search-icon"
+    >
+      <path
+        d="M10.5 5.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm-7 5a7 7 0 1 1 12.48 4.35l3.59 3.58-1.42 1.42-3.58-3.59A7 7 0 0 1 3.5 10.5Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
