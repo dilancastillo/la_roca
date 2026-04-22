@@ -26,8 +26,7 @@ export const overlayRegionPresets: Record<
   OverlayRegion[]
 > = {
   lowerPocketPair: [
-    { x: 146, y: 572, width: 196, height: 312 },
-    { x: 558, y: 572, width: 196, height: 312 },
+    { x: 96, y: 548, width: 708, height: 470 },
   ],
   auxiliaryPocketPair: [
     { x: 116, y: 518, width: 248, height: 356 },
@@ -78,8 +77,8 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
   const promise = (async () => {
     const image = await loadImage(src);
     const canvas = document.createElement("canvas");
-    canvas.width = image.width;
-    canvas.height = image.height;
+    canvas.width = image.naturalWidth || image.width;
+    canvas.height = image.naturalHeight || image.height;
     const context = canvas.getContext("2d");
 
     if (!context) {
@@ -378,6 +377,7 @@ function drawTrimSections(
 
   for (const section of scene.trimSections) {
     const key = normalize(section.label || section.key);
+    const role = section.role ?? key;
     context.save();
     context.strokeStyle = section.colorHex;
     context.fillStyle = section.colorHex;
@@ -385,10 +385,21 @@ function drawTrimSections(
     context.lineJoin = "round";
     context.lineCap = "round";
 
-    if (key.includes("cuello")) {
+    if (role === "backNeck") {
       context.beginPath();
-      context.moveTo(390, 180);
-      context.bezierCurveTo(415, 245, 485, 245, 510, 180);
+      context.moveTo(388, 155);
+      context.bezierCurveTo(420, 178, 480, 178, 512, 155);
+      context.stroke();
+    } else if (role === "upperNeck" || key.includes("cuello superior")) {
+      context.beginPath();
+      context.moveTo(392, 182);
+      context.bezierCurveTo(418, 246, 482, 246, 508, 182);
+      context.stroke();
+    } else if (role === "lowerNeck" || key.includes("cuello inferior")) {
+      context.beginPath();
+      context.moveTo(382, 186);
+      context.lineTo(450, 366);
+      context.lineTo(518, 186);
       context.stroke();
     }
 
@@ -399,8 +410,22 @@ function drawTrimSections(
       context.stroke();
     }
 
-    if (key.includes("pecho") && !hasChestPocket) {
-      context.strokeRect(530, 362, 110, 128);
+    if (role === "chestPocket" || key.includes("pecho")) {
+      if (hasChestPocket) {
+        context.strokeRect(536, 368, 98, 124);
+      } else {
+        context.strokeRect(530, 362, 110, 128);
+      }
+    }
+
+    if (role === "lowerPockets" || key.includes("bolsillos inferiores")) {
+      context.strokeRect(350, 736, 112, 136);
+      context.strokeRect(546, 736, 112, 136);
+    }
+
+    if (role === "auxiliaryPocket" || key.includes("bolsillo auxiliar")) {
+      context.strokeRect(326, 670, 118, 154);
+      context.strokeRect(556, 670, 118, 154);
     }
 
     context.restore();

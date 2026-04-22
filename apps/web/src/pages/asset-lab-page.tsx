@@ -108,8 +108,10 @@ export function AssetLabPage() {
         return;
       }
 
-      const baseSrc = catalog.necks[baseLabel];
-      const sourceSrc = catalog[sourceFamily][sourceLabel];
+      const baseSrc = baseOptions.find((option) => option.label === baseLabel)?.src;
+      const sourceSrc = sourceOptions.find(
+        (option) => option.label === sourceLabel,
+      )?.src;
 
       if (!baseSrc || !sourceSrc) {
         return;
@@ -193,7 +195,17 @@ export function AssetLabPage() {
     return () => {
       cancelled = true;
     };
-  }, [baseLabel, catalog, fillColor, inkRadius, presetKey, sourceFamily, sourceLabel]);
+  }, [
+    baseLabel,
+    baseOptions,
+    catalog,
+    fillColor,
+    inkRadius,
+    presetKey,
+    sourceFamily,
+    sourceLabel,
+    sourceOptions,
+  ]);
 
   useEffect(() => {
     return () => {

@@ -1,71 +1,25 @@
-export type ProductAssetCatalog = {
-  necks: Record<string, string>;
-  lowerPocketModels: Record<string, string>;
-  auxiliaryPocketModels: Record<string, string>;
-};
+import {
+  getVisualAssetPath,
+  resolveVisualAssetCatalog,
+  visualAssetCatalogs,
+  type VisualAssetCatalog,
+} from "@repo/shared/visual-assets";
 
-const productAssetCatalogAliases: Record<string, string> = {
-  "blusa-antifluido-t180": "blusa-antifluido-t180-24263",
-};
+export type ProductAssetCatalog = VisualAssetCatalog;
 
-function buildIndexedAssetMap(
-  prefix: string,
-  count: number,
-  pathBuilder: (index: number) => string,
-) {
-  return Object.fromEntries(
-    Array.from({ length: count }, (_, index) => {
-      const label = `${prefix} ${index + 1}`;
-      return [label, pathBuilder(index + 1)];
-    }),
-  );
-}
-
-const blusaAntifluidoAssets: ProductAssetCatalog = {
-  necks: buildIndexedAssetMap(
-    "Modelo",
-    18,
-    (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/necks/neck-model-${String(index).padStart(2, "0")}.png`,
-  ),
-  lowerPocketModels: buildIndexedAssetMap(
-    "Modelo",
-    12,
-    (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
-  ),
-  auxiliaryPocketModels: buildIndexedAssetMap(
-    "Modelo",
-    12,
-    (index) =>
-      `/assets/catalog/blusa-antifluido-t180-24263/lower-pockets/lower-pocket-model-${String(index).padStart(2, "0")}.png`,
-  ),
-};
-
-export const productAssetCatalogs: Record<string, ProductAssetCatalog> = {
-  "blusa-antifluido-t180-24263": blusaAntifluidoAssets,
-};
-
-function resolveCatalogKey(graphicManifestKey: string) {
-  const normalizedKey = graphicManifestKey.trim().toLowerCase();
-
-  if (productAssetCatalogs[normalizedKey]) {
-    return normalizedKey;
-  }
-
-  const aliasedKey = productAssetCatalogAliases[normalizedKey];
-  if (aliasedKey && productAssetCatalogs[aliasedKey]) {
-    return aliasedKey;
-  }
-
-  return Object.keys(productAssetCatalogs).find(
-    (catalogKey) =>
-      catalogKey.startsWith(`${normalizedKey}-`) ||
-      normalizedKey.startsWith(`${catalogKey}-`),
-  );
-}
+export const productAssetCatalogs = Object.fromEntries(
+  visualAssetCatalogs.map((catalog) => [catalog.productKey, catalog]),
+);
 
 export function getProductAssetCatalog(graphicManifestKey: string) {
-  const resolvedKey = resolveCatalogKey(graphicManifestKey);
-  return resolvedKey ? productAssetCatalogs[resolvedKey] : undefined;
+  return resolveVisualAssetCatalog(graphicManifestKey);
+}
+
+export function getImageSourceByIds(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+) {
+  const path = getVisualAssetPath(graphicManifestKey, attributeId, valueId);
+  return path ? `/${path}` : undefined;
 }

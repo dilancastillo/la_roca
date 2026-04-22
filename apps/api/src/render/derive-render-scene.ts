@@ -1,5 +1,8 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
-import { getServerProductAssetCatalog } from "./server-asset-catalog.js";
+import {
+  getServerAssetPathByIds,
+  getServerProductAssetCatalog,
+} from "./server-asset-catalog.js";
 
 export type AutomationRenderScene = {
   productName: string;
@@ -9,6 +12,15 @@ export type AutomationRenderScene = {
   auxiliaryPocketAssetPath?: string;
   chestPocketType?: string;
   trimSections: Array<{
+    valueId: number;
+    role?:
+      | "backNeck"
+      | "upperNeck"
+      | "lowerNeck"
+      | "chestPocket"
+      | "lowerPockets"
+      | "auxiliaryPocket"
+      | "none";
     key: string;
     label: string;
     colorHex: string;
@@ -54,44 +66,21 @@ function getSelectedOptions(
   return attribute.values.filter((value) => selectedIds.has(value.id));
 }
 
-function getAssetPath(
-  graphicManifestKey: string,
-  attributeName: string,
-  valueName: string,
-) {
-  const catalog = getServerProductAssetCatalog(graphicManifestKey);
-
-  if (!catalog) {
-    return undefined;
-  }
-
-  const normalizedAttribute = normalize(attributeName);
-
-  if (normalizedAttribute.includes("modelo de cuello")) {
-    return catalog.necks[valueName];
-  }
-
-  if (normalizedAttribute.includes("modelo bolsillo inferior")) {
-    return catalog.lowerPocketModels[valueName];
-  }
-
-  if (normalizedAttribute.includes("modelo bolsillo auxiliar")) {
-    return catalog.auxiliaryPocketModels[valueName];
-  }
-
-  return undefined;
-}
-
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const sectionAttribute = findAttributeByName(session, (name) =>
-    name.includes("seccion de vivo"),
-  );
+  const catalog = getServerProductAssetCatalog(session.graphicManifestKey);
+  const sectionAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.trimSections,
+    ) ??
+    findAttributeByName(session, (name) => name.includes("seccion de vivo"));
 
-  const colorAttributes = session.attributes.filter((attribute) =>
-    normalize(attribute.name).includes("color de vivo"),
+  const colorAttributes = session.attributes.filter(
+    (attribute) =>
+      attribute.id === catalog?.attributeIds.trimColor ||
+      normalize(attribute.name).includes("color de vivo"),
   );
 
   if (!sectionAttribute) {
@@ -105,6 +94,7 @@ function getSelectedTrimSections(
   }
 
   const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
+  const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   return enabledSections.map((section) => {
     const matchingColorAttribute = colorAttributes.find((attribute) =>
@@ -112,8 +102,13 @@ function getSelectedTrimSections(
     );
     const sectionColor =
       findSelectedValue(matchingColorAttribute, selectedValueIds) ?? globalColor;
+    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
+      | AutomationRenderScene["trimSections"][number]["role"]
+      | undefined;
 
     return {
+      valueId: section.id,
+      ...(role ? { role } : {}),
       key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
       label: section.name,
       colorHex: sectionColor?.colorHex ?? "#1d4ed8",
@@ -125,18 +120,35 @@ export function deriveAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ): AutomationRenderScene {
-  const colorAttribute = findAttributeByName(session, (name) =>
-    name === "color" || name.includes("color de tela base") || name.includes("tela base"),
-  );
-  const neckAttribute = findAttributeByName(session, (name) =>
-    name.includes("modelo de cuello"),
-  );
-  const lowerPocketModelAttribute = findAttributeByName(session, (name) =>
-    name.includes("modelo bolsillo inferior"),
-  );
-  const auxiliaryPocketModelAttribute = findAttributeByName(session, (name) =>
-    name.includes("modelo bolsillo auxiliar"),
-  );
+  const catalog = getServerProductAssetCatalog(session.graphicManifestKey);
+  const colorAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.baseColor,
+    ) ??
+    findAttributeByName(session, (name) =>
+      name === "color" ||
+      name.includes("color de tela base") ||
+      name.includes("tela base"),
+    );
+  const neckAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.neckModel,
+    ) ??
+    findAttributeByName(session, (name) => name.includes("modelo de cuello"));
+  const lowerPocketModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.lowerPocketModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      name.includes("modelo bolsillo inferior"),
+    );
+  const auxiliaryPocketModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.auxiliaryPocketModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      name.includes("modelo bolsillo auxiliar"),
+    );
   const chestPocketTypeAttribute = findAttributeByName(
     session,
     (name) => name.includes("bolsillo de pecho") && !name.includes("bordado"),
@@ -157,20 +169,24 @@ export function deriveAutomationRenderScene(
     selectedValueIds,
   );
   const neckAssetPath = selectedNeck
-    ? getAssetPath(session.graphicManifestKey, neckAttribute?.name ?? "", selectedNeck.name)
+    ? getServerAssetPathByIds(
+        session.graphicManifestKey,
+        neckAttribute?.id ?? 0,
+        selectedNeck.id,
+      )
     : undefined;
   const lowerPocketAssetPath = selectedLowerPocketModel
-    ? getAssetPath(
+    ? getServerAssetPathByIds(
         session.graphicManifestKey,
-        lowerPocketModelAttribute?.name ?? "",
-        selectedLowerPocketModel.name,
+        lowerPocketModelAttribute?.id ?? 0,
+        selectedLowerPocketModel.id,
       )
     : undefined;
   const auxiliaryPocketAssetPath = selectedAuxiliaryPocketModel
-    ? getAssetPath(
+    ? getServerAssetPathByIds(
         session.graphicManifestKey,
-        auxiliaryPocketModelAttribute?.name ?? "",
-        selectedAuxiliaryPocketModel.name,
+        auxiliaryPocketModelAttribute?.id ?? 0,
+        selectedAuxiliaryPocketModel.id,
       )
     : undefined;
 

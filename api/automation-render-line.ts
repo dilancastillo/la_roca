@@ -2,6 +2,7 @@ import type { AppEnv } from "../apps/api/src/lib/app-env.js";
 import {
   extractSaleOrderLineIdFromWebhookPayload,
   isValidAutomationToken,
+  shouldDryRunAutomation,
 } from "../apps/api/src/services/automation-webhook.js";
 import { renderAutomationLine } from "../apps/api/src/services/render-automation-line.js";
 
@@ -37,7 +38,15 @@ export default async function handler(request: Request) {
   }
 
   const payload = await request.json().catch(() => null);
-  const saleOrderLineId = extractSaleOrderLineIdFromWebhookPayload(payload);
+  const queryPayload = {
+    lineId: url.searchParams.get("lineId"),
+    saleOrderLineId: url.searchParams.get("saleOrderLineId"),
+    sale_order_line_id: url.searchParams.get("sale_order_line_id"),
+  };
+  const saleOrderLineId =
+    extractSaleOrderLineIdFromWebhookPayload(payload) ??
+    extractSaleOrderLineIdFromWebhookPayload(queryPayload);
+  const dryRun = shouldDryRunAutomation(payload, url.searchParams.get("dryRun"));
 
   if (!saleOrderLineId) {
     return Response.json(
@@ -47,7 +56,7 @@ export default async function handler(request: Request) {
   }
 
   try {
-    const result = await renderAutomationLine(env, saleOrderLineId);
+    const result = await renderAutomationLine(env, saleOrderLineId, { dryRun });
     return Response.json(result, { status: 200 });
   } catch (error) {
     return Response.json(

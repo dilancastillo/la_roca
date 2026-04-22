@@ -29,8 +29,7 @@ type ProcessedImage = {
 const overlayRegionPresets: Record<"lowerPocketPair" | "auxiliaryPocketPair", OverlayRegion[]> =
   {
     lowerPocketPair: [
-      { x: 146, y: 572, width: 196, height: 312 },
-      { x: 558, y: 572, width: 196, height: 312 },
+      { x: 96, y: 548, width: 708, height: 470 },
     ],
     auxiliaryPocketPair: [
       { x: 116, y: 518, width: 248, height: 356 },
@@ -312,11 +311,20 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
   return scene.trimSections
     .map((section) => {
       const key = normalize(section.label || section.key);
+      const role = section.role ?? key;
       const parts: string[] = [];
 
-      if (key.includes("cuello")) {
+      if (role === "backNeck") {
         parts.push(
-          `<path d="M390 180 C415 245 485 245 510 180" fill="none" stroke="${section.colorHex}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />`,
+          `<path d="M388 155 C420 178 480 178 512 155" fill="none" stroke="${section.colorHex}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />`,
+        );
+      } else if (role === "upperNeck" || key.includes("cuello superior")) {
+        parts.push(
+          `<path d="M392 182 C418 246 482 246 508 182" fill="none" stroke="${section.colorHex}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />`,
+        );
+      } else if (role === "lowerNeck" || key.includes("cuello inferior")) {
+        parts.push(
+          `<path d="M382 186 L450 366 L518 186" fill="none" stroke="${section.colorHex}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />`,
         );
       }
 
@@ -326,9 +334,25 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
         );
       }
 
-      if (key.includes("pecho") && (!scene.chestPocketType || normalize(scene.chestPocketType).includes("sin bolsillo"))) {
+      if (role === "chestPocket" || key.includes("pecho")) {
         parts.push(
-          `<rect x="530" y="362" width="110" height="128" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
+          scene.chestPocketType && !normalize(scene.chestPocketType).includes("sin bolsillo")
+            ? `<rect x="536" y="368" width="98" height="124" fill="none" stroke="${section.colorHex}" stroke-width="10" />`
+            : `<rect x="530" y="362" width="110" height="128" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
+        );
+      }
+
+      if (role === "lowerPockets" || key.includes("bolsillos inferiores")) {
+        parts.push(
+          `<rect x="350" y="736" width="112" height="136" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
+          `<rect x="546" y="736" width="112" height="136" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
+        );
+      }
+
+      if (role === "auxiliaryPocket" || key.includes("bolsillo auxiliar")) {
+        parts.push(
+          `<rect x="326" y="670" width="118" height="154" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
+          `<rect x="556" y="670" width="118" height="154" fill="none" stroke="${section.colorHex}" stroke-width="10" />`,
         );
       }
 
