@@ -4,7 +4,6 @@ import {
   isValidAutomationToken,
   shouldDryRunAutomation,
 } from "../apps/api/src/services/automation-webhook.js";
-import { renderAutomationLine } from "../apps/api/src/services/render-automation-line.js";
 
 export const runtime = "nodejs";
 
@@ -56,11 +55,15 @@ export default async function handler(request: Request) {
   }
 
   try {
+    const { renderAutomationLine } = await import(
+      "../apps/api/src/services/render-automation-line.js"
+    );
     const result = await renderAutomationLine(env, saleOrderLineId, { dryRun });
     return Response.json(result, { status: 200 });
   } catch (error) {
     return Response.json(
       {
+        phase: "render_automation_line",
         error:
           error instanceof Error
             ? error.message
