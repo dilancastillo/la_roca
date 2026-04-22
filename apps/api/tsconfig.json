@@ -4,5 +4,5 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "../../types/node-shims.d.ts"]
 }

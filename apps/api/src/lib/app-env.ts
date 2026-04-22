@@ -9,6 +9,7 @@ export type AppEnv = {
   APP_USERS_JSON?: string;
   APP_COOKIE_NAME?: string;
   APP_COOKIE_SECURE?: string;
+  APP_AUTOMATION_TOKEN?: string;
   ALLOW_DEV_BYPASS_ACCESS?: string;
   DEV_SESSION_USER_EMAIL?: string;
   DEV_SESSION_USER_NAME?: string;
