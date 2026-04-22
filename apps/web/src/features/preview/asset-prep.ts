@@ -13,9 +13,25 @@ export function getAssetEntries(
   catalog: ProductAssetCatalog,
   family: "necks" | AssetFamily,
 ) {
-  return Object.entries(catalog[family])
-    .map(([label, src]) => ({ label, src }))
+  const assetsByValueId =
+    family === "necks"
+      ? catalog.neckModelsByValueId
+      : family === "auxiliaryPocketModels"
+        ? catalog.auxiliaryPocketModelsByValueId
+        : catalog.lowerPocketModelsByValueId;
+
+  return Object.entries(assetsByValueId)
+    .map(([valueId, src]) => ({
+      label: buildAssetOptionLabel(Number(valueId), src),
+      src: src.startsWith("/") ? src : `/${src}`,
+    }))
     .sort((left, right) => left.label.localeCompare(right.label, "es"));
+}
+
+function buildAssetOptionLabel(valueId: number, src: string) {
+  const match = src.match(/blouse-model-(\d+)/);
+  const modelLabel = match?.[1] ? `Modelo ${Number(match[1])}` : "Asset";
+  return `${modelLabel} · ID ${valueId}`;
 }
 
 export function slugifyAssetLabel(label: string) {

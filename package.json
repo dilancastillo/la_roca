@@ -15,7 +15,11 @@
     "typecheck:web": "npm --workspace @app/web run typecheck",
     "typecheck:api": "npm --workspace @app/api run typecheck",
     "typecheck:shared": "npm --workspace @repo/shared run typecheck",
+<<<<<<< HEAD
     "typecheck": "npm run typecheck:shared && npm run typecheck:api && npm run typecheck:web",
+=======
+    "typecheck": "npm run typecheck:shared && npm run build:shared && npm run typecheck:api && npm run typecheck:web && npm run typecheck:vercel",
+>>>>>>> fix
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   }

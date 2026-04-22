@@ -13,6 +13,10 @@
     "./schemas/configurator": {
       "types": "./dist/schemas/configurator.d.ts",
       "default": "./dist/schemas/configurator.js"
+    },
+    "./visual-assets": {
+      "types": "./dist/visual-assets.d.ts",
+      "default": "./dist/visual-assets.js"
     }
   },
   "files": [
