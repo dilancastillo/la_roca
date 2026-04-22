@@ -92,7 +92,7 @@ app.get("/session/:saleOrderLineId", async (c) => {
     return c.json(
       {
         error:
-          error instanceof Error ? error.message : "No se pudo cargar la sesion.",
+          error instanceof Error ? error.message : "No se pudo cargar la sesión.",
       },
       400,
     );
