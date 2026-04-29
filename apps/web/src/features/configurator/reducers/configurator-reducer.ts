@@ -4,6 +4,7 @@ export type ConfiguratorState = {
 
 type Action =
   | { type: "INITIALIZE"; value: Record<string, number[]> }
+  | { type: "SET_SELECTIONS"; value: Record<string, number[]> }
   | { type: "SET_SINGLE"; attributeId: number; valueId: number }
   | { type: "TOGGLE_MULTI"; attributeId: number; valueId: number };
 
@@ -13,6 +14,7 @@ export function configuratorReducer(
 ): ConfiguratorState {
   switch (action.type) {
     case "INITIALIZE":
+    case "SET_SELECTIONS":
       return {
         selectedValueIds: action.value,
       };

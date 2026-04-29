@@ -22,11 +22,14 @@ export const previewCanvasSize = {
 };
 
 export const overlayRegionPresets: Record<
-  "lowerPocketPair" | "auxiliaryPocketPair",
+  "lowerPocketPair" | "lowerPocketSingleRight" | "auxiliaryPocketPair",
   OverlayRegion[]
 > = {
   lowerPocketPair: [
     { x: 96, y: 548, width: 708, height: 470 },
+  ],
+  lowerPocketSingleRight: [
+    { x: 450, y: 548, width: 354, height: 470 },
   ],
   auxiliaryPocketPair: [
     { x: 116, y: 518, width: 248, height: 356 },
@@ -419,8 +422,17 @@ function drawTrimSections(
     }
 
     if (role === "lowerPockets" || key.includes("bolsillos inferiores")) {
-      context.strokeRect(350, 736, 112, 136);
-      context.strokeRect(546, 736, 112, 136);
+      if (scene.lowerPocketLayout === "none") {
+        context.restore();
+        continue;
+      }
+
+      if (scene.lowerPocketLayout === "single") {
+        context.strokeRect(546, 736, 112, 136);
+      } else {
+        context.strokeRect(350, 736, 112, 136);
+        context.strokeRect(546, 736, 112, 136);
+      }
     }
 
     if (role === "auxiliaryPocket" || key.includes("bolsillo auxiliar")) {
@@ -700,11 +712,15 @@ export async function composeDesign(
 
   drawChestPocket(context, scene.chestPocketType);
 
-  if (scene.lowerPocketImageSrc) {
+  if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
     await drawOverlayInRegions(
       context,
       scene.lowerPocketImageSrc,
-      getOverlayRegionPreset("lowerPocketPair"),
+      getOverlayRegionPreset(
+        scene.lowerPocketLayout === "single"
+          ? "lowerPocketSingleRight"
+          : "lowerPocketPair",
+      ),
     );
   }
 

@@ -46,6 +46,24 @@ function createColorProps() {
   };
 }
 
+function createImageProps() {
+  return {
+    ...createProps(),
+    group: {
+      attributeId: 30,
+      label: "Modelo bolsillo inferior",
+      helpText: "Selecciona el modelo del bolsillo.",
+      controlType: "image" as const,
+      selectionMode: "single" as const,
+      options: [
+        { id: 1, name: "Modelo 1", imageSrc: "/modelo-1.svg" },
+        { id: 2, name: "Modelo 2", imageSrc: "/modelo-2.svg" },
+      ],
+    },
+    selectionLabel: "Modelo 1",
+  };
+}
+
 describe("AttributeSection", () => {
   afterEach(() => {
     cleanup();
@@ -73,6 +91,25 @@ describe("AttributeSection", () => {
     expect(baseProps.onSelect).toHaveBeenCalledWith(2);
   });
 
+  it("oculta opciones excluidas en controles de botones", () => {
+    const baseProps = createProps();
+    render(
+      <AttributeSection
+        {...baseProps}
+        disabledValueIds={new Set([2])}
+        expanded
+      />,
+    );
+
+    const optionList = screen.getByRole("list");
+    expect(
+      within(optionList).getByRole("button", { name: /modelo 1/i }),
+    ).toBeTruthy();
+    expect(
+      within(optionList).queryByRole("button", { name: /modelo 2/i }),
+    ).toBeNull();
+  });
+
   it("filtra colores por codigo de cliente o nombre", () => {
     const baseProps = createColorProps();
     render(<AttributeSection {...baseProps} expanded />);
@@ -96,6 +133,44 @@ describe("AttributeSection", () => {
     ).toBeTruthy();
     expect(
       within(swatchGrid).queryByRole("button", { name: /146305 - azul aruba/i }),
+    ).toBeNull();
+  });
+
+  it("oculta colores excluidos antes de aplicar la busqueda", () => {
+    const baseProps = createColorProps();
+    render(
+      <AttributeSection
+        {...baseProps}
+        disabledValueIds={new Set([2])}
+        expanded
+      />,
+    );
+
+    const swatchGrid = screen.getByRole("list");
+    expect(
+      within(swatchGrid).getByRole("button", { name: /110601 - blanco/i }),
+    ).toBeTruthy();
+    expect(
+      within(swatchGrid).queryByRole("button", { name: /146305 - azul aruba/i }),
+    ).toBeNull();
+  });
+
+  it("oculta opciones excluidas en controles de imagen", () => {
+    const baseProps = createImageProps();
+    render(
+      <AttributeSection
+        {...baseProps}
+        disabledValueIds={new Set([2])}
+        expanded
+      />,
+    );
+
+    const optionList = screen.getByRole("list");
+    expect(
+      within(optionList).getByRole("button", { name: /modelo 1/i }),
+    ).toBeTruthy();
+    expect(
+      within(optionList).queryByRole("button", { name: /modelo 2/i }),
     ).toBeNull();
   });
 

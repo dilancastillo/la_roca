@@ -30,12 +30,24 @@ export function AttributeSection({
   const isColorGroup = group.controlType === "color";
   const normalizedColorQuery = normalizeSearchTerm(colorQuery);
   const compactColorQuery = compactSearchTerm(normalizedColorQuery);
+  const selectedValueIdSet = useMemo(
+    () => new Set(selectedValueIds),
+    [selectedValueIds],
+  );
+  const availableOptions = useMemo(
+    () =>
+      group.options.filter(
+        (option) =>
+          selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+      ),
+    [disabledValueIds, group.options, selectedValueIdSet],
+  );
   const visibleColorOptions = useMemo(() => {
     if (!isColorGroup || !normalizedColorQuery) {
-      return group.options;
+      return availableOptions;
     }
 
-    return group.options.filter((option) => {
+    return availableOptions.filter((option) => {
       const normalizedName = normalizeSearchTerm(option.name);
       const compactName = compactSearchTerm(normalizedName);
 
@@ -44,7 +56,12 @@ export function AttributeSection({
         Boolean(compactColorQuery) && compactName.includes(compactColorQuery)
       );
     });
-  }, [compactColorQuery, group.options, isColorGroup, normalizedColorQuery]);
+  }, [
+    availableOptions,
+    compactColorQuery,
+    isColorGroup,
+    normalizedColorQuery,
+  ]);
 
   useEffect(() => {
     if (expanded && colorSearchOpen) {
@@ -160,47 +177,53 @@ export function AttributeSection({
                 </button>
               ) : null}
               <span className="color-search__count" aria-live="polite">
-                {visibleColorOptions.length}/{group.options.length}
+                {visibleColorOptions.length}/{availableOptions.length}
               </span>
             </div>
           ) : null}
 
           {group.controlType === "image" ? (
-            <div className="image-option-grid" role="list">
-              {group.options.map((option) => {
-                const selected = selectedValueIds.includes(option.id);
-                const optionDisabled =
-                  disabled || (disabledValueIds.has(option.id) && !selected);
+            availableOptions.length > 0 ? (
+              <div className="image-option-grid" role="list">
+                {availableOptions.map((option) => {
+                  const selected = selectedValueIds.includes(option.id);
+                  const optionDisabled =
+                    disabled || (disabledValueIds.has(option.id) && !selected);
 
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={[
-                      "image-option-card",
-                      selected ? "image-option-card--selected" : "",
-                      optionDisabled ? "image-option-card--disabled" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    aria-pressed={selected}
-                    disabled={optionDisabled}
-                    onClick={() =>
-                      group.selectionMode === "multiple"
-                        ? onToggle(option.id)
-                        : onSelect(option.id)
-                    }
-                  >
-                    {option.imageSrc ? (
-                      <img src={option.imageSrc} alt={option.name} />
-                    ) : (
-                      <div className="image-option-card__placeholder">Sin imagen</div>
-                    )}
-                    <span>{option.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={[
+                        "image-option-card",
+                        selected ? "image-option-card--selected" : "",
+                        optionDisabled ? "image-option-card--disabled" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      aria-pressed={selected}
+                      disabled={optionDisabled}
+                      onClick={() =>
+                        group.selectionMode === "multiple"
+                          ? onToggle(option.id)
+                          : onSelect(option.id)
+                      }
+                    >
+                      {option.imageSrc ? (
+                        <img src={option.imageSrc} alt={option.name} />
+                      ) : (
+                        <div className="image-option-card__placeholder">Sin imagen</div>
+                      )}
+                      <span>{option.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="color-search__empty" role="status">
+                No hay opciones disponibles con la combinacion actual.
+              </div>
+            )
           ) : group.controlType === "color" ? (
             visibleColorOptions.length > 0 ? (
               <div className="swatch-grid" role="list">
@@ -242,9 +265,9 @@ export function AttributeSection({
                 No encontramos ese codigo o color.
               </div>
             )
-          ) : (
+          ) : availableOptions.length > 0 ? (
             <div className="chip-grid" role="list">
-              {group.options.map((option) => {
+              {availableOptions.map((option) => {
                 const selected = selectedValueIds.includes(option.id);
                 const optionDisabled =
                   disabled || (disabledValueIds.has(option.id) && !selected);
@@ -271,6 +294,10 @@ export function AttributeSection({
                   </button>
                 );
               })}
+            </div>
+          ) : (
+            <div className="color-search__empty" role="status">
+              No hay opciones disponibles con la combinacion actual.
             </div>
           )}
         </div>

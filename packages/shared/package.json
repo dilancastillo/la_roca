@@ -14,6 +14,10 @@
       "types": "./dist/schemas/configurator.d.ts",
       "default": "./dist/schemas/configurator.js"
     },
+    "./lower-pocket-rules": {
+      "types": "./dist/lower-pocket-rules.d.ts",
+      "default": "./dist/lower-pocket-rules.js"
+    },
     "./visual-assets": {
       "types": "./dist/visual-assets.d.ts",
       "default": "./dist/visual-assets.js"

@@ -1,14 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 import { AttributeSection } from "../features/configurator/components/attribute-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
+import { getNextAutoExpandedAttributeId } from "../features/configurator/lib/attribute-auto-advance";
 import {
   computeDisabledValueIds,
   deriveConfiguratorUi,
 } from "../features/configurator/lib/derive-configurator-ui";
+import { sanitizeSelectedValueIdsForExclusions } from "../features/configurator/lib/selection-exclusions";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
 import { DesignPreviewCanvas } from "../features/preview/components/design-preview-canvas";
 import { saveDesign } from "../features/save-design/save-design";
@@ -41,6 +43,7 @@ export function ConfiguratorPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
+  const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
 
   const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
   const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
@@ -52,7 +55,10 @@ export function ConfiguratorPage() {
 
     dispatch({
       type: "INITIALIZE",
-      value: sessionQuery.data.selectedValueIds,
+      value: sanitizeSelectedValueIdsForExclusions(
+        sessionQuery.data,
+        sessionQuery.data.selectedValueIds,
+      ),
     });
   }, [sessionQuery.data]);
 
@@ -167,6 +173,74 @@ export function ConfiguratorPage() {
     return `${first?.name ?? "Seleccionado"} · ${second?.name ?? ""} +${
       selectedOptions.length - 2
     }`.trim();
+  }
+
+  function scrollToAttributeSection(attributeId: number | null) {
+    if (attributeId === null) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      attributeSectionRefs.current.get(attributeId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+  }
+
+  function handleSingleSelect(attributeId: number, valueId: number) {
+    const nextSelectedValueIds = {
+      ...state.selectedValueIds,
+      [String(attributeId)]: [valueId],
+    };
+    const sanitizedSelectedValueIds = sanitizeSelectedValueIdsForExclusions(
+      session,
+      nextSelectedValueIds,
+      valueId,
+    );
+    const nextDisabledValueIds = computeDisabledValueIds(
+      session,
+      sanitizedSelectedValueIds,
+    );
+    const nextExpandedAttributeId = getNextAutoExpandedAttributeId({
+      groups: ui.groups,
+      currentAttributeId: attributeId,
+      selectedValueIds: sanitizedSelectedValueIds,
+      disabledValueIds: nextDisabledValueIds,
+    });
+
+    dispatch({
+      type: "SET_SELECTIONS",
+      value: sanitizedSelectedValueIds,
+    });
+    setExpandedAttributeId(nextExpandedAttributeId);
+    scrollToAttributeSection(nextExpandedAttributeId);
+  }
+
+  function handleMultiToggle(attributeId: number, valueId: number) {
+    const key = String(attributeId);
+    const current = new Set(state.selectedValueIds[key] ?? []);
+    const isSelecting = !current.has(valueId);
+
+    if (isSelecting) {
+      current.add(valueId);
+    } else {
+      current.delete(valueId);
+    }
+
+    const nextSelectedValueIds = {
+      ...state.selectedValueIds,
+      [key]: Array.from(current),
+    };
+
+    dispatch({
+      type: "SET_SELECTIONS",
+      value: sanitizeSelectedValueIdsForExclusions(
+        session,
+        nextSelectedValueIds,
+        isSelecting ? valueId : undefined,
+      ),
+    });
   }
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
@@ -296,34 +370,36 @@ export function ConfiguratorPage() {
             <form className="configurator-form" onSubmit={handleSave}>
               <div className="configurator-form__scroll">
                 {ui.groups.map((group) => (
-                  <AttributeSection
+                  <div
                     key={group.attributeId}
-                    group={group}
-                    selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
-                    disabledValueIds={disabledValueIds}
-                    disabled={isReadOnly}
-                    expanded={expandedAttributeId === group.attributeId}
-                    selectionLabel={getSelectionLabel(group.attributeId)}
-                    onExpandToggle={() =>
-                      setExpandedAttributeId((current) =>
-                        current === group.attributeId ? null : group.attributeId,
-                      )
-                    }
-                    onSelect={(valueId) =>
-                      dispatch({
-                        type: "SET_SINGLE",
-                        attributeId: group.attributeId,
-                        valueId,
-                      })
-                    }
-                    onToggle={(valueId) =>
-                      dispatch({
-                        type: "TOGGLE_MULTI",
-                        attributeId: group.attributeId,
-                        valueId,
-                      })
-                    }
-                  />
+                    ref={(node) => {
+                      if (node) {
+                        attributeSectionRefs.current.set(group.attributeId, node);
+                      } else {
+                        attributeSectionRefs.current.delete(group.attributeId);
+                      }
+                    }}
+                  >
+                    <AttributeSection
+                      group={group}
+                      selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
+                      disabledValueIds={disabledValueIds}
+                      disabled={isReadOnly}
+                      expanded={expandedAttributeId === group.attributeId}
+                      selectionLabel={getSelectionLabel(group.attributeId)}
+                      onExpandToggle={() =>
+                        setExpandedAttributeId((current) =>
+                          current === group.attributeId ? null : group.attributeId,
+                        )
+                      }
+                      onSelect={(valueId) =>
+                        handleSingleSelect(group.attributeId, valueId)
+                      }
+                      onToggle={(valueId) =>
+                        handleMultiToggle(group.attributeId, valueId)
+                      }
+                    />
+                  </div>
                 ))}
               </div>
 

@@ -1,4 +1,8 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import {
+  getLowerPocketLayout,
+  type LowerPocketLayout,
+} from "@repo/shared/lower-pocket-rules";
 import { getImageSourceByIds, getProductAssetCatalog } from "./asset-catalog";
 
 export type UiOption = {
@@ -22,6 +26,7 @@ export type PreviewScene = {
   baseColorHex: string;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
+  lowerPocketLayout: LowerPocketLayout;
   auxiliaryPocketImageSrc?: string | undefined;
   chestPocketType?: string | undefined;
   trimSections: Array<{
@@ -250,6 +255,7 @@ export function deriveConfiguratorUi(
     chestPocketTypeAttribute,
     selectedValueIds,
   );
+  const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
 
   const summary = session.attributes.flatMap((attribute) => {
     const selected = getSelectedOptions(attribute, selectedValueIds);
@@ -279,13 +285,14 @@ export function deriveConfiguratorUi(
             selectedNeck.id,
           )
         : undefined,
-      lowerPocketImageSrc: selectedLowerPocketModel
+      lowerPocketImageSrc: lowerPocketLayout !== "none" && selectedLowerPocketModel
         ? getImageSource(
             session.graphicManifestKey,
             lowerPocketModelAttribute?.id ?? 0,
             selectedLowerPocketModel.id,
           )
         : undefined,
+      lowerPocketLayout,
       auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
         ? getImageSource(
             session.graphicManifestKey,

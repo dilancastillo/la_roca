@@ -3,6 +3,7 @@ export type VisualAssetCatalog = {
   aliases: string[];
   attributeIds: {
     neckModel: number;
+    lowerPocketType?: number;
     lowerPocketModel: number;
     auxiliaryPocketModel?: number;
     baseColor: number;
@@ -18,6 +19,11 @@ export type VisualAssetCatalog = {
     auxiliaryPocket: number;
     none: number;
   };
+  lowerPocketTypeValueIds?: {
+    none: number[];
+    double: number[];
+  };
+  lowerPocketModelNoneValueIds?: number[];
   neckModelsByValueId: Record<number, string>;
   lowerPocketModelsByValueId: Record<number, string>;
   auxiliaryPocketModelsByValueId: Record<number, string>;
@@ -37,6 +43,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   ],
   attributeIds: {
     neckModel: 63,
+    lowerPocketType: 69,
     lowerPocketModel: 70,
     baseColor: 90,
     trimColor: 91,
@@ -51,6 +58,11 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     auxiliaryPocket: 5151,
     none: 5423,
   },
+  lowerPocketTypeValueIds: {
+    none: [5342],
+    double: [5354, 5366, 5378, 5390],
+  },
+  lowerPocketModelNoneValueIds: [5425],
   neckModelsByValueId: {
     2590: blouseModelAsset(1), // CUELLO V, inferido desde el valor actual de Odoo.
     2592: blouseModelAsset(3), // PUNTAS, confirmado por usuario.

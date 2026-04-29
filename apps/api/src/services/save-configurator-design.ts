@@ -2,6 +2,7 @@ import type {
   ConfiguratorSession,
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
+import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
@@ -23,13 +24,13 @@ function normalizeManyIds(value: unknown): number[] {
 
 function parseSelectedValueIds(
   selectedValueIds: SaveDesignRequest["selectedValueIds"],
-): Record<number, number[]> {
+): Record<string, number[]> {
   return Object.fromEntries(
     Object.entries(selectedValueIds).map(([key, values]) => [
-      Number(key),
+      String(Number(key)),
       normalizeManyIds(values).filter((value) => Number.isFinite(value)),
     ]),
-  ) as Record<number, number[]>;
+  ) as Record<string, number[]>;
 }
 
 function setsMatch(left: number[], right: number[]) {
@@ -43,12 +44,12 @@ function setsMatch(left: number[], right: number[]) {
 
 function validateSelections(
   session: ConfiguratorSession,
-  selectedValueIds: Record<number, number[]>,
+  selectedValueIds: Record<string, number[]>,
 ) {
   const errors: string[] = [];
 
   for (const attribute of session.attributes) {
-    const selected = selectedValueIds[attribute.id] ?? [];
+    const selected = selectedValueIds[String(attribute.id)] ?? [];
     const selectedSet = new Set(selected);
 
     if (selected.length !== selectedSet.size) {
@@ -112,7 +113,10 @@ export async function saveConfiguratorDesign(
     throw new Error("La linea no esta habilitada para edicion.");
   }
 
-  const selectedValueIds = parseSelectedValueIds(payload.selectedValueIds);
+  const selectedValueIds = normalizeLowerPocketSelectionsForSave(
+    session,
+    parseSelectedValueIds(payload.selectedValueIds),
+  );
   const validationErrors = validateSelections(session, selectedValueIds);
 
   if (validationErrors.length > 0) {
@@ -121,11 +125,11 @@ export async function saveConfiguratorDesign(
 
   const variantValueIds = session.attributes
     .filter((attribute) => attribute.variantMode === "variant")
-    .flatMap((attribute) => selectedValueIds[attribute.id] ?? []);
+    .flatMap((attribute) => selectedValueIds[String(attribute.id)] ?? []);
 
   const noVariantValueIds = session.attributes
     .filter((attribute) => attribute.variantMode !== "variant")
-    .flatMap((attribute) => selectedValueIds[attribute.id] ?? []);
+    .flatMap((attribute) => selectedValueIds[String(attribute.id)] ?? []);
 
   const matchingVariant = await findExactVariant(env, session, variantValueIds);
 
