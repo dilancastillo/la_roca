@@ -2,15 +2,16 @@ export type VisualAssetCatalog = {
   productKey: string;
   aliases: string[];
   attributeIds: {
-    neckModel: number;
+    garmentModel?: number;
+    neckModel?: number;
     lowerPocketType?: number;
-    lowerPocketModel: number;
+    lowerPocketModel?: number;
     auxiliaryPocketModel?: number;
     baseColor: number;
-    trimColor: number;
-    trimSections: number;
+    trimColor?: number;
+    trimSections?: number;
   };
-  trimSectionValueIds: {
+  trimSectionValueIds?: {
     backNeck: number;
     upperNeck: number;
     lowerNeck: number;
@@ -24,15 +25,22 @@ export type VisualAssetCatalog = {
     double: number[];
   };
   lowerPocketModelNoneValueIds?: number[];
-  neckModelsByValueId: Record<number, string>;
-  lowerPocketModelsByValueId: Record<number, string>;
-  auxiliaryPocketModelsByValueId: Record<number, string>;
+  defaultGarmentAsset?: string;
+  garmentModelsByValueId?: Record<number, string>;
+  neckModelsByValueId?: Record<number, string>;
+  lowerPocketModelsByValueId?: Record<number, string>;
+  auxiliaryPocketModelsByValueId?: Record<number, string>;
 };
 
 const BLUSA_ASSET_BASE = "assets/catalog/blusa-antifluido-t180/svg-clean";
+const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 
 function blouseModelAsset(index: number) {
   return `${BLUSA_ASSET_BASE}/blouse-model-${String(index).padStart(2, "0")}.svg`;
+}
+
+function pantsModelAsset(index: number) {
+  return `${PANTALON_ASSET_BASE}/pants-model-${String(index).padStart(2, "0")}.svg`;
 }
 
 export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
@@ -83,8 +91,26 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   auxiliaryPocketModelsByValueId: {},
 };
 
+export const pantalonVisualCatalog: VisualAssetCatalog = {
+  productKey: "pantalon",
+  aliases: ["pantalon"],
+  attributeIds: {
+    baseColor: 90,
+    trimColor: 91,
+    trimSections: 92,
+  },
+  // El producto Pantalon aun no tiene un atributo unico de modelo. Mientras se
+  // define el mapeo funcional, usamos el primer SVG como base limpia por defecto.
+  defaultGarmentAsset: pantsModelAsset(1),
+  garmentModelsByValueId: {},
+  neckModelsByValueId: {},
+  lowerPocketModelsByValueId: {},
+  auxiliaryPocketModelsByValueId: {},
+};
+
 export const visualAssetCatalogs: VisualAssetCatalog[] = [
   blusaAntifluidoT180VisualCatalog,
+  pantalonVisualCatalog,
 ];
 
 function normalizeCatalogKey(value: string) {
@@ -122,16 +148,24 @@ export function getVisualAssetPath(
   }
 
   if (attributeId === catalog.attributeIds.neckModel) {
-    return catalog.neckModelsByValueId[valueId];
+    return catalog.neckModelsByValueId?.[valueId];
+  }
+
+  if (attributeId === catalog.attributeIds.garmentModel) {
+    return catalog.garmentModelsByValueId?.[valueId];
   }
 
   if (attributeId === catalog.attributeIds.lowerPocketModel) {
-    return catalog.lowerPocketModelsByValueId[valueId];
+    return catalog.lowerPocketModelsByValueId?.[valueId];
   }
 
   if (attributeId === catalog.attributeIds.auxiliaryPocketModel) {
-    return catalog.auxiliaryPocketModelsByValueId[valueId];
+    return catalog.auxiliaryPocketModelsByValueId?.[valueId];
   }
 
   return undefined;
+}
+
+export function getDefaultVisualAssetPath(graphicManifestKey: string) {
+  return resolveVisualAssetCatalog(graphicManifestKey)?.defaultGarmentAsset;
 }

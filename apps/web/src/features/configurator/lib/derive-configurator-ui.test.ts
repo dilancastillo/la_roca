@@ -110,6 +110,63 @@ const session: ConfiguratorSession = {
   warnings: [],
 };
 
+const pantalonSession: ConfiguratorSession = {
+  saleOrderLineId: 289,
+  saleOrderId: 118,
+  orderName: "S00118",
+  productId: 54857,
+  productTemplateId: 19,
+  productName: "Pantalon",
+  graphicManifestKey: "pantalon",
+  attributes: [
+    {
+      id: 90,
+      name: "Color",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "variant",
+      values: [
+        {
+          id: 6921,
+          name: "110601 - Blanco",
+          attributeId: 90,
+          attributeName: "Color",
+          colorHex: "#F0F0F0",
+        },
+      ],
+    },
+    {
+      id: 84,
+      name: "Tipo bota",
+      displayType: "option",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 4266,
+          name: "Original",
+          attributeId: 84,
+          attributeName: "Tipo bota",
+        },
+      ],
+    },
+  ],
+  selectedValueIds: {
+    "84": [4266],
+    "90": [6921],
+  },
+  exclusions: [],
+  status: {
+    orderState: "draft",
+    canEdit: true,
+    isLocked: false,
+    version: 0,
+    generatedAt: null,
+  },
+  existingDesignBase64: null,
+  warnings: [],
+};
+
 describe("deriveConfiguratorUi", () => {
   it("resuelve assets por IDs aunque Odoo cambie nombres de atributos o valores", () => {
     const ui = deriveConfiguratorUi(session, session.selectedValueIds);
@@ -127,13 +184,13 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
-  it("dibuja un solo bolsillo inferior cuando el tipo no es doble", () => {
+  it("dibuja dos bolsillos inferiores cuando el tipo no es Sin bolsillos", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
       "69": [2561],
     });
 
-    expect(ui.previewScene.lowerPocketLayout).toBe("single");
+    expect(ui.previewScene.lowerPocketLayout).toBe("double");
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
     );
@@ -154,5 +211,18 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketLayout).toBe("none");
     expect(ui.previewScene.lowerPocketImageSrc).toBeUndefined();
     expect(normalized["70"]).toEqual([5425]);
+  });
+
+  it("usa el SVG base de pantalon cuando el producto no tiene atributo unico de modelo", () => {
+    const ui = deriveConfiguratorUi(
+      pantalonSession,
+      pantalonSession.selectedValueIds,
+    );
+
+    expect(ui.previewScene.baseColorHex).toBe("#F0F0F0");
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });
 });

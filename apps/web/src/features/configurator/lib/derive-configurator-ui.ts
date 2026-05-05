@@ -3,13 +3,18 @@ import {
   getLowerPocketLayout,
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
-import { getImageSourceByIds, getProductAssetCatalog } from "./asset-catalog";
+import {
+  getDefaultImageSource,
+  getImageSourceByIds,
+  getProductAssetCatalog,
+} from "./asset-catalog";
 
 export type UiOption = {
   id: number;
   name: string;
   colorHex?: string | undefined;
   imageSrc?: string | undefined;
+  allowsCustomValue?: boolean | undefined;
 };
 
 export type UiAttributeGroup = {
@@ -24,6 +29,7 @@ export type UiAttributeGroup = {
 export type PreviewScene = {
   productName: string;
   baseColorHex: string;
+  garmentImageSrc?: string | undefined;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
@@ -153,13 +159,23 @@ function getSelectedTrimSections(
   }
 
   const enabledSections = getSelectedOptions(sectionAttribute, selectedValueIds);
+  const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   if (enabledSections.length === 0) {
     return [];
   }
 
+  const hasNoTrimSelection = enabledSections.some((section) => {
+    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0];
+
+    return role === "none" || normalize(section.name) === "sin vivos";
+  });
+
+  if (hasNoTrimSelection) {
+    return [];
+  }
+
   const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
-  const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   return enabledSections.map((section) => {
     const matchingColorAttribute = colorAttributes.find((attribute) =>
@@ -195,6 +211,7 @@ export function deriveConfiguratorUi(
     options: attribute.values.map((value) => ({
       id: value.id,
       name: value.name,
+      allowsCustomValue: Boolean(value.allowsCustomValue),
       ...(value.colorHex ? { colorHex: value.colorHex } : {}),
       ...(getImageSource(session.graphicManifestKey, attribute.id, value.id)
         ? {
@@ -222,6 +239,14 @@ export function deriveConfiguratorUi(
       (attribute) => attribute.id === catalog?.attributeIds.neckModel,
     ) ??
     findAttributeByName(session, (name) => name.includes("modelo de cuello"));
+  const garmentAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.garmentModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      name.includes("modelo de pantalon") ||
+      name.includes("modelo pantalon"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) => attribute.id === catalog?.attributeIds.lowerPocketModel,
@@ -242,6 +267,7 @@ export function deriveConfiguratorUi(
   );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
+  const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
@@ -278,6 +304,13 @@ export function deriveConfiguratorUi(
     previewScene: {
       productName: session.productName,
       baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
+      garmentImageSrc: selectedGarment
+        ? getImageSource(
+            session.graphicManifestKey,
+            garmentAttribute?.id ?? 0,
+            selectedGarment.id,
+          ) ?? getDefaultImageSource(session.graphicManifestKey)
+        : getDefaultImageSource(session.graphicManifestKey),
       neckImageSrc: selectedNeck
         ? getImageSource(
             session.graphicManifestKey,

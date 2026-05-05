@@ -77,23 +77,6 @@ function isNoneLowerPocketType(
   return normalize(value.name).includes("sin bolsillo");
 }
 
-function isDoubleLowerPocketType(
-  session: ConfiguratorSession,
-  value: AttributeValue | undefined,
-) {
-  const catalog = resolveVisualAssetCatalog(session.graphicManifestKey);
-
-  if (!value) {
-    return false;
-  }
-
-  if (catalog?.lowerPocketTypeValueIds?.double.includes(value.id)) {
-    return true;
-  }
-
-  return normalize(value.name).includes("doble");
-}
-
 function findNoneLowerPocketModelValue(
   session: ConfiguratorSession,
   modelAttribute: Attribute | undefined,
@@ -120,11 +103,7 @@ export function getLowerPocketLayout(
     return "none";
   }
 
-  if (isDoubleLowerPocketType(session, selectedType)) {
-    return "double";
-  }
-
-  return selectedType ? "single" : "double";
+  return "double";
 }
 
 export function normalizeLowerPocketSelectionsForSave(

@@ -10,6 +10,7 @@ type SaleOrderLineRecord = {
   product_id: Many2one;
   product_template_attribute_value_ids?: number[];
   product_no_variant_attribute_value_ids?: number[];
+  product_custom_attribute_value_ids?: number[];
   x_product_design_generated_at?: string | false;
   x_product_design_image?: string | false;
   x_product_design_locked?: boolean;
@@ -36,6 +37,7 @@ type ProductTemplateAttributeValueRecord = {
   product_attribute_value_id: Many2one;
   product_tmpl_id: Many2one;
   ptav_active?: boolean;
+  is_custom?: boolean;
   excluded_value_ids?: number[];
 };
 
@@ -56,7 +58,32 @@ type ProductAttributeValueRecord = {
   id: number;
   name: string;
   html_color?: string | false;
+  is_custom?: boolean;
 };
+
+type ProductAttributeCustomValueRecord = {
+  id: number;
+  custom_product_template_attribute_value_id: Many2one;
+  custom_value?: string | false;
+};
+
+export function resolveSelectedIdsForAttributeValues(
+  values: Array<{ id: number }>,
+  lineValueIds: Set<number>,
+  productValueIds: Set<number>,
+) {
+  const lineSelectedIds = values
+    .map((value) => value.id)
+    .filter((valueId) => lineValueIds.has(valueId));
+
+  if (lineSelectedIds.length > 0) {
+    return lineSelectedIds;
+  }
+
+  return values
+    .map((value) => value.id)
+    .filter((valueId) => productValueIds.has(valueId));
+}
 
 function toMany2oneId(value: Many2one, fieldName: string): number {
   if (!Array.isArray(value) || typeof value[0] !== "number") {
@@ -137,6 +164,7 @@ const productTemplateAttributeValueBaseFields = [
   "product_attribute_value_id",
   "product_tmpl_id",
   "ptav_active",
+  "is_custom",
 ];
 
 async function loadProductTemplateAttributeValues(
@@ -199,6 +227,7 @@ export async function getConfiguratorSession(
       "product_id",
       "product_template_attribute_value_ids",
       "product_no_variant_attribute_value_ids",
+      "product_custom_attribute_value_ids",
       "x_product_design_generated_at",
       "x_product_design_image",
       "x_product_design_locked",
@@ -271,31 +300,44 @@ export async function getConfiguratorSession(
     ),
   );
 
-  const [attributes, attributeLines, attributeValues] = await Promise.all([
-    attributeIds.length > 0
-      ? odooRead<ProductAttributeRecord>(
-          env,
-          "product.attribute",
-          attributeIds,
-          ["id", "name", "display_type", "create_variant"],
-        )
-      : Promise.resolve([]),
-    odooSearchRead<ProductTemplateAttributeLineRecord>(
-      env,
-      "product.template.attribute.line",
-      [["product_tmpl_id", "=", productTemplateId]],
-      ["id", "attribute_id", "sequence"],
-      "sequence, id",
-    ).catch(() => []),
-    productAttributeValueIds.length > 0
-      ? odooRead<ProductAttributeValueRecord>(
-          env,
-          "product.attribute.value",
-          productAttributeValueIds,
-          ["id", "name", "html_color"],
-        )
-      : Promise.resolve([]),
-  ]);
+  const customAttributeValueIds = normalizeManyIds(
+    line.product_custom_attribute_value_ids,
+  );
+
+  const [attributes, attributeLines, attributeValues, customAttributeValues] =
+    await Promise.all([
+      attributeIds.length > 0
+        ? odooRead<ProductAttributeRecord>(
+            env,
+            "product.attribute",
+            attributeIds,
+            ["id", "name", "display_type", "create_variant"],
+          )
+        : Promise.resolve([]),
+      odooSearchRead<ProductTemplateAttributeLineRecord>(
+        env,
+        "product.template.attribute.line",
+        [["product_tmpl_id", "=", productTemplateId]],
+        ["id", "attribute_id", "sequence"],
+        "sequence, id",
+      ).catch(() => []),
+      productAttributeValueIds.length > 0
+        ? odooRead<ProductAttributeValueRecord>(
+            env,
+            "product.attribute.value",
+            productAttributeValueIds,
+            ["id", "name", "html_color", "is_custom"],
+          )
+        : Promise.resolve([]),
+      customAttributeValueIds.length > 0
+        ? odooRead<ProductAttributeCustomValueRecord>(
+            env,
+            "product.attribute.custom.value",
+            customAttributeValueIds,
+            ["id", "custom_product_template_attribute_value_id", "custom_value"],
+          )
+        : Promise.resolve([]),
+    ]);
 
   const attributeMap = new Map<number, ProductAttributeRecord>(
     attributes.map(
@@ -311,6 +353,24 @@ export async function getConfiguratorSession(
     ),
   );
   const attributeLineOrder = new Map<number, { sequence: number; index: number }>();
+  const customValuesByValueId: Record<string, string> = {};
+
+  for (const customAttributeValue of customAttributeValues) {
+    const ptavId = Array.isArray(
+      customAttributeValue.custom_product_template_attribute_value_id,
+    )
+      ? customAttributeValue.custom_product_template_attribute_value_id[0]
+      : null;
+
+    if (typeof ptavId !== "number") {
+      continue;
+    }
+
+    customValuesByValueId[String(ptavId)] =
+      typeof customAttributeValue.custom_value === "string"
+        ? customAttributeValue.custom_value
+        : "";
+  }
 
   attributeLines.forEach((line, index) => {
     const attributeId = Array.isArray(line.attribute_id)
@@ -327,9 +387,11 @@ export async function getConfiguratorSession(
     });
   });
 
-  const currentValueIds = new Set<number>([
+  const lineValueIds = new Set<number>([
     ...normalizeManyIds(line.product_template_attribute_value_ids),
     ...normalizeManyIds(line.product_no_variant_attribute_value_ids),
+  ]);
+  const productValueIds = new Set<number>([
     ...normalizeManyIds(product.product_template_attribute_value_ids),
   ]);
 
@@ -369,6 +431,7 @@ export async function getConfiguratorSession(
       ...(attributeValue?.html_color
         ? { colorHex: attributeValue.html_color }
         : {}),
+      allowsCustomValue: Boolean(ptav.is_custom || attributeValue?.is_custom),
     });
 
     groupedAttributes.set(attributeId, group);
@@ -402,10 +465,12 @@ export async function getConfiguratorSession(
   const selectedValueIds: Record<string, number[]> = {};
 
   for (const attribute of sortedAttributes) {
-    const selectedIds = attribute.values
-      .map((value) => value.id)
-      .filter((valueId) => currentValueIds.has(valueId));
-    selectedValueIds[String(attribute.id)] = selectedIds;
+    selectedValueIds[String(attribute.id)] =
+      resolveSelectedIdsForAttributeValues(
+        attribute.values,
+        lineValueIds,
+        productValueIds,
+      );
   }
 
   const exclusions = ptavs.flatMap((ptav) => {
@@ -433,6 +498,7 @@ export async function getConfiguratorSession(
     graphicManifestKey: normalizeGraphicManifestKey(productName),
     attributes: sortedAttributes,
     selectedValueIds,
+    customValuesByValueId,
     exclusions,
     status: {
       orderState: order.state,

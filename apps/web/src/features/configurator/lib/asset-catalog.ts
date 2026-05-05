@@ -1,4 +1,5 @@
 import {
+  getDefaultVisualAssetPath,
   getVisualAssetPath,
   resolveVisualAssetCatalog,
   visualAssetCatalogs,
@@ -21,5 +22,10 @@ export function getImageSourceByIds(
   valueId: number,
 ) {
   const path = getVisualAssetPath(graphicManifestKey, attributeId, valueId);
+  return path ? `/${path}` : undefined;
+}
+
+export function getDefaultImageSource(graphicManifestKey: string) {
+  const path = getDefaultVisualAssetPath(graphicManifestKey);
   return path ? `/${path}` : undefined;
 }

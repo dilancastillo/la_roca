@@ -13,14 +13,16 @@ function createProps() {
       controlType: "chips" as const,
       selectionMode: "single" as const,
       options: [
-        { id: 1, name: "Modelo 1" },
-        { id: 2, name: "Modelo 2" },
+        { id: 1, name: "Modelo 1", allowsCustomValue: false },
+        { id: 2, name: "Modelo 2", allowsCustomValue: false },
       ],
     },
     selectedValueIds: [1],
+    customValuesByValueId: {},
     disabledValueIds: new Set<number>(),
     onSelect: vi.fn(),
     onToggle: vi.fn(),
+    onCustomValueChange: vi.fn(),
     onExpandToggle: vi.fn(),
     selectionLabel: "Modelo 1",
   };
@@ -36,9 +38,24 @@ function createColorProps() {
       controlType: "color" as const,
       selectionMode: "single" as const,
       options: [
-        { id: 1, name: "110601 - Blanco", colorHex: "#f8fafc" },
-        { id: 2, name: "146305 - Azul Aruba", colorHex: "#7bb6d6" },
-        { id: 3, name: "154225 - Rojo intenso", colorHex: "#c1121f" },
+        {
+          id: 1,
+          name: "110601 - Blanco",
+          colorHex: "#f8fafc",
+          allowsCustomValue: false,
+        },
+        {
+          id: 2,
+          name: "146305 - Azul Aruba",
+          colorHex: "#7bb6d6",
+          allowsCustomValue: false,
+        },
+        {
+          id: 3,
+          name: "154225 - Rojo intenso",
+          colorHex: "#c1121f",
+          allowsCustomValue: false,
+        },
       ],
     },
     selectedValueIds: [1],
@@ -56,8 +73,18 @@ function createImageProps() {
       controlType: "image" as const,
       selectionMode: "single" as const,
       options: [
-        { id: 1, name: "Modelo 1", imageSrc: "/modelo-1.svg" },
-        { id: 2, name: "Modelo 2", imageSrc: "/modelo-2.svg" },
+        {
+          id: 1,
+          name: "Modelo 1",
+          imageSrc: "/modelo-1.svg",
+          allowsCustomValue: false,
+        },
+        {
+          id: 2,
+          name: "Modelo 2",
+          imageSrc: "/modelo-2.svg",
+          allowsCustomValue: false,
+        },
       ],
     },
     selectionLabel: "Modelo 1",
@@ -192,5 +219,30 @@ describe("AttributeSection", () => {
     expect(
       within(swatchGrid).getByRole("button", { name: /146305 - azul aruba/i }),
     ).toBeTruthy();
+  });
+
+  it("muestra y actualiza el valor personalizado cuando la opcion seleccionada lo permite", () => {
+    const baseProps = {
+      ...createProps(),
+      group: {
+        ...createProps().group,
+        label: "¿Texto en manga derecha?",
+        options: [
+          { id: 10, name: "No", allowsCustomValue: false },
+          { id: 11, name: "Si", allowsCustomValue: true },
+        ],
+      },
+      selectedValueIds: [11],
+      customValuesByValueId: { "11": "LA ROCA" },
+      selectionLabel: "Si",
+    };
+
+    render(<AttributeSection {...baseProps} expanded />);
+
+    const input = screen.getByLabelText(/valor personalizado para si/i);
+    expect((input as HTMLInputElement).value).toBe("LA ROCA");
+
+    fireEvent.change(input, { target: { value: "NUEVO TEXTO" } });
+    expect(baseProps.onCustomValueChange).toHaveBeenCalledWith(11, "NUEVO TEXTO");
   });
 });

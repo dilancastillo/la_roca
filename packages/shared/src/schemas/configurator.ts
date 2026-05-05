@@ -6,6 +6,7 @@ export const configuratorValueSchema = z.object({
   attributeId: z.number(),
   attributeName: z.string().min(1),
   colorHex: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/).optional(),
+  allowsCustomValue: z.boolean().optional(),
 });
 
 export const configuratorAttributeSchema = z.object({
@@ -48,6 +49,7 @@ export const configuratorSessionSchema = z.object({
   graphicManifestKey: z.string().min(1),
   attributes: z.array(configuratorAttributeSchema),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
+  customValuesByValueId: z.record(z.string(), z.string()).optional(),
   exclusions: z.array(exclusionRuleSchema),
   status: configuratorStatusSchema,
   existingDesignBase64: z.string().min(1).nullable().optional(),
@@ -61,6 +63,7 @@ export const saveDesignRequestSchema = z.object({
   filename: z.string().min(1).max(140),
   imageBase64: z.string().min(1),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
+  customValuesByValueId: z.record(z.string(), z.string()).optional(),
 });
 
 export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;

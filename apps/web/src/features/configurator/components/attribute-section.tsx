@@ -4,9 +4,11 @@ import type { UiAttributeGroup } from "../lib/derive-configurator-ui";
 type Props = {
   group: UiAttributeGroup;
   selectedValueIds: number[];
+  customValuesByValueId: Record<string, string>;
   disabledValueIds: Set<number>;
   onSelect: (valueId: number) => void;
   onToggle: (valueId: number) => void;
+  onCustomValueChange: (valueId: number, value: string) => void;
   expanded: boolean;
   selectionLabel: string;
   onExpandToggle: () => void;
@@ -16,9 +18,11 @@ type Props = {
 export function AttributeSection({
   group,
   selectedValueIds,
+  customValuesByValueId,
   disabledValueIds,
   onSelect,
   onToggle,
+  onCustomValueChange,
   expanded,
   selectionLabel,
   onExpandToggle,
@@ -33,6 +37,14 @@ export function AttributeSection({
   const selectedValueIdSet = useMemo(
     () => new Set(selectedValueIds),
     [selectedValueIds],
+  );
+  const selectedCustomOptions = useMemo(
+    () =>
+      group.options.filter(
+        (option) =>
+          option.allowsCustomValue && selectedValueIdSet.has(option.id),
+      ),
+    [group.options, selectedValueIdSet],
   );
   const availableOptions = useMemo(
     () =>
@@ -300,6 +312,26 @@ export function AttributeSection({
               No hay opciones disponibles con la combinacion actual.
             </div>
           )}
+
+          {selectedCustomOptions.length > 0 ? (
+            <div className="custom-value-fields">
+              {selectedCustomOptions.map((option) => (
+                <label key={option.id} className="custom-value-field">
+                  <span>Valor personalizado para {option.name}</span>
+                  <input
+                    type="text"
+                    value={customValuesByValueId[String(option.id)] ?? ""}
+                    placeholder="Escribe el texto exactamente como debe quedar"
+                    disabled={disabled}
+                    maxLength={120}
+                    onChange={(event) =>
+                      onCustomValueChange(option.id, event.target.value)
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

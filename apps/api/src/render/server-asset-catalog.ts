@@ -1,4 +1,5 @@
 import {
+  getDefaultVisualAssetPath,
   getVisualAssetPath,
   resolveVisualAssetCatalog,
   type VisualAssetCatalog,
@@ -16,4 +17,8 @@ export function getServerAssetPathByIds(
   valueId: number,
 ) {
   return getVisualAssetPath(graphicManifestKey, attributeId, valueId);
+}
+
+export function getServerDefaultAssetPath(graphicManifestKey: string) {
+  return getDefaultVisualAssetPath(graphicManifestKey);
 }

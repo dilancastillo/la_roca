@@ -26,15 +26,34 @@ export const overlayRegionPresets: Record<
   OverlayRegion[]
 > = {
   lowerPocketPair: [
-    { x: 96, y: 548, width: 708, height: 470 },
+    { x: 260, y: 690, width: 180, height: 340 },
+    { x: 485, y: 690, width: 190, height: 340 },
   ],
   lowerPocketSingleRight: [
-    { x: 450, y: 548, width: 354, height: 470 },
+    { x: 485, y: 690, width: 190, height: 340 },
   ],
   auxiliaryPocketPair: [
     { x: 116, y: 518, width: 248, height: 356 },
     { x: 536, y: 518, width: 248, height: 356 },
   ],
+};
+
+const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
+  collar: [{ x: 320, y: 100, width: 270, height: 300 }],
+};
+
+const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-14.svg": [1, 2, 3, 4, 5, 6],
+  "blouse-model-15.svg": [4, 5, 6, 7],
+  "blouse-model-16.svg": [1, 2, 3, 4, 5],
+  "blouse-model-18.svg": [1, 2, 3],
+  "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
+  "blouse-model-20.svg": [1, 2, 3],
+};
+
+const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-08.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
 };
 
 export function getOverlayRegionPreset(
@@ -52,6 +71,8 @@ const imageCache = new Map<string, Promise<ProcessedImage>>();
 const maskCache = new Map<string, Promise<HTMLCanvasElement>>();
 const rasterCache = new Map<string, Promise<HTMLCanvasElement>>();
 const detailOverlayCache = new Map<string, Promise<HTMLCanvasElement>>();
+const svgObjectUrlCache = new Map<string, Promise<string>>();
+const lowerPocketDetailObjectUrlCache = new Map<string, Promise<string>>();
 
 function normalize(value: string) {
   return value
@@ -61,13 +82,169 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
+function isSvgSource(src: string) {
+  return src.split("?")[0]?.toLowerCase().endsWith(".svg") ?? false;
+}
+
+function getFileNameFromSource(src: string) {
+  return decodeURIComponent(src.split("?")[0]?.split("/").pop() ?? "");
+}
+
+function getTrimSectionColor(
+  scene: PreviewScene,
+  matcher: (section: PreviewScene["trimSections"][number]) => boolean,
+) {
+  return scene.trimSections.find(matcher)?.colorHex;
+}
+
+function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
+  return normalize(section.label || section.key) === "cuello";
+}
+
+function isLowerPocketTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = normalize(section.label || section.key);
+
+  return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
+}
+
+function getSvgViewBox(svgText: string) {
+  const match = svgText.match(
+    /viewBox=["']\s*([-\d.]+)[,\s]+([-\d.]+)[,\s]+([-\d.]+)[,\s]+([-\d.]+)\s*["']/i,
+  );
+
+  if (!match) {
+    return undefined;
+  }
+
+  const width = Number(match[3]);
+  const height = Number(match[4]);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  return { width, height };
+}
+
+function withExplicitSvgDimensions(svgText: string) {
+  const viewBox = getSvgViewBox(svgText);
+
+  if (!viewBox) {
+    return svgText;
+  }
+
+  const aspectRatio = viewBox.width / viewBox.height;
+  let renderWidth = Math.max(Math.round(viewBox.width), CANVAS_WIDTH);
+  let renderHeight = Math.round(renderWidth / aspectRatio);
+
+  if (renderHeight < CANVAS_HEIGHT) {
+    renderHeight = CANVAS_HEIGHT;
+    renderWidth = Math.round(renderHeight * aspectRatio);
+  }
+
+  return svgText.replace(/<svg\b([^>]*)>/i, (match, attributes: string) => {
+    const widthAttribute = /\swidth\s*=/.test(attributes)
+      ? ""
+      : ` width="${renderWidth}"`;
+    const heightAttribute = /\sheight\s*=/.test(attributes)
+      ? ""
+      : ` height="${renderHeight}"`;
+
+    if (!widthAttribute && !heightAttribute) {
+      return match;
+    }
+
+    return `<svg${attributes}${widthAttribute}${heightAttribute}>`;
+  });
+}
+
+async function getRenderableSvgObjectUrl(src: string) {
+  const existing = svgObjectUrlCache.get(src);
+
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const response = await fetch(src);
+
+    if (!response.ok) {
+      throw new Error(`No se pudo cargar ${src}`);
+    }
+
+    const svgText = await response.text();
+    const blob = new Blob([withExplicitSvgDimensions(svgText)], {
+      type: "image/svg+xml",
+    });
+
+    return URL.createObjectURL(blob);
+  })();
+
+  svgObjectUrlCache.set(src, promise);
+  return await promise;
+}
+
+function buildSvgFromDrawableIndexes(svgText: string, indexes: number[]) {
+  const rootAttributes = svgText.match(/<svg\b([^>]*)>/i)?.[1] ?? "";
+  const defs = svgText.match(/<defs\b[\s\S]*?<\/defs>/i)?.[0] ?? "";
+  const drawableTags = [
+    ...svgText.matchAll(
+      /<(?:path|rect|line|polyline|polygon|ellipse|circle)\b[^>]*\/?>/gi,
+    ),
+  ].map((match) => match[0]);
+  const selectedTags = indexes
+    .map((index) => drawableTags[index])
+    .filter((tag): tag is string => Boolean(tag));
+
+  return withExplicitSvgDimensions(
+    `<svg${rootAttributes}>${defs}${selectedTags.join("")}</svg>`,
+  );
+}
+
+async function getLowerPocketDetailObjectUrl(src: string) {
+  const fileName = getFileNameFromSource(src);
+  const detailIndexes = lowerPocketDetailElementIndexesByFileName[fileName];
+
+  if (!detailIndexes) {
+    return undefined;
+  }
+
+  const existing = lowerPocketDetailObjectUrlCache.get(src);
+
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const response = await fetch(src);
+
+    if (!response.ok) {
+      throw new Error(`No se pudo cargar ${src}`);
+    }
+
+    const svgText = await response.text();
+    const blob = new Blob([buildSvgFromDrawableIndexes(svgText, detailIndexes)], {
+      type: "image/svg+xml",
+    });
+
+    return URL.createObjectURL(blob);
+  })();
+
+  lowerPocketDetailObjectUrlCache.set(src, promise);
+  return await promise;
+}
+
 async function loadImage(src: string): Promise<HTMLImageElement> {
+  const imageSrc = isSvgSource(src) ? await getRenderableSvgObjectUrl(src) : src;
+
   return await new Promise((resolve, reject) => {
     const image = new Image();
     image.decoding = "async";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
-    image.src = src;
+    image.src = imageSrc;
   });
 }
 
@@ -88,6 +265,8 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
       throw new Error("No se pudo procesar la imagen.");
     }
 
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
     context.drawImage(image, 0, 0);
 
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -331,56 +510,12 @@ async function getInteriorMask(src: string) {
   return await promise;
 }
 
-function drawChestPocket(
-  context: CanvasRenderingContext2D,
-  pocketLabel?: string,
-) {
-  if (!pocketLabel || normalize(pocketLabel).includes("sin bolsillo")) {
-    return;
-  }
-
-  const label = normalize(pocketLabel);
-  context.save();
-  context.strokeStyle = "#0f172a";
-  context.lineWidth = 7;
-  context.lineJoin = "round";
-  context.lineCap = "round";
-
-  if (label.includes("cremallera visible")) {
-    context.strokeRect(538, 370, 92, 118);
-    context.beginPath();
-    context.moveTo(584, 370);
-    context.lineTo(584, 488);
-    context.stroke();
-  } else if (label.includes("cremallera invisible")) {
-    context.beginPath();
-    context.moveTo(536, 372);
-    context.lineTo(624, 484);
-    context.stroke();
-  } else if (label.includes("velcro")) {
-    context.strokeRect(538, 370, 92, 118);
-    context.fillStyle = "#0f172a";
-    context.fillRect(548, 382, 72, 10);
-  } else {
-    context.beginPath();
-    context.rect(538, 370, 92, 118);
-    context.stroke();
-  }
-
-  context.restore();
-}
-
 function drawTrimSections(
   context: CanvasRenderingContext2D,
   scene: PreviewScene,
 ) {
-  const hasChestPocket =
-    Boolean(scene.chestPocketType) &&
-    !normalize(scene.chestPocketType ?? "").includes("sin bolsillo");
-
   for (const section of scene.trimSections) {
     const key = normalize(section.label || section.key);
-    const role = section.role ?? key;
     context.save();
     context.strokeStyle = section.colorHex;
     context.fillStyle = section.colorHex;
@@ -388,56 +523,11 @@ function drawTrimSections(
     context.lineJoin = "round";
     context.lineCap = "round";
 
-    if (role === "backNeck") {
-      context.beginPath();
-      context.moveTo(388, 155);
-      context.bezierCurveTo(420, 178, 480, 178, 512, 155);
-      context.stroke();
-    } else if (role === "upperNeck" || key.includes("cuello superior")) {
-      context.beginPath();
-      context.moveTo(392, 182);
-      context.bezierCurveTo(418, 246, 482, 246, 508, 182);
-      context.stroke();
-    } else if (role === "lowerNeck" || key.includes("cuello inferior")) {
-      context.beginPath();
-      context.moveTo(382, 186);
-      context.lineTo(450, 366);
-      context.lineTo(518, 186);
-      context.stroke();
-    }
-
     if (key.includes("frente") || key.includes("central")) {
       context.beginPath();
       context.moveTo(450, 205);
       context.lineTo(450, 978);
       context.stroke();
-    }
-
-    if (role === "chestPocket" || key.includes("pecho")) {
-      if (hasChestPocket) {
-        context.strokeRect(536, 368, 98, 124);
-      } else {
-        context.strokeRect(530, 362, 110, 128);
-      }
-    }
-
-    if (role === "lowerPockets" || key.includes("bolsillos inferiores")) {
-      if (scene.lowerPocketLayout === "none") {
-        context.restore();
-        continue;
-      }
-
-      if (scene.lowerPocketLayout === "single") {
-        context.strokeRect(546, 736, 112, 136);
-      } else {
-        context.strokeRect(350, 736, 112, 136);
-        context.strokeRect(546, 736, 112, 136);
-      }
-    }
-
-    if (role === "auxiliaryPocket" || key.includes("bolsillo auxiliar")) {
-      context.strokeRect(326, 670, 118, 154);
-      context.strokeRect(556, 670, 118, 154);
     }
 
     context.restore();
@@ -452,15 +542,19 @@ async function drawFullOverlay(
   context.drawImage(rasterCanvas, 0, 0);
 }
 
-export async function createRasterCanvas(src: string) {
-  const existing = rasterCache.get(src);
+export async function createRasterCanvas(src: string, placementSrc = src) {
+  const cacheKey = `${src}::${placementSrc}`;
+  const existing = rasterCache.get(cacheKey);
   if (existing) {
     return await existing;
   }
 
   const promise = (async () => {
-    const processed = await getProcessedImage(src);
-    const { bounds } = processed;
+    const [processed, placement] = await Promise.all([
+      getProcessedImage(src),
+      placementSrc === src ? getProcessedImage(src) : getProcessedImage(placementSrc),
+    ]);
+    const { bounds } = placement;
     const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
     const rasterCanvas = document.createElement("canvas");
     rasterCanvas.width = CANVAS_WIDTH;
@@ -471,6 +565,8 @@ export async function createRasterCanvas(src: string) {
       throw new Error("No se pudo rasterizar el asset.");
     }
 
+    rasterContext.imageSmoothingEnabled = true;
+    rasterContext.imageSmoothingQuality = "high";
     rasterContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     rasterContext.drawImage(
       processed.canvas,
@@ -487,7 +583,7 @@ export async function createRasterCanvas(src: string) {
     return rasterCanvas;
   })();
 
-  rasterCache.set(src, promise);
+  rasterCache.set(cacheKey, promise);
   return await promise;
 }
 
@@ -623,6 +719,100 @@ async function drawOverlayInRegions(
   }
 }
 
+function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = canvas.width;
+  outputCanvas.height = canvas.height;
+  const outputContext = outputCanvas.getContext("2d");
+
+  if (!outputContext) {
+    throw new Error("No se pudo colorear el detalle del asset.");
+  }
+
+  outputContext.drawImage(canvas, 0, 0);
+  outputContext.globalCompositeOperation = "source-in";
+  outputContext.fillStyle = colorHex;
+  outputContext.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+  outputContext.globalCompositeOperation = "source-over";
+
+  return outputCanvas;
+}
+
+function drawCanvasInRegions(
+  context: CanvasRenderingContext2D,
+  sourceCanvas: HTMLCanvasElement,
+  regions: OverlayRegion[],
+) {
+  for (const region of regions) {
+    context.save();
+    context.beginPath();
+    context.rect(region.x, region.y, region.width, region.height);
+    context.clip();
+    context.drawImage(sourceCanvas, 0, 0);
+    context.restore();
+  }
+}
+
+async function drawDetailOverlayInRegions(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  baseSrc: string | undefined,
+  regions: OverlayRegion[],
+) {
+  if (!baseSrc) {
+    await drawOverlayInRegions(context, sourceSrc, regions);
+    return;
+  }
+
+  const detailOverlay = await createDetailOverlayCanvas(
+    sourceSrc,
+    baseSrc,
+    regions,
+    14,
+  );
+  context.drawImage(detailOverlay, 0, 0);
+}
+
+async function drawLowerPocketOverlay(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  regions: OverlayRegion[],
+  trimColor?: string,
+) {
+  const detailSrc = await getLowerPocketDetailObjectUrl(sourceSrc);
+  const rasterCanvas = await createRasterCanvas(detailSrc ?? sourceSrc, sourceSrc);
+  const outputCanvas = trimColor
+    ? recolorCanvasInk(rasterCanvas, trimColor)
+    : rasterCanvas;
+
+  drawCanvasInRegions(context, outputCanvas, regions);
+}
+
+async function drawCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string | undefined,
+  trimColor: string | undefined,
+) {
+  if (!sourceSrc || !trimColor) {
+    return;
+  }
+
+  const overlaySrc = collarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (overlaySrc) {
+    const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    return;
+  }
+
+  const collarRegions = trimRegionPresets.collar;
+  const tintedCanvas = await createTintedBaseCanvas(sourceSrc, trimColor);
+  const inkCanvas = recolorCanvasInk(await createRasterCanvas(sourceSrc), trimColor);
+
+  drawCanvasInRegions(context, tintedCanvas, collarRegions);
+  drawCanvasInRegions(context, inkCanvas, collarRegions);
+}
+
 export async function createTintedBaseCanvas(src: string, fillColor: string) {
   const processed = await getProcessedImage(src);
   const mask = await getInteriorMask(src);
@@ -636,6 +826,9 @@ export async function createTintedBaseCanvas(src: string, fillColor: string) {
   if (!tintContext) {
     throw new Error("No se pudo generar la base coloreada.");
   }
+
+  tintContext.imageSmoothingEnabled = true;
+  tintContext.imageSmoothingQuality = "high";
 
   const fillCanvas = document.createElement("canvas");
   fillCanvas.width = processed.canvas.width;
@@ -703,36 +896,54 @@ export async function composeDesign(
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  if (scene.neckImageSrc) {
+  const usesGenericGarmentAsset = Boolean(scene.garmentImageSrc);
+
+  if (scene.garmentImageSrc) {
+    await drawTintedBaseFromAsset(
+      context,
+      scene.garmentImageSrc,
+      scene.baseColorHex,
+    );
+  } else if (scene.neckImageSrc) {
     await drawTintedBaseFromAsset(context, scene.neckImageSrc, scene.baseColorHex);
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
     drawGarmentBase(context, "transparent");
   }
 
-  drawChestPocket(context, scene.chestPocketType);
-
-  if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
-    await drawOverlayInRegions(
-      context,
-      scene.lowerPocketImageSrc,
-      getOverlayRegionPreset(
-        scene.lowerPocketLayout === "single"
-          ? "lowerPocketSingleRight"
-          : "lowerPocketPair",
-      ),
+  if (!usesGenericGarmentAsset) {
+    const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
+    const lowerPocketTrimColor = getTrimSectionColor(
+      scene,
+      isLowerPocketTrimSection,
     );
-  }
 
-  if (scene.auxiliaryPocketImageSrc) {
-    await drawOverlayInRegions(
-      context,
-      scene.auxiliaryPocketImageSrc,
-      getOverlayRegionPreset("auxiliaryPocketPair"),
-    );
-  }
+    await drawCollarTrimFromAsset(context, scene.neckImageSrc, collarTrimColor);
 
-  drawTrimSections(context, scene);
+    if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
+      await drawLowerPocketOverlay(
+        context,
+        scene.lowerPocketImageSrc,
+        getOverlayRegionPreset(
+          scene.lowerPocketLayout === "single"
+            ? "lowerPocketSingleRight"
+            : "lowerPocketPair",
+        ),
+        lowerPocketTrimColor,
+      );
+    }
+
+    if (scene.auxiliaryPocketImageSrc) {
+      await drawDetailOverlayInRegions(
+        context,
+        scene.auxiliaryPocketImageSrc,
+        scene.neckImageSrc,
+        getOverlayRegionPreset("auxiliaryPocketPair"),
+      );
+    }
+
+    drawTrimSections(context, scene);
+  }
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {

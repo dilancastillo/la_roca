@@ -33,6 +33,7 @@ export function DesignPreviewCanvas({ scene, readOnly, onBlobReady }: Props) {
 
       setStatus("rendering");
       setErrorMessage(null);
+      onBlobReady(null);
 
       try {
         const blob = await composeDesign(canvasRef.current, scene);

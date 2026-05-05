@@ -1,5 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import {
+  getLowerPocketLayout,
+  type LowerPocketLayout,
+} from "@repo/shared/lower-pocket-rules";
+import {
+  getServerDefaultAssetPath,
   getServerAssetPathByIds,
   getServerProductAssetCatalog,
 } from "./server-asset-catalog.js";
@@ -7,8 +12,10 @@ import {
 export type AutomationRenderScene = {
   productName: string;
   baseColorHex: string;
+  garmentAssetPath?: string;
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
+  lowerPocketLayout: LowerPocketLayout;
   auxiliaryPocketAssetPath?: string;
   chestPocketType?: string;
   trimSections: Array<{
@@ -88,13 +95,23 @@ function getSelectedTrimSections(
   }
 
   const enabledSections = getSelectedOptions(sectionAttribute, selectedValueIds);
+  const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   if (enabledSections.length === 0) {
     return [];
   }
 
+  const hasNoTrimSelection = enabledSections.some((section) => {
+    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0];
+
+    return role === "none" || normalize(section.name) === "sin vivos";
+  });
+
+  if (hasNoTrimSelection) {
+    return [];
+  }
+
   const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
-  const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   return enabledSections.map((section) => {
     const matchingColorAttribute = colorAttributes.find((attribute) =>
@@ -135,6 +152,14 @@ export function deriveAutomationRenderScene(
       (attribute) => attribute.id === catalog?.attributeIds.neckModel,
     ) ??
     findAttributeByName(session, (name) => name.includes("modelo de cuello"));
+  const garmentAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.garmentModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      name.includes("modelo de pantalon") ||
+      name.includes("modelo pantalon"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) => attribute.id === catalog?.attributeIds.lowerPocketModel,
@@ -155,6 +180,7 @@ export function deriveAutomationRenderScene(
   );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
+  const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
@@ -168,6 +194,14 @@ export function deriveAutomationRenderScene(
     chestPocketTypeAttribute,
     selectedValueIds,
   );
+  const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
+  const garmentAssetPath = selectedGarment
+    ? getServerAssetPathByIds(
+        session.graphicManifestKey,
+        garmentAttribute?.id ?? 0,
+        selectedGarment.id,
+      ) ?? getServerDefaultAssetPath(session.graphicManifestKey)
+    : getServerDefaultAssetPath(session.graphicManifestKey);
   const neckAssetPath = selectedNeck
     ? getServerAssetPathByIds(
         session.graphicManifestKey,
@@ -193,8 +227,12 @@ export function deriveAutomationRenderScene(
   return {
     productName: session.productName,
     baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
+    ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
-    ...(lowerPocketAssetPath ? { lowerPocketAssetPath } : {}),
+    ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
+      ? { lowerPocketAssetPath }
+      : {}),
+    lowerPocketLayout,
     ...(auxiliaryPocketAssetPath ? { auxiliaryPocketAssetPath } : {}),
     ...(selectedChestPocketType?.name
       ? { chestPocketType: selectedChestPocketType.name }

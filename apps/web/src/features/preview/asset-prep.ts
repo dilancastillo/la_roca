@@ -20,7 +20,7 @@ export function getAssetEntries(
         ? catalog.auxiliaryPocketModelsByValueId
         : catalog.lowerPocketModelsByValueId;
 
-  return Object.entries(assetsByValueId)
+  return Object.entries(assetsByValueId ?? {})
     .map(([valueId, src]) => ({
       label: buildAssetOptionLabel(Number(valueId), src),
       src: src.startsWith("/") ? src : `/${src}`,

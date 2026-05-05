@@ -12,6 +12,7 @@ export async function saveDesign(
   lineId: number,
   blob: Blob,
   selectedValueIds: Record<string, number[]>,
+  customValuesByValueId: Record<string, string>,
 ) {
   const imageBase64 = await blobToBase64(blob);
 
@@ -27,6 +28,7 @@ export async function saveDesign(
       filename: `sale-line-${lineId}-design.png`,
       imageBase64,
       selectedValueIds,
+      customValuesByValueId,
     }),
   });
 

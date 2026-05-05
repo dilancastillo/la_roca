@@ -5,10 +5,10 @@ import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 import { AttributeSection } from "../features/configurator/components/attribute-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
-import { getNextAutoExpandedAttributeId } from "../features/configurator/lib/attribute-auto-advance";
 import {
   computeDisabledValueIds,
   deriveConfiguratorUi,
+  type UiAttributeGroup,
 } from "../features/configurator/lib/derive-configurator-ui";
 import { sanitizeSelectedValueIdsForExclusions } from "../features/configurator/lib/selection-exclusions";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
@@ -26,6 +26,46 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isNoTrimValueName(value: string) {
+  return normalizeText(value) === "sin vivos";
+}
+
+function shouldKeepSectionOpenAfterSelection(
+  group: UiAttributeGroup,
+  selectedValueId?: number,
+) {
+  if (
+    selectedValueId !== undefined &&
+    group.options.some(
+      (option) => option.id === selectedValueId && option.allowsCustomValue,
+    )
+  ) {
+    return true;
+  }
+
+  if (group.controlType === "color" || group.controlType === "image") {
+    return true;
+  }
+
+  const label = normalizeText(group.label);
+  const isModelSection = label.includes("modelo");
+
+  return (
+    isModelSection &&
+    (label.includes("bolsillo") ||
+      label.includes("cuello") ||
+      label.includes("pantalon"))
+  );
+}
+
 export function ConfiguratorPage() {
   const { saleOrderLineId } = useParams();
   const location = useLocation();
@@ -36,6 +76,7 @@ export function ConfiguratorPage() {
 
   const [state, dispatch] = useReducer(configuratorReducer, {
     selectedValueIds: {},
+    customValuesByValueId: {},
   });
   const [currentBlob, setCurrentBlob] = useState<Blob | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +85,7 @@ export function ConfiguratorPage() {
   const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
+  const hasInitializedExpandedAttributeRef = useRef(false);
 
   const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
   const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
@@ -55,10 +97,13 @@ export function ConfiguratorPage() {
 
     dispatch({
       type: "INITIALIZE",
-      value: sanitizeSelectedValueIdsForExclusions(
-        sessionQuery.data,
-        sessionQuery.data.selectedValueIds,
-      ),
+      value: {
+        selectedValueIds: sanitizeSelectedValueIdsForExclusions(
+          sessionQuery.data,
+          sessionQuery.data.selectedValueIds,
+        ),
+        customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
+      },
     });
   }, [sessionQuery.data]);
 
@@ -93,8 +138,14 @@ export function ConfiguratorPage() {
       (group) => group.attributeId === expandedAttributeId,
     );
 
-    if (!expandedStillExists) {
+    if (!hasInitializedExpandedAttributeRef.current) {
+      hasInitializedExpandedAttributeRef.current = true;
       setExpandedAttributeId(firstIncompleteGroup?.attributeId ?? null);
+      return;
+    }
+
+    if (expandedAttributeId !== null && !expandedStillExists) {
+      setExpandedAttributeId(null);
     }
   }, [expandedAttributeId, state.selectedValueIds, uiModel]);
 
@@ -175,17 +226,14 @@ export function ConfiguratorPage() {
     }`.trim();
   }
 
-  function scrollToAttributeSection(attributeId: number | null) {
-    if (attributeId === null) {
+  function collapseAfterSelection(attributeId: number, selectedValueId?: number) {
+    const group = ui.groups.find((item) => item.attributeId === attributeId);
+
+    if (!group || shouldKeepSectionOpenAfterSelection(group, selectedValueId)) {
       return;
     }
 
-    window.setTimeout(() => {
-      attributeSectionRefs.current.get(attributeId)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 0);
+    setExpandedAttributeId(null);
   }
 
   function handleSingleSelect(attributeId: number, valueId: number) {
@@ -198,27 +246,21 @@ export function ConfiguratorPage() {
       nextSelectedValueIds,
       valueId,
     );
-    const nextDisabledValueIds = computeDisabledValueIds(
-      session,
-      sanitizedSelectedValueIds,
-    );
-    const nextExpandedAttributeId = getNextAutoExpandedAttributeId({
-      groups: ui.groups,
-      currentAttributeId: attributeId,
-      selectedValueIds: sanitizedSelectedValueIds,
-      disabledValueIds: nextDisabledValueIds,
-    });
 
     dispatch({
       type: "SET_SELECTIONS",
       value: sanitizedSelectedValueIds,
     });
-    setExpandedAttributeId(nextExpandedAttributeId);
-    scrollToAttributeSection(nextExpandedAttributeId);
+    collapseAfterSelection(attributeId, valueId);
   }
 
   function handleMultiToggle(attributeId: number, valueId: number) {
     const key = String(attributeId);
+    const group = ui.groups.find((item) => item.attributeId === attributeId);
+    const toggledOption = group?.options.find((option) => option.id === valueId);
+    const noTrimOption = group?.options.find((option) =>
+      isNoTrimValueName(option.name),
+    );
     const current = new Set(state.selectedValueIds[key] ?? []);
     const isSelecting = !current.has(valueId);
 
@@ -226,6 +268,13 @@ export function ConfiguratorPage() {
       current.add(valueId);
     } else {
       current.delete(valueId);
+    }
+
+    if (isSelecting && toggledOption && isNoTrimValueName(toggledOption.name)) {
+      current.clear();
+      current.add(valueId);
+    } else if (isSelecting && noTrimOption) {
+      current.delete(noTrimOption.id);
     }
 
     const nextSelectedValueIds = {
@@ -241,6 +290,7 @@ export function ConfiguratorPage() {
         isSelecting ? valueId : undefined,
       ),
     });
+    collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
   }
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
@@ -260,7 +310,12 @@ export function ConfiguratorPage() {
 
     try {
       setIsSaving(true);
-      const result = await saveDesign(lineId, currentBlob, state.selectedValueIds);
+      const result = await saveDesign(
+        lineId,
+        currentBlob,
+        state.selectedValueIds,
+        state.customValuesByValueId,
+      );
       await sessionQuery.refetch();
       setSaveMessage(
         `Diseno guardado correctamente. Version ${result.version} lista para Odoo.`,
@@ -387,6 +442,7 @@ export function ConfiguratorPage() {
                       disabled={isReadOnly}
                       expanded={expandedAttributeId === group.attributeId}
                       selectionLabel={getSelectionLabel(group.attributeId)}
+                      customValuesByValueId={state.customValuesByValueId}
                       onExpandToggle={() =>
                         setExpandedAttributeId((current) =>
                           current === group.attributeId ? null : group.attributeId,
@@ -397,6 +453,9 @@ export function ConfiguratorPage() {
                       }
                       onToggle={(valueId) =>
                         handleMultiToggle(group.attributeId, valueId)
+                      }
+                      onCustomValueChange={(valueId, value) =>
+                        dispatch({ type: "SET_CUSTOM_VALUE", valueId, value })
                       }
                     />
                   </div>
@@ -417,9 +476,15 @@ export function ConfiguratorPage() {
                 <button
                   type="submit"
                   className="primary-button"
-                  disabled={isSaving || isReadOnly}
+                  disabled={isSaving || isReadOnly || !currentBlob}
                 >
-                  {isSaving ? "Guardando..." : isReadOnly ? "Solo lectura" : "Guardar diseno"}
+                  {isSaving
+                    ? "Guardando..."
+                    : isReadOnly
+                      ? "Solo lectura"
+                      : currentBlob
+                        ? "Guardar diseno"
+                        : "Preparando imagen..."}
                 </button>
 
                 {saveMessage ? (

@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { getImageSourceByIds, getProductAssetCatalog } from "./asset-catalog";
+import {
+  getDefaultImageSource,
+  getImageSourceByIds,
+  getProductAssetCatalog,
+} from "./asset-catalog";
 
 describe("getProductAssetCatalog", () => {
   it("resuelve la llave exacta del catalogo", () => {
     const catalog = getProductAssetCatalog("blusa-antifluido-t180");
 
-    expect(catalog?.neckModelsByValueId[2592]).toBe(
+    expect(catalog?.neckModelsByValueId?.[2592]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-03.svg",
     );
   });
@@ -30,5 +34,11 @@ describe("getProductAssetCatalog", () => {
 
   it("no usa nombres como fallback cuando falta un ID mapeado", () => {
     expect(getImageSourceByIds("blusa-antifluido-t180", 63, 999999)).toBeUndefined();
+  });
+
+  it("resuelve el SVG base de pantalon por la llave normalizada de Odoo", () => {
+    expect(getDefaultImageSource("pantalon")).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
   });
 });

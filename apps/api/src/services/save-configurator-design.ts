@@ -33,6 +33,27 @@ function parseSelectedValueIds(
   ) as Record<string, number[]>;
 }
 
+function parseCustomValuesByValueId(
+  customValuesByValueId: SaveDesignRequest["customValuesByValueId"],
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(customValuesByValueId ?? {}).flatMap(([key, value]) => {
+      const valueId = Number(key);
+
+      if (!Number.isFinite(valueId)) {
+        return [];
+      }
+
+      return [
+        [
+          String(valueId),
+          typeof value === "string" ? value : "",
+        ],
+      ];
+    }),
+  );
+}
+
 function setsMatch(left: number[], right: number[]) {
   if (left.length !== right.length) {
     return false;
@@ -88,6 +109,10 @@ async function findExactVariant(
   session: ConfiguratorSession,
   variantValueIds: number[],
 ) {
+  if (variantValueIds.length === 0) {
+    return undefined;
+  }
+
   const variants = await odooSearchRead<ProductVariantRecord>(
     env,
     "product.product",
@@ -117,6 +142,9 @@ export async function saveConfiguratorDesign(
     session,
     parseSelectedValueIds(payload.selectedValueIds),
   );
+  const customValuesByValueId = parseCustomValuesByValueId(
+    payload.customValuesByValueId,
+  );
   const validationErrors = validateSelections(session, selectedValueIds);
 
   if (validationErrors.length > 0) {
@@ -132,17 +160,34 @@ export async function saveConfiguratorDesign(
     .flatMap((attribute) => selectedValueIds[String(attribute.id)] ?? []);
 
   const matchingVariant = await findExactVariant(env, session, variantValueIds);
+  const productId = matchingVariant?.id ?? session.productId;
+  const selectedCustomValueIds = new Set(
+    Object.values(selectedValueIds).flatMap((valueIds) => valueIds),
+  );
+  const customValueCommands: unknown[] = [[5, 0, 0]];
 
-  if (!matchingVariant) {
-    throw new Error(
-      "No existe una variante exacta para la combinacion seleccionada. Ajusta color, genero o talla y vuelve a intentar.",
-    );
+  for (const attribute of session.attributes) {
+    for (const value of attribute.values) {
+      if (!value.allowsCustomValue || !selectedCustomValueIds.has(value.id)) {
+        continue;
+      }
+
+      customValueCommands.push([
+        0,
+        0,
+        {
+          custom_product_template_attribute_value_id: value.id,
+          custom_value: customValuesByValueId[String(value.id)] ?? "",
+        },
+      ]);
+    }
   }
 
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
-    product_id: matchingVariant.id,
+    product_id: productId,
+    product_template_attribute_value_ids: [[6, 0, variantValueIds]],
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
-    product_custom_attribute_value_ids: [[5, 0, 0]],
+    product_custom_attribute_value_ids: customValueCommands,
   });
 
   return {
@@ -152,6 +197,7 @@ export async function saveConfiguratorDesign(
       imageBase64: payload.imageBase64,
       currentVersion: session.status.version,
     })),
-    productId: matchingVariant.id,
+    productId,
+    variantResolution: matchingVariant ? "product_variant" : "line_attribute_values",
   };
 }
