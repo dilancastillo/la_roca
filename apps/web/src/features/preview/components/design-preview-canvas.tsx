@@ -4,11 +4,17 @@ import { composeDesign } from "../canvas-renderer";
 
 type Props = {
   scene: PreviewScene;
+  renderKey: string;
   readOnly: boolean;
-  onBlobReady: (blob: Blob | null) => void;
+  onBlobReady: (renderKey: string, blob: Blob | null) => void;
 };
 
-export function DesignPreviewCanvas({ scene, readOnly, onBlobReady }: Props) {
+export function DesignPreviewCanvas({
+  scene,
+  renderKey,
+  readOnly,
+  onBlobReady,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [status, setStatus] = useState<"idle" | "rendering" | "ready" | "error">(
     "idle",
@@ -33,7 +39,7 @@ export function DesignPreviewCanvas({ scene, readOnly, onBlobReady }: Props) {
 
       setStatus("rendering");
       setErrorMessage(null);
-      onBlobReady(null);
+      onBlobReady(renderKey, null);
 
       try {
         const blob = await composeDesign(canvasRef.current, scene);
@@ -42,14 +48,14 @@ export function DesignPreviewCanvas({ scene, readOnly, onBlobReady }: Props) {
           return;
         }
 
-        onBlobReady(blob);
+        onBlobReady(renderKey, blob);
         setStatus("ready");
       } catch (error) {
         if (cancelled) {
           return;
         }
 
-        onBlobReady(null);
+        onBlobReady(renderKey, null);
         setStatus("error");
         setErrorMessage(
           error instanceof Error
@@ -64,7 +70,7 @@ export function DesignPreviewCanvas({ scene, readOnly, onBlobReady }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [scene, onBlobReady]);
+  }, [scene, renderKey, onBlobReady]);
 
   return (
     <section className="preview-card" aria-labelledby="preview-title">

@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
@@ -13,6 +14,11 @@ import {
 import { sanitizeSelectedValueIdsForExclusions } from "../features/configurator/lib/selection-exclusions";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
 import { DesignPreviewCanvas } from "../features/preview/components/design-preview-canvas";
+import {
+  applyRenderedPreviewUpdate,
+  createPreviewSceneKey,
+  type RenderedPreview,
+} from "../features/preview/rendered-preview";
 import { saveDesign } from "../features/save-design/save-design";
 
 function formatDateTime(value: string | null) {
@@ -78,7 +84,7 @@ export function ConfiguratorPage() {
     selectedValueIds: {},
     customValuesByValueId: {},
   });
-  const [currentBlob, setCurrentBlob] = useState<Blob | null>(null);
+  const [currentPreview, setCurrentPreview] = useState<RenderedPreview | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -86,6 +92,9 @@ export function ConfiguratorPage() {
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
   const hasInitializedExpandedAttributeRef = useRef(false);
+  const initializedLineIdRef = useRef<number | null>(null);
+  const latestPreviewSceneKeyRef = useRef("");
+  const previousLineIdRef = useRef<number | null>(null);
 
   const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
   const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
@@ -95,6 +104,11 @@ export function ConfiguratorPage() {
       return;
     }
 
+    if (initializedLineIdRef.current === lineId) {
+      return;
+    }
+
+    initializedLineIdRef.current = lineId;
     dispatch({
       type: "INITIALIZE",
       value: {
@@ -105,7 +119,7 @@ export function ConfiguratorPage() {
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
     });
-  }, [sessionQuery.data]);
+  }, [lineId, sessionQuery.data]);
 
   const uiModel = useMemo(() => {
     if (!sessionQuery.data) {
@@ -114,6 +128,37 @@ export function ConfiguratorPage() {
 
     return deriveConfiguratorUi(sessionQuery.data, state.selectedValueIds);
   }, [sessionQuery.data, state.selectedValueIds]);
+
+  const previewSceneKey = useMemo(
+    () => (uiModel ? createPreviewSceneKey(uiModel.previewScene) : ""),
+    [uiModel],
+  );
+
+  useEffect(() => {
+    latestPreviewSceneKeyRef.current = previewSceneKey;
+  }, [previewSceneKey]);
+
+  useEffect(() => {
+    if (previousLineIdRef.current === lineId) {
+      return;
+    }
+
+    previousLineIdRef.current = lineId;
+    hasInitializedExpandedAttributeRef.current = false;
+    setExpandedAttributeId(null);
+    setCurrentPreview(null);
+  }, [lineId]);
+
+  const handleBlobReady = useCallback((renderKey: string, blob: Blob | null) => {
+    setCurrentPreview((current) =>
+      applyRenderedPreviewUpdate(
+        current,
+        latestPreviewSceneKeyRef.current,
+        renderKey,
+        blob,
+      ),
+    );
+  }, []);
 
   const disabledValueIds = useMemo(() => {
     if (!sessionQuery.data) {
@@ -303,8 +348,13 @@ export function ConfiguratorPage() {
       return;
     }
 
-    if (!currentBlob) {
-      setSaveError("Aun no existe una imagen lista para guardar.");
+    const previewBlob =
+      currentPreview?.renderKey === previewSceneKey ? currentPreview.blob : null;
+
+    if (!previewBlob) {
+      setSaveError(
+        "La imagen aun se esta actualizando. Espera a que el preview quede en Listo y vuelve a guardar.",
+      );
       return;
     }
 
@@ -312,11 +362,27 @@ export function ConfiguratorPage() {
       setIsSaving(true);
       const result = await saveDesign(
         lineId,
-        currentBlob,
+        previewBlob,
         state.selectedValueIds,
         state.customValuesByValueId,
       );
-      await sessionQuery.refetch();
+      queryClient.setQueryData<ConfiguratorSession>(
+        ["configurator-session", lineId],
+        (current) =>
+          current
+            ? {
+                ...current,
+                productId: result.productId ?? current.productId,
+                selectedValueIds: state.selectedValueIds,
+                customValuesByValueId: state.customValuesByValueId,
+                status: {
+                  ...current.status,
+                  version: result.version ?? current.status.version,
+                  generatedAt: result.generatedAt ?? current.status.generatedAt,
+                },
+              }
+            : current,
+      );
       setSaveMessage(
         `Diseno guardado correctamente. Version ${result.version} lista para Odoo.`,
       );
@@ -476,13 +542,17 @@ export function ConfiguratorPage() {
                 <button
                   type="submit"
                   className="primary-button"
-                  disabled={isSaving || isReadOnly || !currentBlob}
+                  disabled={
+                    isSaving ||
+                    isReadOnly ||
+                    currentPreview?.renderKey !== previewSceneKey
+                  }
                 >
                   {isSaving
                     ? "Guardando..."
                     : isReadOnly
                       ? "Solo lectura"
-                      : currentBlob
+                      : currentPreview?.renderKey === previewSceneKey
                         ? "Guardar diseno"
                         : "Preparando imagen..."}
                 </button>
@@ -506,8 +576,9 @@ export function ConfiguratorPage() {
         <section className="preview-panel" aria-label="Panel de previsualizacion">
           <DesignPreviewCanvas
             scene={ui.previewScene}
+            renderKey={previewSceneKey}
             readOnly={isReadOnly}
-            onBlobReady={setCurrentBlob}
+            onBlobReady={handleBlobReady}
           />
         </section>
       </div>

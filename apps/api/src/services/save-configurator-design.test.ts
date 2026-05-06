@@ -224,4 +224,34 @@ describe("saveConfiguratorDesign", () => {
       }),
     );
   });
+
+  it("rechaza una seleccion vacia para no limpiar atributos en Odoo", async () => {
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: {},
+      }),
+    ).rejects.toThrow(/seleccion llego vacia/i);
+
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+  });
+
+  it("rechaza guardar si falta un atributo de variante requerido", async () => {
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: {
+          "91": [9101],
+        },
+      }),
+    ).rejects.toThrow(/falta seleccionar "color"/i);
+
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+  });
 });

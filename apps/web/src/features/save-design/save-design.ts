@@ -13,7 +13,14 @@ export async function saveDesign(
   blob: Blob,
   selectedValueIds: Record<string, number[]>,
   customValuesByValueId: Record<string, string>,
-) {
+): Promise<{
+  ok?: boolean;
+  attachmentId?: number;
+  version?: number;
+  generatedAt?: string;
+  productId?: number;
+  variantResolution?: string;
+}> {
   const imageBase64 = await blobToBase64(blob);
 
   const response = await fetch("/api/design/save", {
@@ -42,5 +49,5 @@ export async function saveDesign(
     );
   }
 
-  return payload;
+  return payload ?? {};
 }

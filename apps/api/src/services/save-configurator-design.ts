@@ -26,10 +26,20 @@ function parseSelectedValueIds(
   selectedValueIds: SaveDesignRequest["selectedValueIds"],
 ): Record<string, number[]> {
   return Object.fromEntries(
-    Object.entries(selectedValueIds).map(([key, values]) => [
-      String(Number(key)),
-      normalizeManyIds(values).filter((value) => Number.isFinite(value)),
-    ]),
+    Object.entries(selectedValueIds).flatMap(([key, values]) => {
+      const attributeId = Number(key);
+
+      if (!Number.isFinite(attributeId)) {
+        return [];
+      }
+
+      return [
+        [
+          String(attributeId),
+          normalizeManyIds(values).filter((value) => Number.isFinite(value)),
+        ],
+      ];
+    }),
   ) as Record<string, number[]>;
 }
 
@@ -68,10 +78,26 @@ function validateSelections(
   selectedValueIds: Record<string, number[]>,
 ) {
   const errors: string[] = [];
+  const selectedCount = Object.values(selectedValueIds).reduce(
+    (count, valueIds) => count + valueIds.length,
+    0,
+  );
+
+  if (selectedCount === 0) {
+    errors.push(
+      "La seleccion llego vacia al servidor. No se guardo para evitar limpiar la linea en Odoo.",
+    );
+  }
 
   for (const attribute of session.attributes) {
     const selected = selectedValueIds[String(attribute.id)] ?? [];
     const selectedSet = new Set(selected);
+
+    if (attribute.variantMode === "variant" && selected.length === 0) {
+      errors.push(
+        `Falta seleccionar "${attribute.name}". No se guardo para evitar una variante incompleta.`,
+      );
+    }
 
     if (selected.length !== selectedSet.size) {
       errors.push(`El atributo "${attribute.name}" tiene valores repetidos.`);
