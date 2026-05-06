@@ -30,6 +30,16 @@ function readObject(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function readFirstString(...candidates: unknown[]) {
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return null;
+}
+
 export function extractSaleOrderLineIdFromWebhookPayload(payload: unknown) {
   const record = readObject(payload);
 
@@ -82,4 +92,37 @@ export function shouldDryRunAutomation(payload: unknown, dryRunParam: string | n
   const dryRunValue = record?.dryRun ?? record?.dry_run;
 
   return dryRunValue === true || dryRunValue === "true" || dryRunValue === "1";
+}
+
+export function extractWebhookWriteDate(payload: unknown) {
+  const record = readObject(payload);
+
+  if (!record) {
+    return null;
+  }
+
+  const data = readObject(record.data);
+  const recordPayload = readObject(record.record);
+  const firstRecord = Array.isArray(record.records)
+    ? readObject(record.records[0])
+    : null;
+
+  return readFirstString(
+    record.write_date,
+    record.writeDate,
+    record.last_update,
+    record.updated_at,
+    data?.write_date,
+    data?.writeDate,
+    data?.last_update,
+    data?.updated_at,
+    recordPayload?.write_date,
+    recordPayload?.writeDate,
+    recordPayload?.last_update,
+    recordPayload?.updated_at,
+    firstRecord?.write_date,
+    firstRecord?.writeDate,
+    firstRecord?.last_update,
+    firstRecord?.updated_at,
+  );
 }

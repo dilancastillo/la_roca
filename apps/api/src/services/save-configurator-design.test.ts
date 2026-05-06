@@ -5,6 +5,7 @@ import { saveConfiguratorDesign } from "./save-configurator-design.js";
 
 const mocks = vi.hoisted(() => ({
   getConfiguratorSession: vi.fn(),
+  odooCreate: vi.fn(),
   odooSearchRead: vi.fn(),
   odooWrite: vi.fn(),
   storeDesignImage: vi.fn(),
@@ -15,6 +16,7 @@ vi.mock("./get-configurator-session.js", () => ({
 }));
 
 vi.mock("../lib/odoo-client.js", () => ({
+  odooCreate: mocks.odooCreate,
   odooSearchRead: mocks.odooSearchRead,
   odooWrite: mocks.odooWrite,
 }));
@@ -87,13 +89,14 @@ describe("saveConfiguratorDesign", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getConfiguratorSession.mockResolvedValue(editableSession);
+    mocks.odooCreate.mockResolvedValue(778);
     mocks.storeDesignImage.mockResolvedValue({
       version: 2,
       generatedAt: "2026-05-04T21:00:00.000Z",
     });
   });
 
-  it("mantiene el producto actual y guarda PTAVs cuando Odoo no tiene una variante fisica exacta", async () => {
+  it("crea y usa una variante cuando Odoo no tiene una variante fisica exacta", async () => {
     mocks.odooSearchRead.mockResolvedValue([]);
     mocks.odooWrite.mockResolvedValue(true);
 
@@ -109,15 +112,26 @@ describe("saveConfiguratorDesign", () => {
       "sale.order.line",
       [290],
       {
-        product_id: 12345,
+        product_id: 778,
         product_template_attribute_value_ids: [[6, 0, [9001]]],
         product_no_variant_attribute_value_ids: [[6, 0, [9101]]],
         product_custom_attribute_value_ids: [[5, 0, 0]],
       },
     );
+    expect(mocks.odooCreate).toHaveBeenCalledWith(
+      env,
+      "product.product",
+      [
+        {
+          product_tmpl_id: 678,
+          product_template_attribute_value_ids: [[6, 0, [9001]]],
+          product_template_variant_value_ids: [[6, 0, [9001]]],
+        },
+      ],
+    );
     expect(result).toMatchObject({
-      productId: 12345,
-      variantResolution: "line_attribute_values",
+      productId: 778,
+      variantResolution: "created_product_variant",
       version: 2,
     });
   });
@@ -152,6 +166,7 @@ describe("saveConfiguratorDesign", () => {
       productId: 777,
       variantResolution: "product_variant",
     });
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
   });
 
   it("guarda los valores personalizados seleccionados sin depender del nombre del atributo", async () => {
@@ -250,6 +265,25 @@ describe("saveConfiguratorDesign", () => {
         },
       }),
     ).rejects.toThrow(/falta seleccionar "color"/i);
+
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+  });
+
+  it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooCreate.mockRejectedValue(
+      new Error("Odoo product.product.create respondio 400: combinacion invalida"),
+    );
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: editableSession.selectedValueIds,
+      }),
+    ).rejects.toThrow(/no se pudo crear la variante exacta/i);
 
     expect(mocks.odooWrite).not.toHaveBeenCalled();
     expect(mocks.storeDesignImage).not.toHaveBeenCalled();

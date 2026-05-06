@@ -18,6 +18,7 @@ import { getConfiguratorSession } from "./services/get-configurator-session.js";
 import { saveConfiguratorDesign } from "./services/save-configurator-design.js";
 import {
   extractSaleOrderLineIdFromWebhookPayload,
+  extractWebhookWriteDate,
   isValidAutomationToken,
   shouldDryRunAutomation,
 } from "./services/automation-webhook.js";
@@ -90,6 +91,8 @@ app.post("/automation/render-line", async (c) => {
     extractSaleOrderLineIdFromWebhookPayload(payload) ??
     extractSaleOrderLineIdFromWebhookPayload(queryPayload);
   const dryRun = shouldDryRunAutomation(payload, c.req.query("dryRun") ?? null);
+  const triggerWriteDate =
+    extractWebhookWriteDate(payload) ?? c.req.query("write_date") ?? undefined;
 
   if (!saleOrderLineId) {
     return c.json(
@@ -102,7 +105,11 @@ app.post("/automation/render-line", async (c) => {
     const { renderAutomationLine } = await import(
       "./services/render-automation-line.js"
     );
-    const result = await renderAutomationLine(appEnv, saleOrderLineId, { dryRun });
+    const result = await renderAutomationLine(
+      appEnv,
+      saleOrderLineId,
+      triggerWriteDate ? { dryRun, triggerWriteDate } : { dryRun },
+    );
 
     return c.json(result, 200, {
       "Cache-Control": "no-store",

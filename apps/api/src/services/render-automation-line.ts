@@ -6,7 +6,30 @@ import { storeDesignImage } from "./store-design-image.js";
 
 type RenderAutomationLineOptions = {
   dryRun?: boolean;
+  triggerWriteDate?: string | null;
 };
+
+function parseAutomationDate(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const valueWithMilliseconds = normalizedValue.replace(
+    /(\.\d{3})\d+/,
+    "$1",
+  );
+  const isoLikeValue = valueWithMilliseconds.includes("T")
+    ? valueWithMilliseconds
+    : `${valueWithMilliseconds.replace(" ", "T")}Z`;
+  const date = new Date(isoLikeValue);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export async function renderAutomationLine(
   env: OdooEnv,
@@ -20,6 +43,29 @@ export async function renderAutomationLine(
       ok: true,
       skipped: true,
       reason: `La linea ${saleOrderLineId} no esta en cotizacion editable.`,
+    };
+  }
+
+  const triggerWriteDate = parseAutomationDate(options.triggerWriteDate);
+  const generatedAt = parseAutomationDate(session.status.generatedAt);
+
+  if (
+    triggerWriteDate &&
+    generatedAt &&
+    generatedAt.getTime() >= triggerWriteDate.getTime()
+  ) {
+    return {
+      ok: true,
+      skipped: true,
+      reason:
+        "La imagen vigente es igual o posterior al evento del webhook; se evita sobrescribir un guardado mas reciente.",
+      saleOrderLineId,
+      orderName: session.orderName,
+      productId: session.productId,
+      productName: session.productName,
+      currentVersion: session.status.version,
+      generatedAt: session.status.generatedAt,
+      triggerWriteDate: options.triggerWriteDate,
     };
   }
 

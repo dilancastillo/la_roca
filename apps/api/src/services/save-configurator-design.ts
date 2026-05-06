@@ -4,7 +4,7 @@ import type {
 } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import type { OdooEnv } from "../lib/app-env.js";
-import { odooSearchRead, odooWrite } from "../lib/odoo-client.js";
+import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
 import { storeDesignImage } from "./store-design-image.js";
 
@@ -13,6 +13,10 @@ type ProductVariantRecord = {
   display_name: string;
   product_template_attribute_value_ids?: number[];
 };
+
+type VariantResolution =
+  | { productId: number; resolution: "product_variant" | "created_product_variant" }
+  | { productId: number; resolution: "line_attribute_values" };
 
 function normalizeManyIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
@@ -144,6 +148,8 @@ async function findExactVariant(
     "product.product",
     [["product_tmpl_id", "=", session.productTemplateId]],
     ["id", "display_name", "product_template_attribute_value_ids"],
+    undefined,
+    { limit: 5_000 },
   );
 
   return variants.find((variant) =>
@@ -151,6 +157,72 @@ async function findExactVariant(
       normalizeManyIds(variant.product_template_attribute_value_ids).sort((a, b) => a - b),
       [...variantValueIds].sort((a, b) => a - b),
     ),
+  );
+}
+
+function parseCreatedProductId(created: unknown) {
+  if (typeof created === "number" && Number.isFinite(created) && created > 0) {
+    return Math.trunc(created);
+  }
+
+  if (Array.isArray(created)) {
+    const [first] = created;
+
+    if (typeof first === "number" && Number.isFinite(first) && first > 0) {
+      return Math.trunc(first);
+    }
+  }
+
+  return null;
+}
+
+async function resolveVariantProduct(
+  env: OdooEnv,
+  session: ConfiguratorSession,
+  variantValueIds: number[],
+): Promise<VariantResolution> {
+  const matchingVariant = await findExactVariant(env, session, variantValueIds);
+
+  if (matchingVariant) {
+    return {
+      productId: matchingVariant.id,
+      resolution: "product_variant",
+    };
+  }
+
+  if (variantValueIds.length === 0) {
+    return {
+      productId: session.productId,
+      resolution: "line_attribute_values",
+    };
+  }
+
+  try {
+    const created = await odooCreate<unknown>(env, "product.product", [
+      {
+        product_tmpl_id: session.productTemplateId,
+        product_template_attribute_value_ids: [[6, 0, variantValueIds]],
+        product_template_variant_value_ids: [[6, 0, variantValueIds]],
+      },
+    ]);
+    const createdProductId = parseCreatedProductId(created);
+
+    if (createdProductId) {
+      return {
+        productId: createdProductId,
+        resolution: "created_product_variant",
+      };
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    throw new Error(
+      `No se pudo crear la variante exacta para la combinacion seleccionada. Odoo respondio: ${message}`,
+    );
+  }
+
+  throw new Error(
+    "Odoo no devolvio un product_id valido al crear la variante exacta seleccionada.",
   );
 }
 
@@ -185,8 +257,12 @@ export async function saveConfiguratorDesign(
     .filter((attribute) => attribute.variantMode !== "variant")
     .flatMap((attribute) => selectedValueIds[String(attribute.id)] ?? []);
 
-  const matchingVariant = await findExactVariant(env, session, variantValueIds);
-  const productId = matchingVariant?.id ?? session.productId;
+  const variantResolution = await resolveVariantProduct(
+    env,
+    session,
+    variantValueIds,
+  );
+  const productId = variantResolution.productId;
   const selectedCustomValueIds = new Set(
     Object.values(selectedValueIds).flatMap((valueIds) => valueIds),
   );
@@ -224,6 +300,6 @@ export async function saveConfiguratorDesign(
       currentVersion: session.status.version,
     })),
     productId,
-    variantResolution: matchingVariant ? "product_variant" : "line_attribute_values",
+    variantResolution: variantResolution.resolution,
   };
 }

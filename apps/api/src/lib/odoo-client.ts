@@ -63,11 +63,14 @@ export async function odooSearchRead<T>(
   domain: unknown[],
   fields: string[],
   order?: string,
+  options: { limit?: number; offset?: number } = {},
 ): Promise<T[]> {
   return await odooCall<T[]>(env, model, "search_read", {
     domain,
     fields,
     ...(order ? { order } : {}),
+    ...(options.limit !== undefined ? { limit: options.limit } : {}),
+    ...(options.offset !== undefined ? { offset: options.offset } : {}),
   });
 }
 

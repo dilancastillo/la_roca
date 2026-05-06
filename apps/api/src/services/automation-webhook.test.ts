@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractSaleOrderLineIdFromWebhookPayload,
+  extractWebhookWriteDate,
   isValidAutomationToken,
   shouldDryRunAutomation,
 } from "./automation-webhook.js";
@@ -38,5 +39,21 @@ describe("automation-webhook", () => {
     expect(shouldDryRunAutomation({ dryRun: true }, null)).toBe(true);
     expect(shouldDryRunAutomation({ dry_run: "1" }, null)).toBe(true);
     expect(shouldDryRunAutomation({ dryRun: false }, null)).toBe(false);
+  });
+
+  it("extracts the Odoo write date from common webhook payload shapes", () => {
+    expect(extractWebhookWriteDate({ write_date: "2026-05-05 22:48:01.123456" })).toBe(
+      "2026-05-05 22:48:01.123456",
+    );
+    expect(
+      extractWebhookWriteDate({
+        data: { writeDate: "2026-05-05T22:48:01.123Z" },
+      }),
+    ).toBe("2026-05-05T22:48:01.123Z");
+    expect(
+      extractWebhookWriteDate({
+        records: [{ updated_at: "2026-05-05 22:49:00" }],
+      }),
+    ).toBe("2026-05-05 22:49:00");
   });
 });
