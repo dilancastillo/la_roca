@@ -1,0 +1,122 @@
+[
+  {
+    "nombre": "pretina",
+    "campos": [
+      {
+        "nombre": "Pretina Caucho",
+        "tipo": "escoger",
+        "opciones": [
+          "completa",
+          "media",
+          "embarazo"
+        ]
+      },
+      {
+        "nombre": "Pretina",
+        "tipo": "escoger",
+        "opciones": [
+          "cordón",
+          "hiladillo"
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "bolsillos",
+    "campos": [
+      {
+        "nombre": "lateral",
+        "tipo": "escoger-multi-campo",
+        "opciones": [
+          {
+            "nombre": "Internos",
+            "tipo": "escoger",
+            "opciones": [
+              "Doble Cremallera",
+              "Sin doble cremallera"
+            ]
+          },
+          {
+            "nombre": "Externos",
+            "tipo": "escoger",
+            "opciones": [
+              "Si",
+              "No"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "parche trasero",
+        "tipo": "escoger",
+        "obligatorio": false,
+        "opciones": [
+          "cremallera",
+          "lizo",
+          "velcro"
+        ]
+      },
+      {
+        "nombre": "parche rodilla",
+        "tipo": "escoger-multi-campo",
+        "obligatorio": false,
+        "opciones": [
+          {
+            "nombre": "cremallera",
+            "tipo": "escoger-tipo",
+            "opciones": [
+              {
+                "nombre": "sesgo",
+                "tipo": "color"
+              }
+            ]
+          },
+          {
+            "nombre": "lizo",
+            "tipo": "escoger-tipo",
+            "opciones": [
+              {
+                "nombre": "sesgo",
+                "tipo": "color"
+              }
+            ]
+          },
+          {
+            "nombre": "velcro",
+            "tipo": "escoger-tipo",
+            "opciones": [
+              {
+                "nombre": "sesgo",
+                "tipo": "color"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "bota",
+    "campos": [
+      {
+        "nombre": "Tipo bota",
+        "tipo": "escoger",
+        "opciones": [
+          "Original",
+          "Resorte",
+          "Con abertura",
+          "Campana"
+        ]
+      },
+      {
+        "nombre": "Dimensiones",
+        "tipo": "input-number",
+        "opciones": [
+          "Ancho",
+          "Largo"
+        ]
+      }
+    ]
+  }
+]
+

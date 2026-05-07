@@ -57,6 +57,34 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-20.svg": [1, 2, 3],
 };
 
+const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-14.svg": [5, 6],
+  "blouse-model-15.svg": [5, 7],
+  "blouse-model-19.svg": [4, 5, 6, 7],
+};
+
+const lowerPocketTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-20.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
+};
+
+const collarTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-09.svg": [3],
+  "blouse-model-10.svg": [3, 4],
+};
+
+const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
+  "blouse-model-14.svg": "band",
+  "blouse-model-15.svg": "ink",
+  "blouse-model-19.svg": "ink",
+  "blouse-model-20.svg": "ink",
+};
+
+const POCKET_TRIM_BAND_HEIGHT = 18;
+const POCKET_TRIM_HORIZONTAL_PAD = 8;
+const POCKET_TRIM_OUTLINE_PAD = 5;
+const POCKET_TRIM_RADIUS = 3;
+
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
@@ -434,18 +462,72 @@ async function recolorPngInkBuffer(buffer: Buffer, colorHex: string) {
   return await rgbaToPngBuffer(data, width, height);
 }
 
-async function createLowerPocketOverlayBuffer(
-  assetPath: string,
-  trimColor?: string,
+async function createPngInkOutlineBuffer(
+  buffer: Buffer,
+  outlineColor = "#f8fafc",
+  radius = 7,
 ) {
+  const { data, width, height } = await pngBufferToRaw(buffer);
+  const color = sharp({
+    create: { width: 1, height: 1, channels: 4, background: outlineColor },
+  });
+  const { data: colorSample } = await color
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const [red, green, blue] = colorSample;
+  const output = new Uint8ClampedArray(data.length);
+
+  for (let sourceOffset = 0; sourceOffset < data.length; sourceOffset += 4) {
+    const alpha = data[sourceOffset + 3] ?? 0;
+
+    if (alpha <= 0) {
+      continue;
+    }
+
+    const index = sourceOffset / 4;
+    const x = index % width;
+    const y = Math.floor(index / width);
+
+    for (let offsetY = -radius; offsetY <= radius; offsetY += 1) {
+      for (let offsetX = -radius; offsetX <= radius; offsetX += 1) {
+        if (offsetX * offsetX + offsetY * offsetY > radius * radius) {
+          continue;
+        }
+
+        const targetX = x + offsetX;
+        const targetY = y + offsetY;
+
+        if (
+          targetX < 0 ||
+          targetX >= width ||
+          targetY < 0 ||
+          targetY >= height
+        ) {
+          continue;
+        }
+
+        const targetOffset = (targetY * width + targetX) * 4;
+        output[targetOffset] = red ?? 0;
+        output[targetOffset + 1] = green ?? 0;
+        output[targetOffset + 2] = blue ?? 0;
+        output[targetOffset + 3] = Math.max(
+          output[targetOffset + 3] ?? 0,
+          alpha,
+        );
+      }
+    }
+  }
+
+  return await rgbaToPngBuffer(output, width, height);
+}
+
+async function createLowerPocketOverlayBuffer(assetPath: string) {
   const detailIndexes =
     lowerPocketDetailElementIndexesByFileName[getAssetFileName(assetPath)];
 
   if (!detailIndexes) {
-    const fallbackBuffer = await createOverlayBuffer(assetPath);
-    return trimColor
-      ? await recolorPngInkBuffer(fallbackBuffer, trimColor)
-      : fallbackBuffer;
+    return await createOverlayBuffer(assetPath);
   }
 
   const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
@@ -460,27 +542,78 @@ async function createLowerPocketOverlayBuffer(
     placementProcessed,
   );
 
-  return trimColor
-    ? await recolorPngInkBuffer(overlayBuffer, trimColor)
-    : overlayBuffer;
+  return overlayBuffer;
+}
+
+async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
+  const overlayPath =
+    lowerPocketTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (overlayPath) {
+    const [trimProcessed, placementProcessed] = await Promise.all([
+      loadProcessedImage(overlayPath),
+      loadProcessedImage(assetPath),
+    ]);
+
+    return await createOverlayBufferFromProcessed(
+      trimProcessed,
+      placementProcessed,
+    );
+  }
+
+  const trimIndexes =
+    lowerPocketTrimElementIndexesByFileName[getAssetFileName(assetPath)];
+
+  if (!trimIndexes) {
+    return undefined;
+  }
+
+  const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
+    "utf8",
+  );
+  const trimProcessed = await processImageBuffer(
+    Buffer.from(buildSvgFromDrawableIndexes(svgText, trimIndexes)),
+  );
+  const placementProcessed = await loadProcessedImage(assetPath);
+
+  return await createOverlayBufferFromProcessed(trimProcessed, placementProcessed);
 }
 
 async function createCollarTrimOverlayBuffer(
   assetPath: string,
   trimColor: string,
 ) {
-  const overlayPath = collarTrimOverlayByFileName[getAssetFileName(assetPath)];
+  const assetFileName = getAssetFileName(assetPath);
+  const overlayPath = collarTrimOverlayByFileName[assetFileName];
 
-  if (!overlayPath) {
+  if (overlayPath) {
+    const [overlayProcessed, placementProcessed] = await Promise.all([
+      loadProcessedImage(overlayPath),
+      loadProcessedImage(assetPath),
+    ]);
+    const overlayBuffer = await createOverlayBufferFromProcessed(
+      overlayProcessed,
+      placementProcessed,
+    );
+
+    return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  }
+
+  const trimIndexes = collarTrimElementIndexesByFileName[assetFileName];
+
+  if (!trimIndexes) {
     return undefined;
   }
 
-  const [overlayProcessed, placementProcessed] = await Promise.all([
-    loadProcessedImage(overlayPath),
-    loadProcessedImage(assetPath),
-  ]);
+  const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
+    "utf8",
+  );
+  const trimProcessed = await processImageBuffer(
+    Buffer.from(buildSvgFromDrawableIndexes(svgText, trimIndexes)),
+  );
+  const placementProcessed = await loadProcessedImage(assetPath);
   const overlayBuffer = await createOverlayBufferFromProcessed(
-    overlayProcessed,
+    trimProcessed,
     placementProcessed,
   );
 
@@ -614,6 +747,117 @@ function getOverlaySvg(
   `;
 }
 
+function getRawInkBoundsInRegion(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  region: OverlayRegion,
+) {
+  const startX = Math.max(0, Math.floor(region.x));
+  const startY = Math.max(0, Math.floor(region.y));
+  const endX = Math.min(width, Math.ceil(region.x + region.width));
+  const endY = Math.min(height, Math.ceil(region.y + region.height));
+  let minX = endX;
+  let minY = endY;
+  let maxX = startX;
+  let maxY = startY;
+  let hasInk = false;
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const offset = (y * width + x) * 4;
+      const alpha = data[offset + 3] ?? 0;
+
+      if (alpha <= 24) {
+        continue;
+      }
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      hasInk = true;
+    }
+  }
+
+  if (!hasInk) {
+    return undefined;
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  };
+}
+
+function buildPocketTrimBand(bounds: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}) {
+  const bandHeight = Math.max(POCKET_TRIM_BAND_HEIGHT, bounds.height + 8);
+  const bandX = bounds.x - POCKET_TRIM_HORIZONTAL_PAD;
+  const bandY = bounds.y - (bandHeight - bounds.height) / 2;
+
+  return {
+    x: bandX,
+    y: bandY,
+    width: bounds.width + POCKET_TRIM_HORIZONTAL_PAD * 2,
+    height: bandHeight,
+  };
+}
+
+async function getLowerPocketTrimBandSvg(
+  trimOverlayBuffer: Buffer,
+  trimColor: string,
+  regions: OverlayRegion[],
+) {
+  const raw = await pngBufferToRaw(trimOverlayBuffer);
+  const bands = regions
+    .map((region) => {
+      const bounds = getRawInkBoundsInRegion(
+        raw.data,
+        raw.width,
+        raw.height,
+        region,
+      );
+
+      if (!bounds) {
+        return "";
+      }
+
+      const band = buildPocketTrimBand(bounds);
+      const outlineBand = {
+        x: band.x - POCKET_TRIM_OUTLINE_PAD,
+        y: band.y - POCKET_TRIM_OUTLINE_PAD,
+        width: band.width + POCKET_TRIM_OUTLINE_PAD * 2,
+        height: band.height + POCKET_TRIM_OUTLINE_PAD * 2,
+      };
+
+      return `
+        <rect x="${outlineBand.x}" y="${outlineBand.y}" width="${outlineBand.width}" height="${outlineBand.height}" rx="${POCKET_TRIM_RADIUS + 3}" fill="#f8fafc" filter="url(#lower-pocket-trim-glow)" />
+        <rect x="${band.x}" y="${band.y}" width="${band.width}" height="${band.height}" rx="${POCKET_TRIM_RADIUS}" fill="${trimColor}" />
+      `;
+    })
+    .join("");
+
+  if (!bands.trim()) {
+    return "";
+  }
+
+  return `
+    <defs>
+      <filter id="lower-pocket-trim-glow" x="-30%" y="-120%" width="160%" height="340%">
+        <feGaussianBlur stdDeviation="5" />
+      </filter>
+    </defs>
+    ${bands}
+  `;
+}
+
 function getFallbackGarmentSvg(fillColor: string) {
   return `
     <path d="M250 180 L180 290 L235 355 L270 330 L300 980 L600 980 L630 330 L665 355 L720 290 L650 180 L560 140 L340 140 Z" fill="${fillColor}" stroke="#0f172a" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" />
@@ -661,7 +905,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
 
       if (collarTrimOverlayBuffer) {
+        const collarTrimOutlineBuffer = await createPngInkOutlineBuffer(
+          collarTrimOverlayBuffer,
+        );
         layers.push(
+          `<image href="${toDataUri(collarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
           `<image href="${toDataUri(collarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
@@ -696,7 +944,6 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           : overlayRegionPresets.lowerPocketPair;
       const overlayBuffer = await createLowerPocketOverlayBuffer(
         scene.lowerPocketAssetPath,
-        lowerPocketTrimColor,
       );
       layers.push(
         getOverlaySvg(
@@ -705,6 +952,52 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           lowerPocketRegions,
         ),
       );
+
+      if (lowerPocketTrimColor) {
+        const trimOverlayBuffer = await createLowerPocketTrimOverlayBuffer(
+          scene.lowerPocketAssetPath,
+        );
+
+        if (trimOverlayBuffer) {
+          const trimMode =
+            lowerPocketTrimModeByFileName[
+              getAssetFileName(scene.lowerPocketAssetPath)
+            ] ?? "ink";
+
+          if (trimMode === "band") {
+            layers.push(
+              await getLowerPocketTrimBandSvg(
+                trimOverlayBuffer,
+                lowerPocketTrimColor,
+                lowerPocketRegions,
+              ),
+            );
+          } else {
+            const trimOutlineBuffer = await createPngInkOutlineBuffer(
+              trimOverlayBuffer,
+              "#f8fafc",
+              7,
+            );
+            const trimColorBuffer = await recolorPngInkBuffer(
+              trimOverlayBuffer,
+              lowerPocketTrimColor,
+            );
+
+            layers.push(
+              getOverlaySvg(
+                "lower-pocket-trim-outline",
+                toDataUri(trimOutlineBuffer),
+                lowerPocketRegions,
+              ),
+              getOverlaySvg(
+                "lower-pocket-trim-color",
+                toDataUri(trimColorBuffer),
+                lowerPocketRegions,
+              ),
+            );
+          }
+        }
+      }
     }
 
     if (scene.auxiliaryPocketAssetPath) {

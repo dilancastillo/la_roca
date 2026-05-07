@@ -61,6 +61,16 @@ function findSelectedValue(
   return attribute.values.find((value) => selectedIds.has(value.id));
 }
 
+function getFileNameFromAssetPath(assetPath: string | undefined) {
+  return assetPath?.split(/[\\/]/).pop()?.toLowerCase() ?? "";
+}
+
+function hasAutomaticCollarTrimAsset(assetPath: string | undefined) {
+  return ["blouse-model-08.svg", "blouse-model-09.svg", "blouse-model-10.svg"].includes(
+    getFileNameFromAssetPath(assetPath),
+  );
+}
+
 function getSelectedOptions(
   attribute: ConfiguratorSession["attributes"][number] | undefined,
   selectedValueIds: Record<string, number[]>,
@@ -73,9 +83,16 @@ function getSelectedOptions(
   return attribute.values.filter((value) => selectedIds.has(value.id));
 }
 
+type TrimVisualContext = {
+  neckAssetPath?: string | undefined;
+  lowerPocketAssetPath?: string | undefined;
+  lowerPocketLayout?: LowerPocketLayout | undefined;
+};
+
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
+  visualContext?: TrimVisualContext,
 ) {
   const catalog = getServerProductAssetCatalog(session.graphicManifestKey);
   const sectionAttribute =
@@ -89,29 +106,63 @@ function getSelectedTrimSections(
       attribute.id === catalog?.attributeIds.trimColor ||
       normalize(attribute.name).includes("color de vivo"),
   );
+  const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
 
-  if (!sectionAttribute) {
-    return [];
-  }
-
-  const enabledSections = getSelectedOptions(sectionAttribute, selectedValueIds);
+  const enabledSections = sectionAttribute
+    ? getSelectedOptions(sectionAttribute, selectedValueIds)
+    : [];
   const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
-
-  if (enabledSections.length === 0) {
-    return [];
-  }
 
   const hasNoTrimSelection = enabledSections.some((section) => {
     const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0];
+    const normalizedSection = normalize(section.name);
 
-    return role === "none" || normalize(section.name) === "sin vivos";
+    return (
+      role === "none" ||
+      normalizedSection === "sin vivos" ||
+      normalizedSection === "sin cuello" ||
+      normalizedSection === "sin cuellos"
+    );
   });
 
   if (hasNoTrimSelection) {
     return [];
   }
 
-  const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
+  const automaticSections: AutomationRenderScene["trimSections"] = [];
+
+  if (hasAutomaticCollarTrimAsset(visualContext?.neckAssetPath)) {
+    if (globalColor?.colorHex) {
+      automaticSections.push({
+        valueId: catalog?.trimSectionValueIds?.upperNeck ?? 0,
+        key: "cuello",
+        label: "Cuello",
+        colorHex: globalColor.colorHex,
+      });
+    }
+  }
+
+  if (
+    globalColor?.colorHex &&
+    visualContext?.lowerPocketAssetPath &&
+    visualContext.lowerPocketLayout !== "none"
+  ) {
+    automaticSections.push({
+      valueId: catalog?.trimSectionValueIds?.lowerPockets ?? 0,
+      role: "lowerPockets",
+      key: "bolsillos-inferiores",
+      label: "Bolsillos inferiores",
+      colorHex: globalColor.colorHex,
+    });
+  }
+
+  if (automaticSections.length > 0) {
+    return automaticSections;
+  }
+
+  if (!sectionAttribute || enabledSections.length === 0) {
+    return [];
+  }
 
   return enabledSections.map((section) => {
     const matchingColorAttribute = colorAttributes.find((attribute) =>
@@ -237,6 +288,11 @@ export function deriveAutomationRenderScene(
     ...(selectedChestPocketType?.name
       ? { chestPocketType: selectedChestPocketType.name }
       : {}),
-    trimSections: getSelectedTrimSections(session, selectedValueIds),
+    trimSections: getSelectedTrimSections(session, selectedValueIds, {
+      neckAssetPath,
+      lowerPocketAssetPath:
+        lowerPocketLayout !== "none" ? lowerPocketAssetPath : undefined,
+      lowerPocketLayout,
+    }),
   };
 }

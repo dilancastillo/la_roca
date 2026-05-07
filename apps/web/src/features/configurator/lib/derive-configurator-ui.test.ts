@@ -25,6 +25,24 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2601,
+          name: "Nombre cambiado de cuello alto",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
+          id: 2593,
+          name: "2019",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
+          id: 2599,
+          name: "PRESILLA OVALO",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -88,6 +106,43 @@ const session: ConfiguratorSession = {
           attributeId: 90,
           attributeName: "Color renombrado",
           colorHex: "#B2D4D1",
+        },
+      ],
+    },
+    {
+      id: 91,
+      name: "Color de vivo",
+      displayType: "color",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 5152,
+          name: "131906 - Rosa Pastel",
+          attributeId: 91,
+          attributeName: "Color de vivo",
+          colorHex: "#f4c7cc",
+        },
+      ],
+    },
+    {
+      id: 92,
+      name: "Sección de vivo",
+      displayType: "multi",
+      selectionMode: "multiple",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 5149,
+          name: "Bolsillo pecho",
+          attributeId: 92,
+          attributeName: "Sección de vivo",
+        },
+        {
+          id: 5423,
+          name: "Sin vivos",
+          attributeId: 92,
+          attributeName: "Sección de vivo",
         },
       ],
     },
@@ -224,5 +279,115 @@ describe("deriveConfiguratorUi", () => {
       "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
     );
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
+  });
+
+  it("pinta cuello alto y vivo de bolsillo inferior solo con escoger color de vivo", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2601],
+      "91": [5152],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5147,
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores",
+        label: "Bolsillos inferiores",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pinta cuello 2019 con el color de vivo sin depender de la seccion escogida", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2593],
+      "91": [5152],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5147,
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores",
+        label: "Bolsillos inferiores",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pinta presilla ovalo con el color de vivo sin depender de la seccion escogida", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2599],
+      "91": [5152],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-09.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5147,
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores",
+        label: "Bolsillos inferiores",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pinta el vivo de bolsillo inferior aunque el cuello no sea cuello alto", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2590],
+      "91": [5152],
+    });
+
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores",
+        label: "Bolsillos inferiores",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("no pinta vivos del cuello alto cuando la sección está en Sin vivos", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2601],
+      "91": [5152],
+      "92": [5423],
+    });
+
+    expect(ui.previewScene.trimSections).toEqual([]);
   });
 });

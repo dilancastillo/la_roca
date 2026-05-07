@@ -51,6 +51,34 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-20.svg": [1, 2, 3],
 };
 
+const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-14.svg": [5, 6],
+  "blouse-model-15.svg": [5, 7],
+  "blouse-model-19.svg": [4, 5, 6, 7],
+};
+
+const lowerPocketTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-20.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
+};
+
+const collarTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-09.svg": [3],
+  "blouse-model-10.svg": [3, 4],
+};
+
+const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
+  "blouse-model-14.svg": "band",
+  "blouse-model-15.svg": "ink",
+  "blouse-model-19.svg": "ink",
+  "blouse-model-20.svg": "ink",
+};
+
+const POCKET_TRIM_BAND_HEIGHT = 18;
+const POCKET_TRIM_HORIZONTAL_PAD = 8;
+const POCKET_TRIM_OUTLINE_PAD = 5;
+const POCKET_TRIM_RADIUS = 3;
+
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
@@ -73,6 +101,8 @@ const rasterCache = new Map<string, Promise<HTMLCanvasElement>>();
 const detailOverlayCache = new Map<string, Promise<HTMLCanvasElement>>();
 const svgObjectUrlCache = new Map<string, Promise<string>>();
 const lowerPocketDetailObjectUrlCache = new Map<string, Promise<string>>();
+const lowerPocketTrimObjectUrlCache = new Map<string, Promise<string>>();
+const collarTrimObjectUrlCache = new Map<string, Promise<string>>();
 
 function normalize(value: string) {
   return value
@@ -233,6 +263,78 @@ async function getLowerPocketDetailObjectUrl(src: string) {
   })();
 
   lowerPocketDetailObjectUrlCache.set(src, promise);
+  return await promise;
+}
+
+async function getLowerPocketTrimObjectUrl(src: string) {
+  const fileName = getFileNameFromSource(src);
+  const overlaySrc = lowerPocketTrimOverlayByFileName[fileName];
+
+  if (overlaySrc) {
+    return overlaySrc;
+  }
+
+  const trimIndexes = lowerPocketTrimElementIndexesByFileName[fileName];
+
+  if (!trimIndexes) {
+    return undefined;
+  }
+
+  const existing = lowerPocketTrimObjectUrlCache.get(src);
+
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const response = await fetch(src);
+
+    if (!response.ok) {
+      throw new Error(`No se pudo cargar ${src}`);
+    }
+
+    const svgText = await response.text();
+    const blob = new Blob([buildSvgFromDrawableIndexes(svgText, trimIndexes)], {
+      type: "image/svg+xml",
+    });
+
+    return URL.createObjectURL(blob);
+  })();
+
+  lowerPocketTrimObjectUrlCache.set(src, promise);
+  return await promise;
+}
+
+async function getCollarTrimObjectUrl(src: string) {
+  const fileName = getFileNameFromSource(src);
+  const trimIndexes = collarTrimElementIndexesByFileName[fileName];
+
+  if (!trimIndexes) {
+    return undefined;
+  }
+
+  const existing = collarTrimObjectUrlCache.get(src);
+
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const response = await fetch(src);
+
+    if (!response.ok) {
+      throw new Error(`No se pudo cargar ${src}`);
+    }
+
+    const svgText = await response.text();
+    const blob = new Blob([buildSvgFromDrawableIndexes(svgText, trimIndexes)], {
+      type: "image/svg+xml",
+    });
+
+    return URL.createObjectURL(blob);
+  })();
+
+  collarTrimObjectUrlCache.set(src, promise);
   return await promise;
 }
 
@@ -738,6 +840,38 @@ function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
   return outputCanvas;
 }
 
+function createCanvasInkOutline(
+  canvas: HTMLCanvasElement,
+  outlineColor = "#f8fafc",
+  radius = 7,
+) {
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = canvas.width;
+  outputCanvas.height = canvas.height;
+  const outputContext = outputCanvas.getContext("2d");
+
+  if (!outputContext) {
+    throw new Error("No se pudo contornear el detalle del asset.");
+  }
+
+  for (let offsetY = -radius; offsetY <= radius; offsetY += 1) {
+    for (let offsetX = -radius; offsetX <= radius; offsetX += 1) {
+      if (offsetX * offsetX + offsetY * offsetY > radius * radius) {
+        continue;
+      }
+
+      outputContext.drawImage(canvas, offsetX, offsetY);
+    }
+  }
+
+  outputContext.globalCompositeOperation = "source-in";
+  outputContext.fillStyle = outlineColor;
+  outputContext.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+  outputContext.globalCompositeOperation = "source-over";
+
+  return outputCanvas;
+}
+
 function drawCanvasInRegions(
   context: CanvasRenderingContext2D,
   sourceCanvas: HTMLCanvasElement,
@@ -749,6 +883,147 @@ function drawCanvasInRegions(
     context.rect(region.x, region.y, region.width, region.height);
     context.clip();
     context.drawImage(sourceCanvas, 0, 0);
+    context.restore();
+  }
+}
+
+function getCanvasInkBoundsInRegion(
+  canvas: HTMLCanvasElement,
+  region: OverlayRegion,
+) {
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("No se pudo analizar el vivo del bolsillo.");
+  }
+
+  const startX = Math.max(0, Math.floor(region.x));
+  const startY = Math.max(0, Math.floor(region.y));
+  const endX = Math.min(canvas.width, Math.ceil(region.x + region.width));
+  const endY = Math.min(canvas.height, Math.ceil(region.y + region.height));
+  const width = endX - startX;
+  const height = endY - startY;
+
+  if (width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  const imageData = context.getImageData(startX, startY, width, height);
+  const data = imageData.data;
+  let minX = endX;
+  let minY = endY;
+  let maxX = startX;
+  let maxY = startY;
+  let hasInk = false;
+
+  for (let offset = 0; offset < data.length; offset += 4) {
+    const alpha = data[offset + 3] ?? 0;
+
+    if (alpha <= 24) {
+      continue;
+    }
+
+    const localIndex = offset / 4;
+    const x = startX + (localIndex % width);
+    const y = startY + Math.floor(localIndex / width);
+
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+    hasInk = true;
+  }
+
+  if (!hasInk) {
+    return undefined;
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  };
+}
+
+function buildPocketTrimBand(bounds: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}) {
+  const bandHeight = Math.max(POCKET_TRIM_BAND_HEIGHT, bounds.height + 8);
+  const bandX = bounds.x - POCKET_TRIM_HORIZONTAL_PAD;
+  const bandY = bounds.y - (bandHeight - bounds.height) / 2;
+
+  return {
+    x: bandX,
+    y: bandY,
+    width: bounds.width + POCKET_TRIM_HORIZONTAL_PAD * 2,
+    height: bandHeight,
+  };
+}
+
+function fillRoundedRect(
+  context: CanvasRenderingContext2D,
+  rect: { x: number; y: number; width: number; height: number },
+  radius: number,
+) {
+  context.beginPath();
+  context.moveTo(rect.x + radius, rect.y);
+  context.lineTo(rect.x + rect.width - radius, rect.y);
+  context.quadraticCurveTo(
+    rect.x + rect.width,
+    rect.y,
+    rect.x + rect.width,
+    rect.y + radius,
+  );
+  context.lineTo(rect.x + rect.width, rect.y + rect.height - radius);
+  context.quadraticCurveTo(
+    rect.x + rect.width,
+    rect.y + rect.height,
+    rect.x + rect.width - radius,
+    rect.y + rect.height,
+  );
+  context.lineTo(rect.x + radius, rect.y + rect.height);
+  context.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - radius);
+  context.lineTo(rect.x, rect.y + radius);
+  context.quadraticCurveTo(rect.x, rect.y, rect.x + radius, rect.y);
+  context.closePath();
+  context.fill();
+}
+
+function drawLowerPocketTrimBands(
+  context: CanvasRenderingContext2D,
+  trimCanvas: HTMLCanvasElement,
+  regions: OverlayRegion[],
+  trimColor: string,
+) {
+  for (const region of regions) {
+    const bounds = getCanvasInkBoundsInRegion(trimCanvas, region);
+
+    if (!bounds) {
+      continue;
+    }
+
+    const band = buildPocketTrimBand(bounds);
+    const outlineBand = {
+      x: band.x - POCKET_TRIM_OUTLINE_PAD,
+      y: band.y - POCKET_TRIM_OUTLINE_PAD,
+      width: band.width + POCKET_TRIM_OUTLINE_PAD * 2,
+      height: band.height + POCKET_TRIM_OUTLINE_PAD * 2,
+    };
+
+    context.save();
+    context.shadowColor = "rgba(248, 250, 252, 0.96)";
+    context.shadowBlur = 11;
+    context.fillStyle = "#f8fafc";
+    fillRoundedRect(context, outlineBand, POCKET_TRIM_RADIUS + 3);
+
+    context.shadowColor = "rgba(15, 23, 42, 0.16)";
+    context.shadowBlur = 2;
+    context.fillStyle = trimColor;
+    fillRoundedRect(context, band, POCKET_TRIM_RADIUS);
     context.restore();
   }
 }
@@ -781,11 +1056,34 @@ async function drawLowerPocketOverlay(
 ) {
   const detailSrc = await getLowerPocketDetailObjectUrl(sourceSrc);
   const rasterCanvas = await createRasterCanvas(detailSrc ?? sourceSrc, sourceSrc);
-  const outputCanvas = trimColor
-    ? recolorCanvasInk(rasterCanvas, trimColor)
-    : rasterCanvas;
 
-  drawCanvasInRegions(context, outputCanvas, regions);
+  drawCanvasInRegions(context, rasterCanvas, regions);
+
+  if (!trimColor) {
+    return;
+  }
+
+  const trimSrc = await getLowerPocketTrimObjectUrl(sourceSrc);
+
+  if (!trimSrc) {
+    return;
+  }
+
+  const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
+  const trimMode =
+    lowerPocketTrimModeByFileName[getFileNameFromSource(sourceSrc)] ?? "ink";
+
+  if (trimMode === "band") {
+    drawLowerPocketTrimBands(context, trimCanvas, regions, trimColor);
+    return;
+  }
+
+  drawCanvasInRegions(
+    context,
+    createCanvasInkOutline(trimCanvas, "#f8fafc", 7),
+    regions,
+  );
+  drawCanvasInRegions(context, recolorCanvasInk(trimCanvas, trimColor), regions);
 }
 
 async function drawCollarTrimFromAsset(
@@ -801,7 +1099,17 @@ async function drawCollarTrimFromAsset(
 
   if (overlaySrc) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+    context.drawImage(createCanvasInkOutline(overlayCanvas), 0, 0);
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    return;
+  }
+
+  const trimSrc = await getCollarTrimObjectUrl(sourceSrc);
+
+  if (trimSrc) {
+    const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
+    context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 7), 0, 0);
+    context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
     return;
   }
 

@@ -99,6 +99,16 @@ function getImageSource(
   return getImageSourceByIds(graphicManifestKey, attributeId, valueId);
 }
 
+function getFileNameFromSource(src: string | undefined) {
+  return decodeURIComponent(src?.split("?")[0]?.split("/").pop() ?? "");
+}
+
+function hasAutomaticCollarTrimAsset(src: string | undefined) {
+  return ["blouse-model-08.svg", "blouse-model-09.svg", "blouse-model-10.svg"].includes(
+    getFileNameFromSource(src).toLowerCase(),
+  );
+}
+
 function getControlType(
   attribute: ConfiguratorSession["attributes"][number],
   session: ConfiguratorSession,
@@ -137,9 +147,16 @@ function findSelectedValue(
   return attribute.values.find((value) => selectedIds.has(value.id));
 }
 
+type TrimVisualContext = {
+  neckImageSrc?: string | undefined;
+  lowerPocketImageSrc?: string | undefined;
+  lowerPocketLayout?: LowerPocketLayout | undefined;
+};
+
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
+  visualContext?: TrimVisualContext,
 ) {
   const catalog = getProductAssetCatalog(session.graphicManifestKey);
   const sectionAttribute =
@@ -153,29 +170,63 @@ function getSelectedTrimSections(
       attribute.id === catalog?.attributeIds.trimColor ||
       normalize(attribute.name).includes("color de vivo"),
   );
+  const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
 
-  if (!sectionAttribute) {
-    return [];
-  }
-
-  const enabledSections = getSelectedOptions(sectionAttribute, selectedValueIds);
+  const enabledSections = sectionAttribute
+    ? getSelectedOptions(sectionAttribute, selectedValueIds)
+    : [];
   const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
-
-  if (enabledSections.length === 0) {
-    return [];
-  }
 
   const hasNoTrimSelection = enabledSections.some((section) => {
     const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0];
+    const normalizedSection = normalize(section.name);
 
-    return role === "none" || normalize(section.name) === "sin vivos";
+    return (
+      role === "none" ||
+      normalizedSection === "sin vivos" ||
+      normalizedSection === "sin cuello" ||
+      normalizedSection === "sin cuellos"
+    );
   });
 
   if (hasNoTrimSelection) {
     return [];
   }
 
-  const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
+  const automaticSections: PreviewScene["trimSections"] = [];
+
+  if (hasAutomaticCollarTrimAsset(visualContext?.neckImageSrc)) {
+    if (globalColor?.colorHex) {
+      automaticSections.push({
+        valueId: catalog?.trimSectionValueIds?.upperNeck ?? 0,
+        key: "cuello",
+        label: "Cuello",
+        colorHex: globalColor.colorHex,
+      });
+    }
+  }
+
+  if (
+    globalColor?.colorHex &&
+    visualContext?.lowerPocketImageSrc &&
+    visualContext.lowerPocketLayout !== "none"
+  ) {
+    automaticSections.push({
+      valueId: catalog?.trimSectionValueIds?.lowerPockets ?? 0,
+      role: "lowerPockets",
+      key: "bolsillos-inferiores",
+      label: "Bolsillos inferiores",
+      colorHex: globalColor.colorHex,
+    });
+  }
+
+  if (automaticSections.length > 0) {
+    return automaticSections;
+  }
+
+  if (!sectionAttribute || enabledSections.length === 0) {
+    return [];
+  }
 
   return enabledSections.map((section) => {
     const matchingColorAttribute = colorAttributes.find((attribute) =>
@@ -282,6 +333,21 @@ export function deriveConfiguratorUi(
     selectedValueIds,
   );
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
+  const neckImageSrc = selectedNeck
+    ? getImageSource(
+        session.graphicManifestKey,
+        neckAttribute?.id ?? 0,
+        selectedNeck.id,
+      )
+    : undefined;
+  const lowerPocketImageSrc =
+    lowerPocketLayout !== "none" && selectedLowerPocketModel
+      ? getImageSource(
+          session.graphicManifestKey,
+          lowerPocketModelAttribute?.id ?? 0,
+          selectedLowerPocketModel.id,
+        )
+      : undefined;
 
   const summary = session.attributes.flatMap((attribute) => {
     const selected = getSelectedOptions(attribute, selectedValueIds);
@@ -311,20 +377,8 @@ export function deriveConfiguratorUi(
             selectedGarment.id,
           ) ?? getDefaultImageSource(session.graphicManifestKey)
         : getDefaultImageSource(session.graphicManifestKey),
-      neckImageSrc: selectedNeck
-        ? getImageSource(
-            session.graphicManifestKey,
-            neckAttribute?.id ?? 0,
-            selectedNeck.id,
-          )
-        : undefined,
-      lowerPocketImageSrc: lowerPocketLayout !== "none" && selectedLowerPocketModel
-        ? getImageSource(
-            session.graphicManifestKey,
-            lowerPocketModelAttribute?.id ?? 0,
-            selectedLowerPocketModel.id,
-          )
-        : undefined,
+      neckImageSrc,
+      lowerPocketImageSrc,
       lowerPocketLayout,
       auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
         ? getImageSource(
@@ -334,7 +388,11 @@ export function deriveConfiguratorUi(
           )
         : undefined,
       chestPocketType: selectedChestPocketType?.name,
-      trimSections: getSelectedTrimSections(session, selectedValueIds),
+      trimSections: getSelectedTrimSections(session, selectedValueIds, {
+        neckImageSrc,
+        lowerPocketImageSrc,
+        lowerPocketLayout,
+      }),
     },
   };
 }
