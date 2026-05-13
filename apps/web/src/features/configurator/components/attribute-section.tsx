@@ -6,6 +6,7 @@ type Props = {
   selectedValueIds: number[];
   customValuesByValueId: Record<string, string>;
   disabledValueIds: Set<number>;
+  invalidCustomValueIds?: Set<number>;
   onSelect: (valueId: number) => void;
   onToggle: (valueId: number) => void;
   onCustomValueChange: (valueId: number, value: string) => void;
@@ -20,6 +21,7 @@ export function AttributeSection({
   selectedValueIds,
   customValuesByValueId,
   disabledValueIds,
+  invalidCustomValueIds = new Set<number>(),
   onSelect,
   onToggle,
   onCustomValueChange,
@@ -315,21 +317,41 @@ export function AttributeSection({
 
           {selectedCustomOptions.length > 0 ? (
             <div className="custom-value-fields">
-              {selectedCustomOptions.map((option) => (
-                <label key={option.id} className="custom-value-field">
-                  <span>Valor personalizado para {option.name}</span>
-                  <input
-                    type="text"
-                    value={customValuesByValueId[String(option.id)] ?? ""}
-                    placeholder="Escribe el texto exactamente como debe quedar"
-                    disabled={disabled}
-                    maxLength={120}
-                    onChange={(event) =>
-                      onCustomValueChange(option.id, event.target.value)
-                    }
-                  />
-                </label>
-              ))}
+              {selectedCustomOptions.map((option) => {
+                const isInvalid = invalidCustomValueIds.has(option.id);
+                const errorId = `custom-value-error-${option.id}`;
+
+                return (
+                  <label
+                    key={option.id}
+                    className={[
+                      "custom-value-field",
+                      isInvalid ? "custom-value-field--invalid" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <span>Valor personalizado para {option.name}</span>
+                    <input
+                      type="text"
+                      value={customValuesByValueId[String(option.id)] ?? ""}
+                      placeholder="Escribe el texto exactamente como debe quedar"
+                      disabled={disabled}
+                      maxLength={120}
+                      aria-invalid={isInvalid}
+                      aria-describedby={isInvalid ? errorId : undefined}
+                      onChange={(event) =>
+                        onCustomValueChange(option.id, event.target.value)
+                      }
+                    />
+                    {isInvalid ? (
+                      <span id={errorId} className="custom-value-field__error">
+                        Este texto es obligatorio para guardar.
+                      </span>
+                    ) : null}
+                  </label>
+                );
+              })}
             </div>
           ) : null}
         </div>

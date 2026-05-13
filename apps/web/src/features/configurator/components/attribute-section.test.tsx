@@ -245,4 +245,28 @@ describe("AttributeSection", () => {
     fireEvent.change(input, { target: { value: "NUEVO TEXTO" } });
     expect(baseProps.onCustomValueChange).toHaveBeenCalledWith(11, "NUEVO TEXTO");
   });
+
+  it("marca como obligatorio el valor personalizado pendiente", () => {
+    const baseProps = {
+      ...createProps(),
+      group: {
+        ...createProps().group,
+        label: "Â¿Texto en pecho encima del bolsillo?",
+        options: [
+          { id: 10, name: "No", allowsCustomValue: false },
+          { id: 11, name: "Si", allowsCustomValue: true },
+        ],
+      },
+      selectedValueIds: [11],
+      customValuesByValueId: {},
+      invalidCustomValueIds: new Set([11]),
+      selectionLabel: "Si",
+    };
+
+    render(<AttributeSection {...baseProps} expanded />);
+
+    const input = screen.getByLabelText(/valor personalizado para si/i);
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/este texto es obligatorio para guardar/i)).toBeTruthy();
+  });
 });

@@ -551,6 +551,18 @@ main {
   padding: 0 12px;
 }
 
+.custom-value-field--invalid input {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.custom-value-field__error {
+  color: var(--danger) !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+}
+
 .swatch-grid,
 .chip-grid {
   display: flex;

@@ -64,15 +64,45 @@ function shouldKeepSectionOpenAfterSelection(
     return true;
   }
 
-  const label = normalizeText(group.label);
-  const isModelSection = label.includes("modelo");
+  return group.selectionMode === "multiple";
+}
 
-  return (
-    isModelSection &&
-    (label.includes("bolsillo") ||
-      label.includes("cuello") ||
-      label.includes("pantalon"))
-  );
+type MissingCustomValue = {
+  attributeId: number;
+  attributeLabel: string;
+  optionName: string;
+  valueId: number;
+};
+
+function getMissingCustomValues(
+  groups: UiAttributeGroup[],
+  selectedValueIds: Record<string, number[]>,
+  customValuesByValueId: Record<string, string>,
+) {
+  const missing: MissingCustomValue[] = [];
+
+  for (const group of groups) {
+    const selectedIds = new Set(selectedValueIds[String(group.attributeId)] ?? []);
+
+    for (const option of group.options) {
+      if (!option.allowsCustomValue || !selectedIds.has(option.id)) {
+        continue;
+      }
+
+      const customValue = customValuesByValueId[String(option.id)] ?? "";
+
+      if (customValue.trim().length === 0) {
+        missing.push({
+          attributeId: group.attributeId,
+          attributeLabel: group.label,
+          optionName: option.name,
+          valueId: option.id,
+        });
+      }
+    }
+  }
+
+  return missing;
 }
 
 const LOGO_ATTACHMENT_MAX_BYTES = 2 * 1024 * 1024;
@@ -119,6 +149,9 @@ export function ConfiguratorPage() {
     useState<UploadedAttachment | null>(null);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
+  const [invalidCustomValueIds, setInvalidCustomValueIds] = useState<Set<number>>(
+    () => new Set<number>(),
+  );
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
   const hasInitializedExpandedAttributeRef = useRef(false);
@@ -149,6 +182,7 @@ export function ConfiguratorPage() {
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
     });
+    setInvalidCustomValueIds(new Set());
   }, [lineId, sessionQuery.data]);
 
   const uiModel = useMemo(() => {
@@ -185,6 +219,7 @@ export function ConfiguratorPage() {
     previousLineIdRef.current = lineId;
     hasInitializedExpandedAttributeRef.current = false;
     setExpandedAttributeId(null);
+    setInvalidCustomValueIds(new Set());
     setCurrentPreview(null);
   }, [lineId]);
 
@@ -377,6 +412,23 @@ export function ConfiguratorPage() {
     collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
   }
 
+  function handleCustomValueChange(valueId: number, value: string) {
+    dispatch({ type: "SET_CUSTOM_VALUE", valueId, value });
+    setInvalidCustomValueIds((current) => {
+      if (!current.has(valueId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+
+      if (value.trim().length > 0) {
+        next.delete(valueId);
+      }
+
+      return next;
+    });
+  }
+
   async function handleLogoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const [file] = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
@@ -421,6 +473,38 @@ export function ConfiguratorPage() {
       setSaveError("La linea esta en modo lectura y no acepta nuevos cambios.");
       return;
     }
+
+    const missingCustomValues = getMissingCustomValues(
+      ui.groups,
+      state.selectedValueIds,
+      state.customValuesByValueId,
+    );
+
+    if (missingCustomValues.length > 0) {
+      const [firstMissing] = missingCustomValues;
+
+      if (!firstMissing) {
+        return;
+      }
+
+      setInvalidCustomValueIds(
+        new Set(missingCustomValues.map((item) => item.valueId)),
+      );
+      setExpandedAttributeId(firstMissing.attributeId);
+      window.setTimeout(() => {
+        attributeSectionRefs.current
+          .get(firstMissing.attributeId)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      setSaveError(
+        missingCustomValues.length === 1
+          ? `Falta llenar el texto personalizado de "${firstMissing.attributeLabel}".`
+          : `Faltan ${missingCustomValues.length} textos personalizados obligatorios por llenar.`,
+      );
+      return;
+    }
+
+    setInvalidCustomValueIds(new Set());
 
     const previewBlob =
       currentPreview?.renderKey === previewSceneKey ? currentPreview.blob : null;
@@ -595,9 +679,8 @@ export function ConfiguratorPage() {
                       onToggle={(valueId) =>
                         handleMultiToggle(group.attributeId, valueId)
                       }
-                      onCustomValueChange={(valueId, value) =>
-                        dispatch({ type: "SET_CUSTOM_VALUE", valueId, value })
-                      }
+                      onCustomValueChange={handleCustomValueChange}
+                      invalidCustomValueIds={invalidCustomValueIds}
                     />
                   </div>
                 ))}
