@@ -78,6 +78,7 @@ const CHEST_POCKET_LOGO_MARKER_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
 };
