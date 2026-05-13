@@ -4,6 +4,7 @@ import {
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
 import {
+  getDefaultChestPocketImageSource,
   getDefaultImageSource,
   getImageSourceByIds,
   getProductAssetCatalog,
@@ -35,6 +36,10 @@ export type PreviewScene = {
   lowerPocketLayout: LowerPocketLayout;
   auxiliaryPocketImageSrc?: string | undefined;
   chestPocketType?: string | undefined;
+  chestPocketImageSrc?: string | undefined;
+  logoMarker?: {
+    placement: string;
+  } | undefined;
   trimSections: Array<{
     valueId: number;
     role?:
@@ -55,6 +60,11 @@ export type ConfiguratorUiModel = {
   groups: UiAttributeGroup[];
   summary: Array<{ label: string; value: string }>;
   previewScene: PreviewScene;
+  logoSelection?: {
+    attributeId: number;
+    valueIds: number[];
+    label: string;
+  } | undefined;
 };
 
 function normalize(value: string) {
@@ -66,9 +76,13 @@ function normalize(value: string) {
 }
 
 function getSelectedOptions(
-  attribute: ConfiguratorSession["attributes"][number],
+  attribute: ConfiguratorSession["attributes"][number] | undefined,
   selectedValueIds: Record<string, number[]>,
 ) {
+  if (!attribute) {
+    return [];
+  }
+
   const ids = new Set(selectedValueIds[String(attribute.id)] ?? []);
   return attribute.values.filter((value) => ids.has(value.id));
 }
@@ -97,16 +111,6 @@ function getImageSource(
   valueId: number,
 ) {
   return getImageSourceByIds(graphicManifestKey, attributeId, valueId);
-}
-
-function getFileNameFromSource(src: string | undefined) {
-  return decodeURIComponent(src?.split("?")[0]?.split("/").pop() ?? "");
-}
-
-function hasAutomaticCollarTrimAsset(src: string | undefined) {
-  return ["blouse-model-08.svg", "blouse-model-09.svg", "blouse-model-10.svg"].includes(
-    getFileNameFromSource(src).toLowerCase(),
-  );
 }
 
 function getControlType(
@@ -147,16 +151,9 @@ function findSelectedValue(
   return attribute.values.find((value) => selectedIds.has(value.id));
 }
 
-type TrimVisualContext = {
-  neckImageSrc?: string | undefined;
-  lowerPocketImageSrc?: string | undefined;
-  lowerPocketLayout?: LowerPocketLayout | undefined;
-};
-
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
-  visualContext?: TrimVisualContext,
 ) {
   const catalog = getProductAssetCatalog(session.graphicManifestKey);
   const sectionAttribute =
@@ -193,59 +190,64 @@ function getSelectedTrimSections(
     return [];
   }
 
-  const automaticSections: PreviewScene["trimSections"] = [];
+  const selectedSections =
+    !sectionAttribute || enabledSections.length === 0
+      ? []
+      : enabledSections.map((section) => {
+          const matchingColorAttribute = colorAttributes.find((attribute) =>
+            normalize(attribute.name).includes(normalize(section.name)),
+          );
+          const sectionColor =
+            findSelectedValue(matchingColorAttribute, selectedValueIds) ??
+            globalColor;
+          const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
+            | PreviewScene["trimSections"][number]["role"]
+            | undefined;
 
-  if (hasAutomaticCollarTrimAsset(visualContext?.neckImageSrc)) {
-    if (globalColor?.colorHex) {
-      automaticSections.push({
-        valueId: catalog?.trimSectionValueIds?.upperNeck ?? 0,
-        key: "cuello",
-        label: "Cuello",
-        colorHex: globalColor.colorHex,
-      });
-    }
+          return {
+            valueId: section.id,
+            ...(role ? { role } : {}),
+            key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
+            label: section.name,
+            colorHex: sectionColor?.colorHex ?? "#1d4ed8",
+          };
+        });
+
+  return selectedSections;
+}
+
+function isVisibleChestPocketModel(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
   }
 
-  if (
-    globalColor?.colorHex &&
-    visualContext?.lowerPocketImageSrc &&
-    visualContext.lowerPocketLayout !== "none"
-  ) {
-    automaticSections.push({
-      valueId: catalog?.trimSectionValueIds?.lowerPockets ?? 0,
-      role: "lowerPockets",
-      key: "bolsillos-inferiores",
-      label: "Bolsillos inferiores",
-      colorHex: globalColor.colorHex,
-    });
+  const normalized = normalize(valueName);
+
+  return !isNoChestPocket(normalized);
+}
+
+function isNoChestPocket(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
   }
 
-  if (automaticSections.length > 0) {
-    return automaticSections;
+  const normalized = normalize(valueName);
+
+  return (
+    normalized.includes("ninguno") ||
+    normalized.includes("sin bolsillo") ||
+    normalized === "no"
+  );
+}
+
+function isNoLogo(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
   }
 
-  if (!sectionAttribute || enabledSections.length === 0) {
-    return [];
-  }
+  const normalized = normalize(valueName);
 
-  return enabledSections.map((section) => {
-    const matchingColorAttribute = colorAttributes.find((attribute) =>
-      normalize(attribute.name).includes(normalize(section.name)),
-    );
-    const sectionColor =
-      findSelectedValue(matchingColorAttribute, selectedValueIds) ?? globalColor;
-    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
-      | PreviewScene["trimSections"][number]["role"]
-      | undefined;
-
-    return {
-      valueId: section.id,
-      ...(role ? { role } : {}),
-      key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
-      label: section.name,
-      colorHex: sectionColor?.colorHex ?? "#1d4ed8",
-    };
-  });
+  return normalized.includes("sin logo") || normalized === "no";
 }
 
 export function deriveConfiguratorUi(
@@ -316,6 +318,21 @@ export function deriveConfiguratorUi(
     session,
     (name) => name.includes("bolsillo de pecho") && !name.includes("bordado"),
   );
+  const chestPocketModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.chestPocketModel,
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("modelo") &&
+        name.includes("bolsillo") &&
+        name.includes("pecho"),
+    );
+  const logoAttribute = findAttributeByName(
+    session,
+    (name) => name === "logo" || name.includes("logo"),
+  );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -332,6 +349,15 @@ export function deriveConfiguratorUi(
     chestPocketTypeAttribute,
     selectedValueIds,
   );
+  const selectedChestPocketModel = findSelectedValue(
+    chestPocketModelAttribute,
+    selectedValueIds,
+  );
+  const selectedLogoOptions = getSelectedOptions(logoAttribute, selectedValueIds);
+  const activeLogoOptions = selectedLogoOptions.filter(
+    (option) => !isNoLogo(option.name),
+  );
+  const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const neckImageSrc = selectedNeck
     ? getImageSource(
@@ -388,12 +414,29 @@ export function deriveConfiguratorUi(
           )
         : undefined,
       chestPocketType: selectedChestPocketType?.name,
-      trimSections: getSelectedTrimSections(session, selectedValueIds, {
-        neckImageSrc,
-        lowerPocketImageSrc,
-        lowerPocketLayout,
-      }),
+      chestPocketImageSrc:
+        selectedChestPocketModel &&
+        !isNoChestPocket(selectedChestPocketModel.name) &&
+        isVisibleChestPocketModel(selectedChestPocketModel.name)
+          ? getImageSource(
+              session.graphicManifestKey,
+              chestPocketModelAttribute?.id ?? 0,
+              selectedChestPocketModel.id,
+            ) ?? getDefaultChestPocketImageSource(session.graphicManifestKey)
+          : undefined,
+      logoMarker: hasLogoSelection
+        ? { placement: activeLogoOptions.map((option) => option.name).join(", ") }
+        : undefined,
+      trimSections: getSelectedTrimSections(session, selectedValueIds),
     },
+    logoSelection:
+      logoAttribute && hasLogoSelection
+        ? {
+            attributeId: logoAttribute.id,
+            valueIds: activeLogoOptions.map((option) => option.id),
+            label: activeLogoOptions.map((option) => option.name).join(", "),
+          }
+        : undefined,
   };
 }
 

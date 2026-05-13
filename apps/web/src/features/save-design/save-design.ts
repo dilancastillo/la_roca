@@ -1,3 +1,5 @@
+import type { UploadedAttachment } from "@repo/shared/schemas/configurator";
+
 export async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
   let binary = "";
@@ -13,9 +15,11 @@ export async function saveDesign(
   blob: Blob,
   selectedValueIds: Record<string, number[]>,
   customValuesByValueId: Record<string, string>,
+  logoAttachment?: UploadedAttachment | null,
 ): Promise<{
   ok?: boolean;
   attachmentId?: number;
+  logoAttachmentId?: number;
   version?: number;
   generatedAt?: string;
   productId?: number;
@@ -36,6 +40,7 @@ export async function saveDesign(
       imageBase64,
       selectedValueIds,
       customValuesByValueId,
+      logoAttachment: logoAttachment ?? undefined,
     }),
   });
 

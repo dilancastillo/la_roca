@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   odooCreate: vi.fn(),
   odooSearchRead: vi.fn(),
   odooWrite: vi.fn(),
-  storeDesignImage: vi.fn(),
 }));
 
 vi.mock("./get-configurator-session.js", () => ({
@@ -19,10 +18,6 @@ vi.mock("../lib/odoo-client.js", () => ({
   odooCreate: mocks.odooCreate,
   odooSearchRead: mocks.odooSearchRead,
   odooWrite: mocks.odooWrite,
-}));
-
-vi.mock("./store-design-image.js", () => ({
-  storeDesignImage: mocks.storeDesignImage,
 }));
 
 const editableSession: ConfiguratorSession = {
@@ -90,10 +85,6 @@ describe("saveConfiguratorDesign", () => {
     vi.clearAllMocks();
     mocks.getConfiguratorSession.mockResolvedValue(editableSession);
     mocks.odooCreate.mockResolvedValue(778);
-    mocks.storeDesignImage.mockResolvedValue({
-      version: 2,
-      generatedAt: "2026-05-04T21:00:00.000Z",
-    });
   });
 
   it("crea y usa una variante cuando Odoo no tiene una variante fisica exacta", async () => {
@@ -116,9 +107,13 @@ describe("saveConfiguratorDesign", () => {
         product_template_attribute_value_ids: [[6, 0, [9001]]],
         product_no_variant_attribute_value_ids: [[6, 0, [9101]]],
         product_custom_attribute_value_ids: [[5, 0, 0]],
+        x_product_design_image: "png-base64",
+        x_product_design_generated_at: expect.any(String),
+        x_product_design_version: 2,
       },
     );
-    expect(mocks.odooCreate).toHaveBeenCalledWith(
+    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
+      1,
       env,
       "product.product",
       [
@@ -127,6 +122,20 @@ describe("saveConfiguratorDesign", () => {
           product_template_attribute_value_ids: [[6, 0, [9001]]],
           product_template_variant_value_ids: [[6, 0, [9001]]],
         },
+      ],
+    );
+    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
+      2,
+      env,
+      "ir.attachment",
+      [
+        expect.objectContaining({
+          name: "design-v2-sale-line-290-design.png",
+          datas: "png-base64",
+          res_model: "sale.order.line",
+          res_id: 290,
+          mimetype: "image/png",
+        }),
       ],
     );
     expect(result).toMatchObject({
@@ -166,7 +175,69 @@ describe("saveConfiguratorDesign", () => {
       productId: 777,
       variantResolution: "product_variant",
     });
-    expect(mocks.odooCreate).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalledWith(
+      env,
+      "product.product",
+      expect.any(Array),
+    );
+    expect(mocks.odooCreate).toHaveBeenCalledWith(
+      env,
+      "ir.attachment",
+      expect.any(Array),
+    );
+  });
+
+  it("adjunta la imagen del logo a la orden de venta cuando llega desde la app", async () => {
+    mocks.odooSearchRead.mockResolvedValue([
+      {
+        id: 777,
+        display_name: "Blusa / Verde Olivo Claro",
+        product_template_attribute_value_ids: [9001],
+      },
+    ]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    const result = await saveConfiguratorDesign(env, {
+      saleOrderLineId: 290,
+      filename: "sale-line-290-design.png",
+      imageBase64: "png-base64",
+      selectedValueIds: editableSession.selectedValueIds,
+      logoAttachment: {
+        filename: "logo cliente.png",
+        mimeType: "image/png",
+        dataBase64: "data:image/png;base64,logo-base64",
+      },
+    });
+
+    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
+      1,
+      env,
+      "ir.attachment",
+      [
+        expect.objectContaining({
+          name: "design-v2-sale-line-290-design.png",
+          datas: "png-base64",
+          res_model: "sale.order.line",
+          res_id: 290,
+          mimetype: "image/png",
+        }),
+      ],
+    );
+    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
+      2,
+      env,
+      "ir.attachment",
+      [
+        expect.objectContaining({
+          name: expect.stringContaining("logo-v2-S00119-line-290-logo cliente.png"),
+          datas: "logo-base64",
+          res_model: "sale.order",
+          res_id: 119,
+          mimetype: "image/png",
+        }),
+      ],
+    );
+    expect(result.logoAttachmentId).toBe(778);
   });
 
   it("guarda los valores personalizados seleccionados sin depender del nombre del atributo", async () => {
@@ -251,7 +322,7 @@ describe("saveConfiguratorDesign", () => {
     ).rejects.toThrow(/seleccion llego vacia/i);
 
     expect(mocks.odooWrite).not.toHaveBeenCalled();
-    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
   });
 
   it("rechaza guardar si falta un atributo de variante requerido", async () => {
@@ -267,7 +338,7 @@ describe("saveConfiguratorDesign", () => {
     ).rejects.toThrow(/falta seleccionar "color"/i);
 
     expect(mocks.odooWrite).not.toHaveBeenCalled();
-    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
   });
 
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {
@@ -286,6 +357,5 @@ describe("saveConfiguratorDesign", () => {
     ).rejects.toThrow(/no se pudo crear la variante exacta/i);
 
     expect(mocks.odooWrite).not.toHaveBeenCalled();
-    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
   });
 });

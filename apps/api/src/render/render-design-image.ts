@@ -68,6 +68,15 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
 };
 
+const chestPocketTrimOverlayByFileName: Record<string, string> = {
+  "chest-pocket-rectangular.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
+  "chest-pocket-rectangular-v2.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
+};
+const CHEST_POCKET_LOGO_MARKER_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
+
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
@@ -125,6 +134,31 @@ function isLowerPocketTrimSection(
   const key = normalize(section.label || section.key);
 
   return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
+}
+
+function isChestPocketTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = normalize(section.label || section.key);
+
+  return (
+    section.role === "chestPocket" ||
+    key.includes("bolsillo pecho") ||
+    key.includes("bolsillo de pecho")
+  );
+}
+
+function isBackNeckTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = normalize(section.label || section.key);
+
+  return (
+    section.role === "backNeck" ||
+    key.includes("cogotera") ||
+    key.includes("cuello-trasero") ||
+    key.includes("cuello trasero")
+  );
 }
 
 function isSvgAsset(assetPath: string) {
@@ -579,6 +613,55 @@ async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
   return await createOverlayBufferFromProcessed(trimProcessed, placementProcessed);
 }
 
+async function createChestPocketOverlayBuffer(
+  assetPath: string,
+  placementAssetPath: string,
+) {
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(assetPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
+async function createChestPocketTrimOverlayBuffer(
+  assetPath: string,
+  placementAssetPath: string,
+) {
+  const overlayPath =
+    chestPocketTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
+async function createChestPocketLogoMarkerBuffer(placementAssetPath: string) {
+  const [markerProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(CHEST_POCKET_LOGO_MARKER_ASSET_PATH),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    markerProcessed,
+    placementProcessed,
+  );
+}
+
 async function createCollarTrimOverlayBuffer(
   assetPath: string,
   trimColor: string,
@@ -727,6 +810,20 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
     .join("");
 }
 
+function getBackNeckTrimSvg(trimColor: string) {
+  const pathData = "M305 128 L595 128";
+
+  return `
+    <defs>
+      <filter id="back-neck-trim-glow" x="-35%" y="-220%" width="170%" height="520%">
+        <feGaussianBlur stdDeviation="5" />
+      </filter>
+    </defs>
+    <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#back-neck-trim-glow)" />
+    <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+  `;
+}
+
 function getOverlaySvg(
   clipId: string,
   overlayDataUri: string,
@@ -745,6 +842,10 @@ function getOverlaySvg(
     </defs>
     <image href="${overlayDataUri}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" clip-path="url(#${clipId})" />
   `;
+}
+
+function getImageSvg(imageDataUri: string) {
+  return `<image href="${imageDataUri}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
 }
 
 function getRawInkBoundsInRegion(
@@ -893,9 +994,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
   if (!scene.garmentAssetPath) {
     const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
+    const backNeckTrimColor = getTrimSectionColor(scene, isBackNeckTrimSection);
     const lowerPocketTrimColor = getTrimSectionColor(
       scene,
       isLowerPocketTrimSection,
+    );
+    const chestPocketTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketTrimSection,
     );
 
     if (scene.neckAssetPath && collarTrimColor) {
@@ -935,6 +1041,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           ),
         );
       }
+    }
+
+    if (backNeckTrimColor) {
+      layers.push(getBackNeckTrimSvg(backNeckTrimColor));
     }
 
     if (scene.lowerPocketAssetPath && scene.lowerPocketLayout !== "none") {
@@ -1015,6 +1125,45 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           overlayRegionPresets.auxiliaryPocketPair,
         ),
       );
+    }
+
+    if (scene.chestPocketAssetPath && scene.neckAssetPath) {
+      const overlayBuffer = await createChestPocketOverlayBuffer(
+        scene.chestPocketAssetPath,
+        scene.neckAssetPath,
+      );
+      layers.push(getImageSvg(toDataUri(overlayBuffer)));
+
+      if (chestPocketTrimColor) {
+        const trimOverlayBuffer = await createChestPocketTrimOverlayBuffer(
+          scene.chestPocketAssetPath,
+          scene.neckAssetPath,
+        );
+
+        if (trimOverlayBuffer) {
+          const trimOutlineBuffer = await createPngInkOutlineBuffer(
+            trimOverlayBuffer,
+            "#f8fafc",
+            7,
+          );
+          const trimColorBuffer = await recolorPngInkBuffer(
+            trimOverlayBuffer,
+            chestPocketTrimColor,
+          );
+
+          layers.push(
+            getImageSvg(toDataUri(trimOutlineBuffer)),
+            getImageSvg(toDataUri(trimColorBuffer)),
+          );
+        }
+      }
+
+      if (scene.logoMarker) {
+        const markerBuffer = await createChestPocketLogoMarkerBuffer(
+          scene.neckAssetPath,
+        );
+        layers.push(getImageSvg(toDataUri(markerBuffer)));
+      }
     }
 
     layers.push(getTrimSectionsSvg(scene));

@@ -62,6 +62,15 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
 };
 
+const chestPocketTrimOverlayByFileName: Record<string, string> = {
+  "chest-pocket-rectangular.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
+  "chest-pocket-rectangular-v2.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
+};
+const CHEST_POCKET_LOGO_MARKER_SRC =
+  "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
+
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
@@ -137,6 +146,29 @@ function isLowerPocketTrimSection(
   const key = normalize(section.label || section.key);
 
   return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
+}
+
+function isChestPocketTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = normalize(section.label || section.key);
+
+  return (
+    section.role === "chestPocket" ||
+    key.includes("bolsillo pecho") ||
+    key.includes("bolsillo de pecho")
+  );
+}
+
+function isBackNeckTrimSection(section: PreviewScene["trimSections"][number]) {
+  const key = normalize(section.label || section.key);
+
+  return (
+    section.role === "backNeck" ||
+    key.includes("cogotera") ||
+    key.includes("cuello-trasero") ||
+    key.includes("cuello trasero")
+  );
 }
 
 function getSvgViewBox(svgText: string) {
@@ -1086,6 +1118,74 @@ async function drawLowerPocketOverlay(
   drawCanvasInRegions(context, recolorCanvasInk(trimCanvas, trimColor), regions);
 }
 
+async function drawChestPocketOverlay(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  placementSrc: string,
+  trimColor?: string,
+) {
+  const overlayCanvas = await createRasterCanvas(sourceSrc, placementSrc);
+  context.drawImage(overlayCanvas, 0, 0);
+
+  if (!trimColor) {
+    return;
+  }
+
+  const trimSrc = chestPocketTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!trimSrc) {
+    return;
+  }
+
+  const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
+  context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+}
+
+async function drawChestPocketLogoMarker(
+  context: CanvasRenderingContext2D,
+  placementSrc: string,
+) {
+  const markerCanvas = await createRasterCanvas(
+    CHEST_POCKET_LOGO_MARKER_SRC,
+    placementSrc,
+  );
+
+  context.drawImage(markerCanvas, 0, 0);
+}
+
+function drawBackNeckTrimPath(context: CanvasRenderingContext2D) {
+  context.beginPath();
+  context.moveTo(305, 128);
+  context.lineTo(595, 128);
+}
+
+function drawBackNeckTrim(
+  context: CanvasRenderingContext2D,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  context.save();
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.shadowColor = "rgba(248, 250, 252, 0.98)";
+  context.shadowBlur = 10;
+  context.strokeStyle = "#f8fafc";
+  context.lineWidth = 15;
+  drawBackNeckTrimPath(context);
+  context.stroke();
+
+  context.shadowBlur = 0;
+  context.strokeStyle = trimColor;
+  context.lineWidth = 9;
+  drawBackNeckTrimPath(context);
+  context.stroke();
+  context.restore();
+}
+
 async function drawCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string | undefined,
@@ -1221,12 +1321,21 @@ export async function composeDesign(
 
   if (!usesGenericGarmentAsset) {
     const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
+    const backNeckTrimColor = getTrimSectionColor(
+      scene,
+      isBackNeckTrimSection,
+    );
     const lowerPocketTrimColor = getTrimSectionColor(
       scene,
       isLowerPocketTrimSection,
     );
+    const chestPocketTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketTrimSection,
+    );
 
     await drawCollarTrimFromAsset(context, scene.neckImageSrc, collarTrimColor);
+    drawBackNeckTrim(context, backNeckTrimColor);
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
       await drawLowerPocketOverlay(
@@ -1248,6 +1357,19 @@ export async function composeDesign(
         scene.neckImageSrc,
         getOverlayRegionPreset("auxiliaryPocketPair"),
       );
+    }
+
+    if (scene.chestPocketImageSrc && scene.neckImageSrc) {
+      await drawChestPocketOverlay(
+        context,
+        scene.chestPocketImageSrc,
+        scene.neckImageSrc,
+        chestPocketTrimColor,
+      );
+
+      if (scene.logoMarker) {
+        await drawChestPocketLogoMarker(context, scene.neckImageSrc);
+      }
     }
 
     drawTrimSections(context, scene);

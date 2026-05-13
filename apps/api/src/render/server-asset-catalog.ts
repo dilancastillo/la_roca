@@ -1,4 +1,5 @@
 import {
+  getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
   getVisualAssetPath,
   resolveVisualAssetCatalog,
@@ -21,4 +22,8 @@ export function getServerAssetPathByIds(
 
 export function getServerDefaultAssetPath(graphicManifestKey: string) {
   return getDefaultVisualAssetPath(graphicManifestKey);
+}
+
+export function getServerDefaultChestPocketAssetPath(graphicManifestKey: string) {
+  return getDefaultChestPocketAssetPath(graphicManifestKey);
 }

@@ -53,6 +53,7 @@ const editableSession: ConfiguratorSession = {
 
 describe("renderAutomationLine", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
     mocks.getConfiguratorSession.mockResolvedValue(editableSession);
     mocks.deriveAutomationRenderScene.mockReturnValue({ productKind: "blouse" });
@@ -107,6 +108,55 @@ describe("renderAutomationLine", () => {
     });
   });
 
+  it("skips webhook events without write_date when a generated image is very recent", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-05T22:50:30.000Z"));
+    mocks.getConfiguratorSession.mockResolvedValue({
+      ...editableSession,
+      status: {
+        ...editableSession.status,
+        version: 3,
+        generatedAt: "2026-05-05T22:50:00.000Z",
+      },
+    });
+
+    const result = await renderAutomationLine(env, 304);
+
+    expect(mocks.renderDesignImage).not.toHaveBeenCalled();
+    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      ok: true,
+      skipped: true,
+      currentVersion: 3,
+      generatedAt: "2026-05-05T22:50:00.000Z",
+    });
+  });
+
+  it("skips webhook events created by the same manual design save", async () => {
+    mocks.getConfiguratorSession.mockResolvedValue({
+      ...editableSession,
+      status: {
+        ...editableSession.status,
+        version: 10,
+        generatedAt: "2026-05-12T03:19:58.000Z",
+      },
+    });
+
+    const result = await renderAutomationLine(env, 334, {
+      triggerWriteDate: "2026-05-12 03:20:00.000000",
+    });
+
+    expect(mocks.renderDesignImage).not.toHaveBeenCalled();
+    expect(mocks.storeDesignImage).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      ok: true,
+      skipped: true,
+      currentVersion: 10,
+      generatedAt: "2026-05-12T03:19:58.000Z",
+      triggerWriteDate: "2026-05-12 03:20:00.000000",
+    });
+  });
+
   it("allows automation after a later Odoo line update", async () => {
     mocks.getConfiguratorSession.mockResolvedValue({
       ...editableSession,
@@ -118,7 +168,7 @@ describe("renderAutomationLine", () => {
     });
 
     await renderAutomationLine(env, 304, {
-      triggerWriteDate: "2026-05-05 22:51:00.000000",
+      triggerWriteDate: "2026-05-05 22:53:00.000000",
     });
 
     expect(mocks.renderDesignImage).toHaveBeenCalledOnce();

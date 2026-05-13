@@ -9,35 +9,67 @@ type StoreDesignImageInput = {
   currentVersion: number;
 };
 
-export async function storeDesignImage(
-  env: OdooEnv,
+type DesignImageStoragePayload = {
+  attachmentName: string;
+  generatedAtIso: string;
+  lineValues: {
+    x_product_design_image: string;
+    x_product_design_generated_at: string;
+    x_product_design_version: number;
+  };
+  version: number;
+};
+
+export function buildDesignImageStoragePayload(
   input: StoreDesignImageInput,
-) {
+  generatedAt = new Date(),
+): DesignImageStoragePayload {
   const nextVersion = input.currentVersion + 1;
-  const generatedAt = new Date();
   const generatedAtIso = generatedAt.toISOString();
   const generatedAtOdoo = toOdooDatetimeString(generatedAt);
 
-  await odooWrite(env, "sale.order.line", [input.saleOrderLineId], {
-    x_product_design_image: input.imageBase64,
-    x_product_design_generated_at: generatedAtOdoo,
-    x_product_design_version: nextVersion,
-  });
+  return {
+    attachmentName: `design-v${nextVersion}-${input.filename}`,
+    generatedAtIso,
+    lineValues: {
+      x_product_design_image: input.imageBase64,
+      x_product_design_generated_at: generatedAtOdoo,
+      x_product_design_version: nextVersion,
+    },
+    version: nextVersion,
+  };
+}
 
-  const attachmentId = await odooCreate<number>(env, "ir.attachment", [
+export async function createDesignImageAttachment(
+  env: OdooEnv,
+  input: StoreDesignImageInput,
+  storage: DesignImageStoragePayload,
+) {
+  return await odooCreate<number>(env, "ir.attachment", [
     {
-      name: `design-v${nextVersion}-${input.filename}`,
+      name: storage.attachmentName,
       datas: input.imageBase64,
       res_model: "sale.order.line",
       res_id: input.saleOrderLineId,
       mimetype: "image/png",
     },
   ]);
+}
+
+export async function storeDesignImage(
+  env: OdooEnv,
+  input: StoreDesignImageInput,
+) {
+  const storage = buildDesignImageStoragePayload(input);
+
+  await odooWrite(env, "sale.order.line", [input.saleOrderLineId], storage.lineValues);
+
+  const attachmentId = await createDesignImageAttachment(env, input, storage);
 
   return {
     ok: true,
     attachmentId,
-    version: nextVersion,
-    generatedAt: generatedAtIso,
+    version: storage.version,
+    generatedAt: storage.generatedAtIso,
   };
 }

@@ -91,6 +91,54 @@ const session: ConfiguratorSession = {
       ],
     },
     {
+      id: 102,
+      name: "Modelo bolsillo de pecho",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 6101,
+          name: "Rectangular",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
+        {
+          id: 6102,
+          name: "Ninguno",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
+        {
+          id: 6103,
+          name: "Modelo 2",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
+      ],
+    },
+    {
+      id: 120,
+      name: "Logo",
+      displayType: "multi",
+      selectionMode: "multiple",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 7001,
+          name: "Bolsillo de pecho izquierdo",
+          attributeId: 120,
+          attributeName: "Logo",
+        },
+        {
+          id: 7002,
+          name: "Sin logo",
+          attributeId: 120,
+          attributeName: "Logo",
+        },
+      ],
+    },
+    {
       id: 91,
       name: "Color de vivo",
       displayType: "color",
@@ -108,22 +156,40 @@ const session: ConfiguratorSession = {
     },
     {
       id: 92,
-      name: "Sección de vivo",
+      name: "Seccion de vivo",
       displayType: "multi",
       selectionMode: "multiple",
       variantMode: "no_variant",
       values: [
         {
+          id: 5146,
+          name: "Cogotera",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 5149,
           name: "Bolsillo pecho",
           attributeId: 92,
-          attributeName: "Sección de vivo",
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 5147,
+          name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 5150,
+          name: "Bolsillos inferiores parte superior",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
         },
         {
           id: 5423,
           name: "Sin vivos",
           attributeId: 92,
-          attributeName: "Sección de vivo",
+          attributeName: "Seccion de vivo",
         },
       ],
     },
@@ -149,7 +215,7 @@ const session: ConfiguratorSession = {
 };
 
 describe("deriveAutomationRenderScene", () => {
-  it("pinta el cuello alto con el color de vivo sin depender de la sección escogida", () => {
+  it("no pinta vivos solo con escoger color de vivo", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
     });
@@ -157,27 +223,14 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg",
     );
-    expect(scene.trimSections).toEqual([
-      {
-        valueId: 5147,
-        key: "cuello",
-        label: "Cuello",
-        colorHex: "#f4c7cc",
-      },
-      {
-        valueId: 5150,
-        role: "lowerPockets",
-        key: "bolsillos-inferiores",
-        label: "Bolsillos inferiores",
-        colorHex: "#f4c7cc",
-      },
-    ]);
+    expect(scene.trimSections).toEqual([]);
   });
 
-  it("pinta el cuello 2019 con el color de vivo sin depender de la seccion escogida", () => {
+  it("pinta el cuello solo cuando Seccion de vivo tiene Cuello", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
       "63": [2593],
+      "92": [5147],
     });
 
     expect(scene.neckAssetPath).toBe(
@@ -186,32 +239,41 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.trimSections).toEqual([
       {
         valueId: 5147,
+        role: "upperNeck",
         key: "cuello",
         label: "Cuello",
-        colorHex: "#f4c7cc",
-      },
-      {
-        valueId: 5150,
-        role: "lowerPockets",
-        key: "bolsillos-inferiores",
-        label: "Bolsillos inferiores",
         colorHex: "#f4c7cc",
       },
     ]);
   });
 
-  it("pinta presilla ovalo con el color de vivo sin depender de la seccion escogida", () => {
+  it("pinta el vivo del bolsillo inferior solo con Bolsillos inferiores parte superior", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
-      "63": [2599],
+      "92": [5150],
     });
 
-    expect(scene.neckAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-09.svg",
-    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pinta cuello y bolsillo cuando ambas secciones estan seleccionadas", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "92": [5147, 5150],
+    });
+
     expect(scene.trimSections).toEqual([
       {
         valueId: 5147,
+        role: "upperNeck",
         key: "cuello",
         label: "Cuello",
         colorHex: "#f4c7cc",
@@ -219,28 +281,25 @@ describe("deriveAutomationRenderScene", () => {
       {
         valueId: 5150,
         role: "lowerPockets",
-        key: "bolsillos-inferiores",
-        label: "Bolsillos inferiores",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
         colorHex: "#f4c7cc",
       },
     ]);
   });
 
-  it("pinta el vivo de bolsillo inferior aunque no dependa del cuello", () => {
+  it("mantiene solo la cogotera seleccionada sin agregar vivos automaticos", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
-      "63": [],
+      "92": [5146],
     });
 
-    expect(scene.lowerPocketAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
-    );
     expect(scene.trimSections).toEqual([
       {
-        valueId: 5150,
-        role: "lowerPockets",
-        key: "bolsillos-inferiores",
-        label: "Bolsillos inferiores",
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
         colorHex: "#f4c7cc",
       },
     ]);
@@ -253,5 +312,79 @@ describe("deriveAutomationRenderScene", () => {
     });
 
     expect(scene.trimSections).toEqual([]);
+  });
+
+  it("muestra bolsillo de pecho rectangular solo cuando el modelo seleccionado es Rectangular", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6101],
+    });
+
+    expect(scene.chestPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
+    );
+  });
+
+  it("oculta bolsillo de pecho cuando el modelo seleccionado es Ninguno", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6102],
+    });
+
+    expect(scene.chestPocketAssetPath).toBeUndefined();
+  });
+
+  it("muestra bolsillo de pecho si Odoo envia un modelo numerado distinto de Ninguno", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6103],
+    });
+
+    expect(scene.chestPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
+    );
+  });
+
+  it("pinta vivo de bolsillo de pecho solo con la seccion Bolsillo pecho", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6101],
+      "92": [5149],
+    });
+
+    expect(scene.chestPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5149,
+        role: "chestPocket",
+        key: "bolsillo-pecho",
+        label: "Bolsillo pecho",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("muestra punto de logo cuando se selecciona una posicion de logo", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6101],
+      "120": [7001],
+    });
+
+    expect(scene.logoMarker).toEqual({
+      placement: "Bolsillo de pecho izquierdo",
+    });
+  });
+
+  it("no muestra punto de logo cuando la seleccion es Sin logo", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6101],
+      "120": [7002],
+    });
+
+    expect(scene.logoMarker).toBeUndefined();
   });
 });

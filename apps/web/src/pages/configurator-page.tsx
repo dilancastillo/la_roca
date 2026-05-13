@@ -1,6 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import type {
+  ConfiguratorSession,
+  UploadedAttachment,
+} from "@repo/shared/schemas/configurator";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
@@ -72,6 +75,30 @@ function shouldKeepSectionOpenAfterSelection(
   );
 }
 
+const LOGO_ATTACHMENT_MAX_BYTES = 2 * 1024 * 1024;
+const LOGO_ATTACHMENT_ACCEPT = "image/png,image/jpeg,image/webp,image/svg+xml";
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      const result = reader.result;
+
+      if (typeof result !== "string") {
+        reject(new Error("No se pudo leer la imagen del logo."));
+        return;
+      }
+
+      resolve(result.includes(",") ? result.split(",").pop() ?? "" : result);
+    });
+    reader.addEventListener("error", () => {
+      reject(new Error("No se pudo leer la imagen del logo."));
+    });
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ConfiguratorPage() {
   const { saleOrderLineId } = useParams();
   const location = useLocation();
@@ -88,6 +115,9 @@ export function ConfiguratorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [logoAttachment, setLogoAttachment] =
+    useState<UploadedAttachment | null>(null);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
@@ -128,6 +158,15 @@ export function ConfiguratorPage() {
 
     return deriveConfiguratorUi(sessionQuery.data, state.selectedValueIds);
   }, [sessionQuery.data, state.selectedValueIds]);
+
+  useEffect(() => {
+    if (uiModel?.logoSelection) {
+      return;
+    }
+
+    setLogoAttachment(null);
+    setLogoUploadError(null);
+  }, [uiModel?.logoSelection]);
 
   const previewSceneKey = useMemo(
     () => (uiModel ? createPreviewSceneKey(uiModel.previewScene) : ""),
@@ -338,6 +377,41 @@ export function ConfiguratorPage() {
     collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
   }
 
+  async function handleLogoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const [file] = Array.from(event.currentTarget.files ?? []);
+    event.currentTarget.value = "";
+    setLogoUploadError(null);
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setLogoUploadError("Carga un archivo de imagen valido para el logo.");
+      return;
+    }
+
+    if (file.size > LOGO_ATTACHMENT_MAX_BYTES) {
+      setLogoUploadError("La imagen del logo debe pesar maximo 2 MB.");
+      return;
+    }
+
+    try {
+      const dataBase64 = await readFileAsBase64(file);
+      setLogoAttachment({
+        filename: file.name,
+        mimeType: file.type || "application/octet-stream",
+        dataBase64,
+      });
+    } catch (error) {
+      setLogoUploadError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo leer la imagen del logo.",
+      );
+    }
+  }
+
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveMessage(null);
@@ -365,6 +439,7 @@ export function ConfiguratorPage() {
         previewBlob,
         state.selectedValueIds,
         state.customValuesByValueId,
+        ui.logoSelection ? logoAttachment : null,
       );
       queryClient.setQueryData<ConfiguratorSession>(
         ["configurator-session", lineId],
@@ -538,6 +613,54 @@ export function ConfiguratorPage() {
                   </div>
                   <span className="save-panel__version">V{session.status.version}</span>
                 </div>
+
+                {ui.logoSelection ? (
+                  <div className="logo-upload-panel">
+                    <div className="logo-upload-panel__header">
+                      <div>
+                        <strong>Imagen de logo</strong>
+                        <span>{ui.logoSelection.label}</span>
+                      </div>
+                      {!isReadOnly ? (
+                        <label className="logo-upload-panel__action">
+                          <input
+                            type="file"
+                            accept={LOGO_ATTACHMENT_ACCEPT}
+                            disabled={isSaving}
+                            onChange={handleLogoFileChange}
+                          />
+                          {logoAttachment ? "Cambiar" : "Cargar"}
+                        </label>
+                      ) : null}
+                    </div>
+
+                    {logoAttachment ? (
+                      <div className="logo-upload-panel__file">
+                        <span>{logoAttachment.filename}</span>
+                        {!isReadOnly ? (
+                          <button
+                            type="button"
+                            className="logo-upload-panel__remove"
+                            onClick={() => setLogoAttachment(null)}
+                            disabled={isSaving}
+                          >
+                            Quitar
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="logo-upload-panel__hint">
+                        Opcional: adjunta la imagen real del logo para la orden.
+                      </p>
+                    )}
+
+                    {logoUploadError ? (
+                      <p className="error-banner" role="alert">
+                        {logoUploadError}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <button
                   type="submit"

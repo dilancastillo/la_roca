@@ -58,12 +58,21 @@ export const configuratorSessionSchema = z.object({
 
 export type ConfiguratorSession = z.infer<typeof configuratorSessionSchema>;
 
+export const uploadedAttachmentSchema = z.object({
+  filename: z.string().min(1).max(140),
+  mimeType: z.string().min(1).max(120),
+  dataBase64: z.string().min(1),
+});
+
+export type UploadedAttachment = z.infer<typeof uploadedAttachmentSchema>;
+
 export const saveDesignRequestSchema = z.object({
   saleOrderLineId: z.number(),
   filename: z.string().min(1).max(140),
   imageBase64: z.string().min(1),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
   customValuesByValueId: z.record(z.string(), z.string()).optional(),
+  logoAttachment: uploadedAttachmentSchema.optional(),
 });
 
 export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;

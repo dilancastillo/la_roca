@@ -1,4 +1,5 @@
 import {
+  getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
   getVisualAssetPath,
   resolveVisualAssetCatalog,
@@ -27,5 +28,10 @@ export function getImageSourceByIds(
 
 export function getDefaultImageSource(graphicManifestKey: string) {
   const path = getDefaultVisualAssetPath(graphicManifestKey);
+  return path ? `/${path}` : undefined;
+}
+
+export function getDefaultChestPocketImageSource(graphicManifestKey: string) {
+  const path = getDefaultChestPocketAssetPath(graphicManifestKey);
   return path ? `/${path}` : undefined;
 }

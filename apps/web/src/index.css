@@ -793,6 +793,76 @@ main {
   font-weight: 800;
 }
 
+.logo-upload-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.logo-upload-panel__header,
+.logo-upload-panel__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.logo-upload-panel__header div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.logo-upload-panel__header span,
+.logo-upload-panel__hint,
+.logo-upload-panel__file span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.logo-upload-panel__file span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logo-upload-panel__action,
+.logo-upload-panel__remove {
+  min-height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--primary);
+  padding: 0 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.logo-upload-panel__action {
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-upload-panel__action input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-upload-panel__remove {
+  color: var(--danger);
+}
+
+.logo-upload-panel__hint {
+  margin: 0;
+}
+
 .primary-button,
 .secondary-button {
   min-height: 46px;

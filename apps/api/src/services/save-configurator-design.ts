@@ -1,12 +1,16 @@
 import type {
   ConfiguratorSession,
   SaveDesignRequest,
+  UploadedAttachment,
 } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
-import { storeDesignImage } from "./store-design-image.js";
+import {
+  buildDesignImageStoragePayload,
+  createDesignImageAttachment,
+} from "./store-design-image.js";
 
 type ProductVariantRecord = {
   id: number;
@@ -66,6 +70,40 @@ function parseCustomValuesByValueId(
       ];
     }),
   );
+}
+
+function sanitizeAttachmentFilename(filename: string) {
+  return (
+    filename
+      .trim()
+      .replace(/[^\w.\- ()]+/g, "_")
+      .slice(0, 140) || "logo"
+  );
+}
+
+function stripDataUrlPrefix(dataBase64: string) {
+  const [, payload] = dataBase64.split(",", 2);
+  return payload || dataBase64;
+}
+
+async function createSaleOrderLogoAttachment(
+  env: OdooEnv,
+  session: ConfiguratorSession,
+  attachment: UploadedAttachment,
+  version: number,
+) {
+  const safeFilename = sanitizeAttachmentFilename(attachment.filename);
+  const safeOrderName = sanitizeAttachmentFilename(session.orderName);
+
+  return await odooCreate<number>(env, "ir.attachment", [
+    {
+      name: `logo-v${version}-${safeOrderName}-line-${session.saleOrderLineId}-${safeFilename}`,
+      datas: stripDataUrlPrefix(attachment.dataBase64),
+      res_model: "sale.order",
+      res_id: session.saleOrderId,
+      mimetype: attachment.mimeType,
+    },
+  ]);
 }
 
 function setsMatch(left: number[], right: number[]) {
@@ -285,20 +323,42 @@ export async function saveConfiguratorDesign(
     }
   }
 
+  const designImageInput = {
+    saleOrderLineId: payload.saleOrderLineId,
+    filename: payload.filename,
+    imageBase64: payload.imageBase64,
+    currentVersion: session.status.version,
+  };
+  const designImageStorage = buildDesignImageStoragePayload(designImageInput);
+
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: productId,
     product_template_attribute_value_ids: [[6, 0, variantValueIds]],
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     product_custom_attribute_value_ids: customValueCommands,
+    ...designImageStorage.lineValues,
   });
 
+  const attachmentId = await createDesignImageAttachment(
+    env,
+    designImageInput,
+    designImageStorage,
+  );
+  const logoAttachmentId = payload.logoAttachment
+    ? await createSaleOrderLogoAttachment(
+        env,
+        session,
+        payload.logoAttachment,
+        designImageStorage.version,
+      )
+    : undefined;
+
   return {
-    ...(await storeDesignImage(env, {
-      saleOrderLineId: payload.saleOrderLineId,
-      filename: payload.filename,
-      imageBase64: payload.imageBase64,
-      currentVersion: session.status.version,
-    })),
+    ok: true,
+    attachmentId,
+    ...(logoAttachmentId ? { logoAttachmentId } : {}),
+    version: designImageStorage.version,
+    generatedAt: designImageStorage.generatedAtIso,
     productId,
     variantResolution: variantResolution.resolution,
   };

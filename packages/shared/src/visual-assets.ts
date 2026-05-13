@@ -6,6 +6,7 @@ export type VisualAssetCatalog = {
     neckModel?: number;
     lowerPocketType?: number;
     lowerPocketModel?: number;
+    chestPocketModel?: number;
     auxiliaryPocketModel?: number;
     baseColor: number;
     trimColor?: number;
@@ -26,13 +27,17 @@ export type VisualAssetCatalog = {
   };
   lowerPocketModelNoneValueIds?: number[];
   defaultGarmentAsset?: string;
+  defaultChestPocketModelAsset?: string;
   garmentModelsByValueId?: Record<number, string>;
   neckModelsByValueId?: Record<number, string>;
   lowerPocketModelsByValueId?: Record<number, string>;
+  chestPocketModelsByValueId?: Record<number, string>;
   auxiliaryPocketModelsByValueId?: Record<number, string>;
 };
 
 const BLUSA_ASSET_BASE = "assets/catalog/blusa-antifluido-t180/svg-clean";
+const BLUSA_DETAIL_OVERLAY_BASE =
+  "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 
 function blouseModelAsset(index: number) {
@@ -53,6 +58,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     neckModel: 63,
     lowerPocketType: 69,
     lowerPocketModel: 70,
+    chestPocketModel: 102,
     baseColor: 90,
     trimColor: 91,
     trimSections: 92,
@@ -71,6 +77,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     double: [5354, 5366, 5378, 5390],
   },
   lowerPocketModelNoneValueIds: [5425],
+  defaultChestPocketModelAsset: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
   neckModelsByValueId: {
     2590: blouseModelAsset(1), // CUELLO V, inferido desde el valor actual de Odoo.
     2592: blouseModelAsset(3), // PUNTAS, confirmado por usuario.
@@ -159,6 +166,10 @@ export function getVisualAssetPath(
     return catalog.lowerPocketModelsByValueId?.[valueId];
   }
 
+  if (attributeId === catalog.attributeIds.chestPocketModel) {
+    return catalog.chestPocketModelsByValueId?.[valueId];
+  }
+
   if (attributeId === catalog.attributeIds.auxiliaryPocketModel) {
     return catalog.auxiliaryPocketModelsByValueId?.[valueId];
   }
@@ -168,4 +179,8 @@ export function getVisualAssetPath(
 
 export function getDefaultVisualAssetPath(graphicManifestKey: string) {
   return resolveVisualAssetCatalog(graphicManifestKey)?.defaultGarmentAsset;
+}
+
+export function getDefaultChestPocketAssetPath(graphicManifestKey: string) {
+  return resolveVisualAssetCatalog(graphicManifestKey)?.defaultChestPocketModelAsset;
 }

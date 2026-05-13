@@ -9,6 +9,8 @@ type RenderAutomationLineOptions = {
   triggerWriteDate?: string | null;
 };
 
+const RECENT_GENERATED_IMAGE_GRACE_MS = 120_000;
+
 function parseAutomationDate(value: string | null | undefined) {
   if (!value) {
     return null;
@@ -48,11 +50,13 @@ export async function renderAutomationLine(
 
   const triggerWriteDate = parseAutomationDate(options.triggerWriteDate);
   const generatedAt = parseAutomationDate(session.status.generatedAt);
+  const generatedAtTime = generatedAt?.getTime() ?? null;
+  const triggerWriteTime = triggerWriteDate?.getTime() ?? null;
 
   if (
-    triggerWriteDate &&
-    generatedAt &&
-    generatedAt.getTime() >= triggerWriteDate.getTime()
+    triggerWriteTime !== null &&
+    generatedAtTime !== null &&
+    generatedAtTime >= triggerWriteTime
   ) {
     return {
       ok: true,
@@ -66,6 +70,45 @@ export async function renderAutomationLine(
       currentVersion: session.status.version,
       generatedAt: session.status.generatedAt,
       triggerWriteDate: options.triggerWriteDate,
+    };
+  }
+
+  if (
+    triggerWriteTime !== null &&
+    generatedAtTime !== null &&
+    triggerWriteTime >= generatedAtTime &&
+    triggerWriteTime - generatedAtTime <= RECENT_GENERATED_IMAGE_GRACE_MS
+  ) {
+    return {
+      ok: true,
+      skipped: true,
+      reason:
+        "La imagen vigente fue generada justo antes del evento del webhook; se evita que la automatizacion pise el canvas guardado desde la app.",
+      saleOrderLineId,
+      orderName: session.orderName,
+      productId: session.productId,
+      productName: session.productName,
+      currentVersion: session.status.version,
+      generatedAt: session.status.generatedAt,
+      triggerWriteDate: options.triggerWriteDate,
+    };
+  }
+
+  if (
+    generatedAtTime !== null &&
+    generatedAtTime >= Date.now() - RECENT_GENERATED_IMAGE_GRACE_MS
+  ) {
+    return {
+      ok: true,
+      skipped: true,
+      reason:
+        "La linea ya tiene una imagen generada muy reciente; se evita sobrescribir un guardado manual sin write_date del webhook.",
+      saleOrderLineId,
+      orderName: session.orderName,
+      productId: session.productId,
+      productName: session.productName,
+      currentVersion: session.status.version,
+      generatedAt: session.status.generatedAt,
     };
   }
 

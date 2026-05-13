@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1082 1350" width="1082" height="1350">
+  <path
+    d="M759.92,572.2h-145.5v-165.43h145.5v165.43ZM619.42,567.2h135.5v-155.43h-135.5v155.43Z"
+    fill="#1d1d1b"
+  />
+  <rect
+    x="616.5"
+    y="409.27"
+    width="140.63"
+    height="18.77"
+    fill="none"
+    stroke="#1d1d1b"
+    stroke-width="5"
+    stroke-linejoin="round"
+  />
+</svg>

@@ -5,6 +5,7 @@ import {
 } from "@repo/shared/lower-pocket-rules";
 import {
   getServerDefaultAssetPath,
+  getServerDefaultChestPocketAssetPath,
   getServerAssetPathByIds,
   getServerProductAssetCatalog,
 } from "./server-asset-catalog.js";
@@ -18,6 +19,10 @@ export type AutomationRenderScene = {
   lowerPocketLayout: LowerPocketLayout;
   auxiliaryPocketAssetPath?: string;
   chestPocketType?: string;
+  chestPocketAssetPath?: string;
+  logoMarker?: {
+    placement: string;
+  };
   trimSections: Array<{
     valueId: number;
     role?:
@@ -61,14 +66,38 @@ function findSelectedValue(
   return attribute.values.find((value) => selectedIds.has(value.id));
 }
 
-function getFileNameFromAssetPath(assetPath: string | undefined) {
-  return assetPath?.split(/[\\/]/).pop()?.toLowerCase() ?? "";
+function isVisibleChestPocketModel(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return !isNoChestPocket(normalized);
 }
 
-function hasAutomaticCollarTrimAsset(assetPath: string | undefined) {
-  return ["blouse-model-08.svg", "blouse-model-09.svg", "blouse-model-10.svg"].includes(
-    getFileNameFromAssetPath(assetPath),
+function isNoChestPocket(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return (
+    normalized.includes("ninguno") ||
+    normalized.includes("sin bolsillo") ||
+    normalized === "no"
   );
+}
+
+function isNoLogo(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("sin logo") || normalized === "no";
 }
 
 function getSelectedOptions(
@@ -83,16 +112,9 @@ function getSelectedOptions(
   return attribute.values.filter((value) => selectedIds.has(value.id));
 }
 
-type TrimVisualContext = {
-  neckAssetPath?: string | undefined;
-  lowerPocketAssetPath?: string | undefined;
-  lowerPocketLayout?: LowerPocketLayout | undefined;
-};
-
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
-  visualContext?: TrimVisualContext,
 ) {
   const catalog = getServerProductAssetCatalog(session.graphicManifestKey);
   const sectionAttribute =
@@ -129,59 +151,30 @@ function getSelectedTrimSections(
     return [];
   }
 
-  const automaticSections: AutomationRenderScene["trimSections"] = [];
+  const selectedSections =
+    !sectionAttribute || enabledSections.length === 0
+      ? []
+      : enabledSections.map((section) => {
+          const matchingColorAttribute = colorAttributes.find((attribute) =>
+            normalize(attribute.name).includes(normalize(section.name)),
+          );
+          const sectionColor =
+            findSelectedValue(matchingColorAttribute, selectedValueIds) ??
+            globalColor;
+          const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
+            | AutomationRenderScene["trimSections"][number]["role"]
+            | undefined;
 
-  if (hasAutomaticCollarTrimAsset(visualContext?.neckAssetPath)) {
-    if (globalColor?.colorHex) {
-      automaticSections.push({
-        valueId: catalog?.trimSectionValueIds?.upperNeck ?? 0,
-        key: "cuello",
-        label: "Cuello",
-        colorHex: globalColor.colorHex,
-      });
-    }
-  }
+          return {
+            valueId: section.id,
+            ...(role ? { role } : {}),
+            key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
+            label: section.name,
+            colorHex: sectionColor?.colorHex ?? "#1d4ed8",
+          };
+        });
 
-  if (
-    globalColor?.colorHex &&
-    visualContext?.lowerPocketAssetPath &&
-    visualContext.lowerPocketLayout !== "none"
-  ) {
-    automaticSections.push({
-      valueId: catalog?.trimSectionValueIds?.lowerPockets ?? 0,
-      role: "lowerPockets",
-      key: "bolsillos-inferiores",
-      label: "Bolsillos inferiores",
-      colorHex: globalColor.colorHex,
-    });
-  }
-
-  if (automaticSections.length > 0) {
-    return automaticSections;
-  }
-
-  if (!sectionAttribute || enabledSections.length === 0) {
-    return [];
-  }
-
-  return enabledSections.map((section) => {
-    const matchingColorAttribute = colorAttributes.find((attribute) =>
-      normalize(attribute.name).includes(normalize(section.name)),
-    );
-    const sectionColor =
-      findSelectedValue(matchingColorAttribute, selectedValueIds) ?? globalColor;
-    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
-      | AutomationRenderScene["trimSections"][number]["role"]
-      | undefined;
-
-    return {
-      valueId: section.id,
-      ...(role ? { role } : {}),
-      key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
-      label: section.name,
-      colorHex: sectionColor?.colorHex ?? "#1d4ed8",
-    };
-  });
+  return selectedSections;
 }
 
 export function deriveAutomationRenderScene(
@@ -229,6 +222,21 @@ export function deriveAutomationRenderScene(
     session,
     (name) => name.includes("bolsillo de pecho") && !name.includes("bordado"),
   );
+  const chestPocketModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === catalog?.attributeIds.chestPocketModel,
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("modelo") &&
+        name.includes("bolsillo") &&
+        name.includes("pecho"),
+    );
+  const logoAttribute = findAttributeByName(
+    session,
+    (name) => name === "logo" || name.includes("logo"),
+  );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -245,6 +253,14 @@ export function deriveAutomationRenderScene(
     chestPocketTypeAttribute,
     selectedValueIds,
   );
+  const selectedChestPocketModel = findSelectedValue(
+    chestPocketModelAttribute,
+    selectedValueIds,
+  );
+  const activeLogoOptions = getSelectedOptions(
+    logoAttribute,
+    selectedValueIds,
+  ).filter((option) => !isNoLogo(option.name));
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const garmentAssetPath = selectedGarment
     ? getServerAssetPathByIds(
@@ -274,6 +290,16 @@ export function deriveAutomationRenderScene(
         selectedAuxiliaryPocketModel.id,
       )
     : undefined;
+  const chestPocketAssetPath =
+    selectedChestPocketModel &&
+    !isNoChestPocket(selectedChestPocketModel.name) &&
+    isVisibleChestPocketModel(selectedChestPocketModel.name)
+      ? getServerAssetPathByIds(
+          session.graphicManifestKey,
+          chestPocketModelAttribute?.id ?? 0,
+          selectedChestPocketModel.id,
+        ) ?? getServerDefaultChestPocketAssetPath(session.graphicManifestKey)
+      : undefined;
 
   return {
     productName: session.productName,
@@ -288,11 +314,14 @@ export function deriveAutomationRenderScene(
     ...(selectedChestPocketType?.name
       ? { chestPocketType: selectedChestPocketType.name }
       : {}),
-    trimSections: getSelectedTrimSections(session, selectedValueIds, {
-      neckAssetPath,
-      lowerPocketAssetPath:
-        lowerPocketLayout !== "none" ? lowerPocketAssetPath : undefined,
-      lowerPocketLayout,
-    }),
+    ...(chestPocketAssetPath ? { chestPocketAssetPath } : {}),
+    ...(activeLogoOptions.length > 0
+      ? {
+          logoMarker: {
+            placement: activeLogoOptions.map((option) => option.name).join(", "),
+          },
+        }
+      : {}),
+    trimSections: getSelectedTrimSections(session, selectedValueIds),
   };
 }
