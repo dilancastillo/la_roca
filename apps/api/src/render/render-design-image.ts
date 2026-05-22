@@ -92,8 +92,9 @@ const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
 
 const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
-const POCKET_TRIM_OUTLINE_PAD = 5;
-const POCKET_TRIM_RADIUS = 3;
+const POCKET_TRIM_LINE_WIDTH = 5;
+const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
+const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
@@ -123,6 +124,12 @@ function getTrimSectionColor(
   return scene.trimSections.find(matcher)?.colorHex;
 }
 
+function getTrimSectionText(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  return normalize(`${section.label} ${section.key}`);
+}
+
 function isWholeCollarSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -132,15 +139,38 @@ function isWholeCollarSection(
 function isLowerPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = getTrimSectionText(section);
 
   return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
+}
+
+function isLowerPocketLowerTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    isLowerPocketTrimSection(section) &&
+    (key.includes("parte baja") ||
+      key.includes("parte-baja") ||
+      key.includes("parte inferior") ||
+      key.includes("parte-inferior"))
+  );
+}
+
+function isLowerPocketUpperTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  return (
+    isLowerPocketTrimSection(section) &&
+    !isLowerPocketLowerTrimSection(section)
+  );
 }
 
 function isChestPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = getTrimSectionText(section);
 
   return (
     section.role === "chestPocket" ||
@@ -894,6 +924,19 @@ function getRawInkBoundsInRegion(
   };
 }
 
+function getRawInkBounds(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+) {
+  return getRawInkBoundsInRegion(data, width, height, {
+    x: 0,
+    y: 0,
+    width,
+    height,
+  });
+}
+
 function buildPocketTrimBand(bounds: {
   x: number;
   y: number;
@@ -909,12 +952,34 @@ function buildPocketTrimBand(bounds: {
     y: bandY,
     width: bounds.width + POCKET_TRIM_HORIZONTAL_PAD * 2,
     height: bandHeight,
+    topLineY: bounds.y + POCKET_TRIM_LINE_WIDTH / 2,
+    bottomLineY: bandY + bandHeight - POCKET_TRIM_LINE_WIDTH / 2,
   };
+}
+
+type LowerPocketBandTrimColors = {
+  top?: string | undefined;
+  bottom?: string | undefined;
+};
+
+function getPocketTrimLineSvg(
+  x1: number,
+  x2: number,
+  y: number,
+  trimColor: string,
+  filterId = "lower-pocket-trim-glow",
+) {
+  const pathData = `M${x1} ${y} L${x2} ${y}`;
+
+  return `
+    <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="${POCKET_TRIM_OUTLINE_LINE_WIDTH}" stroke-linecap="butt" stroke-linejoin="round" filter="url(#${filterId})" />
+    <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="${POCKET_TRIM_LINE_WIDTH}" stroke-linecap="butt" stroke-linejoin="round" />
+  `;
 }
 
 async function getLowerPocketTrimBandSvg(
   trimOverlayBuffer: Buffer,
-  trimColor: string,
+  trimColors: LowerPocketBandTrimColors,
   regions: OverlayRegion[],
 ) {
   const raw = await pngBufferToRaw(trimOverlayBuffer);
@@ -932,17 +997,31 @@ async function getLowerPocketTrimBandSvg(
       }
 
       const band = buildPocketTrimBand(bounds);
-      const outlineBand = {
-        x: band.x - POCKET_TRIM_OUTLINE_PAD,
-        y: band.y - POCKET_TRIM_OUTLINE_PAD,
-        width: band.width + POCKET_TRIM_OUTLINE_PAD * 2,
-        height: band.height + POCKET_TRIM_OUTLINE_PAD * 2,
-      };
+      const lines: string[] = [];
 
-      return `
-        <rect x="${outlineBand.x}" y="${outlineBand.y}" width="${outlineBand.width}" height="${outlineBand.height}" rx="${POCKET_TRIM_RADIUS + 3}" fill="#f8fafc" filter="url(#lower-pocket-trim-glow)" />
-        <rect x="${band.x}" y="${band.y}" width="${band.width}" height="${band.height}" rx="${POCKET_TRIM_RADIUS}" fill="${trimColor}" />
-      `;
+      if (trimColors.top) {
+        lines.push(
+          getPocketTrimLineSvg(
+            band.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+            band.x + band.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+            band.topLineY,
+            trimColors.top,
+          ),
+        );
+      }
+
+      if (trimColors.bottom) {
+        lines.push(
+          getPocketTrimLineSvg(
+            band.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+            band.x + band.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+            band.bottomLineY,
+            trimColors.bottom,
+          ),
+        );
+      }
+
+      return lines.join("");
     })
     .join("");
 
@@ -957,6 +1036,35 @@ async function getLowerPocketTrimBandSvg(
       </filter>
     </defs>
     ${bands}
+  `;
+}
+
+async function getChestPocketTrimLineSvg(
+  trimOverlayBuffer: Buffer,
+  trimColor: string,
+) {
+  const raw = await pngBufferToRaw(trimOverlayBuffer);
+  const bounds = getRawInkBounds(raw.data, raw.width, raw.height);
+
+  if (!bounds) {
+    return "";
+  }
+
+  const lineSvg = getPocketTrimLineSvg(
+    bounds.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+    bounds.x + bounds.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+    bounds.y + POCKET_TRIM_LINE_WIDTH / 2,
+    trimColor,
+    "chest-pocket-trim-glow",
+  );
+
+  return `
+    <defs>
+      <filter id="chest-pocket-trim-glow" x="-30%" y="-120%" width="160%" height="340%">
+        <feGaussianBlur stdDeviation="5" />
+      </filter>
+    </defs>
+    ${lineSvg}
   `;
 }
 
@@ -996,10 +1104,16 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   if (!scene.garmentAssetPath) {
     const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
     const backNeckTrimColor = getTrimSectionColor(scene, isBackNeckTrimSection);
-    const lowerPocketTrimColor = getTrimSectionColor(
+    const lowerPocketUpperTrimColor = getTrimSectionColor(
       scene,
-      isLowerPocketTrimSection,
+      isLowerPocketUpperTrimSection,
     );
+    const lowerPocketLowerTrimColor = getTrimSectionColor(
+      scene,
+      isLowerPocketLowerTrimSection,
+    );
+    const lowerPocketTrimColor =
+      lowerPocketUpperTrimColor ?? lowerPocketLowerTrimColor;
     const chestPocketTrimColor = getTrimSectionColor(
       scene,
       isChestPocketTrimSection,
@@ -1079,7 +1193,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             layers.push(
               await getLowerPocketTrimBandSvg(
                 trimOverlayBuffer,
-                lowerPocketTrimColor,
+                {
+                  top: lowerPocketUpperTrimColor,
+                  bottom: lowerPocketLowerTrimColor,
+                },
                 lowerPocketRegions,
               ),
             );
@@ -1142,19 +1259,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         );
 
         if (trimOverlayBuffer) {
-          const trimOutlineBuffer = await createPngInkOutlineBuffer(
-            trimOverlayBuffer,
-            "#f8fafc",
-            7,
-          );
-          const trimColorBuffer = await recolorPngInkBuffer(
-            trimOverlayBuffer,
-            chestPocketTrimColor,
-          );
-
           layers.push(
-            getImageSvg(toDataUri(trimOutlineBuffer)),
-            getImageSvg(toDataUri(trimColorBuffer)),
+            await getChestPocketTrimLineSvg(
+              trimOverlayBuffer,
+              chestPocketTrimColor,
+            ),
           );
         }
       }

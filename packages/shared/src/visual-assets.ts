@@ -79,12 +79,17 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   lowerPocketModelNoneValueIds: [5425],
   defaultChestPocketModelAsset: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
   neckModelsByValueId: {
-    2590: blouseModelAsset(1), // CUELLO V, inferido desde el valor actual de Odoo.
-    2592: blouseModelAsset(3), // PUNTAS, confirmado por usuario.
-    2593: blouseModelAsset(10), // 2019, confirmado por usuario.
-    2599: blouseModelAsset(9), // PRESILLA OVALO, confirmado por usuario.
-    2601: blouseModelAsset(8), // CUELLO ALTO, confirmado por usuario.
-    2602: blouseModelAsset(7), // Modelo 13, confirmado por usuario.
+    // IDs de product.template.attribute.value para product_tmpl_id=6 (Blusa).
+    2590: blouseModelAsset(1), // CUELLO V.
+    2591: blouseModelAsset(3), // PRESILLAS. Antes estaba asociado a PUNTAS.
+    2592: blouseModelAsset(22), // PUNTAS. Nuevo SVG entregado por el usuario.
+    2593: blouseModelAsset(10), // 2019.
+    2594: blouseModelAsset(30), // JDC - CRUZADO.
+    2595: blouseModelAsset(42), // JEAN.
+    2597: blouseModelAsset(43), // ENFERMERA.
+    2599: blouseModelAsset(9), // PRESILLA OVALO.
+    2601: blouseModelAsset(8), // CUELLO ALTO.
+    2602: blouseModelAsset(7), // Modelo 13.
   },
   lowerPocketModelsByValueId: {
     // Los SVG disponibles para bolsillos inferiores son Modelo 14, 15, 16, 18, 19 y 20.

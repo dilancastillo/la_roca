@@ -97,7 +97,11 @@ function isNoLogo(valueName: string | undefined) {
 
   const normalized = normalize(valueName);
 
-  return normalized.includes("sin logo") || normalized === "no";
+  return (
+    normalized.includes("sin logo") ||
+    normalized.includes("sin seleccion") ||
+    normalized === "no"
+  );
 }
 
 function getSelectedOptions(

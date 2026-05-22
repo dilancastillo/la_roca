@@ -67,6 +67,10 @@ type ProductAttributeCustomValueRecord = {
   custom_value?: string | false;
 };
 
+type GetConfiguratorSessionOptions = {
+  loadCustomValues?: boolean;
+};
+
 export function resolveSelectedIdsForAttributeValues(
   values: Array<{ id: number }>,
   lineValueIds: Set<number>,
@@ -216,7 +220,9 @@ async function loadProductTemplateAttributeValues(
 export async function getConfiguratorSession(
   env: OdooEnv,
   saleOrderLineId: number,
+  options: GetConfiguratorSessionOptions = {},
 ): Promise<ConfiguratorSession> {
+  const shouldLoadCustomValues = options.loadCustomValues ?? true;
   const lines = await odooRead<SaleOrderLineRecord>(
     env,
     "sale.order.line",
@@ -329,7 +335,7 @@ export async function getConfiguratorSession(
             ["id", "name", "html_color", "is_custom"],
           )
         : Promise.resolve([]),
-      customAttributeValueIds.length > 0
+      shouldLoadCustomValues && customAttributeValueIds.length > 0
         ? odooRead<ProductAttributeCustomValueRecord>(
             env,
             "product.attribute.custom.value",

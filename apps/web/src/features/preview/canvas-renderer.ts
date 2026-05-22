@@ -86,8 +86,9 @@ const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
 
 const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
-const POCKET_TRIM_OUTLINE_PAD = 5;
-const POCKET_TRIM_RADIUS = 3;
+const POCKET_TRIM_LINE_WIDTH = 5;
+const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
+const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
@@ -137,6 +138,10 @@ function getTrimSectionColor(
   return scene.trimSections.find(matcher)?.colorHex;
 }
 
+function getTrimSectionText(section: PreviewScene["trimSections"][number]) {
+  return normalize(`${section.label} ${section.key}`);
+}
+
 function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
   return normalize(section.label || section.key) === "cuello";
 }
@@ -144,15 +149,38 @@ function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
 function isLowerPocketTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = getTrimSectionText(section);
 
   return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
+}
+
+function isLowerPocketLowerTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    isLowerPocketTrimSection(section) &&
+    (key.includes("parte baja") ||
+      key.includes("parte-baja") ||
+      key.includes("parte inferior") ||
+      key.includes("parte-inferior"))
+  );
+}
+
+function isLowerPocketUpperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  return (
+    isLowerPocketTrimSection(section) &&
+    !isLowerPocketLowerTrimSection(section)
+  );
 }
 
 function isChestPocketTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = getTrimSectionText(section);
 
   return (
     section.role === "chestPocket" ||
@@ -979,6 +1007,15 @@ function getCanvasInkBoundsInRegion(
   };
 }
 
+function getCanvasInkBounds(canvas: HTMLCanvasElement) {
+  return getCanvasInkBoundsInRegion(canvas, {
+    x: 0,
+    y: 0,
+    width: canvas.width,
+    height: canvas.height,
+  });
+}
+
 function buildPocketTrimBand(bounds: {
   x: number;
   y: number;
@@ -994,43 +1031,51 @@ function buildPocketTrimBand(bounds: {
     y: bandY,
     width: bounds.width + POCKET_TRIM_HORIZONTAL_PAD * 2,
     height: bandHeight,
+    topLineY: bounds.y + POCKET_TRIM_LINE_WIDTH / 2,
+    bottomLineY: bandY + bandHeight - POCKET_TRIM_LINE_WIDTH / 2,
   };
 }
 
-function fillRoundedRect(
+type LowerPocketBandTrimColors = {
+  top?: string | undefined;
+  bottom?: string | undefined;
+};
+
+function strokePocketTrimLine(
   context: CanvasRenderingContext2D,
-  rect: { x: number; y: number; width: number; height: number },
-  radius: number,
+  x1: number,
+  x2: number,
+  y: number,
+  trimColor: string,
 ) {
+  context.save();
+  context.lineCap = "butt";
+  context.lineJoin = "round";
+  context.shadowColor = "rgba(248, 250, 252, 0.96)";
+  context.shadowBlur = 9;
+  context.strokeStyle = "#f8fafc";
+  context.lineWidth = POCKET_TRIM_OUTLINE_LINE_WIDTH;
   context.beginPath();
-  context.moveTo(rect.x + radius, rect.y);
-  context.lineTo(rect.x + rect.width - radius, rect.y);
-  context.quadraticCurveTo(
-    rect.x + rect.width,
-    rect.y,
-    rect.x + rect.width,
-    rect.y + radius,
-  );
-  context.lineTo(rect.x + rect.width, rect.y + rect.height - radius);
-  context.quadraticCurveTo(
-    rect.x + rect.width,
-    rect.y + rect.height,
-    rect.x + rect.width - radius,
-    rect.y + rect.height,
-  );
-  context.lineTo(rect.x + radius, rect.y + rect.height);
-  context.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - radius);
-  context.lineTo(rect.x, rect.y + radius);
-  context.quadraticCurveTo(rect.x, rect.y, rect.x + radius, rect.y);
-  context.closePath();
-  context.fill();
+  context.moveTo(x1, y);
+  context.lineTo(x2, y);
+  context.stroke();
+
+  context.shadowColor = "rgba(15, 23, 42, 0.16)";
+  context.shadowBlur = 2;
+  context.strokeStyle = trimColor;
+  context.lineWidth = POCKET_TRIM_LINE_WIDTH;
+  context.beginPath();
+  context.moveTo(x1, y);
+  context.lineTo(x2, y);
+  context.stroke();
+  context.restore();
 }
 
-function drawLowerPocketTrimBands(
+function drawLowerPocketTrimBandLines(
   context: CanvasRenderingContext2D,
   trimCanvas: HTMLCanvasElement,
   regions: OverlayRegion[],
-  trimColor: string,
+  trimColors: LowerPocketBandTrimColors,
 ) {
   for (const region of regions) {
     const bounds = getCanvasInkBoundsInRegion(trimCanvas, region);
@@ -1040,25 +1085,47 @@ function drawLowerPocketTrimBands(
     }
 
     const band = buildPocketTrimBand(bounds);
-    const outlineBand = {
-      x: band.x - POCKET_TRIM_OUTLINE_PAD,
-      y: band.y - POCKET_TRIM_OUTLINE_PAD,
-      width: band.width + POCKET_TRIM_OUTLINE_PAD * 2,
-      height: band.height + POCKET_TRIM_OUTLINE_PAD * 2,
-    };
 
-    context.save();
-    context.shadowColor = "rgba(248, 250, 252, 0.96)";
-    context.shadowBlur = 11;
-    context.fillStyle = "#f8fafc";
-    fillRoundedRect(context, outlineBand, POCKET_TRIM_RADIUS + 3);
+    if (trimColors.top) {
+      strokePocketTrimLine(
+        context,
+        band.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+        band.x + band.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+        band.topLineY,
+        trimColors.top,
+      );
+    }
 
-    context.shadowColor = "rgba(15, 23, 42, 0.16)";
-    context.shadowBlur = 2;
-    context.fillStyle = trimColor;
-    fillRoundedRect(context, band, POCKET_TRIM_RADIUS);
-    context.restore();
+    if (trimColors.bottom) {
+      strokePocketTrimLine(
+        context,
+        band.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+        band.x + band.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+        band.bottomLineY,
+        trimColors.bottom,
+      );
+    }
   }
+}
+
+function drawPocketTrimTopLine(
+  context: CanvasRenderingContext2D,
+  trimCanvas: HTMLCanvasElement,
+  trimColor: string,
+) {
+  const bounds = getCanvasInkBounds(trimCanvas);
+
+  if (!bounds) {
+    return;
+  }
+
+  strokePocketTrimLine(
+    context,
+    bounds.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
+    bounds.x + bounds.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
+    bounds.y + POCKET_TRIM_LINE_WIDTH / 2,
+    trimColor,
+  );
 }
 
 async function drawDetailOverlayInRegions(
@@ -1085,12 +1152,14 @@ async function drawLowerPocketOverlay(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   regions: OverlayRegion[],
-  trimColor?: string,
+  trimColors?: LowerPocketBandTrimColors,
 ) {
   const detailSrc = await getLowerPocketDetailObjectUrl(sourceSrc);
   const rasterCanvas = await createRasterCanvas(detailSrc ?? sourceSrc, sourceSrc);
 
   drawCanvasInRegions(context, rasterCanvas, regions);
+
+  const trimColor = trimColors?.top ?? trimColors?.bottom;
 
   if (!trimColor) {
     return;
@@ -1107,7 +1176,7 @@ async function drawLowerPocketOverlay(
     lowerPocketTrimModeByFileName[getFileNameFromSource(sourceSrc)] ?? "ink";
 
   if (trimMode === "band") {
-    drawLowerPocketTrimBands(context, trimCanvas, regions, trimColor);
+    drawLowerPocketTrimBandLines(context, trimCanvas, regions, trimColors ?? {});
     return;
   }
 
@@ -1139,8 +1208,7 @@ async function drawChestPocketOverlay(
   }
 
   const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
-  context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 7), 0, 0);
-  context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+  drawPocketTrimTopLine(context, trimCanvas, trimColor);
 }
 
 async function drawChestPocketLogoMarker(
@@ -1326,9 +1394,13 @@ export async function composeDesign(
       scene,
       isBackNeckTrimSection,
     );
-    const lowerPocketTrimColor = getTrimSectionColor(
+    const lowerPocketUpperTrimColor = getTrimSectionColor(
       scene,
-      isLowerPocketTrimSection,
+      isLowerPocketUpperTrimSection,
+    );
+    const lowerPocketLowerTrimColor = getTrimSectionColor(
+      scene,
+      isLowerPocketLowerTrimSection,
     );
     const chestPocketTrimColor = getTrimSectionColor(
       scene,
@@ -1347,7 +1419,10 @@ export async function composeDesign(
             ? "lowerPocketSingleRight"
             : "lowerPocketPair",
         ),
-        lowerPocketTrimColor,
+        {
+          top: lowerPocketUpperTrimColor,
+          bottom: lowerPocketLowerTrimColor,
+        },
       );
     }
 

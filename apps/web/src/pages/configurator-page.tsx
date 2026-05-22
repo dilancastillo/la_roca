@@ -433,6 +433,7 @@ export function ConfiguratorPage() {
     const [file] = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
     setLogoUploadError(null);
+    setSaveError(null);
 
     if (!file) {
       return;
@@ -505,6 +506,14 @@ export function ConfiguratorPage() {
     }
 
     setInvalidCustomValueIds(new Set());
+
+    if (ui.logoSelection && !logoAttachment) {
+      setLogoUploadError(
+        `Carga la imagen del logo para "${ui.logoSelection.label}" antes de guardar.`,
+      );
+      setSaveError("Falta cargar la imagen obligatoria del logo.");
+      return;
+    }
 
     const previewBlob =
       currentPreview?.renderKey === previewSceneKey ? currentPreview.blob : null;
@@ -733,7 +742,7 @@ export function ConfiguratorPage() {
                       </div>
                     ) : (
                       <p className="logo-upload-panel__hint">
-                        Opcional: adjunta la imagen real del logo para la orden.
+                        Obligatorio: adjunta la imagen real del logo para poder guardar.
                       </p>
                     )}
 

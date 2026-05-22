@@ -10,7 +10,32 @@ describe("getProductAssetCatalog", () => {
     const catalog = getProductAssetCatalog("blusa-antifluido-t180");
 
     expect(catalog?.neckModelsByValueId?.[2592]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22.svg",
+    );
+  });
+
+  it("mantiene PUNTAS y PRESILLAS mapeados por ID aunque cambien nombres", () => {
+    const catalog = getProductAssetCatalog("blusa-antifluido-t180");
+
+    expect(catalog?.neckModelsByValueId?.[2591]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-03.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2592]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22.svg",
+    );
+  });
+
+  it("resuelve los nuevos modelos de cuello por PTAV ID", () => {
+    const catalog = getProductAssetCatalog("blusa-antifluido-t180");
+
+    expect(catalog?.neckModelsByValueId?.[2594]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2595]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2597]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
   });
 

@@ -98,6 +98,9 @@ describe("saveConfiguratorDesign", () => {
       selectedValueIds: editableSession.selectedValueIds,
     });
 
+    expect(mocks.getConfiguratorSession).toHaveBeenCalledWith(env, 290, {
+      loadCustomValues: false,
+    });
     expect(mocks.odooWrite).toHaveBeenCalledWith(
       env,
       "sale.order.line",
@@ -187,7 +190,7 @@ describe("saveConfiguratorDesign", () => {
     );
   });
 
-  it("adjunta la imagen del logo a la orden de venta cuando llega desde la app", async () => {
+  it("guarda la imagen del logo en el campo Studio de la linea cuando llega desde la app", async () => {
     mocks.odooSearchRead.mockResolvedValue([
       {
         id: 777,
@@ -209,8 +212,16 @@ describe("saveConfiguratorDesign", () => {
       },
     });
 
-    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
-      1,
+    expect(mocks.odooWrite).toHaveBeenCalledWith(
+      env,
+      "sale.order.line",
+      [290],
+      expect.objectContaining({
+        x_studio_imagen_adjunta: "logo-base64",
+      }),
+    );
+    expect(mocks.odooCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.odooCreate).toHaveBeenCalledWith(
       env,
       "ir.attachment",
       [
@@ -223,21 +234,55 @@ describe("saveConfiguratorDesign", () => {
         }),
       ],
     );
-    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
-      2,
-      env,
-      "ir.attachment",
-      [
-        expect.objectContaining({
-          name: expect.stringContaining("logo-v2-S00119-line-290-logo cliente.png"),
-          datas: "logo-base64",
-          res_model: "sale.order",
-          res_id: 119,
-          mimetype: "image/png",
-        }),
+    expect(result.logoImageUpdated).toBe(true);
+  });
+
+  it("rechaza guardar cuando hay logo seleccionado pero no llega imagen del logo", async () => {
+    const sessionWithLogo: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: 93,
+          name: "Logo",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9301,
+              name: "Pecho derecho",
+              attributeId: 93,
+              attributeName: "Logo",
+            },
+            {
+              id: 9302,
+              name: "Sin logo",
+              attributeId: 93,
+              attributeName: "Logo",
+            },
+          ],
+        },
       ],
-    );
-    expect(result.logoAttachmentId).toBe(778);
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        "93": [9301],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithLogo);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithLogo.selectedValueIds,
+      }),
+    ).rejects.toThrow(/carga la imagen del logo/i);
+
+    expect(mocks.odooSearchRead).not.toHaveBeenCalled();
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
   });
 
   it("guarda los valores personalizados seleccionados sin depender del nombre del atributo", async () => {

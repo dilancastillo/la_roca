@@ -19,7 +19,7 @@ export async function saveDesign(
 ): Promise<{
   ok?: boolean;
   attachmentId?: number;
-  logoAttachmentId?: number;
+  logoImageUpdated?: boolean;
   version?: number;
   generatedAt?: string;
   productId?: number;

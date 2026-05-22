@@ -186,6 +186,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 5153,
+          name: "Bolsillos inferiores parte baja",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 5423,
           name: "Sin vivos",
           attributeId: 92,
@@ -259,6 +265,22 @@ describe("deriveAutomationRenderScene", () => {
         role: "lowerPockets",
         key: "bolsillos-inferiores-parte-superior",
         label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("detecta la parte baja del vivo del bolsillo inferior aunque no tenga rol de catalogo", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "92": [5153],
+    });
+
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5153,
+        key: "bolsillos-inferiores-parte-baja",
+        label: "Bolsillos inferiores parte baja",
         colorHex: "#f4c7cc",
       },
     ]);

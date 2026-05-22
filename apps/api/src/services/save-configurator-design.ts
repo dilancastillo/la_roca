@@ -1,7 +1,6 @@
 import type {
   ConfiguratorSession,
   SaveDesignRequest,
-  UploadedAttachment,
 } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import type { OdooEnv } from "../lib/app-env.js";
@@ -72,38 +71,9 @@ function parseCustomValuesByValueId(
   );
 }
 
-function sanitizeAttachmentFilename(filename: string) {
-  return (
-    filename
-      .trim()
-      .replace(/[^\w.\- ()]+/g, "_")
-      .slice(0, 140) || "logo"
-  );
-}
-
 function stripDataUrlPrefix(dataBase64: string) {
   const [, payload] = dataBase64.split(",", 2);
   return payload || dataBase64;
-}
-
-async function createSaleOrderLogoAttachment(
-  env: OdooEnv,
-  session: ConfiguratorSession,
-  attachment: UploadedAttachment,
-  version: number,
-) {
-  const safeFilename = sanitizeAttachmentFilename(attachment.filename);
-  const safeOrderName = sanitizeAttachmentFilename(session.orderName);
-
-  return await odooCreate<number>(env, "ir.attachment", [
-    {
-      name: `logo-v${version}-${safeOrderName}-line-${session.saleOrderLineId}-${safeFilename}`,
-      datas: stripDataUrlPrefix(attachment.dataBase64),
-      res_model: "sale.order",
-      res_id: session.saleOrderId,
-      mimetype: attachment.mimeType,
-    },
-  ]);
 }
 
 function setsMatch(left: number[], right: number[]) {
@@ -113,6 +83,45 @@ function setsMatch(left: number[], right: number[]) {
 
   const rightSet = new Set(right);
   return left.every((value) => rightSet.has(value));
+}
+
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function isLogoAttributeName(name: string) {
+  const normalized = normalizeText(name);
+  return normalized === "logo" || normalized.includes("logo");
+}
+
+function isNoLogoValueName(name: string) {
+  const normalized = normalizeText(name);
+  return (
+    normalized === "no" ||
+    normalized.includes("sin logo") ||
+    normalized.includes("sin seleccion")
+  );
+}
+
+function hasSelectedLogo(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const logoAttributes = session.attributes.filter((attribute) =>
+    isLogoAttributeName(attribute.name),
+  );
+
+  return logoAttributes.some((attribute) => {
+    const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
+
+    return attribute.values.some(
+      (value) => selected.has(value.id) && !isNoLogoValueName(value.name),
+    );
+  });
 }
 
 function validateSelections(
@@ -268,7 +277,9 @@ export async function saveConfiguratorDesign(
   env: OdooEnv,
   payload: SaveDesignRequest,
 ) {
-  const session = await getConfiguratorSession(env, payload.saleOrderLineId);
+  const session = await getConfiguratorSession(env, payload.saleOrderLineId, {
+    loadCustomValues: false,
+  });
 
   if (!session.status.canEdit || session.status.isLocked) {
     throw new Error("La linea no esta habilitada para edicion.");
@@ -285,6 +296,12 @@ export async function saveConfiguratorDesign(
 
   if (validationErrors.length > 0) {
     throw new Error(validationErrors[0]);
+  }
+
+  if (hasSelectedLogo(session, selectedValueIds) && !payload.logoAttachment) {
+    throw new Error(
+      "La prenda tiene logo seleccionado. Carga la imagen del logo antes de guardar.",
+    );
   }
 
   const variantValueIds = session.attributes
@@ -330,6 +347,13 @@ export async function saveConfiguratorDesign(
     currentVersion: session.status.version,
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
+  const logoImageLineValues = payload.logoAttachment
+    ? {
+        x_studio_imagen_adjunta: stripDataUrlPrefix(
+          payload.logoAttachment.dataBase64,
+        ),
+      }
+    : {};
 
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: productId,
@@ -337,6 +361,7 @@ export async function saveConfiguratorDesign(
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     product_custom_attribute_value_ids: customValueCommands,
     ...designImageStorage.lineValues,
+    ...logoImageLineValues,
   });
 
   const attachmentId = await createDesignImageAttachment(
@@ -344,19 +369,11 @@ export async function saveConfiguratorDesign(
     designImageInput,
     designImageStorage,
   );
-  const logoAttachmentId = payload.logoAttachment
-    ? await createSaleOrderLogoAttachment(
-        env,
-        session,
-        payload.logoAttachment,
-        designImageStorage.version,
-      )
-    : undefined;
 
   return {
     ok: true,
     attachmentId,
-    ...(logoAttachmentId ? { logoAttachmentId } : {}),
+    ...(payload.logoAttachment ? { logoImageUpdated: true } : {}),
     version: designImageStorage.version,
     generatedAt: designImageStorage.generatedAtIso,
     productId,
