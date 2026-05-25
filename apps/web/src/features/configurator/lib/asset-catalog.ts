@@ -2,6 +2,7 @@ import {
   getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
   getVisualAssetPath,
+  getVisualAssetPathForValue,
   resolveVisualAssetCatalog,
   visualAssetCatalogs,
   type VisualAssetCatalog,
@@ -23,6 +24,24 @@ export function getImageSourceByIds(
   valueId: number,
 ) {
   const path = getVisualAssetPath(graphicManifestKey, attributeId, valueId);
+  return path ? `/${path}` : undefined;
+}
+
+export function getImageSourceForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const path = getVisualAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
+
   return path ? `/${path}` : undefined;
 }
 

@@ -1,5 +1,8 @@
 import type { ConfiguratorSession } from "./schemas/configurator.js";
-import { resolveVisualAssetCatalog } from "./visual-assets.js";
+import {
+  matchesVisualAssetAttributeId,
+  resolveVisualAssetCatalog,
+} from "./visual-assets.js";
 
 export type LowerPocketLayout = "none" | "single" | "double";
 
@@ -39,7 +42,10 @@ export function getLowerPocketTypeAttribute(session: ConfiguratorSession) {
 
   return (
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.lowerPocketType,
+      (attribute) =>
+        catalog
+          ? matchesVisualAssetAttributeId(catalog, "lowerPocketType", attribute.id)
+          : false,
     ) ??
     findAttributeByName(session, (name) =>
       name.includes("tipo de bolsillos inferiores"),
@@ -52,10 +58,14 @@ export function getLowerPocketModelAttribute(session: ConfiguratorSession) {
 
   return (
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.lowerPocketModel,
+      (attribute) =>
+        catalog
+          ? matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attribute.id)
+          : false,
     ) ??
     findAttributeByName(session, (name) =>
-      name.includes("modelo bolsillo inferior"),
+      name.includes("modelo bolsillo inferior") ||
+      (name.includes("bolsillo inferior") && !name.includes("tipo")),
     )
   );
 }

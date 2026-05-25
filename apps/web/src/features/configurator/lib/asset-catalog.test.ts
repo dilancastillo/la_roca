@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getDefaultImageSource,
   getImageSourceByIds,
+  getImageSourceForValue,
   getProductAssetCatalog,
 } from "./asset-catalog";
 
@@ -28,13 +29,13 @@ describe("getProductAssetCatalog", () => {
   it("resuelve los nuevos modelos de cuello por PTAV ID", () => {
     const catalog = getProductAssetCatalog("blusa-antifluido-t180");
 
-    expect(catalog?.neckModelsByValueId?.[2594]).toBe(
+    expect(catalog?.neckModelsByValueId?.[338]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",
     );
-    expect(catalog?.neckModelsByValueId?.[2595]).toBe(
+    expect(catalog?.neckModelsByValueId?.[339]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg",
     );
-    expect(catalog?.neckModelsByValueId?.[2597]).toBe(
+    expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
   });
@@ -57,8 +58,26 @@ describe("getProductAssetCatalog", () => {
     );
   });
 
-  it("no usa nombres como fallback cuando falta un ID mapeado", () => {
-    expect(getImageSourceByIds("blusa-antifluido-t180", 63, 999999)).toBeUndefined();
+  it("resuelve assets por nombre cuando Odoo cambia los IDs de PTAV", () => {
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999999,
+        "Modelo de cuello",
+        "CUELLO V",
+      ),
+    ).toBe("/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg");
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999998,
+        "Modelo bolsillo inferior",
+        "RECTANGULAR",
+      ),
+    ).toBe("/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg");
   });
 
   it("resuelve el SVG base de pantalon por la llave normalizada de Odoo", () => {

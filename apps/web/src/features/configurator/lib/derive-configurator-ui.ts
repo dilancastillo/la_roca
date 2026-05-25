@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
   getLowerPocketLayout,
   type LowerPocketLayout,
@@ -6,7 +7,7 @@ import {
 import {
   getDefaultChestPocketImageSource,
   getDefaultImageSource,
-  getImageSourceByIds,
+  getImageSourceForValue,
   getProductAssetCatalog,
 } from "./asset-catalog";
 
@@ -107,10 +108,16 @@ function getHelpText(attributeName: string) {
 
 function getImageSource(
   graphicManifestKey: string,
-  attributeId: number,
-  valueId: number,
+  attribute: ConfiguratorSession["attributes"][number],
+  value: ConfiguratorSession["attributes"][number]["values"][number],
 ) {
-  return getImageSourceByIds(graphicManifestKey, attributeId, valueId);
+  return getImageSourceForValue(
+    graphicManifestKey,
+    attribute.id,
+    value.id,
+    attribute.name,
+    value.name,
+  );
 }
 
 function getControlType(
@@ -123,7 +130,7 @@ function getControlType(
 
   if (
     attribute.values.some((value) =>
-      Boolean(getImageSource(session.graphicManifestKey, attribute.id, value.id)),
+      Boolean(getImageSource(session.graphicManifestKey, attribute, value)),
     )
   ) {
     return "image";
@@ -151,6 +158,16 @@ function findSelectedValue(
   return attribute.values.find((value) => selectedIds.has(value.id));
 }
 
+function matchesCatalogAttribute(
+  catalog: ReturnType<typeof getProductAssetCatalog>,
+  key: Parameters<typeof matchesVisualAssetAttributeId>[1],
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  return catalog
+    ? matchesVisualAssetAttributeId(catalog, key, attribute.id)
+    : false;
+}
+
 function getSelectedTrimSections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -158,13 +175,14 @@ function getSelectedTrimSections(
   const catalog = getProductAssetCatalog(session.graphicManifestKey);
   const sectionAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.trimSections,
+      (attribute) =>
+        matchesCatalogAttribute(catalog, "trimSections", attribute),
     ) ??
     findAttributeByName(session, (name) => name.includes("seccion de vivo"));
 
   const colorAttributes = session.attributes.filter(
     (attribute) =>
-      attribute.id === catalog?.attributeIds.trimColor ||
+      matchesCatalogAttribute(catalog, "trimColor", attribute) ||
       normalize(attribute.name).includes("color de vivo"),
   );
   const globalColor = findSelectedValue(colorAttributes[0], selectedValueIds);
@@ -174,8 +192,59 @@ function getSelectedTrimSections(
     : [];
   const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
+  function resolveTrimRole(section: ConfiguratorSession["attributes"][number]["values"][number]) {
+    const configuredRole = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
+      | PreviewScene["trimSections"][number]["role"]
+      | undefined;
+
+    if (configuredRole) {
+      return configuredRole;
+    }
+
+    const normalizedSection = normalize(section.name);
+
+    if (normalizedSection === "cogotera") {
+      return "backNeck";
+    }
+
+    if (
+      normalizedSection === "cuello" ||
+      normalizedSection.includes("cuello alto") ||
+      normalizedSection.includes("cuello completo") ||
+      normalizedSection.includes("cuello borde dividido superior")
+    ) {
+      return "upperNeck";
+    }
+
+    if (
+      normalizedSection.includes("cuello bajo") ||
+      normalizedSection.includes("cuello inferior") ||
+      normalizedSection.includes("cuello borde dividido inferior")
+    ) {
+      return "lowerNeck";
+    }
+
+    if (normalizedSection.includes("bolsillo pecho")) {
+      return "chestPocket";
+    }
+
+    if (normalizedSection.includes("bolsillos inferiores parte superior")) {
+      return "lowerPockets";
+    }
+
+    if (normalizedSection.includes("bolsillo auxiliar")) {
+      return "auxiliaryPocket";
+    }
+
+    if (normalizedSection.includes("sin vivos")) {
+      return "none";
+    }
+
+    return undefined;
+  }
+
   const hasNoTrimSelection = enabledSections.some((section) => {
-    const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0];
+    const role = resolveTrimRole(section);
     const normalizedSection = normalize(section.name);
 
     return (
@@ -200,9 +269,7 @@ function getSelectedTrimSections(
           const sectionColor =
             findSelectedValue(matchingColorAttribute, selectedValueIds) ??
             globalColor;
-          const role = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
-            | PreviewScene["trimSections"][number]["role"]
-            | undefined;
+          const role = resolveTrimRole(section);
 
           return {
             valueId: section.id,
@@ -265,55 +332,56 @@ export function deriveConfiguratorUi(
     helpText: getHelpText(attribute.name),
     controlType: getControlType(attribute, session),
     selectionMode: attribute.selectionMode,
-    options: attribute.values.map((value) => ({
-      id: value.id,
-      name: value.name,
-      allowsCustomValue: Boolean(value.allowsCustomValue),
-      ...(value.colorHex ? { colorHex: value.colorHex } : {}),
-      ...(getImageSource(session.graphicManifestKey, attribute.id, value.id)
-        ? {
-            imageSrc: getImageSource(
-              session.graphicManifestKey,
-              attribute.id,
-              value.id,
-            ),
-          }
-        : {}),
-    })),
+    options: attribute.values.map((value) => {
+      const imageSrc = getImageSource(session.graphicManifestKey, attribute, value);
+
+      return {
+        id: value.id,
+        name: value.name,
+        allowsCustomValue: Boolean(value.allowsCustomValue),
+        ...(value.colorHex ? { colorHex: value.colorHex } : {}),
+        ...(imageSrc ? { imageSrc } : {}),
+      };
+    }),
   }));
 
   const colorAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.baseColor,
+      (attribute) => matchesCatalogAttribute(catalog, "baseColor", attribute),
     ) ??
     findAttributeByName(session, (name) =>
       name === "color" ||
+      (name.includes("color") && !name.includes("vivo")) ||
       name.includes("color de tela base") ||
       name.includes("tela base"),
     );
   const neckAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.neckModel,
+      (attribute) => matchesCatalogAttribute(catalog, "neckModel", attribute),
     ) ??
     findAttributeByName(session, (name) => name.includes("modelo de cuello"));
   const garmentAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.garmentModel,
+      (attribute) => matchesCatalogAttribute(catalog, "garmentModel", attribute),
     ) ??
     findAttributeByName(session, (name) =>
+      name.includes("modelo de blusa") ||
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
   const lowerPocketModelAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.lowerPocketModel,
+      (attribute) =>
+        matchesCatalogAttribute(catalog, "lowerPocketModel", attribute),
     ) ??
     findAttributeByName(session, (name) =>
-      name.includes("modelo bolsillo inferior"),
+      name.includes("modelo bolsillo inferior") ||
+      (name.includes("bolsillo inferior") && !name.includes("tipo")),
     );
   const auxiliaryPocketModelAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.auxiliaryPocketModel,
+      (attribute) =>
+        matchesCatalogAttribute(catalog, "auxiliaryPocketModel", attribute),
     ) ??
     findAttributeByName(session, (name) =>
       name.includes("modelo bolsillo auxiliar"),
@@ -324,7 +392,8 @@ export function deriveConfiguratorUi(
   );
   const chestPocketModelAttribute =
     session.attributes.find(
-      (attribute) => attribute.id === catalog?.attributeIds.chestPocketModel,
+      (attribute) =>
+        matchesCatalogAttribute(catalog, "chestPocketModel", attribute),
     ) ??
     findAttributeByName(
       session,
@@ -364,18 +433,14 @@ export function deriveConfiguratorUi(
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const neckImageSrc = selectedNeck
-    ? getImageSource(
-        session.graphicManifestKey,
-        neckAttribute?.id ?? 0,
-        selectedNeck.id,
-      )
+    ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
   const lowerPocketImageSrc =
     lowerPocketLayout !== "none" && selectedLowerPocketModel
       ? getImageSource(
           session.graphicManifestKey,
-          lowerPocketModelAttribute?.id ?? 0,
-          selectedLowerPocketModel.id,
+          lowerPocketModelAttribute!,
+          selectedLowerPocketModel,
         )
       : undefined;
 
@@ -401,11 +466,8 @@ export function deriveConfiguratorUi(
       productName: session.productName,
       baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
       garmentImageSrc: selectedGarment
-        ? getImageSource(
-            session.graphicManifestKey,
-            garmentAttribute?.id ?? 0,
-            selectedGarment.id,
-          ) ?? getDefaultImageSource(session.graphicManifestKey)
+        ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
+          getDefaultImageSource(session.graphicManifestKey)
         : getDefaultImageSource(session.graphicManifestKey),
       neckImageSrc,
       lowerPocketImageSrc,
@@ -413,8 +475,8 @@ export function deriveConfiguratorUi(
       auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
         ? getImageSource(
             session.graphicManifestKey,
-            auxiliaryPocketModelAttribute?.id ?? 0,
-            selectedAuxiliaryPocketModel.id,
+            auxiliaryPocketModelAttribute!,
+            selectedAuxiliaryPocketModel,
           )
         : undefined,
       chestPocketType: selectedChestPocketType?.name,
@@ -424,8 +486,8 @@ export function deriveConfiguratorUi(
         isVisibleChestPocketModel(selectedChestPocketModel.name)
           ? getImageSource(
               session.graphicManifestKey,
-              chestPocketModelAttribute?.id ?? 0,
-              selectedChestPocketModel.id,
+              chestPocketModelAttribute!,
+              selectedChestPocketModel,
             ) ?? getDefaultChestPocketImageSource(session.graphicManifestKey)
           : undefined,
       logoMarker: hasLogoSelection

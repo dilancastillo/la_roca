@@ -2,6 +2,7 @@ import {
   getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
   getVisualAssetPath,
+  getVisualAssetPathForValue,
   resolveVisualAssetCatalog,
   type VisualAssetCatalog,
 } from "@repo/shared/visual-assets";
@@ -18,6 +19,22 @@ export function getServerAssetPathByIds(
   valueId: number,
 ) {
   return getVisualAssetPath(graphicManifestKey, attributeId, valueId);
+}
+
+export function getServerAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  return getVisualAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
 }
 
 export function getServerDefaultAssetPath(graphicManifestKey: string) {
