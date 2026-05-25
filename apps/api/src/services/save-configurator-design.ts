@@ -7,6 +7,7 @@ import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
 import {
+  LOGO_IMAGE_FIELD,
   buildDesignImageStoragePayload,
   createDesignImageAttachment,
 } from "./store-design-image.js";
@@ -349,11 +350,15 @@ export async function saveConfiguratorDesign(
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
   const logoImageLineValues = payload.logoAttachment
     ? {
-        x_studio_imagen_adjunta: stripDataUrlPrefix(
-          payload.logoAttachment.dataBase64,
-        ),
+        [LOGO_IMAGE_FIELD]: stripDataUrlPrefix(payload.logoAttachment.dataBase64),
       }
     : {};
+
+  const attachmentId = await createDesignImageAttachment(
+    env,
+    designImageInput,
+    designImageStorage,
+  );
 
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: productId,
@@ -363,12 +368,6 @@ export async function saveConfiguratorDesign(
     ...designImageStorage.lineValues,
     ...logoImageLineValues,
   });
-
-  const attachmentId = await createDesignImageAttachment(
-    env,
-    designImageInput,
-    designImageStorage,
-  );
 
   return {
     ok: true,

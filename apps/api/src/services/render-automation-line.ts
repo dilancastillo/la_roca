@@ -2,7 +2,7 @@ import type { OdooEnv } from "../lib/app-env.js";
 import { deriveAutomationRenderScene } from "../render/derive-render-scene.js";
 import { renderDesignImage } from "../render/render-design-image.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
-import { storeDesignImage } from "./store-design-image.js";
+import { DESIGN_IMAGE_FIELD, storeDesignImage } from "./store-design-image.js";
 
 type RenderAutomationLineOptions = {
   dryRun?: boolean;
@@ -131,11 +131,7 @@ export async function renderAutomationLine(
       wouldWrite: {
         model: "sale.order.line",
         id: saleOrderLineId,
-        fields: [
-          "x_product_design_image",
-          "x_product_design_generated_at",
-          "x_product_design_version",
-        ],
+        fields: [DESIGN_IMAGE_FIELD],
       },
     };
   }

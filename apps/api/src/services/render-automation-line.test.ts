@@ -23,6 +23,7 @@ vi.mock("./get-configurator-session.js", () => ({
 }));
 
 vi.mock("./store-design-image.js", () => ({
+  DESIGN_IMAGE_FIELD: "x_product_design_image",
   storeDesignImage: mocks.storeDesignImage,
 }));
 

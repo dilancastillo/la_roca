@@ -11,10 +11,7 @@ type SaleOrderLineRecord = {
   product_template_attribute_value_ids?: number[];
   product_no_variant_attribute_value_ids?: number[];
   product_custom_attribute_value_ids?: number[];
-  x_product_design_generated_at?: string | false;
   x_product_design_image?: string | false;
-  x_product_design_locked?: boolean;
-  x_product_design_version?: number;
 };
 
 type SaleOrderRecord = {
@@ -65,6 +62,12 @@ type ProductAttributeCustomValueRecord = {
   id: number;
   custom_product_template_attribute_value_id: Many2one;
   custom_value?: string | false;
+};
+
+type DesignAttachmentRecord = {
+  id: number;
+  name: string;
+  create_date?: string | false;
 };
 
 type GetConfiguratorSessionOptions = {
@@ -217,6 +220,50 @@ async function loadProductTemplateAttributeValues(
   }
 }
 
+function parseDesignAttachmentVersion(name: string) {
+  const match = /^design-v(\d+)-/.exec(name);
+  const version = match ? Number(match[1]) : 0;
+
+  return Number.isInteger(version) && version > 0 ? version : 0;
+}
+
+function parseOdooDatetime(value: string | false | undefined) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+
+  const date = new Date(`${value.replace(" ", "T")}Z`);
+
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+async function loadLatestDesignAttachment(env: OdooEnv, saleOrderLineId: number) {
+  const attachments = await odooSearchRead<DesignAttachmentRecord>(
+    env,
+    "ir.attachment",
+    [
+      ["res_model", "=", "sale.order.line"],
+      ["res_id", "=", saleOrderLineId],
+      ["name", "ilike", "design-v"],
+    ],
+    ["id", "name", "create_date"],
+    "create_date desc, id desc",
+    { limit: 1 },
+  ).catch(() => []);
+
+  const [attachment] = attachments;
+
+  return attachment
+    ? {
+        version: parseDesignAttachmentVersion(attachment.name),
+        generatedAt: parseOdooDatetime(attachment.create_date),
+      }
+    : {
+        version: 0,
+        generatedAt: null,
+      };
+}
+
 export async function getConfiguratorSession(
   env: OdooEnv,
   saleOrderLineId: number,
@@ -234,10 +281,7 @@ export async function getConfiguratorSession(
       "product_template_attribute_value_ids",
       "product_no_variant_attribute_value_ids",
       "product_custom_attribute_value_ids",
-      "x_product_design_generated_at",
       "x_product_design_image",
-      "x_product_design_locked",
-      "x_product_design_version",
     ],
   );
 
@@ -493,6 +537,10 @@ export async function getConfiguratorSession(
   });
 
   const canEdit = order.state === "draft" || order.state === "sent";
+  const latestDesignAttachment = await loadLatestDesignAttachment(
+    env,
+    saleOrderLineId,
+  );
 
   return {
     saleOrderLineId,
@@ -509,12 +557,9 @@ export async function getConfiguratorSession(
     status: {
       orderState: order.state,
       canEdit,
-      isLocked: Boolean(line.x_product_design_locked),
-      version: line.x_product_design_version ?? 0,
-      generatedAt:
-        typeof line.x_product_design_generated_at === "string"
-          ? new Date(line.x_product_design_generated_at).toISOString()
-          : null,
+      isLocked: false,
+      version: latestDesignAttachment.version,
+      generatedAt: latestDesignAttachment.generatedAt,
     },
     existingDesignBase64:
       typeof line.x_product_design_image === "string"

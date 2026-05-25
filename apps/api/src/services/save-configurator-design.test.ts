@@ -111,8 +111,6 @@ describe("saveConfiguratorDesign", () => {
         product_no_variant_attribute_value_ids: [[6, 0, [9101]]],
         product_custom_attribute_value_ids: [[5, 0, 0]],
         x_product_design_image: "png-base64",
-        x_product_design_generated_at: expect.any(String),
-        x_product_design_version: 2,
       },
     );
     expect(mocks.odooCreate).toHaveBeenNthCalledWith(

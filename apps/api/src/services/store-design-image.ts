@@ -1,6 +1,8 @@
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooWrite } from "../lib/odoo-client.js";
-import { toOdooDatetimeString } from "../lib/odoo-datetime.js";
+
+export const DESIGN_IMAGE_FIELD = "x_product_design_image" as const;
+export const LOGO_IMAGE_FIELD = "x_studio_imagen_adjunta" as const;
 
 type StoreDesignImageInput = {
   saleOrderLineId: number;
@@ -13,9 +15,7 @@ type DesignImageStoragePayload = {
   attachmentName: string;
   generatedAtIso: string;
   lineValues: {
-    x_product_design_image: string;
-    x_product_design_generated_at: string;
-    x_product_design_version: number;
+    [DESIGN_IMAGE_FIELD]: string;
   };
   version: number;
 };
@@ -26,15 +26,12 @@ export function buildDesignImageStoragePayload(
 ): DesignImageStoragePayload {
   const nextVersion = input.currentVersion + 1;
   const generatedAtIso = generatedAt.toISOString();
-  const generatedAtOdoo = toOdooDatetimeString(generatedAt);
 
   return {
     attachmentName: `design-v${nextVersion}-${input.filename}`,
     generatedAtIso,
     lineValues: {
-      x_product_design_image: input.imageBase64,
-      x_product_design_generated_at: generatedAtOdoo,
-      x_product_design_version: nextVersion,
+      [DESIGN_IMAGE_FIELD]: input.imageBase64,
     },
     version: nextVersion,
   };
