@@ -109,8 +109,29 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
-function resolveAssetFilePath(assetPath: string) {
-  return path.join(process.cwd(), "apps", "web", "public", assetPath);
+function resolveAssetFilePaths(assetPath: string): [string, string] {
+  return [
+    path.join(process.cwd(), "apps", "web", "public", assetPath),
+    path.join(process.cwd(), "..", "web", "public", assetPath),
+  ];
+}
+
+async function readAssetFile(assetPath: string) {
+  const [fromRepoRoot, fromApiWorkspace] = resolveAssetFilePaths(assetPath);
+
+  try {
+    return await readFile(fromRepoRoot);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return await readFile(fromApiWorkspace);
+    }
+
+    throw error;
+  }
 }
 
 function getAssetFileName(assetPath: string) {
@@ -324,7 +345,7 @@ async function processImageBuffer(renderBuffer: Buffer): Promise<ProcessedImage>
 }
 
 async function loadProcessedImage(assetPath: string): Promise<ProcessedImage> {
-  const fileBuffer = await readFile(resolveAssetFilePath(assetPath));
+  const fileBuffer = await readAssetFile(assetPath);
   const renderBuffer = isSvgAsset(assetPath)
     ? Buffer.from(withExplicitSvgDimensions(fileBuffer.toString("utf8")))
     : fileBuffer;
@@ -595,7 +616,7 @@ async function createLowerPocketOverlayBuffer(assetPath: string) {
     return await createOverlayBuffer(assetPath);
   }
 
-  const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
+  const svgText = (await readAssetFile(assetPath)).toString(
     "utf8",
   );
   const detailProcessed = await processImageBuffer(
@@ -633,7 +654,7 @@ async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
     return undefined;
   }
 
-  const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
+  const svgText = (await readAssetFile(assetPath)).toString(
     "utf8",
   );
   const trimProcessed = await processImageBuffer(
@@ -719,7 +740,7 @@ async function createCollarTrimOverlayBuffer(
     return undefined;
   }
 
-  const svgText = (await readFile(resolveAssetFilePath(assetPath))).toString(
+  const svgText = (await readAssetFile(assetPath)).toString(
     "utf8",
   );
   const trimProcessed = await processImageBuffer(
@@ -1080,18 +1101,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   const layers: string[] = [
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,
   ];
+  const baseAssetPath = scene.neckAssetPath ?? scene.garmentAssetPath;
 
-  if (scene.garmentAssetPath) {
+  if (baseAssetPath) {
     const baseBuffer = await createTintedBaseBuffer(
-      scene.garmentAssetPath,
-      scene.baseColorHex,
-    );
-    layers.push(
-      `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-    );
-  } else if (scene.neckAssetPath) {
-    const baseBuffer = await createTintedBaseBuffer(
-      scene.neckAssetPath,
+      baseAssetPath,
       scene.baseColorHex,
     );
     layers.push(
@@ -1101,7 +1115,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     layers.push(getFallbackGarmentSvg(scene.baseColorHex));
   }
 
-  if (!scene.garmentAssetPath) {
+  if (baseAssetPath) {
     const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
     const backNeckTrimColor = getTrimSectionColor(scene, isBackNeckTrimSection);
     const lowerPocketUpperTrimColor = getTrimSectionColor(
@@ -1119,9 +1133,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       isChestPocketTrimSection,
     );
 
-    if (scene.neckAssetPath && collarTrimColor) {
+    if (collarTrimColor) {
       const collarTrimOverlayBuffer = await createCollarTrimOverlayBuffer(
-        scene.neckAssetPath,
+        baseAssetPath,
         collarTrimColor,
       );
 
@@ -1135,11 +1149,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         );
       } else {
         const collarBaseBuffer = await createTintedBaseBuffer(
-          scene.neckAssetPath,
+          baseAssetPath,
           collarTrimColor,
         );
         const collarInkBuffer = await recolorPngInkBuffer(
-          await createOverlayBuffer(scene.neckAssetPath),
+          await createOverlayBuffer(baseAssetPath),
           collarTrimColor,
         );
 
@@ -1229,13 +1243,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (scene.auxiliaryPocketAssetPath) {
-      const overlayBuffer = scene.neckAssetPath
-        ? await createDetailOverlayBuffer(
-            scene.auxiliaryPocketAssetPath,
-            scene.neckAssetPath,
-            overlayRegionPresets.auxiliaryPocketPair,
-          )
-        : await createOverlayBuffer(scene.auxiliaryPocketAssetPath);
+      const overlayBuffer = await createDetailOverlayBuffer(
+        scene.auxiliaryPocketAssetPath,
+        baseAssetPath,
+        overlayRegionPresets.auxiliaryPocketPair,
+      );
       layers.push(
         getOverlaySvg(
           "aux-pocket-overlay",
@@ -1245,17 +1257,17 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
-    if (scene.chestPocketAssetPath && scene.neckAssetPath) {
+    if (scene.chestPocketAssetPath) {
       const overlayBuffer = await createChestPocketOverlayBuffer(
         scene.chestPocketAssetPath,
-        scene.neckAssetPath,
+        baseAssetPath,
       );
       layers.push(getImageSvg(toDataUri(overlayBuffer)));
 
       if (chestPocketTrimColor) {
         const trimOverlayBuffer = await createChestPocketTrimOverlayBuffer(
           scene.chestPocketAssetPath,
-          scene.neckAssetPath,
+          baseAssetPath,
         );
 
         if (trimOverlayBuffer) {
@@ -1270,7 +1282,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
       if (scene.logoMarker) {
         const markerBuffer = await createChestPocketLogoMarkerBuffer(
-          scene.neckAssetPath,
+          baseAssetPath,
         );
         layers.push(getImageSvg(toDataUri(markerBuffer)));
       }

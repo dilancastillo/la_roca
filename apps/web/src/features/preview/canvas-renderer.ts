@@ -1373,22 +1373,16 @@ export async function composeDesign(
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  const usesGenericGarmentAsset = Boolean(scene.garmentImageSrc);
+  const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
 
-  if (scene.garmentImageSrc) {
-    await drawTintedBaseFromAsset(
-      context,
-      scene.garmentImageSrc,
-      scene.baseColorHex,
-    );
-  } else if (scene.neckImageSrc) {
-    await drawTintedBaseFromAsset(context, scene.neckImageSrc, scene.baseColorHex);
+  if (baseAssetSrc) {
+    await drawTintedBaseFromAsset(context, baseAssetSrc, scene.baseColorHex);
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
     drawGarmentBase(context, "transparent");
   }
 
-  if (!usesGenericGarmentAsset) {
+  if (baseAssetSrc) {
     const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
     const backNeckTrimColor = getTrimSectionColor(
       scene,
@@ -1407,7 +1401,7 @@ export async function composeDesign(
       isChestPocketTrimSection,
     );
 
-    await drawCollarTrimFromAsset(context, scene.neckImageSrc, collarTrimColor);
+    await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     drawBackNeckTrim(context, backNeckTrimColor);
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
@@ -1430,21 +1424,21 @@ export async function composeDesign(
       await drawDetailOverlayInRegions(
         context,
         scene.auxiliaryPocketImageSrc,
-        scene.neckImageSrc,
+        baseAssetSrc,
         getOverlayRegionPreset("auxiliaryPocketPair"),
       );
     }
 
-    if (scene.chestPocketImageSrc && scene.neckImageSrc) {
+    if (scene.chestPocketImageSrc) {
       await drawChestPocketOverlay(
         context,
         scene.chestPocketImageSrc,
-        scene.neckImageSrc,
+        baseAssetSrc,
         chestPocketTrimColor,
       );
 
       if (scene.logoMarker) {
-        await drawChestPocketLogoMarker(context, scene.neckImageSrc);
+        await drawChestPocketLogoMarker(context, baseAssetSrc);
       }
     }
 
