@@ -62,4 +62,36 @@ describe("renderDesignImage", () => {
       500,
     );
   }, 20000);
+
+  it("renderiza Cherokee con color base y cogotera", async () => {
+    const withoutBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutBackNeck.info.width).toBe(900);
+    expect(withoutBackNeck.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
 });

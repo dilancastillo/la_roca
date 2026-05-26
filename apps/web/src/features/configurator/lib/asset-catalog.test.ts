@@ -38,6 +38,9 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2962]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
   });
 
   it("resuelve alias cuando Odoo envia el nombre base del producto", () => {
@@ -65,9 +68,11 @@ describe("getProductAssetCatalog", () => {
         145,
         999999,
         "Modelo de cuello",
-        "CUELLO V",
+        "CHEROKEE",
       ),
-    ).toBe("/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg");
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
 
     expect(
       getImageSourceForValue(

@@ -47,6 +47,7 @@ const BLUSA_ASSET_BASE = "assets/catalog/blusa-antifluido-t180/svg-clean";
 const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
+const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 
 function blouseModelAsset(index: number) {
   return `${BLUSA_ASSET_BASE}/blouse-model-${String(index).padStart(2, "0")}.svg`;
@@ -209,6 +210,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    2962: BLUSA_CHEROKEE_ASSET, // CHEROKEE.
   },
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
@@ -233,6 +235,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20 20": blouseModelAsset(20),
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
+    cherokee: BLUSA_CHEROKEE_ASSET,
   },
   lowerPocketModelsByValueId: {
     // IDs historicos. Los SVG disponibles para bolsillos inferiores son Modelo 14, 15, 16, 18, 19 y 20.
