@@ -94,4 +94,36 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
+
+  it("renderiza P-PAIPILLA con color base y cogotera", async () => {
+    const withoutBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutBackNeck.info.width).toBe(900);
+    expect(withoutBackNeck.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
 });
