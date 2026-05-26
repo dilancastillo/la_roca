@@ -311,6 +311,40 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa miniaturas de Odoo en la barra lateral sin enviarlas al canvas", () => {
+    const odooOptionImageSrc = "data:image/png;base64,odoo-neck-preview";
+    const sessionWithOdooPreview: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 63
+          ? {
+              ...attribute,
+              displayType: "image",
+              values: attribute.values.map((value) =>
+                value.id === 2590
+                  ? { ...value, optionImageSrc: odooOptionImageSrc }
+                  : value,
+              ),
+            }
+          : attribute,
+      ),
+    };
+
+    const ui = deriveConfiguratorUi(
+      sessionWithOdooPreview,
+      sessionWithOdooPreview.selectedValueIds,
+    );
+    const neckGroup = ui.groups.find((group) => group.attributeId === 63);
+
+    expect(neckGroup?.controlType).toBe("image");
+    expect(
+      neckGroup?.options.find((option) => option.id === 2590)?.imageSrc,
+    ).toBe(odooOptionImageSrc);
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+  });
+
   it("dibuja dos bolsillos inferiores cuando el tipo no es Sin bolsillos", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

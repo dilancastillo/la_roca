@@ -33,8 +33,10 @@ type ProductTemplateAttributeValueRecord = {
   attribute_id: Many2one;
   product_attribute_value_id: Many2one;
   product_tmpl_id: Many2one;
+  display_type?: string | false;
   ptav_active?: boolean;
   is_custom?: boolean;
+  image?: string | false;
   excluded_value_ids?: number[];
 };
 
@@ -55,7 +57,9 @@ type ProductAttributeValueRecord = {
   id: number;
   name: string;
   html_color?: string | false;
+  display_type?: string | false;
   is_custom?: boolean;
+  image?: string | false;
 };
 
 type ProductAttributeCustomValueRecord = {
@@ -164,6 +168,79 @@ function normalizeVariantMode(value: string | false | undefined) {
   }
 }
 
+function findMissingOptionalField(message: string, fields: string[]) {
+  return fields.find((field) => message.includes(field));
+}
+
+function inferOdooImageMimeType(dataBase64: string) {
+  if (dataBase64.startsWith("/9j/")) {
+    return "image/jpeg";
+  }
+
+  if (dataBase64.startsWith("iVBORw0KGgo")) {
+    return "image/png";
+  }
+
+  if (dataBase64.startsWith("R0lGOD")) {
+    return "image/gif";
+  }
+
+  if (dataBase64.startsWith("UklGR")) {
+    return "image/webp";
+  }
+
+  if (dataBase64.startsWith("PHN2Zy") || dataBase64.startsWith("PD94bW")) {
+    return "image/svg+xml";
+  }
+
+  return "image/png";
+}
+
+export function toOdooImageDataUri(value: string | false | undefined) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  if (normalized.startsWith("data:image/")) {
+    return normalized;
+  }
+
+  const dataBase64 = normalized.replace(/\s/g, "");
+
+  return `data:${inferOdooImageMimeType(dataBase64)};base64,${dataBase64}`;
+}
+
+export function resolveOdooOptionImageSrc({
+  attributeDisplayType,
+  ptavDisplayType,
+  valueDisplayType,
+  ptavImage,
+  valueImage,
+}: {
+  attributeDisplayType?: string | false | undefined;
+  ptavDisplayType?: string | false | undefined;
+  valueDisplayType?: string | false | undefined;
+  ptavImage?: string | false | undefined;
+  valueImage?: string | false | undefined;
+}) {
+  const isImageOption =
+    normalizeDisplayType(attributeDisplayType) === "image" ||
+    normalizeDisplayType(ptavDisplayType) === "image" ||
+    normalizeDisplayType(valueDisplayType) === "image";
+
+  if (!isImageOption) {
+    return undefined;
+  }
+
+  return toOdooImageDataUri(ptavImage) ?? toOdooImageDataUri(valueImage);
+}
+
 const productTemplateAttributeValueBaseFields = [
   "id",
   "name",
@@ -174,49 +251,101 @@ const productTemplateAttributeValueBaseFields = [
   "is_custom",
 ];
 
+const productTemplateAttributeValueOptionalFields = [
+  "display_type",
+  "image",
+  "excluded_value_ids",
+];
+
 async function loadProductTemplateAttributeValues(
   env: OdooEnv,
   productTemplateId: number,
 ) {
-  try {
+  const warnings: string[] = [];
+  let optionalFields = [...productTemplateAttributeValueOptionalFields];
+
+  while (true) {
+    try {
+      return {
+        ptavs: await odooSearchRead<ProductTemplateAttributeValueRecord>(
+          env,
+          "product.template.attribute.value",
+          [
+            ["product_tmpl_id", "=", productTemplateId],
+            ["ptav_active", "=", true],
+          ],
+          [...productTemplateAttributeValueBaseFields, ...optionalFields],
+          "attribute_id, id",
+        ),
+        warnings,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const missingField = findMissingOptionalField(message, optionalFields);
+
+      if (!missingField) {
+        throw error;
+      }
+
+      optionalFields = optionalFields.filter((field) => field !== missingField);
+
+      if (missingField === "excluded_value_ids") {
+        warnings.push(
+          "Odoo no devolvio el campo excluded_value_ids; las exclusiones no se aplicaron.",
+        );
+      }
+
+      if (missingField === "image") {
+        warnings.push(
+          "Odoo no devolvio imagenes de valores; la barra lateral usara los assets locales disponibles.",
+        );
+      }
+    }
+  }
+}
+
+async function loadProductAttributeValues(
+  env: OdooEnv,
+  productAttributeValueIds: number[],
+) {
+  if (productAttributeValueIds.length === 0) {
     return {
-      ptavs: await odooSearchRead<ProductTemplateAttributeValueRecord>(
-        env,
-        "product.template.attribute.value",
-        [
-          ["product_tmpl_id", "=", productTemplateId],
-          ["ptav_active", "=", true],
-        ],
-        [
-          ...productTemplateAttributeValueBaseFields,
-          "excluded_value_ids",
-        ],
-        "attribute_id, id",
-      ),
+      attributeValues: [] as ProductAttributeValueRecord[],
       warnings: [] as string[],
     };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  }
 
-    if (!message.includes("excluded_value_ids")) {
-      throw error;
+  const baseFields = ["id", "name", "html_color", "is_custom"];
+  const warnings: string[] = [];
+  let optionalFields = ["display_type", "image"];
+
+  while (true) {
+    try {
+      return {
+        attributeValues: await odooRead<ProductAttributeValueRecord>(
+          env,
+          "product.attribute.value",
+          productAttributeValueIds,
+          [...baseFields, ...optionalFields],
+        ),
+        warnings,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const missingField = findMissingOptionalField(message, optionalFields);
+
+      if (!missingField) {
+        throw error;
+      }
+
+      optionalFields = optionalFields.filter((field) => field !== missingField);
+
+      if (missingField === "image") {
+        warnings.push(
+          "Odoo no devolvio imagenes de valores; la barra lateral usara los assets locales disponibles.",
+        );
+      }
     }
-
-    return {
-      ptavs: await odooSearchRead<ProductTemplateAttributeValueRecord>(
-        env,
-        "product.template.attribute.value",
-        [
-          ["product_tmpl_id", "=", productTemplateId],
-          ["ptav_active", "=", true],
-        ],
-        productTemplateAttributeValueBaseFields,
-        "attribute_id, id",
-      ),
-      warnings: [
-        "Odoo no devolvio el campo excluded_value_ids; las exclusiones no se aplicaron.",
-      ],
-    };
   }
 }
 
@@ -321,7 +450,7 @@ export async function getConfiguratorSession(
     product.display_name ??
     `Producto ${productTemplateId}`;
 
-  const { ptavs, warnings: exclusionWarnings } =
+  const { ptavs, warnings: ptavWarnings } =
     await loadProductTemplateAttributeValues(env, productTemplateId);
 
   if (ptavs.length === 0) {
@@ -354,7 +483,12 @@ export async function getConfiguratorSession(
     line.product_custom_attribute_value_ids,
   );
 
-  const [attributes, attributeLines, attributeValues, customAttributeValues] =
+  const [
+    attributes,
+    attributeLines,
+    attributeValuesResult,
+    customAttributeValues,
+  ] =
     await Promise.all([
       attributeIds.length > 0
         ? odooRead<ProductAttributeRecord>(
@@ -371,14 +505,7 @@ export async function getConfiguratorSession(
         ["id", "attribute_id", "sequence"],
         "sequence, id",
       ).catch(() => []),
-      productAttributeValueIds.length > 0
-        ? odooRead<ProductAttributeValueRecord>(
-            env,
-            "product.attribute.value",
-            productAttributeValueIds,
-            ["id", "name", "html_color", "is_custom"],
-          )
-        : Promise.resolve([]),
+      loadProductAttributeValues(env, productAttributeValueIds),
       shouldLoadCustomValues && customAttributeValueIds.length > 0
         ? odooRead<ProductAttributeCustomValueRecord>(
             env,
@@ -388,6 +515,8 @@ export async function getConfiguratorSession(
           )
         : Promise.resolve([]),
     ]);
+  const { attributeValues, warnings: attributeValueWarnings } =
+    attributeValuesResult;
 
   const attributeMap = new Map<number, ProductAttributeRecord>(
     attributes.map(
@@ -458,6 +587,13 @@ export async function getConfiguratorSession(
       "product_attribute_value_id",
     );
     const attributeValue = attributeValueMap.get(productAttributeValueId);
+    const optionImageSrc = resolveOdooOptionImageSrc({
+      attributeDisplayType: attribute?.display_type,
+      ptavDisplayType: ptav.display_type,
+      valueDisplayType: attributeValue?.display_type,
+      ptavImage: ptav.image,
+      valueImage: attributeValue?.image,
+    });
 
     const group =
       groupedAttributes.get(attributeId) ??
@@ -481,6 +617,7 @@ export async function getConfiguratorSession(
       ...(attributeValue?.html_color
         ? { colorHex: attributeValue.html_color }
         : {}),
+      ...(optionImageSrc ? { optionImageSrc } : {}),
       allowsCustomValue: Boolean(ptav.is_custom || attributeValue?.is_custom),
     });
 
@@ -565,6 +702,6 @@ export async function getConfiguratorSession(
       typeof line.x_product_design_image === "string"
         ? line.x_product_design_image
         : null,
-    warnings: exclusionWarnings,
+    warnings: [...ptavWarnings, ...attributeValueWarnings],
   };
 }

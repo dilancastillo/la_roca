@@ -120,6 +120,17 @@ function getImageSource(
   );
 }
 
+function getOptionImageSource(
+  graphicManifestKey: string,
+  attribute: ConfiguratorSession["attributes"][number],
+  value: ConfiguratorSession["attributes"][number]["values"][number],
+) {
+  return (
+    value.optionImageSrc ??
+    getImageSource(graphicManifestKey, attribute, value)
+  );
+}
+
 function getControlType(
   attribute: ConfiguratorSession["attributes"][number],
   session: ConfiguratorSession,
@@ -129,8 +140,9 @@ function getControlType(
   }
 
   if (
+    attribute.displayType === "image" ||
     attribute.values.some((value) =>
-      Boolean(getImageSource(session.graphicManifestKey, attribute, value)),
+      Boolean(getOptionImageSource(session.graphicManifestKey, attribute, value)),
     )
   ) {
     return "image";
@@ -333,7 +345,11 @@ export function deriveConfiguratorUi(
     controlType: getControlType(attribute, session),
     selectionMode: attribute.selectionMode,
     options: attribute.values.map((value) => {
-      const imageSrc = getImageSource(session.graphicManifestKey, attribute, value);
+      const imageSrc = getOptionImageSource(
+        session.graphicManifestKey,
+        attribute,
+        value,
+      );
 
       return {
         id: value.id,

@@ -6,6 +6,7 @@ export const configuratorValueSchema = z.object({
   attributeId: z.number(),
   attributeName: z.string().min(1),
   colorHex: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/).optional(),
+  optionImageSrc: z.string().min(1).optional(),
   allowsCustomValue: z.boolean().optional(),
 });
 
