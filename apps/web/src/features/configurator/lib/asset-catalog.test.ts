@@ -38,6 +38,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2948]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2949]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[2950]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-33-oriental.svg",
     );
@@ -123,6 +129,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999988,
+        "Modelo de cuello",
+        "PEDAGOGIA",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg",
     );
 
     expect(

@@ -48,6 +48,8 @@ const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
+const BLUSA_PEDAGOGIA_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-29-pedagogia.svg`;
 const BLUSA_ORIENTAL_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-33-oriental.svg`;
 const BLUSA_ORIENTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-33-oriental-lower-pocket.svg`;
@@ -225,6 +227,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    2948: BLUSA_PEDAGOGIA_ASSET, // PEDAGOGIA en Blusa.
+    2949: BLUSA_PEDAGOGIA_ASSET, // PEDAGOGIA en Uniforme.
     2950: BLUSA_ORIENTAL_ASSET, // ORIENTAL en Blusa.
     2951: BLUSA_ORIENTAL_ASSET, // ORIENTAL en Uniforme.
     2952: BLUSA_CUELLO_ALTO_CREMALLERA_ASSET, // CUELLO ALTO CON CREMALLERA en Blusa.
@@ -260,6 +264,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
     "cuello alto con cremallera": BLUSA_CUELLO_ALTO_CREMALLERA_ASSET,
+    pedagogia: BLUSA_PEDAGOGIA_ASSET,
     oriental: BLUSA_ORIENTAL_ASSET,
     cirugia: BLUSA_CIRUGIA_ASSET,
     "el hato": BLUSA_EL_HATO_ASSET,

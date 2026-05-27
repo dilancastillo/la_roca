@@ -127,7 +127,10 @@ const completeCollarOnlyFileNames = new Set([
   "blouse-model-13-p-paipilla.svg",
 ]);
 
-const noCollarTrimFileNames = new Set(["blouse-model-33-oriental.svg"]);
+const noCollarTrimFileNames = new Set([
+  "blouse-model-29-pedagogia.svg",
+  "blouse-model-33-oriental.svg",
+]);
 
 const noBackNeckTrimFileNames = new Set([
   "blouse-model-33-oriental.svg",

@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 2948,
+          name: "PEDAGOGIA",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2950,
           name: "ORIENTAL",
           attributeId: 63,
@@ -443,6 +449,34 @@ describe("deriveAutomationRenderScene", () => {
         role: "lowerPockets",
         key: "bolsillos-inferiores-parte-superior",
         label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga PEDAGOGIA como modelo de cuello independiente", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2948],
+      "92": [421, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
         colorHex: "#f4c7cc",
       },
     ]);

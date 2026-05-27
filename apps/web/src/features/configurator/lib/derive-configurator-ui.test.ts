@@ -50,6 +50,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 2948,
+          name: "PEDAGOGIA",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 2950,
           name: "ORIENTAL",
           attributeId: 63,
@@ -775,6 +781,35 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.chestPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
     );
+  });
+
+  it("carga PEDAGOGIA como modelo de cuello independiente", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2948],
+      "91": [5152],
+      "92": [421, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("oculta bolsillo de pecho cuando el modelo seleccionado es Ninguno", () => {
