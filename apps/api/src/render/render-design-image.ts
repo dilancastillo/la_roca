@@ -114,6 +114,7 @@ const externalCollarTrimOverlayByFileName: Record<
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-24-botones.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-25-20-21.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-26-cuello-redondo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-27-cremallera.svg": "M305 140 C365 121 535 121 595 140",
@@ -135,6 +136,8 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-24-botones.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-24-botones-collar.svg",
   "blouse-model-26-cuello-redondo.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-26-cuello-redondo-collar.svg",
   "blouse-model-08.svg":

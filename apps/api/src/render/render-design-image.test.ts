@@ -69,6 +69,48 @@ function countOrangePixels(buffer: Buffer) {
   return count;
 }
 
+function countSourceTealPixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (
+      alpha > 0 &&
+      red > 20 &&
+      red < 80 &&
+      green > 150 &&
+      green < 200 &&
+      blue > 120 &&
+      blue < 190
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function countYellowPixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (alpha > 0 && red > 220 && green > 210 && blue < 80) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function countPurplePixels(buffer: Buffer) {
   let count = 0;
 
@@ -682,6 +724,76 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withCollar.data),
     ).toBeGreaterThan(100);
     expect(collarPinkPixels).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
+  it("renderiza BOTONES con color base, vivo de cuello y cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const collarPinkPixels = countPastelPinkPixelsInRegion(
+      withCollar.data,
+      withCollar.info.width,
+      { x: 310, y: 110, width: 300, height: 560 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countSourceTealPixels(withoutTrim.data)).toBe(0);
+    expect(countYellowPixels(withoutTrim.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCollar.data),
+    ).toBeGreaterThan(100);
+    expect(collarPinkPixels).toBeGreaterThan(1_000);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);

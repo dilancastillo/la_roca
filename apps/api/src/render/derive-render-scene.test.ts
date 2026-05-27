@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 2938,
+          name: "BOTONES",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2940,
           name: "20-21",
           attributeId: 63,
@@ -521,6 +527,34 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-26-cuello-redondo.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga BOTONES y pinta el cuello con la seccion Cuello", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2938],
+      "92": [5147, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg",
     );
     expect(scene.trimSections).toEqual([
       {

@@ -38,6 +38,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2938]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2939]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[2940]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg",
     );
@@ -147,6 +153,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999984,
+        "Modelo de cuello",
+        "BOTONES",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg",
     );
 
     expect(
