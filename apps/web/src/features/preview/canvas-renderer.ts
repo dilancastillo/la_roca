@@ -105,9 +105,15 @@ const externalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const flapTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-aletas.svg",
+};
+
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-23-polo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-24-botones.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-25-20-21.svg": "M305 140 C365 121 535 121 595 140",
@@ -131,6 +137,8 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-collar.svg",
   "blouse-model-24-botones.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-24-botones-collar.svg",
   "blouse-model-26-cuello-redondo.svg":
@@ -314,6 +322,12 @@ function isChestPocketTrimSection(
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
   );
+}
+
+function isFlapTrimSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("aletas");
 }
 
 function isBackNeckTrimSection(section: PreviewScene["trimSections"][number]) {
@@ -1487,6 +1501,26 @@ async function drawExternalCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawFlapTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc = flapTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 function getCollarTrimColorForAsset(
   scene: PreviewScene,
   sourceSrc: string,
@@ -1642,6 +1676,7 @@ export async function composeDesign(
       scene,
       isChestPocketTrimSection,
     );
+    const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
 
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawInternalCollarTrimFromAsset(
@@ -1668,6 +1703,7 @@ export async function composeDesign(
       "right",
       rightExternalCollarTrimColor,
     );
+    await drawFlapTrimFromAsset(context, baseAssetSrc, flapTrimColor);
     const drewAssetBackNeckTrim = await drawBackNeckTrimFromAsset(
       context,
       baseAssetSrc,

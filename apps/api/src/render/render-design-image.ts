@@ -111,9 +111,15 @@ const externalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const flapTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-aletas.svg",
+};
+
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-23-polo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-24-botones.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-25-20-21.svg": "M305 140 C365 121 535 121 595 140",
@@ -137,6 +143,8 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-22-estrella.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-collar.svg",
   "blouse-model-24-botones.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-24-botones-collar.svg",
   "blouse-model-26-cuello-redondo.svg":
@@ -327,6 +335,14 @@ function isChestPocketTrimSection(
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
   );
+}
+
+function isFlapTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("aletas");
 }
 
 function isBackNeckTrimSection(
@@ -939,6 +955,32 @@ async function createExternalCollarTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+async function createFlapTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath = flapTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
 async function createBackNeckTrimOverlayBuffer(
   assetPath: string,
   trimColor: string | undefined,
@@ -1386,6 +1428,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isChestPocketTrimSection,
     );
+    const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
 
     if (collarTrimColor) {
       const collarTrimOverlayBuffer = await createCollarTrimOverlayBuffer(
@@ -1471,6 +1514,23 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       layers.push(
         `<image href="${toDataUri(externalCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(externalCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    const flapTrimOverlayBuffer = await createFlapTrimOverlayBuffer(
+      baseAssetPath,
+      flapTrimColor,
+    );
+
+    if (flapTrimOverlayBuffer) {
+      const flapTrimOutlineBuffer = await createPngInkOutlineBuffer(
+        flapTrimOverlayBuffer,
+        "#f8fafc",
+        7,
+      );
+      layers.push(
+        `<image href="${toDataUri(flapTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        `<image href="${toDataUri(flapTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 

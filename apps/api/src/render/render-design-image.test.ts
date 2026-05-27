@@ -731,6 +731,103 @@ describe("renderDesignImage", () => {
     expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza ESTRELLA con vivo de cuello, aletas y cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22-estrella.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withFlaps = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2877,
+            key: "aletas",
+            label: "Aletas",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const collarPinkPixels = countPastelPinkPixelsInRegion(
+      withCollar.data,
+      withCollar.info.width,
+      { x: 300, y: 110, width: 310, height: 260 },
+    );
+    const flapPinkPixels = countPastelPinkPixelsInRegion(
+      withFlaps.data,
+      withFlaps.info.width,
+      { x: 295, y: 135, width: 320, height: 130 },
+    );
+    const baseFlapPinkPixels = countPastelPinkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 295, y: 135, width: 320, height: 130 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(baseFlapPinkPixels).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCollar.data),
+    ).toBeGreaterThan(100);
+    expect(collarPinkPixels).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withFlaps.data),
+    ).toBeGreaterThan(100);
+    expect(flapPinkPixels).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza BOTONES con color base, vivo de cuello y cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-24-botones.svg";

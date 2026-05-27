@@ -51,6 +51,8 @@ const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
 const BLUSA_2021_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-25-20-21.svg`;
+const BLUSA_ESTRELLA_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-22-estrella.svg`;
 const BLUSA_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-27-cremallera.svg`;
 const BLUSA_CUELLO_REDONDO_ASSET =
@@ -234,6 +236,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    356: BLUSA_ESTRELLA_ASSET, // ESTRELLA en Blusa.
+    1178: BLUSA_ESTRELLA_ASSET, // ESTRELLA en Uniforme.
     357: BLUSA_POLO_ASSET, // POLO en Blusa.
     1179: BLUSA_POLO_ASSET, // POLO en Uniforme.
     2938: BLUSA_BOTONES_ASSET, // BOTONES en Blusa.
@@ -280,6 +284,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20 20": blouseModelAsset(20),
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
+    estrella: BLUSA_ESTRELLA_ASSET,
     "20 21": BLUSA_2021_ASSET,
     "20-21": BLUSA_2021_ASSET,
     "2021": BLUSA_2021_ASSET,

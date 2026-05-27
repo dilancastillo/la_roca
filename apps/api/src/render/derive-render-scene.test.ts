@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 356,
+          name: "ESTRELLA",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 357,
           name: "POLO",
           attributeId: 63,
@@ -260,6 +266,12 @@ const session: ConfiguratorSession = {
         {
           id: 5147,
           name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 2877,
+          name: "Aletas",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -547,6 +559,40 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga ESTRELLA y pasa Cuello, Aletas y cogotera como vivos independientes", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [356],
+      "92": [5147, 2877, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22-estrella.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2877,
+        key: "aletas",
+        label: "Aletas",
         colorHex: "#f4c7cc",
       },
     ]);
