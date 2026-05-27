@@ -801,6 +801,69 @@ describe("renderDesignImage", () => {
     expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza POLO solo con color base y conserva cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-23-polo.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countYellowPixels(withoutTrim.data)).toBe(0);
+    expect(countSourceTealPixels(withoutTrim.data)).toBe(0);
+    expect(countOrangePixels(withoutTrim.data)).toBe(0);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza 20-21 con vivos externos independientes y cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg";
