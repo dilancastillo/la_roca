@@ -94,9 +94,11 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
-const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {
-  "blouse-model-27-cremallera.svg": [2],
-  "blouse-model-29-pedagogia.svg": [1],
+const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
+
+const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-27-cremallera.svg": "M305 132 C365 113 535 113 595 132",
+  "blouse-model-29-pedagogia.svg": "M305 132 C365 113 535 113 595 132",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -1310,19 +1312,27 @@ async function drawChestPocketLogoMarker(
   context.drawImage(markerCanvas, 0, 0);
 }
 
-function drawBackNeckTrimPath(context: CanvasRenderingContext2D) {
-  context.beginPath();
-  context.moveTo(305, 128);
-  context.lineTo(595, 128);
+function createBackNeckTrimPath(pathData?: string) {
+  if (pathData) {
+    return new Path2D(pathData);
+  }
+
+  const path = new Path2D();
+  path.moveTo(305, 128);
+  path.lineTo(595, 128);
+  return path;
 }
 
 function drawBackNeckTrim(
   context: CanvasRenderingContext2D,
   trimColor: string | undefined,
+  pathData?: string,
 ) {
   if (!trimColor) {
     return;
   }
+
+  const path = createBackNeckTrimPath(pathData);
 
   context.save();
   context.lineCap = "round";
@@ -1331,14 +1341,12 @@ function drawBackNeckTrim(
   context.shadowBlur = 10;
   context.strokeStyle = "#f8fafc";
   context.lineWidth = 15;
-  drawBackNeckTrimPath(context);
-  context.stroke();
+  context.stroke(path);
 
   context.shadowBlur = 0;
   context.strokeStyle = trimColor;
   context.lineWidth = 9;
-  drawBackNeckTrimPath(context);
-  context.stroke();
+  context.stroke(path);
   context.restore();
 }
 
@@ -1580,7 +1588,11 @@ export async function composeDesign(
     );
 
     if (!drewAssetBackNeckTrim) {
-      drawBackNeckTrim(context, backNeckTrimColor);
+      drawBackNeckTrim(
+        context,
+        backNeckTrimColor,
+        backNeckTrimPathDataByFileName[getFileNameFromSource(baseAssetSrc)],
+      );
     }
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {

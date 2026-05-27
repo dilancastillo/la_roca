@@ -96,12 +96,13 @@ function countPinkPixelsByHalf(buffer: Buffer, width: number) {
     const alpha = buffer[offset + 3] ?? 0;
 
     if (
-      alpha > 0 &&
-      red > 220 &&
-      green > 150 &&
-      green < 230 &&
-      blue > 160 &&
-      blue < 235
+      alpha > 200 &&
+      red > 230 &&
+      red < 255 &&
+      green > 180 &&
+      green < 215 &&
+      blue > 185 &&
+      blue < 225
     ) {
       const pixelIndex = offset / 4;
       const x = pixelIndex % width;
@@ -180,46 +181,36 @@ function countPinkPixelsInRegion(
   return count;
 }
 
-function getPinkPixelBounds(buffer: Buffer, width: number, height: number) {
-  let minX = width;
-  let minY = height;
-  let maxX = -1;
-  let maxY = -1;
+function countPastelPinkPixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
 
-  for (let offset = 0; offset < buffer.length; offset += 4) {
-    const red = buffer[offset] ?? 0;
-    const green = buffer[offset + 1] ?? 0;
-    const blue = buffer[offset + 2] ?? 0;
-    const alpha = buffer[offset + 3] ?? 0;
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
 
-    if (
-      alpha > 0 &&
-      red > 220 &&
-      green > 150 &&
-      green < 230 &&
-      blue > 160 &&
-      blue < 235
-    ) {
-      const pixelIndex = offset / 4;
-      const x = pixelIndex % width;
-      const y = Math.floor(pixelIndex / width);
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+      if (
+        alpha > 200 &&
+        red > 230 &&
+        red < 255 &&
+        green > 180 &&
+        green < 215 &&
+        blue > 185 &&
+        blue < 225
+      ) {
+        count += 1;
+      }
     }
   }
 
-  if (maxX < 0 || maxY < 0) {
-    return undefined;
-  }
-
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX + 1,
-    height: maxY - minY + 1,
-  };
+  return count;
 }
 
 describe("renderDesignImage", () => {
@@ -607,10 +598,15 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const backNeckPinkBounds = getPinkPixelBounds(
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
       withBackNeck.data,
       withBackNeck.info.width,
-      withBackNeck.info.height,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
     );
 
     expect(withoutTrim.info.width).toBe(900);
@@ -620,7 +616,8 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
-    expect(backNeckPinkBounds?.height).toBeGreaterThan(16);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
   it("renderiza CREMALLERA sin vivos de cuello y con cogotera ovalada", async () => {
@@ -677,10 +674,15 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const backNeckPinkBounds = getPinkPixelBounds(
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
       withBackNeck.data,
       withBackNeck.info.width,
-      withBackNeck.info.height,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
     );
 
     expect(withoutTrim.info.width).toBe(900);
@@ -690,7 +692,8 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
-    expect(backNeckPinkBounds?.height).toBeGreaterThan(16);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
   it("renderiza ORIENTAL sin vivos de cuello y colorea RIBETE VERTICAL solo por vivo", async () => {

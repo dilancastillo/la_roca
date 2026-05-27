@@ -100,9 +100,11 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
-const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {
-  "blouse-model-27-cremallera.svg": [2],
-  "blouse-model-29-pedagogia.svg": [1],
+const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
+
+const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-27-cremallera.svg": "M305 132 C365 113 535 113 595 132",
+  "blouse-model-29-pedagogia.svg": "M305 132 C365 113 535 113 595 132",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -1026,8 +1028,7 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
     .join("");
 }
 
-function getBackNeckTrimSvg(trimColor: string) {
-  const pathData = "M305 128 L595 128";
+function getBackNeckTrimSvg(trimColor: string, pathData = "M305 128 L595 128") {
 
   return `
     <defs>
@@ -1386,7 +1387,12 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
-        layers.push(getBackNeckTrimSvg(backNeckTrimColor));
+        layers.push(
+          getBackNeckTrimSvg(
+            backNeckTrimColor,
+            backNeckTrimPathDataByFileName[getAssetFileName(baseAssetPath)],
+          ),
+        );
       }
     }
 
