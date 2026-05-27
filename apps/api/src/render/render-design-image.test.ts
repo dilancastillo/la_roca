@@ -69,6 +69,37 @@ function countOrangePixels(buffer: Buffer) {
   return count;
 }
 
+function countPinkPixelsByHalf(buffer: Buffer, width: number) {
+  const counts = { left: 0, right: 0 };
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (
+      alpha > 0 &&
+      red > 220 &&
+      green > 150 &&
+      green < 230 &&
+      blue > 160 &&
+      blue < 235
+    ) {
+      const pixelIndex = offset / 4;
+      const x = pixelIndex % width;
+
+      if (x < width / 2) {
+        counts.left += 1;
+      } else {
+        counts.right += 1;
+      }
+    }
+  }
+
+  return counts;
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -264,5 +295,62 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
+  }, 20000);
+
+  it("renderiza lados internos independientes en cuello 20-19", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withLeftInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6001,
+            key: "cuello-v-lineal-interno-izquierdo",
+            label: "Cuello V lineal interno izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6002,
+            key: "cuello-v-lineal-interno-derecho",
+            label: "Cuello V lineal interno derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    const leftPinkPixels = countPinkPixelsByHalf(
+      withLeftInternal.data,
+      withLeftInternal.info.width,
+    );
+    const rightPinkPixels = countPinkPixelsByHalf(
+      withRightInternal.data,
+      withRightInternal.info.width,
+    );
+
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftInternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightInternal.data),
+    ).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
+    expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
   }, 20000);
 });

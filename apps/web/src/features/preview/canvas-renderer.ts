@@ -77,6 +77,16 @@ const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-10.svg": [3, 4],
 };
 
+const internalCollarTrimElementIndexesByFileName: Record<
+  string,
+  { left: number[]; right: number[] }
+> = {
+  "blouse-model-10.svg": {
+    left: [3],
+    right: [4],
+  },
+};
+
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
   "blouse-model-14.svg": "band",
   "blouse-model-15.svg": "ink",
@@ -159,6 +169,28 @@ function isCompleteCollarSection(section: PreviewScene["trimSections"][number]) 
   const key = getTrimSectionText(section);
 
   return key.includes("cuello completo") || key.includes("cuello-completo");
+}
+
+function isLeftInternalCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v lineal interno izquierdo") ||
+    key.includes("cuello-v-lineal-interno-izquierdo")
+  );
+}
+
+function isRightInternalCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v lineal interno derecho") ||
+    key.includes("cuello-v-lineal-interno-derecho")
+  );
 }
 
 function isLowerPocketTrimSection(
@@ -381,15 +413,20 @@ async function getLowerPocketTrimObjectUrl(src: string) {
   return await promise;
 }
 
-async function getCollarTrimObjectUrl(src: string) {
+async function getCollarTrimObjectUrl(
+  src: string,
+  trimIndexesOverride?: number[],
+) {
   const fileName = getFileNameFromSource(src);
-  const trimIndexes = collarTrimElementIndexesByFileName[fileName];
+  const trimIndexes =
+    trimIndexesOverride ?? collarTrimElementIndexesByFileName[fileName];
 
   if (!trimIndexes) {
     return undefined;
   }
 
-  const existing = collarTrimObjectUrlCache.get(src);
+  const cacheKey = `${src}::${trimIndexes.join(",")}`;
+  const existing = collarTrimObjectUrlCache.get(cacheKey);
 
   if (existing) {
     return await existing;
@@ -410,7 +447,7 @@ async function getCollarTrimObjectUrl(src: string) {
     return URL.createObjectURL(blob);
   })();
 
-  collarTrimObjectUrlCache.set(src, promise);
+  collarTrimObjectUrlCache.set(cacheKey, promise);
   return await promise;
 }
 
@@ -1274,6 +1311,7 @@ async function drawCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string | undefined,
   trimColor: string | undefined,
+  trimIndexesOverride?: number[],
 ) {
   if (!sourceSrc || !trimColor) {
     return;
@@ -1281,14 +1319,14 @@ async function drawCollarTrimFromAsset(
 
   const overlaySrc = collarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
 
-  if (overlaySrc) {
+  if (overlaySrc && !trimIndexesOverride) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
     context.drawImage(createCanvasInkOutline(overlayCanvas), 0, 0);
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
     return;
   }
 
-  const trimSrc = await getCollarTrimObjectUrl(sourceSrc);
+  const trimSrc = await getCollarTrimObjectUrl(sourceSrc, trimIndexesOverride);
 
   if (trimSrc) {
     const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
@@ -1303,6 +1341,24 @@ async function drawCollarTrimFromAsset(
 
   drawCanvasInRegions(context, tintedCanvas, collarRegions);
   drawCanvasInRegions(context, inkCanvas, collarRegions);
+}
+
+async function drawInternalCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  side: "left" | "right",
+  trimColor: string | undefined,
+) {
+  const trimIndexes =
+    internalCollarTrimElementIndexesByFileName[getFileNameFromSource(sourceSrc)]?.[
+      side
+    ];
+
+  if (!trimIndexes) {
+    return;
+  }
+
+  await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
 }
 
 function getCollarTrimColorForAsset(
@@ -1421,6 +1477,14 @@ export async function composeDesign(
 
   if (baseAssetSrc) {
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
+    const leftInternalCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLeftInternalCollarSection,
+    );
+    const rightInternalCollarTrimColor = getTrimSectionColor(
+      scene,
+      isRightInternalCollarSection,
+    );
     const backNeckTrimColor = getTrimSectionColor(
       scene,
       isBackNeckTrimSection,
@@ -1439,6 +1503,18 @@ export async function composeDesign(
     );
 
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
+    await drawInternalCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "left",
+      leftInternalCollarTrimColor,
+    );
+    await drawInternalCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "right",
+      rightInternalCollarTrimColor,
+    );
     drawBackNeckTrim(context, backNeckTrimColor);
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {

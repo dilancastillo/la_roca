@@ -186,6 +186,18 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 5155,
+          name: "Cuello V lineal interno izquierdo",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 5156,
+          name: "Cuello V lineal interno derecho",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 5150,
           name: "Bolsillos inferiores parte superior",
           attributeId: 92,
@@ -271,6 +283,32 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello-completo",
         label: "Cuello completo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pasa los lados internos del cuello V con el color de vivo seleccionado", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2593],
+      "92": [5155, 5156],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5155,
+        key: "cuello-v-lineal-interno-izquierdo",
+        label: "Cuello V lineal interno izquierdo",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5156,
+        key: "cuello-v-lineal-interno-derecho",
+        label: "Cuello V lineal interno derecho",
         colorHex: "#f4c7cc",
       },
     ]);
