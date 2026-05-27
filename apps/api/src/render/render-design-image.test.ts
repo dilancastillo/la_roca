@@ -52,6 +52,23 @@ function countNeonGreenPixels(buffer: Buffer) {
   return count;
 }
 
+function countOrangePixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (alpha > 0 && red > 220 && green > 120 && green < 190 && blue < 80) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -173,6 +190,73 @@ describe("renderDesignImage", () => {
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(countNeonGreenPixels(withoutTrim.data)).toBe(0);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
+
+  it("renderiza FISIOPRACTICAS con color base, cuello completo y cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-11-fisiopracticas.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withCompleteCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello-completo",
+            label: "Cuello completo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countOrangePixels(withoutTrim.data)).toBe(0);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),

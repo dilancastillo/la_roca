@@ -93,9 +93,16 @@ const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
+  "blouse-model-11-fisiopracticas.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-11-fisiopracticas-collar.svg",
   "blouse-model-13-p-paipilla.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-13-p-paipilla-collar.svg",
 };
+
+const completeCollarOnlyFileNames = new Set([
+  "blouse-model-11-fisiopracticas.svg",
+  "blouse-model-13-p-paipilla.svg",
+]);
 
 export function getOverlayRegionPreset(
   key: keyof typeof overlayRegionPresets,
@@ -1306,10 +1313,11 @@ function getCollarTrimColorForAsset(
     scene,
     isCompleteCollarSection,
   );
-  const isPaipillaNeck =
-    getFileNameFromSource(sourceSrc) === "blouse-model-13-p-paipilla.svg";
+  const isCompleteCollarOnlyNeck = completeCollarOnlyFileNames.has(
+    getFileNameFromSource(sourceSrc),
+  );
 
-  if (isPaipillaNeck) {
+  if (isCompleteCollarOnlyNeck) {
     return completeCollarTrimColor;
   }
 

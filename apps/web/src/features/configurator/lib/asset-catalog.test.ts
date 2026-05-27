@@ -38,6 +38,9 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2958]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-11-fisiopracticas.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[2960]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
     );
@@ -70,6 +73,18 @@ describe("getProductAssetCatalog", () => {
         "blusa-antifluido-t180",
         145,
         999999,
+        "Modelo de cuello",
+        "FISIOPRÁCTICAS",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-11-fisiopracticas.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999996,
         "Modelo de cuello",
         "P-PAIPILLA",
       ),
