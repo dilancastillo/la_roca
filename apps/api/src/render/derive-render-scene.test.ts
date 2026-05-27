@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 352,
+          name: "MATRIOSKA",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 353,
           name: "MARIPOSA",
           attributeId: 63,
@@ -284,6 +290,12 @@ const session: ConfiguratorSession = {
         {
           id: 5147,
           name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 2901,
+          name: "Cuello interno",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -775,6 +787,40 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga MATRIOSKA y pasa Cuello interno con cogotera ovalada", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [352],
+      "92": [2901, 5147, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-41-matrioska.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2901,
+        key: "cuello-interno",
+        label: "Cuello interno",
         colorHex: "#f4c7cc",
       },
     ]);

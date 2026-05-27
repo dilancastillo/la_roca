@@ -115,6 +115,11 @@ const internalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const innerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-41-matrioska.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-41-matrioska-inner-collar.svg",
+};
+
 const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -143,6 +148,7 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-27-cremallera.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-29-pedagogia.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-40-mariposa.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-41-matrioska.svg": "M305 140 C365 121 535 121 595 140",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -193,6 +199,7 @@ const noCollarTrimFileNames = new Set([
   "blouse-model-29-pedagogia.svg",
   "blouse-model-33-oriental.svg",
   "blouse-model-40-mariposa.svg",
+  "blouse-model-41-matrioska.svg",
 ]);
 
 const noBackNeckTrimFileNames = new Set([
@@ -268,6 +275,14 @@ function isCompleteCollarSection(
   const key = getTrimSectionText(section);
 
   return key.includes("cuello completo") || key.includes("cuello-completo");
+}
+
+function isInnerCollarTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello interno") || key.includes("cuello-interno");
 }
 
 function isLeftInternalCollarSection(
@@ -963,6 +978,33 @@ async function createInternalCollarTrimOverlayBuffer(
   );
 }
 
+async function createInnerCollarTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath =
+    innerCollarTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
 async function createExternalCollarTrimOverlayBuffer(
   assetPath: string,
   side: "left" | "right",
@@ -1431,6 +1473,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
   if (baseAssetPath) {
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetPath);
+    const innerCollarTrimColor = getTrimSectionColor(
+      scene,
+      isInnerCollarTrimSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1503,6 +1549,22 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           ),
         );
       }
+    }
+
+    const innerCollarTrimOverlayBuffer =
+      await createInnerCollarTrimOverlayBuffer(
+        baseAssetPath,
+        innerCollarTrimColor,
+      );
+
+    if (innerCollarTrimOverlayBuffer) {
+      const innerCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
+        innerCollarTrimOverlayBuffer,
+      );
+      layers.push(
+        `<image href="${toDataUri(innerCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        `<image href="${toDataUri(innerCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
     }
 
     for (const [side, trimColor] of [

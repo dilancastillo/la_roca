@@ -109,6 +109,11 @@ const internalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const innerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-41-matrioska.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-41-matrioska-inner-collar.svg",
+};
+
 const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -137,6 +142,7 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-27-cremallera.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-29-pedagogia.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-40-mariposa.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-41-matrioska.svg": "M305 140 C365 121 535 121 595 140",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -187,6 +193,7 @@ const noCollarTrimFileNames = new Set([
   "blouse-model-29-pedagogia.svg",
   "blouse-model-33-oriental.svg",
   "blouse-model-40-mariposa.svg",
+  "blouse-model-41-matrioska.svg",
 ]);
 
 const noBackNeckTrimFileNames = new Set([
@@ -255,6 +262,14 @@ function isCompleteCollarSection(section: PreviewScene["trimSections"][number]) 
   const key = getTrimSectionText(section);
 
   return key.includes("cuello completo") || key.includes("cuello-completo");
+}
+
+function isInnerCollarTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello interno") || key.includes("cuello-interno");
 }
 
 function isLeftInternalCollarSection(
@@ -1513,6 +1528,27 @@ async function drawInternalCollarTrimFromAsset(
   await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
 }
 
+async function drawInnerCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    innerCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 async function drawExternalCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -1681,6 +1717,10 @@ export async function composeDesign(
 
   if (baseAssetSrc) {
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
+    const innerCollarTrimColor = getTrimSectionColor(
+      scene,
+      isInnerCollarTrimSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1715,6 +1755,11 @@ export async function composeDesign(
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
 
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
+    await drawInnerCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      innerCollarTrimColor,
+    );
     await drawInternalCollarTrimFromAsset(
       context,
       baseAssetSrc,
