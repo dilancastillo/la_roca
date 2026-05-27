@@ -119,6 +119,7 @@ const flapTrimOverlayByFileName: Record<string, string> = {
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-21-deportivo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-22-estrella.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-23-polo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-24-botones.svg": "M305 140 C365 121 535 121 595 140",
@@ -168,6 +169,7 @@ const completeCollarOnlyFileNames = new Set([
 ]);
 
 const noCollarTrimFileNames = new Set([
+  "blouse-model-21-deportivo.svg",
   "blouse-model-23-polo.svg",
   "blouse-model-25-20-21.svg",
   "blouse-model-27-cremallera.svg",

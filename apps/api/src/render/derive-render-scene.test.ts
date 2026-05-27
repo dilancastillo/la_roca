@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 355,
+          name: "DEPORTIVO",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 356,
           name: "ESTRELLA",
           attributeId: 63,
@@ -635,6 +641,34 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-23-polo.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga DEPORTIVO como modelo sin overlay de cuello", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [355],
+      "92": [5147, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-21-deportivo.svg",
     );
     expect(scene.trimSections).toEqual([
       {
