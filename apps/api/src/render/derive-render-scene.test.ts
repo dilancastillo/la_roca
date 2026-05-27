@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 2942,
+          name: "CUELLO REDONDO",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2944,
           name: "CREMALLERA",
           attributeId: 63,
@@ -483,6 +489,34 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello-alto",
         label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga CUELLO REDONDO y pinta el cuello con la seccion Cuello", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2942],
+      "92": [5147, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-26-cuello-redondo.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
         colorHex: "#f4c7cc",
       },
     ]);
