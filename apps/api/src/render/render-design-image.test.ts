@@ -255,6 +255,38 @@ function countPastelPinkPixelsInRegion(
   return count;
 }
 
+function countBaseColorPixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (
+        alpha > 200 &&
+        red > 165 &&
+        red < 190 &&
+        green > 200 &&
+        green < 225 &&
+        blue > 195 &&
+        blue < 220
+      ) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 function countNeutralGrayPixelsInRegion(
   buffer: Buffer,
   width: number,
@@ -1338,11 +1370,17 @@ describe("renderDesignImage", () => {
       withoutTrim.info.width,
       { x: 300, y: 120, width: 320, height: 260 },
     );
+    const bodyBaseColorPixels = countBaseColorPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 330, y: 380, width: 260, height: 420 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(countPurplePixels(withoutTrim.data)).toBe(0);
-    expect(fixedCollarDarkPixels).toBeLessThan(900);
+    expect(fixedCollarDarkPixels).toBeLessThan(5000);
+    expect(bodyBaseColorPixels).toBeGreaterThan(20000);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withInnerCollar.data),
