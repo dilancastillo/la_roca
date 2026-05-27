@@ -56,6 +56,8 @@ const BLUSA_DEPORTIVO_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-21-deportivo.svg`;
 const BLUSA_ESTRELLA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-22-estrella.svg`;
+const BLUSA_MARIPOSA_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-40-mariposa.svg`;
 const BLUSA_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-27-cremallera.svg`;
 const BLUSA_CUELLO_REDONDO_ASSET =
@@ -237,7 +239,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     345: blouseModelAsset(8), // CUELLO ALTO.
     346: blouseModelAsset(7), // PUNTADAS.
     352: blouseModelAsset(12), // MATRIOSKA.
-    353: blouseModelAsset(13), // MARIPOSA.
+    353: BLUSA_MARIPOSA_ASSET, // MARIPOSA en Blusa.
+    1175: BLUSA_MARIPOSA_ASSET, // MARIPOSA en Uniforme.
     354: BLUSA_2020_ASSET, // 20-20 en Blusa.
     1176: BLUSA_2020_ASSET, // 20-20 en Uniforme.
     355: BLUSA_DEPORTIVO_ASSET, // DEPORTIVO en Blusa.
@@ -286,7 +289,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     puntadas: blouseModelAsset(7),
     "modelo 13": blouseModelAsset(7),
     matrioska: blouseModelAsset(12),
-    mariposa: blouseModelAsset(13),
+    mariposa: BLUSA_MARIPOSA_ASSET,
     "20 20": BLUSA_2020_ASSET,
     "20-20": BLUSA_2020_ASSET,
     "2020": BLUSA_2020_ASSET,

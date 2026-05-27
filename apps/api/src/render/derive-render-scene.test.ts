@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 353,
+          name: "MARIPOSA",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 354,
           name: "20-20",
           attributeId: 63,
@@ -727,6 +733,34 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-21-deportivo.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga MARIPOSA sin bolsillos integrados y sin overlay de cuello", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [353],
+      "92": [5147, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-40-mariposa.svg",
     );
     expect(scene.trimSections).toEqual([
       {

@@ -38,6 +38,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[353]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-40-mariposa.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[1175]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-40-mariposa.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[354]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg",
     );
@@ -177,6 +183,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999979,
+        "Modelo de cuello",
+        "MARIPOSA",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-40-mariposa.svg",
     );
 
     expect(

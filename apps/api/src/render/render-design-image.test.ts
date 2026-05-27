@@ -285,6 +285,30 @@ function countNeutralGrayPixelsInRegion(
   return count;
 }
 
+function countDarkPixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (alpha > 0 && red < 80 && green < 80 && blue < 80) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -1167,6 +1191,72 @@ describe("renderDesignImage", () => {
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(fixedGrayPixels).toBeLessThan(300);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
+  it("renderiza MARIPOSA sin bolsillos, sin vivo de cuello y con cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-40-mariposa.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const lowerPocketInteriorInk = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 335, y: 650, width: 230, height: 260 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(lowerPocketInteriorInk).toBeLessThan(30);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
