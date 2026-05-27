@@ -94,6 +94,10 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
+const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-29-pedagogia.svg": [1],
+};
+
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
   "blouse-model-14.svg": "band",
   "blouse-model-15.svg": "ink",
@@ -1336,6 +1340,22 @@ function drawBackNeckTrim(
   context.restore();
 }
 
+async function drawBackNeckTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  const trimIndexes =
+    backNeckTrimElementIndexesByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!trimIndexes) {
+    return false;
+  }
+
+  await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
+  return true;
+}
+
 async function drawCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string | undefined,
@@ -1551,7 +1571,15 @@ export async function composeDesign(
       "right",
       rightInternalCollarTrimColor,
     );
-    drawBackNeckTrim(context, backNeckTrimColor);
+    const drewAssetBackNeckTrim = await drawBackNeckTrimFromAsset(
+      context,
+      baseAssetSrc,
+      backNeckTrimColor,
+    );
+
+    if (!drewAssetBackNeckTrim) {
+      drawBackNeckTrim(context, backNeckTrimColor);
+    }
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
       await drawLowerPocketOverlay(

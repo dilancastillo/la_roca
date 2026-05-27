@@ -100,6 +100,10 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
+const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-29-pedagogia.svg": [1],
+};
+
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
   "blouse-model-14.svg": "band",
   "blouse-model-15.svg": "ink",
@@ -860,6 +864,28 @@ async function createInternalCollarTrimOverlayBuffer(
   );
 }
 
+async function createBackNeckTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const trimIndexes =
+    backNeckTrimElementIndexesByFileName[getAssetFileName(assetPath)];
+
+  if (!trimIndexes) {
+    return undefined;
+  }
+
+  return await createCollarTrimOverlayBuffer(
+    assetPath,
+    trimColor,
+    trimIndexes,
+  );
+}
+
 function getCollarTrimColorForAsset(
   scene: AutomationRenderScene,
   assetPath: string,
@@ -1343,7 +1369,23 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (backNeckTrimColor) {
-      layers.push(getBackNeckTrimSvg(backNeckTrimColor));
+      const backNeckTrimOverlayBuffer =
+        await createBackNeckTrimOverlayBuffer(
+          baseAssetPath,
+          backNeckTrimColor,
+        );
+
+      if (backNeckTrimOverlayBuffer) {
+        const backNeckTrimOutlineBuffer = await createPngInkOutlineBuffer(
+          backNeckTrimOverlayBuffer,
+        );
+        layers.push(
+          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        );
+      } else {
+        layers.push(getBackNeckTrimSvg(backNeckTrimColor));
+      }
     }
 
     if (scene.lowerPocketAssetPath && scene.lowerPocketLayout !== "none") {

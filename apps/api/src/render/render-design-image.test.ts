@@ -180,6 +180,48 @@ function countPinkPixelsInRegion(
   return count;
 }
 
+function getPinkPixelBounds(buffer: Buffer, width: number, height: number) {
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (
+      alpha > 0 &&
+      red > 220 &&
+      green > 150 &&
+      green < 230 &&
+      blue > 160 &&
+      blue < 235
+    ) {
+      const pixelIndex = offset / 4;
+      const x = pixelIndex % width;
+      const y = Math.floor(pixelIndex / width);
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (maxX < 0 || maxY < 0) {
+    return undefined;
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+  };
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -565,6 +607,11 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const backNeckPinkBounds = getPinkPixelBounds(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      withBackNeck.info.height,
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -573,6 +620,7 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
+    expect(backNeckPinkBounds?.height).toBeGreaterThan(16);
   }, 20000);
 
   it("renderiza ORIENTAL sin vivos de cuello y colorea RIBETE VERTICAL solo por vivo", async () => {
