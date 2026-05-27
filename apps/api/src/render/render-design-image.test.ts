@@ -539,6 +539,112 @@ describe("renderDesignImage", () => {
     expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
   }, 20000);
 
+  it("renderiza 20-20 con vivos internos independientes y cogotera recta", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLeftInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2910,
+            key: "cuello-v-lineal-interno-izquierdo",
+            label: "Cuello V lineal interno izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 417,
+            key: "cuello-v-lineal-interno-derecho",
+            label: "Cuello V lineal interno derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftPinkPixels = countPinkPixelsByHalf(
+      withLeftInternal.data,
+      withLeftInternal.info.width,
+    );
+    const rightPinkPixels = countPinkPixelsByHalf(
+      withRightInternal.data,
+      withRightInternal.info.width,
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftInternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightInternal.data),
+    ).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
+    expect(rightPinkPixels.right).toBeGreaterThan(100);
+    expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza EL HATO sin bolsillos integrados y aplica BOLSILLO PRESILLAS por separado", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";

@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 354,
+          name: "20-20",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 355,
           name: "DEPORTIVO",
           attributeId: 63,
@@ -288,8 +294,20 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 417,
+          name: "Cuello V lineal interno derecho",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 2907,
           name: "Cuello V lineal externo izquierdo",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 2910,
+          name: "Cuello V lineal interno izquierdo",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -429,6 +447,46 @@ describe("deriveAutomationRenderScene", () => {
         valueId: 5156,
         key: "cuello-v-lineal-interno-derecho",
         label: "Cuello V lineal interno derecho",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga 20-20 y pasa los vivos internos independientes con cogotera recta", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [354],
+      "92": [417, 2910, 5146, 5147],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 417,
+        key: "cuello-v-lineal-interno-derecho",
+        label: "Cuello V lineal interno derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2910,
+        key: "cuello-v-lineal-interno-izquierdo",
+        label: "Cuello V lineal interno izquierdo",
         colorHex: "#f4c7cc",
       },
     ]);
