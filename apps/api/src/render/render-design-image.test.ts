@@ -117,6 +117,37 @@ function countPinkPixelsByHalf(buffer: Buffer, width: number) {
   return counts;
 }
 
+function countPinkPixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (
+        alpha > 0 &&
+        red > 220 &&
+        green > 150 &&
+        green < 230 &&
+        blue > 160 &&
+        blue < 235
+      ) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -500,6 +531,11 @@ describe("renderDesignImage", () => {
       withHighCollar.data,
       withHighCollar.info.width,
     );
+    const highCollarInteriorPinkPixels = countPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 425, y: 285, width: 18, height: 40 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -512,6 +548,7 @@ describe("renderDesignImage", () => {
     expect(
       highCollarPinkPixels.left + highCollarPinkPixels.right,
     ).toBeGreaterThan(500);
+    expect(highCollarInteriorPinkPixels).toBeGreaterThan(300);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);

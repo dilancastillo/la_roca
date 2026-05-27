@@ -113,6 +113,8 @@ const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
+  "blouse-model-37-cirugia.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-37-cirugia-collar.svg",
   "blouse-model-11-fisiopracticas.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-11-fisiopracticas-collar.svg",
   "blouse-model-13-p-paipilla.svg":
