@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 2940,
+          name: "20-21",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2942,
           name: "CUELLO REDONDO",
           attributeId: 63,
@@ -242,6 +248,18 @@ const session: ConfiguratorSession = {
         {
           id: 5147,
           name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 416,
+          name: "Cuello V lineal externo derecho",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 2907,
+          name: "Cuello V lineal externo izquierdo",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -517,6 +535,39 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga 20-21 y pasa los vivos externos independientes", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2940],
+      "92": [416, 2907, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 416,
+        key: "cuello-v-lineal-externo-derecho",
+        label: "Cuello V lineal externo derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2907,
+        key: "cuello-v-lineal-externo-izquierdo",
+        label: "Cuello V lineal externo izquierdo",
         colorHex: "#f4c7cc",
       },
     ]);

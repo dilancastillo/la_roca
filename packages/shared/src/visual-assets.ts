@@ -48,6 +48,7 @@ const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
+const BLUSA_2021_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-25-20-21.svg`;
 const BLUSA_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-27-cremallera.svg`;
 const BLUSA_CUELLO_REDONDO_ASSET =
@@ -231,6 +232,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    2940: BLUSA_2021_ASSET, // 20-21 en Blusa.
+    2941: BLUSA_2021_ASSET, // 20-21 en Uniforme.
     2942: BLUSA_CUELLO_REDONDO_ASSET, // CUELLO REDONDO en Blusa.
     2943: BLUSA_CUELLO_REDONDO_ASSET, // CUELLO REDONDO en Uniforme.
     2944: BLUSA_CREMALLERA_ASSET, // CREMALLERA en Blusa.
@@ -271,6 +274,9 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20 20": blouseModelAsset(20),
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
+    "20 21": BLUSA_2021_ASSET,
+    "20-21": BLUSA_2021_ASSET,
+    "2021": BLUSA_2021_ASSET,
     "cuello redondo": BLUSA_CUELLO_REDONDO_ASSET,
     "cuello alto con cremallera": BLUSA_CUELLO_ALTO_CREMALLERA_ASSET,
     cremallera: BLUSA_CREMALLERA_ASSET,

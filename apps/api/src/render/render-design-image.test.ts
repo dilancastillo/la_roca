@@ -689,6 +689,101 @@ describe("renderDesignImage", () => {
     expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza 20-21 con vivos externos independientes y cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withLeftExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2907,
+            key: "cuello-v-lineal-externo-izquierdo",
+            label: "Cuello V lineal externo izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 416,
+            key: "cuello-v-lineal-externo-derecho",
+            label: "Cuello V lineal externo derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const basePinkPixels = countPastelPinkPixelsByHalf(
+      withoutTrim.data,
+      withoutTrim.info.width,
+    );
+    const leftPinkPixels = countPastelPinkPixelsByHalf(
+      withLeftExternal.data,
+      withLeftExternal.info.width,
+    );
+    const rightPinkPixels = countPastelPinkPixelsByHalf(
+      withRightExternal.data,
+      withRightExternal.info.width,
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const necklinePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 165, width: 300, height: 130 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(basePinkPixels.left + basePinkPixels.right).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftExternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightExternal.data),
+    ).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
+    expect(rightPinkPixels.right).toBeGreaterThan(100);
+    expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(necklinePinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza CREMALLERA sin vivos de cuello y con cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-27-cremallera.svg";

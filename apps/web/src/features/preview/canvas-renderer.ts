@@ -94,9 +94,21 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
+const externalCollarTrimOverlayByFileName: Record<
+  string,
+  { left: string; right: string }
+> = {
+  "blouse-model-25-20-21.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-25-20-21-external-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-25-20-21-external-right.svg",
+  },
+};
+
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-25-20-21.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-26-cuello-redondo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-27-cremallera.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-29-pedagogia.svg": "M305 140 C365 121 535 121 595 140",
@@ -138,6 +150,7 @@ const completeCollarOnlyFileNames = new Set([
 ]);
 
 const noCollarTrimFileNames = new Set([
+  "blouse-model-25-20-21.svg",
   "blouse-model-27-cremallera.svg",
   "blouse-model-29-pedagogia.svg",
   "blouse-model-33-oriental.svg",
@@ -230,6 +243,28 @@ function isRightInternalCollarSection(
   return (
     key.includes("cuello v lineal interno derecho") ||
     key.includes("cuello-v-lineal-interno-derecho")
+  );
+}
+
+function isLeftExternalCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v lineal externo izquierdo") ||
+    key.includes("cuello-v-lineal-externo-izquierdo")
+  );
+}
+
+function isRightExternalCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v lineal externo derecho") ||
+    key.includes("cuello-v-lineal-externo-derecho")
   );
 }
 
@@ -1423,6 +1458,30 @@ async function drawInternalCollarTrimFromAsset(
   await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
 }
 
+async function drawExternalCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  side: "left" | "right",
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    externalCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)]?.[
+      side
+    ];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 function getCollarTrimColorForAsset(
   scene: PreviewScene,
   sourceSrc: string,
@@ -1555,6 +1614,14 @@ export async function composeDesign(
       scene,
       isRightInternalCollarSection,
     );
+    const leftExternalCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLeftExternalCollarSection,
+    );
+    const rightExternalCollarTrimColor = getTrimSectionColor(
+      scene,
+      isRightExternalCollarSection,
+    );
     const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
@@ -1583,6 +1650,18 @@ export async function composeDesign(
       baseAssetSrc,
       "right",
       rightInternalCollarTrimColor,
+    );
+    await drawExternalCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "left",
+      leftExternalCollarTrimColor,
+    );
+    await drawExternalCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "right",
+      rightExternalCollarTrimColor,
     );
     const drewAssetBackNeckTrim = await drawBackNeckTrimFromAsset(
       context,
