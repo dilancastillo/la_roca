@@ -199,6 +199,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 5154,
+          name: "Cuello completo",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 5150,
           name: "Bolsillos inferiores parte superior",
           attributeId: 92,
@@ -417,6 +423,24 @@ describe("deriveConfiguratorUi", () => {
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("pinta cuello completo con el color de vivo seleccionado", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "91": [5152],
+      "92": [5154],
+    });
+
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5154,
+        role: "upperNeck",
+        key: "cuello-completo",
+        label: "Cuello completo",
         colorHex: "#f4c7cc",
       },
     ]);

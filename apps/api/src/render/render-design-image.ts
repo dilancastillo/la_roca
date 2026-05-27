@@ -99,6 +99,8 @@ const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
+  "blouse-model-13-p-paipilla.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-13-p-paipilla-collar.svg",
 };
 
 function normalize(value: string) {
@@ -155,6 +157,14 @@ function isWholeCollarSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
   return normalize(section.label || section.key) === "cuello";
+}
+
+function isCompleteCollarSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello completo") || key.includes("cuello-completo");
 }
 
 function isLowerPocketTrimSection(
@@ -755,6 +765,27 @@ async function createCollarTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+function getCollarTrimColorForAsset(
+  scene: AutomationRenderScene,
+  assetPath: string,
+) {
+  const completeCollarTrimColor = getTrimSectionColor(
+    scene,
+    isCompleteCollarSection,
+  );
+  const isPaipillaNeck =
+    getAssetFileName(assetPath) === "blouse-model-13-p-paipilla.svg";
+
+  if (isPaipillaNeck) {
+    return completeCollarTrimColor;
+  }
+
+  return (
+    completeCollarTrimColor ??
+    getTrimSectionColor(scene, isWholeCollarSection)
+  );
+}
+
 async function pngBufferToRaw(buffer: Buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -1116,7 +1147,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   }
 
   if (baseAssetPath) {
-    const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
+    const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetPath);
     const backNeckTrimColor = getTrimSectionColor(scene, isBackNeckTrimSection);
     const lowerPocketUpperTrimColor = getTrimSectionColor(
       scene,

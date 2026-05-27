@@ -35,6 +35,23 @@ function countDifferentPixels(left: Buffer, right: Buffer) {
   return count;
 }
 
+function countNeonGreenPixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (alpha > 0 && red < 80 && green > 200 && blue < 80) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 describe("renderDesignImage", () => {
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
@@ -90,13 +107,14 @@ describe("renderDesignImage", () => {
 
     expect(withoutBackNeck.info.width).toBe(900);
     expect(withoutBackNeck.info.height).toBe(1200);
+    expect(countNeonGreenPixels(withoutBackNeck.data)).toBe(0);
     expect(
       countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
 
   it("renderiza P-PAIPILLA con color base y cogotera", async () => {
-    const withoutBackNeck = await readRawPng(
+    const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
         neckAssetPath:
@@ -119,11 +137,48 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withCompleteCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello-completo",
+            label: "Cuello completo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
 
-    expect(withoutBackNeck.info.width).toBe(900);
-    expect(withoutBackNeck.info.height).toBe(1200);
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countNeonGreenPixels(withoutTrim.data)).toBe(0);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
-      countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
+      countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
 });

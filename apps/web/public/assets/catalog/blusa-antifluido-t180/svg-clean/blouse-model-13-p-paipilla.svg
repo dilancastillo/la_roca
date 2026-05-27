@@ -16,7 +16,7 @@
       }
 
       .st2 {
-        fill: #3f0;
+        fill: none;
       }
     </style>
     <clipPath id="clippath">

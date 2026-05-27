@@ -93,6 +93,8 @@ const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
+  "blouse-model-13-p-paipilla.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-13-p-paipilla-collar.svg",
 };
 
 export function getOverlayRegionPreset(
@@ -144,6 +146,12 @@ function getTrimSectionText(section: PreviewScene["trimSections"][number]) {
 
 function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
   return normalize(section.label || section.key) === "cuello";
+}
+
+function isCompleteCollarSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello completo") || key.includes("cuello-completo");
 }
 
 function isLowerPocketTrimSection(
@@ -1290,6 +1298,27 @@ async function drawCollarTrimFromAsset(
   drawCanvasInRegions(context, inkCanvas, collarRegions);
 }
 
+function getCollarTrimColorForAsset(
+  scene: PreviewScene,
+  sourceSrc: string,
+) {
+  const completeCollarTrimColor = getTrimSectionColor(
+    scene,
+    isCompleteCollarSection,
+  );
+  const isPaipillaNeck =
+    getFileNameFromSource(sourceSrc) === "blouse-model-13-p-paipilla.svg";
+
+  if (isPaipillaNeck) {
+    return completeCollarTrimColor;
+  }
+
+  return (
+    completeCollarTrimColor ??
+    getTrimSectionColor(scene, isWholeCollarSection)
+  );
+}
+
 export async function createTintedBaseCanvas(src: string, fillColor: string) {
   const processed = await getProcessedImage(src);
   const mask = await getInteriorMask(src);
@@ -1383,7 +1412,7 @@ export async function composeDesign(
   }
 
   if (baseAssetSrc) {
-    const collarTrimColor = getTrimSectionColor(scene, isWholeCollarSection);
+    const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
     const backNeckTrimColor = getTrimSectionColor(
       scene,
       isBackNeckTrimSection,
