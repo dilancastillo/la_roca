@@ -55,6 +55,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2952,
+          name: "CUELLO ALTO CON CREMALLERA",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -112,6 +118,12 @@ const session: ConfiguratorSession = {
         {
           id: 391,
           name: "COSTURA OVALADO",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
+          id: 390,
+          name: "ANDES HOMBRE",
           attributeId: 70,
           attributeName: "Otro nombre para bolsillo inferior",
         },
@@ -446,6 +458,41 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketLayout).toBe("double");
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga CUELLO ALTO CON CREMALLERA y aplica ANDES HOMBRE como bolsillo inferior independiente", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2952],
+      "69": [2561],
+      "70": [390],
+      "91": [5152],
+      "92": [421, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+    expect(ui.previewScene.lowerPocketLayout).toBe("double");
+    expect(ui.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg",
     );
     expect(ui.previewScene.trimSections).toEqual([
       {

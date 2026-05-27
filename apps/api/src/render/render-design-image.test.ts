@@ -559,4 +559,72 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
+
+  it("renderiza CUELLO ALTO CON CREMALLERA con ANDES HOMBRE, Cuello alto y cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg";
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withAndesPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withHighCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 421,
+            role: "upperNeck",
+            key: "cuello-alto",
+            label: "Cuello alto",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const highCollarRingPinkPixels = countPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 380, y: 125, width: 170, height: 60 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withAndesPocket.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withHighCollar.data),
+    ).toBeGreaterThan(100);
+    expect(highCollarRingPinkPixels).toBeGreaterThan(2000);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
 });

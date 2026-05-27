@@ -49,6 +49,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": [67, 68, 69],
   "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
   "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
 };
@@ -107,6 +108,8 @@ const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-08.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
+  "blouse-model-34-cuello-alto-cremallera.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-34-cuello-alto-cremallera-collar.svg",
   "blouse-model-37-cirugia.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-37-cirugia-collar.svg",
   "blouse-model-11-fisiopracticas.svg":

@@ -38,6 +38,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2952]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[2953]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[2954]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg",
     );
@@ -55,6 +61,12 @@ describe("getProductAssetCatalog", () => {
     );
     expect(catalog?.neckModelsByValueId?.[2962]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[390]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[1212]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg",
     );
     expect(catalog?.lowerPocketModelsByValueId?.[391]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
@@ -89,6 +101,18 @@ describe("getProductAssetCatalog", () => {
   });
 
   it("resuelve assets por nombre cuando Odoo cambia los IDs de PTAV", () => {
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999991,
+        "Modelo de cuello",
+        "CUELLO ALTO CON CREMALLERA",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera.svg",
+    );
+
     expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",
@@ -147,6 +171,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999990,
+        "Modelo bolsillo inferior",
+        "ANDES HOMBRE",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg",
     );
 
     expect(
