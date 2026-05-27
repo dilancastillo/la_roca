@@ -48,6 +48,9 @@ const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
+const BLUSA_ORIENTAL_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-33-oriental.svg`;
+const BLUSA_ORIENTAL_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-33-oriental-lower-pocket.svg`;
 const BLUSA_CIRUGIA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-37-cirugia.svg`;
 const BLUSA_CIRUGIA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-37-cirugia-lower-pocket.svg`;
@@ -222,6 +225,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    2950: BLUSA_ORIENTAL_ASSET, // ORIENTAL en Blusa.
+    2951: BLUSA_ORIENTAL_ASSET, // ORIENTAL en Uniforme.
     2952: BLUSA_CUELLO_ALTO_CREMALLERA_ASSET, // CUELLO ALTO CON CREMALLERA en Blusa.
     2953: BLUSA_CUELLO_ALTO_CREMALLERA_ASSET, // CUELLO ALTO CON CREMALLERA en Uniforme.
     2954: BLUSA_CIRUGIA_ASSET, // CIRUGIA en Blusa.
@@ -255,6 +260,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
     "cuello alto con cremallera": BLUSA_CUELLO_ALTO_CREMALLERA_ASSET,
+    oriental: BLUSA_ORIENTAL_ASSET,
     cirugia: BLUSA_CIRUGIA_ASSET,
     "el hato": BLUSA_EL_HATO_ASSET,
     fisiopracticas: BLUSA_FISIOPRACTICAS_ASSET,
@@ -279,10 +285,11 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     384: blouseModelAsset(19), // COSTURA MARIA.
     385: blouseModelAsset(20), // COSTURA TRIANGULO.
     386: blouseModelAsset(14), // BOLSILLO INTERNO RECTANGULAR.
-    388: blouseModelAsset(18), // RIBETE VERTICAL.
+    388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
     389: blouseModelAsset(18), // RIBETE HORIZONTAL.
     390: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Blusa.
     391: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Blusa.
+    1210: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Uniforme.
     1212: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Uniforme.
     1213: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Uniforme.
     2964: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Uniforme.
@@ -296,7 +303,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "costura maria": blouseModelAsset(19),
     "costura triangulo": blouseModelAsset(20),
     "bolsillo interno rectangular": blouseModelAsset(14),
-    "ribete vertical": blouseModelAsset(18),
+    "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
     "ribete horizontal": blouseModelAsset(18),
     "andes hombre": BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET,
     "costura ovalado": BLUSA_CIRUGIA_LOWER_POCKET_ASSET,

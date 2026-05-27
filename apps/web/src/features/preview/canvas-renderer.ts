@@ -49,6 +49,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-33-oriental-lower-pocket.svg": [6, 7],
   "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": [67, 68, 69],
   "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
   "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
@@ -58,6 +59,7 @@ const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-14.svg": [5, 6],
   "blouse-model-15.svg": [5, 7],
   "blouse-model-19.svg": [4, 5, 6, 7],
+  "blouse-model-33-oriental-lower-pocket.svg": [8, 9],
 };
 
 const lowerPocketTrimOverlayByFileName: Record<string, string> = {
@@ -97,6 +99,7 @@ const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
   "blouse-model-15.svg": "ink",
   "blouse-model-19.svg": "ink",
   "blouse-model-20.svg": "ink",
+  "blouse-model-33-oriental-lower-pocket.svg": "ink",
 };
 
 const POCKET_TRIM_BAND_HEIGHT = 18;
@@ -124,7 +127,12 @@ const completeCollarOnlyFileNames = new Set([
   "blouse-model-13-p-paipilla.svg",
 ]);
 
-const noBackNeckTrimFileNames = new Set(["blouse-model-39-el-hato.svg"]);
+const noCollarTrimFileNames = new Set(["blouse-model-33-oriental.svg"]);
+
+const noBackNeckTrimFileNames = new Set([
+  "blouse-model-33-oriental.svg",
+  "blouse-model-39-el-hato.svg",
+]);
 
 export function getOverlayRegionPreset(
   key: keyof typeof overlayRegionPresets,
@@ -1383,13 +1391,17 @@ function getCollarTrimColorForAsset(
   scene: PreviewScene,
   sourceSrc: string,
 ) {
+  const fileName = getFileNameFromSource(sourceSrc);
+
+  if (noCollarTrimFileNames.has(fileName)) {
+    return undefined;
+  }
+
   const completeCollarTrimColor = getTrimSectionColor(
     scene,
     isCompleteCollarSection,
   );
-  const isCompleteCollarOnlyNeck = completeCollarOnlyFileNames.has(
-    getFileNameFromSource(sourceSrc),
-  );
+  const isCompleteCollarOnlyNeck = completeCollarOnlyFileNames.has(fileName);
 
   if (isCompleteCollarOnlyNeck) {
     return completeCollarTrimColor;

@@ -50,6 +50,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 2950,
+          name: "ORIENTAL",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 2954,
           name: "CIRUGÍA",
           attributeId: 63,
@@ -112,6 +118,12 @@ const session: ConfiguratorSession = {
         {
           id: 2965,
           name: "BOLSILLO PRESILLAS",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
+          id: 388,
+          name: "RIBETE VERTICAL",
           attributeId: 70,
           attributeName: "Otro nombre para bolsillo inferior",
         },
@@ -440,6 +452,48 @@ describe("deriveConfiguratorUi", () => {
     expect(withPresillasPocket.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("carga ORIENTAL y aplica RIBETE VERTICAL como bolsillo inferior independiente", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2950],
+      "69": [2561],
+      "70": [388],
+      "91": [5152],
+      "92": [421, 5146, 5150],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-33-oriental.svg",
+    );
+    expect(ui.previewScene.lowerPocketLayout).toBe("double");
+    expect(ui.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-33-oriental-lower-pocket.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("carga CIRUGÍA y aplica COSTURA OVALADO como bolsillo inferior independiente", () => {
