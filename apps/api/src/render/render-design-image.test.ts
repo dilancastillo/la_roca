@@ -1333,10 +1333,16 @@ describe("renderDesignImage", () => {
       withBackNeck.info.width,
       { x: 300, y: 165, width: 300, height: 130 },
     );
+    const fixedCollarDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 300, y: 120, width: 320, height: 260 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(countPurplePixels(withoutTrim.data)).toBe(0);
+    expect(fixedCollarDarkPixels).toBeLessThan(900);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withInnerCollar.data),
