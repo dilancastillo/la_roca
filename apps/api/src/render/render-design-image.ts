@@ -103,8 +103,8 @@ const internalCollarTrimElementIndexesByFileName: Record<
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
-  "blouse-model-27-cremallera.svg": "M305 132 C365 113 535 113 595 132",
-  "blouse-model-29-pedagogia.svg": "M305 132 C365 113 535 113 595 132",
+  "blouse-model-27-cremallera.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-29-pedagogia.svg": "M305 140 C365 121 535 121 595 140",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
