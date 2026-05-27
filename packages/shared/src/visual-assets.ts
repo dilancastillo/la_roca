@@ -48,6 +48,9 @@ const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
+const BLUSA_CIRUGIA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-37-cirugia.svg`;
+const BLUSA_CIRUGIA_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-37-cirugia-lower-pocket.svg`;
 const BLUSA_EL_HATO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato.svg`;
 const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
@@ -215,6 +218,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     352: blouseModelAsset(12), // MATRIOSKA.
     353: blouseModelAsset(13), // MARIPOSA.
     354: blouseModelAsset(20), // 20-20.
+    2954: BLUSA_CIRUGIA_ASSET, // CIRUGIA en Blusa.
+    2955: BLUSA_CIRUGIA_ASSET, // CIRUGIA en Uniforme.
     2956: BLUSA_EL_HATO_ASSET, // EL HATO.
     2958: BLUSA_FISIOPRACTICAS_ASSET, // FISIOPRACTICAS.
     2960: BLUSA_P_PAIPILLA_ASSET, // P-PAIPILLA.
@@ -243,6 +248,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "20 20": blouseModelAsset(20),
     "20-20": blouseModelAsset(20),
     "2020": blouseModelAsset(20),
+    cirugia: BLUSA_CIRUGIA_ASSET,
     "el hato": BLUSA_EL_HATO_ASSET,
     fisiopracticas: BLUSA_FISIOPRACTICAS_ASSET,
     "fisio practicas": BLUSA_FISIOPRACTICAS_ASSET,
@@ -268,7 +274,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     386: blouseModelAsset(14), // BOLSILLO INTERNO RECTANGULAR.
     388: blouseModelAsset(18), // RIBETE VERTICAL.
     389: blouseModelAsset(18), // RIBETE HORIZONTAL.
-    391: blouseModelAsset(16), // COSTURA OVALADO.
+    391: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Blusa.
+    1213: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Uniforme.
     2964: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Uniforme.
     2965: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Blusa.
   },
@@ -282,7 +289,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "bolsillo interno rectangular": blouseModelAsset(14),
     "ribete vertical": blouseModelAsset(18),
     "ribete horizontal": blouseModelAsset(18),
-    "costura ovalado": blouseModelAsset(16),
+    "costura ovalado": BLUSA_CIRUGIA_LOWER_POCKET_ASSET,
     "bolsillo presillas": BLUSA_EL_HATO_LOWER_POCKET_ASSET,
   },
   chestPocketModelsByValueId: {

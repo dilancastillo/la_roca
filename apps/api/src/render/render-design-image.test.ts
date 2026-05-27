@@ -447,4 +447,73 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
     ).toBeGreaterThan(100);
   }, 20000);
+
+  it("renderiza CIRUGÍA con COSTURA OVALADO, Cuello alto y cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg";
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withOvalPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withHighCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 421,
+            role: "upperNeck",
+            key: "cuello-alto",
+            label: "Cuello alto",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const highCollarPinkPixels = countPinkPixelsByHalf(
+      withHighCollar.data,
+      withHighCollar.info.width,
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withOvalPocket.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withHighCollar.data),
+    ).toBeGreaterThan(100);
+    expect(
+      highCollarPinkPixels.left + highCollarPinkPixels.right,
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
 });

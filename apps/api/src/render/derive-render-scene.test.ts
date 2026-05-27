@@ -42,6 +42,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Modelo de cuello",
         },
+        {
+          id: 2954,
+          name: "CIRUGÍA",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
       ],
     },
     {
@@ -97,6 +103,12 @@ const session: ConfiguratorSession = {
         {
           id: 2965,
           name: "BOLSILLO PRESILLAS",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
+          id: 391,
+          name: "COSTURA OVALADO",
           attributeId: 70,
           attributeName: "Modelo bolsillo inferior",
         },
@@ -188,6 +200,12 @@ const session: ConfiguratorSession = {
         {
           id: 5147,
           name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 421,
+          name: "Cuello alto",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -364,6 +382,39 @@ describe("deriveAutomationRenderScene", () => {
     expect(withPresillasPocket.lowerPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("carga CIRUGÍA y aplica COSTURA OVALADO como bolsillo inferior independiente", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2954],
+      "70": [391],
+      "92": [421, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg",
+    );
+    expect(scene.lowerPocketLayout).toBe("double");
+    expect(scene.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("detecta la parte baja del vivo del bolsillo inferior aunque no tenga rol de catalogo", () => {

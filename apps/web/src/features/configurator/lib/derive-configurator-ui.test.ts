@@ -49,6 +49,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2954,
+          name: "CIRUGÍA",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -100,6 +106,12 @@ const session: ConfiguratorSession = {
         {
           id: 2965,
           name: "BOLSILLO PRESILLAS",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
+          id: 391,
+          name: "COSTURA OVALADO",
           attributeId: 70,
           attributeName: "Otro nombre para bolsillo inferior",
         },
@@ -207,6 +219,12 @@ const session: ConfiguratorSession = {
         {
           id: 5147,
           name: "Cuello",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 421,
+          name: "Cuello alto",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -410,6 +428,41 @@ describe("deriveConfiguratorUi", () => {
     expect(withPresillasPocket.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("carga CIRUGÍA y aplica COSTURA OVALADO como bolsillo inferior independiente", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2954],
+      "69": [2561],
+      "70": [391],
+      "91": [5152],
+      "92": [421, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg",
+    );
+    expect(ui.previewScene.lowerPocketLayout).toBe("double");
+    expect(ui.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("oculta bolsillos inferiores y normaliza modelo a Ninguno cuando el tipo es Sin bolsillos", () => {

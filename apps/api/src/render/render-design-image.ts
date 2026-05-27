@@ -55,6 +55,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
   "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
 };
 
@@ -82,6 +83,7 @@ const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
+  "blouse-model-37-cirugia.svg": [3, 4, 5, 6, 8, 9, 10],
   "blouse-model-39-el-hato.svg": [11, 12, 13, 14, 15, 19, 20, 21],
 };
 
@@ -178,7 +180,13 @@ function getTrimSectionText(
 function isWholeCollarSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  return normalize(section.label || section.key) === "cuello";
+  const key = getTrimSectionText(section);
+
+  return (
+    normalize(section.label || section.key) === "cuello" ||
+    key.includes("cuello alto") ||
+    key.includes("cuello-alto")
+  );
 }
 
 function isCompleteCollarSection(
