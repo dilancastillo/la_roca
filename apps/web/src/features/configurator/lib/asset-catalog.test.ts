@@ -38,6 +38,9 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2956]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[2958]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-11-fisiopracticas.svg",
     );
@@ -73,6 +76,18 @@ describe("getProductAssetCatalog", () => {
         "blusa-antifluido-t180",
         145,
         999999,
+        "Modelo de cuello",
+        "EL HATO",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999995,
         "Modelo de cuello",
         "FISIOPRÁCTICAS",
       ),

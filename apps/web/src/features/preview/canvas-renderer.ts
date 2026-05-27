@@ -75,6 +75,7 @@ const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
+  "blouse-model-39-el-hato.svg": [11, 12, 13, 14, 15, 19, 20, 21],
 };
 
 const internalCollarTrimElementIndexesByFileName: Record<
@@ -110,9 +111,12 @@ const collarTrimOverlayByFileName: Record<string, string> = {
 };
 
 const completeCollarOnlyFileNames = new Set([
+  "blouse-model-39-el-hato.svg",
   "blouse-model-11-fisiopracticas.svg",
   "blouse-model-13-p-paipilla.svg",
 ]);
+
+const noBackNeckTrimFileNames = new Set(["blouse-model-39-el-hato.svg"]);
 
 export function getOverlayRegionPreset(
   key: keyof typeof overlayRegionPresets,
@@ -1383,6 +1387,10 @@ function getCollarTrimColorForAsset(
   );
 }
 
+function allowsBackNeckTrim(sourceSrc: string) {
+  return !noBackNeckTrimFileNames.has(getFileNameFromSource(sourceSrc));
+}
+
 export async function createTintedBaseCanvas(src: string, fillColor: string) {
   const processed = await getProcessedImage(src);
   const mask = await getInteriorMask(src);
@@ -1485,10 +1493,9 @@ export async function composeDesign(
       scene,
       isRightInternalCollarSection,
     );
-    const backNeckTrimColor = getTrimSectionColor(
-      scene,
-      isBackNeckTrimSection,
-    );
+    const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
+      ? getTrimSectionColor(scene, isBackNeckTrimSection)
+      : undefined;
     const lowerPocketUpperTrimColor = getTrimSectionColor(
       scene,
       isLowerPocketUpperTrimSection,

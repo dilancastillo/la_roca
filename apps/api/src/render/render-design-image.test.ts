@@ -69,6 +69,23 @@ function countOrangePixels(buffer: Buffer) {
   return count;
 }
 
+function countPurplePixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (alpha > 0 && red > 100 && red < 180 && green < 110 && blue > 110) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function countPinkPixelsByHalf(buffer: Buffer, width: number) {
   const counts = { left: 0, right: 0 };
 
@@ -352,5 +369,70 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
     expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
+  }, 20000);
+
+  it("renderiza EL HATO sin bolsillos morados, con cuello completo y sin cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withCompleteCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello-completo",
+            label: "Cuello completo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countPurplePixels(withoutTrim.data)).toBe(0);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(countDifferentPixels(withoutTrim.data, withBackNeck.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
+    ).toBeGreaterThan(100);
   }, 20000);
 });

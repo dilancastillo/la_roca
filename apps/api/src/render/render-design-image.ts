@@ -81,6 +81,7 @@ const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
+  "blouse-model-39-el-hato.svg": [11, 12, 13, 14, 15, 19, 20, 21],
 };
 
 const internalCollarTrimElementIndexesByFileName: Record<
@@ -116,9 +117,12 @@ const collarTrimOverlayByFileName: Record<string, string> = {
 };
 
 const completeCollarOnlyFileNames = new Set([
+  "blouse-model-39-el-hato.svg",
   "blouse-model-11-fisiopracticas.svg",
   "blouse-model-13-p-paipilla.svg",
 ]);
+
+const noBackNeckTrimFileNames = new Set(["blouse-model-39-el-hato.svg"]);
 
 function normalize(value: string) {
   return value
@@ -853,6 +857,10 @@ function getCollarTrimColorForAsset(
   );
 }
 
+function allowsBackNeckTrim(assetPath: string) {
+  return !noBackNeckTrimFileNames.has(getAssetFileName(assetPath));
+}
+
 async function pngBufferToRaw(buffer: Buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -1223,7 +1231,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isRightInternalCollarSection,
     );
-    const backNeckTrimColor = getTrimSectionColor(scene, isBackNeckTrimSection);
+    const backNeckTrimColor = allowsBackNeckTrim(baseAssetPath)
+      ? getTrimSectionColor(scene, isBackNeckTrimSection)
+      : undefined;
     const lowerPocketUpperTrimColor = getTrimSectionColor(
       scene,
       isLowerPocketUpperTrimSection,
