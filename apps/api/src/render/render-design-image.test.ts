@@ -614,6 +614,16 @@ describe("renderDesignImage", () => {
       withRightInternal.data,
       withRightInternal.info.width,
     );
+    const leftCenterPinkPixels = countPinkPixelsInRegion(
+      withLeftInternal.data,
+      withLeftInternal.info.width,
+      { x: 390, y: 210, width: 70, height: 90 },
+    );
+    const rightCenterPinkPixels = countPinkPixelsInRegion(
+      withRightInternal.data,
+      withRightInternal.info.width,
+      { x: 475, y: 210, width: 70, height: 90 },
+    );
     const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
       withBackNeck.data,
       withBackNeck.info.width,
@@ -638,6 +648,8 @@ describe("renderDesignImage", () => {
     expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
     expect(rightPinkPixels.right).toBeGreaterThan(100);
     expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
+    expect(leftCenterPinkPixels).toBeGreaterThan(500);
+    expect(rightCenterPinkPixels).toBeGreaterThan(500);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);

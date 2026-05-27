@@ -98,6 +98,17 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
+const internalCollarTrimOverlayByFileName: Record<
+  string,
+  { left: string; right: string }
+> = {
+  "blouse-model-50-20-20.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-right.svg",
+  },
+};
+
 const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -1472,6 +1483,22 @@ async function drawInternalCollarTrimFromAsset(
   side: "left" | "right",
   trimColor: string | undefined,
 ) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    internalCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)]?.[
+      side
+    ];
+
+  if (overlaySrc) {
+    const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+    context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    return;
+  }
+
   const trimIndexes =
     internalCollarTrimElementIndexesByFileName[getFileNameFromSource(sourceSrc)]?.[
       side

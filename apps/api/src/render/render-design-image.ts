@@ -104,6 +104,17 @@ const internalCollarTrimElementIndexesByFileName: Record<
   },
 };
 
+const internalCollarTrimOverlayByFileName: Record<
+  string,
+  { left: string; right: string }
+> = {
+  "blouse-model-50-20-20.svg": {
+    left: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-left.svg",
+    right:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-right.svg",
+  },
+};
+
 const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -916,6 +927,22 @@ async function createInternalCollarTrimOverlayBuffer(
 ) {
   if (!trimColor) {
     return undefined;
+  }
+
+  const overlayPath =
+    internalCollarTrimOverlayByFileName[getAssetFileName(assetPath)]?.[side];
+
+  if (overlayPath) {
+    const [overlayProcessed, placementProcessed] = await Promise.all([
+      loadProcessedImage(overlayPath),
+      loadProcessedImage(assetPath),
+    ]);
+    const overlayBuffer = await createOverlayBufferFromProcessed(
+      overlayProcessed,
+      placementProcessed,
+    );
+
+    return await recolorPngInkBuffer(overlayBuffer, trimColor);
   }
 
   const trimIndexes =
