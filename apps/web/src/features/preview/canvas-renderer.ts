@@ -95,6 +95,7 @@ const internalCollarTrimElementIndexesByFileName: Record<
 };
 
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {
+  "blouse-model-27-cremallera.svg": [2],
   "blouse-model-29-pedagogia.svg": [1],
 };
 
@@ -132,6 +133,7 @@ const completeCollarOnlyFileNames = new Set([
 ]);
 
 const noCollarTrimFileNames = new Set([
+  "blouse-model-27-cremallera.svg",
   "blouse-model-29-pedagogia.svg",
   "blouse-model-33-oriental.svg",
 ]);
