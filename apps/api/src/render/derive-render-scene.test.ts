@@ -36,6 +36,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Modelo de cuello",
         },
+        {
+          id: 2956,
+          name: "EL HATO",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
       ],
     },
     {
@@ -85,6 +91,12 @@ const session: ConfiguratorSession = {
         {
           id: 2578,
           name: "Modelo Lizo",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
+          id: 2965,
+          name: "BOLSILLO PRESILLAS",
           attributeId: 70,
           attributeName: "Modelo bolsillo inferior",
         },
@@ -329,6 +341,29 @@ describe("deriveAutomationRenderScene", () => {
         colorHex: "#f4c7cc",
       },
     ]);
+  });
+
+  it("separa el cuello EL HATO del bolsillo inferior BOLSILLO PRESILLAS", () => {
+    const withOtherPocket = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2956],
+      "70": [2578],
+    });
+    const withPresillasPocket = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2956],
+      "70": [2965],
+    });
+
+    expect(withOtherPocket.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+    expect(withOtherPocket.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
+    );
+    expect(withPresillasPocket.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
   });
 
   it("detecta la parte baja del vivo del bolsillo inferior aunque no tenga rol de catalogo", () => {

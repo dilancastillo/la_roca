@@ -49,6 +49,8 @@ const BLUSA_DETAIL_OVERLAY_BASE =
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_EL_HATO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato.svg`;
+const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;
 const BLUSA_P_PAIPILLA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-13-p-paipilla.svg`;
 
@@ -267,6 +269,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     388: blouseModelAsset(18), // RIBETE VERTICAL.
     389: blouseModelAsset(18), // RIBETE HORIZONTAL.
     391: blouseModelAsset(16), // COSTURA OVALADO.
+    2964: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Uniforme.
+    2965: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Blusa.
   },
   lowerPocketModelsByValueName: {
     rectangular: blouseModelAsset(14),
@@ -279,6 +283,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "ribete vertical": blouseModelAsset(18),
     "ribete horizontal": blouseModelAsset(18),
     "costura ovalado": blouseModelAsset(16),
+    "bolsillo presillas": BLUSA_EL_HATO_LOWER_POCKET_ASSET,
   },
   chestPocketModelsByValueId: {
     376: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,

@@ -50,6 +50,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[2962]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
     );
+    expect(catalog?.lowerPocketModelsByValueId?.[2964]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[2965]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
   });
 
   it("resuelve alias cuando Odoo envia el nombre base del producto", () => {
@@ -128,6 +134,18 @@ describe("getProductAssetCatalog", () => {
         "RECTANGULAR",
       ),
     ).toBe("/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg");
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999994,
+        "Modelo bolsillo inferior",
+        "BOLSILLO PRESILLAS",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
   });
 
   it("resuelve el SVG base de pantalon por la llave normalizada de Odoo", () => {

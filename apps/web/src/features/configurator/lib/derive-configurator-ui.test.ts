@@ -43,6 +43,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2956,
+          name: "EL HATO",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -88,6 +94,12 @@ const session: ConfiguratorSession = {
         {
           id: 5425,
           name: "Ninguno",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
+          id: 2965,
+          name: "BOLSILLO PRESILLAS",
           attributeId: 70,
           attributeName: "Otro nombre para bolsillo inferior",
         },
@@ -372,6 +384,31 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketLayout).toBe("double");
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
+    );
+  });
+
+  it("separa el cuello EL HATO del bolsillo inferior BOLSILLO PRESILLAS", () => {
+    const withOtherPocket = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2956],
+      "69": [2561],
+      "70": [2578],
+    });
+    const withPresillasPocket = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2956],
+      "69": [2561],
+      "70": [2965],
+    });
+
+    expect(withOtherPocket.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+    expect(withOtherPocket.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
+    );
+    expect(withPresillasPocket.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
   });
 

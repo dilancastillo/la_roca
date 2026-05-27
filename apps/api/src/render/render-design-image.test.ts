@@ -371,13 +371,22 @@ describe("renderDesignImage", () => {
     expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
   }, 20000);
 
-  it("renderiza EL HATO sin bolsillos morados, con cuello completo y sin cogotera", async () => {
+  it("renderiza EL HATO sin bolsillos integrados y aplica BOLSILLO PRESILLAS por separado", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg";
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
         neckAssetPath,
+      }),
+    );
+    const withPresillasPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
       }),
     );
     const withGenericCollar = await readRawPng(
@@ -431,6 +440,9 @@ describe("renderDesignImage", () => {
     expect(countPurplePixels(withoutTrim.data)).toBe(0);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(countDifferentPixels(withoutTrim.data, withBackNeck.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withPresillasPocket.data),
+    ).toBeGreaterThan(500);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
     ).toBeGreaterThan(100);

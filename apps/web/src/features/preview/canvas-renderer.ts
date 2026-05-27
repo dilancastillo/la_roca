@@ -49,6 +49,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
 };
 
 const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
