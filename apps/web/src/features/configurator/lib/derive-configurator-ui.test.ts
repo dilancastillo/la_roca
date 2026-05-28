@@ -32,6 +32,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 336,
+          name: "PUNTAS",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 2601,
           name: "Nombre cambiado de cuello alto",
           attributeId: 63,
@@ -598,6 +604,17 @@ describe("deriveConfiguratorUi", () => {
         colorHex: "#f4c7cc",
       },
     ]);
+  });
+
+  it("carga PUNTAS por ID con el modelo nuevo", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [336],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg",
+    );
   });
 
   it("usa miniaturas de Odoo en la barra lateral sin enviarlas al canvas", () => {

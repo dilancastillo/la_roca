@@ -64,6 +64,7 @@ const BLUSA_PESPUNTE_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-45-pespunte.svg`;
 const BLUSA_PRESILLAS_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-15-presillas.svg`;
+const BLUSA_PUNTAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-06-puntas.svg`;
 const BLUSA_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-27-cremallera.svg`;
 const BLUSA_CUELLO_REDONDO_ASSET =
@@ -233,7 +234,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     // IDs historicos de product.template.attribute.value.
     2590: blouseModelAsset(1), // CUELLO V.
     2591: BLUSA_PRESILLAS_ASSET, // PRESILLAS. Antes estaba asociado a PUNTAS.
-    2592: blouseModelAsset(22), // PUNTAS. Nuevo SVG entregado por el usuario.
+    2592: BLUSA_PUNTAS_ASSET, // PUNTAS.
     2593: blouseModelAsset(10), // 2019.
     2594: blouseModelAsset(30), // JDC - CRUZADO.
     2595: blouseModelAsset(42), // JEAN.
@@ -245,7 +246,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     334: blouseModelAsset(1), // CUELLO V.
     335: BLUSA_PRESILLAS_ASSET, // PRESILLAS en Blusa.
     1157: BLUSA_PRESILLAS_ASSET, // PRESILLAS en Uniforme.
-    336: blouseModelAsset(22), // PUNTAS.
+    336: BLUSA_PUNTAS_ASSET, // PUNTAS en Blusa.
+    1158: BLUSA_PUNTAS_ASSET, // PUNTAS en Uniforme.
     337: blouseModelAsset(10), // 20-19.
     338: blouseModelAsset(30), // JDC.
     339: blouseModelAsset(42), // JEAN.
@@ -290,7 +292,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
     presillas: BLUSA_PRESILLAS_ASSET,
-    puntas: blouseModelAsset(22),
+    puntas: BLUSA_PUNTAS_ASSET,
     "20 19": blouseModelAsset(10),
     "20-19": blouseModelAsset(10),
     "2019": blouseModelAsset(10),

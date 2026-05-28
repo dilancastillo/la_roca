@@ -31,6 +31,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 336,
+          name: "PUNTAS",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2601,
           name: "Nombre editable del cuello alto",
           attributeId: 63,
@@ -525,6 +531,17 @@ describe("deriveAutomationRenderScene", () => {
         colorHex: "#f4c7cc",
       },
     ]);
+  });
+
+  it("carga PUNTAS por ID con el modelo nuevo", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [336],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg",
+    );
   });
 
   it("pinta el cuello solo cuando Seccion de vivo tiene Cuello", () => {

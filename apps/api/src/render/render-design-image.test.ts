@@ -2279,4 +2279,67 @@ describe("renderDesignImage", () => {
     expect(lowerLeftButtonDarkPixels).toBeLessThan(30);
     expect(lowerRightButtonDarkPixels).toBeLessThan(30);
   }, 20000);
+
+  it("renderiza PUNTAS solo con color general y cogotera recta", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withCollarSection = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5147,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const bodyBaseColorPixels = countBaseColorPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 410, y: 520, width: 80, height: 120 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countYellowPixels(withoutTrim.data)).toBe(0);
+    expect(bodyBaseColorPixels).toBeGreaterThan(1000);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCollarSection.data),
+    ).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+  }, 20000);
 });

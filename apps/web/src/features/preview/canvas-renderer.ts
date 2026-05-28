@@ -237,6 +237,7 @@ const completeCollarOnlyFileNames = new Set([
 const noCollarTrimFileNames = new Set([
   "blouse-model-21-deportivo.svg",
   "blouse-model-50-20-20.svg",
+  "blouse-model-06-puntas.svg",
   "blouse-model-23-polo.svg",
   "blouse-model-25-20-21.svg",
   "blouse-model-27-cremallera.svg",
