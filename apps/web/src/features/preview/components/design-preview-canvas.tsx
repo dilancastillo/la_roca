@@ -9,6 +9,28 @@ type Props = {
   onBlobReady: (renderKey: string, blob: Blob | null) => void;
 };
 
+function createRenderCanvas(target: HTMLCanvasElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = target.width;
+  canvas.height = target.height;
+
+  return canvas;
+}
+
+function copyRenderedCanvas(
+  target: HTMLCanvasElement,
+  rendered: HTMLCanvasElement,
+) {
+  const context = target.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvas 2D no disponible");
+  }
+
+  context.clearRect(0, 0, target.width, target.height);
+  context.drawImage(rendered, 0, 0);
+}
+
 export function DesignPreviewCanvas({
   scene,
   renderKey,
@@ -42,12 +64,19 @@ export function DesignPreviewCanvas({
       onBlobReady(renderKey, null);
 
       try {
-        const blob = await composeDesign(canvasRef.current, scene);
+        const targetCanvas = canvasRef.current;
+        const renderCanvas = createRenderCanvas(targetCanvas);
+        const blob = await composeDesign(renderCanvas, scene);
 
         if (cancelled) {
           return;
         }
 
+        if (!canvasRef.current) {
+          return;
+        }
+
+        copyRenderedCanvas(canvasRef.current, renderCanvas);
         onBlobReady(renderKey, blob);
         setStatus("ready");
       } catch (error) {
