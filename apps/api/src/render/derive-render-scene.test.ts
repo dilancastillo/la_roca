@@ -206,6 +206,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo bolsillo inferior",
         },
         {
+          id: 384,
+          name: "COSTURA MARÍA",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
           id: 2965,
           name: "BOLSILLO PRESILLAS",
           attributeId: 70,
@@ -623,6 +629,28 @@ describe("deriveAutomationRenderScene", () => {
         valueId: 5153,
         key: "bolsillos-inferiores-parte-baja",
         label: "Bolsillos inferiores parte baja",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("aplica COSTURA MARIA como modelo de bolsillo inferior con vivo superior", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "70": [384],
+      "92": [5150],
+    });
+
+    expect(scene.lowerPocketLayout).toBe("double");
+    expect(scene.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-20-costura-maria-lower-pocket.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
         colorHex: "#f4c7cc",
       },
     ]);

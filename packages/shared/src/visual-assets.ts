@@ -83,6 +83,8 @@ const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
 const BLUSA_COSTURA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-18-costura-lower-pocket.svg`;
+const BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-20-costura-maria-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;
 const BLUSA_P_PAIPILLA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-13-p-paipilla.svg`;
 
@@ -334,14 +336,14 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2579: blouseModelAsset(15),
     2580: BLUSA_COSTURA_LOWER_POCKET_ASSET,
     2581: blouseModelAsset(18),
-    2582: blouseModelAsset(19),
+    2582: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     2583: blouseModelAsset(20),
     // IDs actuales en pstest-traininglaroca.
     380: blouseModelAsset(14), // RECTANGULAR.
     381: blouseModelAsset(15), // AROS.
     382: BLUSA_COSTURA_LOWER_POCKET_ASSET, // COSTURA en Blusa.
     383: blouseModelAsset(18), // RIBETE.
-    384: blouseModelAsset(19), // COSTURA MARIA.
+    384: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Blusa.
     385: blouseModelAsset(20), // COSTURA TRIANGULO.
     386: blouseModelAsset(14), // BOLSILLO INTERNO RECTANGULAR.
     388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
@@ -349,6 +351,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     390: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Blusa.
     391: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Blusa.
     1204: BLUSA_COSTURA_LOWER_POCKET_ASSET, // COSTURA en Uniforme.
+    1206: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Uniforme.
     1210: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Uniforme.
     1212: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Uniforme.
     1213: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Uniforme.
@@ -360,7 +363,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     aros: blouseModelAsset(15),
     costura: BLUSA_COSTURA_LOWER_POCKET_ASSET,
     ribete: blouseModelAsset(18),
-    "costura maria": blouseModelAsset(19),
+    "costura maria": BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     "costura triangulo": blouseModelAsset(20),
     "bolsillo interno rectangular": blouseModelAsset(14),
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
