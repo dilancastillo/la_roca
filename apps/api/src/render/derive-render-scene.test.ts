@@ -37,6 +37,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 338,
+          name: "JDC",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2601,
           name: "Nombre editable del cuello alto",
           attributeId: 63,
@@ -674,6 +680,63 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 416,
+        key: "cuello-v-lineal-externo-derecho",
+        label: "Cuello V lineal externo derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 417,
+        key: "cuello-v-lineal-interno-derecho",
+        label: "Cuello V lineal interno derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2907,
+        key: "cuello-v-lineal-externo-izquierdo",
+        label: "Cuello V lineal externo izquierdo",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2910,
+        key: "cuello-v-lineal-interno-izquierdo",
+        label: "Cuello V lineal interno izquierdo",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2913,
+        key: "cuello-v-completo-interior-derecho",
+        label: "Cuello V Completo interior derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2916,
+        key: "cuello-v-completo-interior-izquierdo",
+        label: "Cuello V Completo interior izquierdo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga JDC con vivos lineales, completos interiores y cogotera recta", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [338],
+      "92": [5146, 416, 417, 2907, 2910, 2913, 2916],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
     );
     expect(scene.trimSections).toEqual([
       {

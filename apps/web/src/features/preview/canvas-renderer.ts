@@ -124,6 +124,11 @@ const internalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
 > = {
+  "blouse-model-02-jdc.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-internal-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-internal-right.svg",
+  },
   "blouse-model-01.svg": {
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-internal-left.svg",
     right:
@@ -145,6 +150,11 @@ const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
 > = {
+  "blouse-model-02-jdc.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-external-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-external-right.svg",
+  },
   "blouse-model-01.svg": {
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-external-left.svg",
     right:
@@ -161,6 +171,11 @@ const completeInteriorCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
 > = {
+  "blouse-model-02-jdc.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-complete-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-02-jdc-collar-v-complete-right.svg",
+  },
   "blouse-model-01.svg": {
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-complete-left.svg",
     right:
@@ -235,6 +250,7 @@ const completeCollarOnlyFileNames = new Set([
 ]);
 
 const noCollarTrimFileNames = new Set([
+  "blouse-model-02-jdc.svg",
   "blouse-model-21-deportivo.svg",
   "blouse-model-50-20-20.svg",
   "blouse-model-06-puntas.svg",
@@ -1629,7 +1645,11 @@ async function drawCollarTrimFromAsset(
 }
 
 function getCollarLineOutlineRadius(sourceSrc: string) {
-  return getFileNameFromSource(sourceSrc) === "blouse-model-01.svg" ? 3 : 7;
+  return ["blouse-model-01.svg", "blouse-model-02-jdc.svg"].includes(
+    getFileNameFromSource(sourceSrc),
+  )
+    ? 3
+    : 7;
 }
 
 async function drawInternalCollarTrimFromAsset(

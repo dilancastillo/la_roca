@@ -50,8 +50,14 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[1158]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[2594]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[338]).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[1160]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
     );
     expect(catalog?.neckModelsByValueId?.[339]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg",
