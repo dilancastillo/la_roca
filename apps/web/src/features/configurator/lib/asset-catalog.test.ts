@@ -158,6 +158,15 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.lowerPocketModelsByValueId?.[1213]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
     );
+    expect(catalog?.lowerPocketModelsByValueId?.[2580]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[382]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[1204]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
     expect(catalog?.lowerPocketModelsByValueId?.[2964]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
@@ -459,6 +468,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia-lower-pocket.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999993,
+        "Modelo bolsillo inferior",
+        "COSTURA",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
     );
 
     expect(

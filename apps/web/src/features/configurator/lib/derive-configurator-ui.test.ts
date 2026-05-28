@@ -197,6 +197,12 @@ const session: ConfiguratorSession = {
           attributeName: "Otro nombre para bolsillo inferior",
         },
         {
+          id: 382,
+          name: "COSTURA",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
           id: 5425,
           name: "Ninguno",
           attributeId: 70,
@@ -573,6 +579,36 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
     );
+  });
+
+  it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "69": [2561],
+      "70": [382],
+      "91": [5152],
+      "92": [5150, 5153],
+    });
+
+    expect(ui.previewScene.lowerPocketLayout).toBe("double");
+    expect(ui.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5153,
+        key: "bolsillos-inferiores-parte-baja",
+        label: "Bolsillos inferiores parte baja",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("separa el cuello EL HATO del bolsillo inferior BOLSILLO PRESILLAS", () => {

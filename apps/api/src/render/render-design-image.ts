@@ -55,6 +55,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-18-costura-lower-pocket.svg": [1, 2, 3],
   "blouse-model-33-oriental-lower-pocket.svg": [6, 7],
   "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": [67, 68, 69],
   "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
@@ -71,6 +72,17 @@ const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
 const lowerPocketTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-20.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
+};
+
+const lowerPocketSectionTrimOverlayByFileName: Record<
+  string,
+  { top?: string; bottom?: string }
+> = {
+  "blouse-model-18-costura-lower-pocket.svg": {
+    top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
+    bottom:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-lower.svg",
+  },
 };
 
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
@@ -849,6 +861,30 @@ async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
   const placementProcessed = await loadProcessedImage(assetPath);
 
   return await createOverlayBufferFromProcessed(trimProcessed, placementProcessed);
+}
+
+async function createLowerPocketSectionTrimOverlayBuffer(
+  assetPath: string,
+  section: "top" | "bottom",
+) {
+  const overlayPath =
+    lowerPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
+      section
+    ];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [trimProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    trimProcessed,
+    placementProcessed,
+  );
 }
 
 async function createChestPocketOverlayBuffer(
@@ -1717,7 +1753,54 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         ),
       );
 
-      if (lowerPocketTrimColor) {
+      const sectionTrimOverlays =
+        lowerPocketSectionTrimOverlayByFileName[
+          getAssetFileName(scene.lowerPocketAssetPath)
+        ];
+
+      if (sectionTrimOverlays) {
+        for (const [section, trimColor] of [
+          ["top", lowerPocketUpperTrimColor],
+          ["bottom", lowerPocketLowerTrimColor],
+        ] as const) {
+          if (!trimColor) {
+            continue;
+          }
+
+          const trimOverlayBuffer =
+            await createLowerPocketSectionTrimOverlayBuffer(
+              scene.lowerPocketAssetPath,
+              section,
+            );
+
+          if (!trimOverlayBuffer) {
+            continue;
+          }
+
+          const trimOutlineBuffer = await createPngInkOutlineBuffer(
+            trimOverlayBuffer,
+            "#f8fafc",
+            7,
+          );
+          const trimColorBuffer = await recolorPngInkBuffer(
+            trimOverlayBuffer,
+            trimColor,
+          );
+
+          layers.push(
+            getOverlaySvg(
+              `lower-pocket-${section}-trim-outline`,
+              toDataUri(trimOutlineBuffer),
+              lowerPocketRegions,
+            ),
+            getOverlaySvg(
+              `lower-pocket-${section}-trim-color`,
+              toDataUri(trimColorBuffer),
+              lowerPocketRegions,
+            ),
+          );
+        }
+      } else if (lowerPocketTrimColor) {
         const trimOverlayBuffer = await createLowerPocketTrimOverlayBuffer(
           scene.lowerPocketAssetPath,
         );

@@ -49,6 +49,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-18.svg": [1, 2, 3],
   "blouse-model-19.svg": [1, 2, 4, 5, 6, 7],
   "blouse-model-20.svg": [1, 2, 3],
+  "blouse-model-18-costura-lower-pocket.svg": [1, 2, 3],
   "blouse-model-33-oriental-lower-pocket.svg": [6, 7],
   "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": [67, 68, 69],
   "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
@@ -65,6 +66,17 @@ const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
 const lowerPocketTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-20.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-lower-pocket.svg",
+};
+
+const lowerPocketSectionTrimOverlayByFileName: Record<
+  string,
+  { top?: string; bottom?: string }
+> = {
+  "blouse-model-18-costura-lower-pocket.svg": {
+    top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
+    bottom:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-lower.svg",
+  },
 };
 
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
@@ -1341,10 +1353,40 @@ async function drawLowerPocketOverlay(
   regions: OverlayRegion[],
   trimColors?: LowerPocketBandTrimColors,
 ) {
+  const fileName = getFileNameFromSource(sourceSrc);
   const detailSrc = await getLowerPocketDetailObjectUrl(sourceSrc);
   const rasterCanvas = await createRasterCanvas(detailSrc ?? sourceSrc, sourceSrc);
 
   drawCanvasInRegions(context, rasterCanvas, regions);
+
+  const sectionTrimOverlays = lowerPocketSectionTrimOverlayByFileName[fileName];
+
+  if (sectionTrimOverlays) {
+    for (const [section, trimColor] of [
+      ["top", trimColors?.top],
+      ["bottom", trimColors?.bottom],
+    ] as const) {
+      const trimSrc = sectionTrimOverlays[section];
+
+      if (!trimSrc || !trimColor) {
+        continue;
+      }
+
+      const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
+      drawCanvasInRegions(
+        context,
+        createCanvasInkOutline(trimCanvas, "#f8fafc", 7),
+        regions,
+      );
+      drawCanvasInRegions(
+        context,
+        recolorCanvasInk(trimCanvas, trimColor),
+        regions,
+      );
+    }
+
+    return;
+  }
 
   const trimColor = trimColors?.top ?? trimColors?.bottom;
 
@@ -1360,7 +1402,7 @@ async function drawLowerPocketOverlay(
 
   const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
   const trimMode =
-    lowerPocketTrimModeByFileName[getFileNameFromSource(sourceSrc)] ?? "ink";
+    lowerPocketTrimModeByFileName[fileName] ?? "ink";
 
   if (trimMode === "band") {
     drawLowerPocketTrimBandLines(context, trimCanvas, regions, trimColors ?? {});

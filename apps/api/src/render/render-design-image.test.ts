@@ -1720,6 +1720,83 @@ describe("renderDesignImage", () => {
     expect(livePocketPinkPixels.right).toBeGreaterThan(100);
   }, 20000);
 
+  it("renderiza COSTURA con vivos independientes para parte superior y baja", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 260, y: 690, width: 180, height: 45 },
+    );
+    const upperRightPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 485, y: 690, width: 190, height: 55 },
+    );
+    const lowerLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 260, y: 708, width: 180, height: 55 },
+    );
+    const lowerRightPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 485, y: 708, width: 190, height: 55 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(upperLeftPinkPixels).toBeGreaterThan(80);
+    expect(upperRightPinkPixels).toBeGreaterThan(80);
+    expect(lowerLeftPinkPixels).toBeGreaterThan(80);
+    expect(lowerRightPinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza CIRUGÍA con COSTURA OVALADO, Cuello alto y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg";

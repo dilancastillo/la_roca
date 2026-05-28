@@ -200,6 +200,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo bolsillo inferior",
         },
         {
+          id: 382,
+          name: "COSTURA",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
           id: 2965,
           name: "BOLSILLO PRESILLAS",
           attributeId: 70,
@@ -592,6 +598,34 @@ describe("deriveAutomationRenderScene", () => {
     expect(withPresillasPocket.lowerPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "70": [382],
+      "92": [5150, 5153],
+    });
+
+    expect(scene.lowerPocketLayout).toBe("double");
+    expect(scene.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5150,
+        role: "lowerPockets",
+        key: "bolsillos-inferiores-parte-superior",
+        label: "Bolsillos inferiores parte superior",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5153,
+        key: "bolsillos-inferiores-parte-baja",
+        label: "Bolsillos inferiores parte baja",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("carga ORIENTAL y aplica RIBETE VERTICAL como bolsillo inferior independiente", () => {
