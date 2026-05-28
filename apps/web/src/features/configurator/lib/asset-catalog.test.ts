@@ -35,6 +35,9 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.garmentModelsByValueId?.[2867]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[1156]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[338]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",
     );

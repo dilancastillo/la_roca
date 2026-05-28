@@ -663,6 +663,183 @@ describe("renderDesignImage", () => {
     expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
   }, 20000);
 
+  it("renderiza CUELLO V con vivos lineales, completos interiores y cogotera recta", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withLeftExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2907,
+            key: "cuello-v-lineal-externo-izquierdo",
+            label: "Cuello V lineal externo izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 416,
+            key: "cuello-v-lineal-externo-derecho",
+            label: "Cuello V lineal externo derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLeftInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2910,
+            key: "cuello-v-lineal-interno-izquierdo",
+            label: "Cuello V lineal interno izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 417,
+            key: "cuello-v-lineal-interno-derecho",
+            label: "Cuello V lineal interno derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLeftComplete = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2916,
+            key: "cuello-v-completo-interior-izquierdo",
+            label: "Cuello V Completo interior izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightComplete = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2913,
+            key: "cuello-v-completo-interior-derecho",
+            label: "Cuello V Completo interior derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftExternalPinkPixels = countPinkPixelsByHalf(
+      withLeftExternal.data,
+      withLeftExternal.info.width,
+    );
+    const rightExternalPinkPixels = countPinkPixelsByHalf(
+      withRightExternal.data,
+      withRightExternal.info.width,
+    );
+    const leftInternalPinkPixels = countPinkPixelsByHalf(
+      withLeftInternal.data,
+      withLeftInternal.info.width,
+    );
+    const rightInternalPinkPixels = countPinkPixelsByHalf(
+      withRightInternal.data,
+      withRightInternal.info.width,
+    );
+    const leftCompletePinkPixels = countPinkPixelsByHalf(
+      withLeftComplete.data,
+      withLeftComplete.info.width,
+    );
+    const rightCompletePinkPixels = countPinkPixelsByHalf(
+      withRightComplete.data,
+      withRightComplete.info.width,
+    );
+    const backNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 120, width: 300, height: 35 },
+    );
+
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftExternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightExternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftInternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightInternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftComplete.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightComplete.data),
+    ).toBeGreaterThan(500);
+    expect(leftExternalPinkPixels.left).toBeGreaterThan(
+      leftExternalPinkPixels.right,
+    );
+    expect(rightExternalPinkPixels.right).toBeGreaterThan(
+      rightExternalPinkPixels.left,
+    );
+    expect(leftInternalPinkPixels.left).toBeGreaterThan(
+      leftInternalPinkPixels.right,
+    );
+    expect(rightInternalPinkPixels.right).toBeGreaterThan(
+      rightInternalPinkPixels.left,
+    );
+    expect(leftCompletePinkPixels.left).toBeGreaterThan(
+      leftCompletePinkPixels.right,
+    );
+    expect(rightCompletePinkPixels.right).toBeGreaterThan(
+      rightCompletePinkPixels.left,
+    );
+    expect(backNeckPinkPixels).toBeGreaterThan(100);
+  }, 20000);
+
   it("renderiza 20-20 con vivos internos independientes y cogotera recta", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg";

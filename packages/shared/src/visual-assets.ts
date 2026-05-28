@@ -250,6 +250,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     343: blouseModelAsset(9), // OVALADO.
     345: blouseModelAsset(8), // CUELLO ALTO.
     346: blouseModelAsset(7), // PUNTADAS.
+    1156: blouseModelAsset(1), // CUELLO V en Uniforme.
     352: BLUSA_MATRIOSKA_ASSET, // MATRIOSKA en Blusa.
     1174: BLUSA_MATRIOSKA_ASSET, // MATRIOSKA en Uniforme.
     353: BLUSA_MARIPOSA_ASSET, // MARIPOSA en Blusa.

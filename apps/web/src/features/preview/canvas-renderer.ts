@@ -124,6 +124,11 @@ const internalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
 > = {
+  "blouse-model-01.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-internal-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-internal-right.svg",
+  },
   "blouse-model-50-20-20.svg": {
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-left.svg",
     right:
@@ -140,10 +145,26 @@ const externalCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
 > = {
+  "blouse-model-01.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-external-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-external-right.svg",
+  },
   "blouse-model-25-20-21.svg": {
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-25-20-21-external-left.svg",
     right:
       "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-25-20-21-external-right.svg",
+  },
+};
+
+const completeInteriorCollarTrimOverlayByFileName: Record<
+  string,
+  { left: string; right: string }
+> = {
+  "blouse-model-01.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-complete-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-complete-right.svg",
   },
 };
 
@@ -335,6 +356,28 @@ function isRightExternalCollarSection(
   return (
     key.includes("cuello v lineal externo derecho") ||
     key.includes("cuello-v-lineal-externo-derecho")
+  );
+}
+
+function isLeftCompleteInteriorCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v completo interior izquierdo") ||
+    key.includes("cuello-v-completo-interior-izquierdo")
+  );
+}
+
+function isRightCompleteInteriorCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello v completo interior derecho") ||
+    key.includes("cuello-v-completo-interior-derecho")
   );
 }
 
@@ -1645,6 +1688,29 @@ async function drawExternalCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawCompleteInteriorCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  side: "left" | "right",
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    completeInteriorCollarTrimOverlayByFileName[
+      getFileNameFromSource(sourceSrc)
+    ]?.[side];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 async function drawFlapTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -1815,6 +1881,14 @@ export async function composeDesign(
       scene,
       isRightExternalCollarSection,
     );
+    const leftCompleteInteriorCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLeftCompleteInteriorCollarSection,
+    );
+    const rightCompleteInteriorCollarTrimColor = getTrimSectionColor(
+      scene,
+      isRightCompleteInteriorCollarSection,
+    );
     const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
@@ -1837,6 +1911,18 @@ export async function composeDesign(
       context,
       baseAssetSrc,
       innerCollarTrimColor,
+    );
+    await drawCompleteInteriorCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "left",
+      leftCompleteInteriorCollarTrimColor,
+    );
+    await drawCompleteInteriorCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "right",
+      rightCompleteInteriorCollarTrimColor,
     );
     await drawInternalCollarTrimFromAsset(
       context,
