@@ -203,6 +203,8 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-15-presillas.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-collar.svg",
   "blouse-model-22-estrella.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-collar.svg",
   "blouse-model-24-botones.svg":
@@ -219,6 +221,11 @@ const collarTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-11-fisiopracticas-collar.svg",
   "blouse-model-13-p-paipilla.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-13-p-paipilla-collar.svg",
+};
+
+const collarRingsTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-15-presillas.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
 const completeCollarOnlyFileNames = new Set([
@@ -263,6 +270,7 @@ const svgObjectUrlCache = new Map<string, Promise<string>>();
 const lowerPocketDetailObjectUrlCache = new Map<string, Promise<string>>();
 const lowerPocketTrimObjectUrlCache = new Map<string, Promise<string>>();
 const collarTrimObjectUrlCache = new Map<string, Promise<string>>();
+const collarRingsTrimValueIds = new Set([2897, 2898, 2899]);
 
 function normalize(value: string) {
   return value
@@ -313,6 +321,16 @@ function isInnerCollarTrimSection(
   const key = getTrimSectionText(section);
 
   return key.includes("cuello interno") || key.includes("cuello-interno");
+}
+
+function isCollarRingsSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return (
+    collarRingsTrimValueIds.has(section.valueId) ||
+    key.includes("cuello aros") ||
+    key.includes("cuello-aros")
+  );
 }
 
 function isLeftInternalCollarSection(
@@ -1684,6 +1702,27 @@ async function drawInnerCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawCollarRingsTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    collarRingsTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 async function drawExternalCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -1885,6 +1924,10 @@ export async function composeDesign(
       scene,
       isInnerCollarTrimSection,
     );
+    const collarRingsTrimColor = getTrimSectionColor(
+      scene,
+      isCollarRingsSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1931,6 +1974,11 @@ export async function composeDesign(
       context,
       baseAssetSrc,
       innerCollarTrimColor,
+    );
+    await drawCollarRingsTrimFromAsset(
+      context,
+      baseAssetSrc,
+      collarRingsTrimColor,
     );
     await drawCompleteInteriorCollarTrimFromAsset(
       context,

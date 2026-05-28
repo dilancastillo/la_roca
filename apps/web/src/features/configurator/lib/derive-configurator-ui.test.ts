@@ -26,6 +26,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 335,
+          name: "PRESILLAS",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 2601,
           name: "Nombre cambiado de cuello alto",
           attributeId: 63,
@@ -346,6 +352,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 2898,
+          name: "Cuello aros",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 2901,
           name: "Cuello interno",
           attributeId: 92,
@@ -551,6 +563,41 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [335],
+      "91": [5152],
+      "92": [5147, 2898, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2898,
+        key: "cuello-aros",
+        label: "Cuello aros",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("usa miniaturas de Odoo en la barra lateral sin enviarlas al canvas", () => {

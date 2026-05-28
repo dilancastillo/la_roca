@@ -19,7 +19,7 @@ describe("getProductAssetCatalog", () => {
     const catalog = getProductAssetCatalog("blusa-antifluido-t180");
 
     expect(catalog?.neckModelsByValueId?.[2591]).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-03.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
     );
     expect(catalog?.neckModelsByValueId?.[2592]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22.svg",
@@ -37,6 +37,12 @@ describe("getProductAssetCatalog", () => {
     );
     expect(catalog?.neckModelsByValueId?.[1156]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[335]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[1157]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
     );
     expect(catalog?.neckModelsByValueId?.[338]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",

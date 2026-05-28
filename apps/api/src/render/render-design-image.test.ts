@@ -2182,4 +2182,101 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
+
+  it("renderiza PRESILLAS sin botones y pinta cuello, aros y cogotera por separado", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5147,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRings = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2898,
+            key: "nombre-cambiado",
+            label: "Nombre cambiado en Odoo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const collarPinkPixels = countPastelPinkPixelsInRegion(
+      withCollar.data,
+      withCollar.info.width,
+      { x: 290, y: 120, width: 330, height: 270 },
+    );
+    const ringPinkPixels = countPastelPinkPixelsInRegion(
+      withRings.data,
+      withRings.info.width,
+      { x: 380, y: 300, width: 135, height: 80 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+    const lowerLeftButtonDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 325, y: 760, width: 70, height: 70 },
+    );
+    const lowerRightButtonDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 545, y: 760, width: 70, height: 70 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withCollar.data),
+    ).toBeGreaterThan(100);
+    expect(collarPinkPixels).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRings.data),
+    ).toBeGreaterThan(100);
+    expect(ringPinkPixels).toBeGreaterThan(120);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+    expect(lowerLeftButtonDarkPixels).toBeLessThan(30);
+    expect(lowerRightButtonDarkPixels).toBeLessThan(30);
+  }, 20000);
 });

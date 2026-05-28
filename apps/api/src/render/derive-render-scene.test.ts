@@ -25,6 +25,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 335,
+          name: "PRESILLAS",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2601,
           name: "Nombre editable del cuello alto",
           attributeId: 63,
@@ -333,6 +339,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 2898,
+          name: "Cuello aros",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 2901,
           name: "Cuello interno",
           attributeId: 92,
@@ -478,6 +490,41 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.lowerPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [335],
+      "91": [5152],
+      "92": [5147, 2898, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5147,
+        role: "upperNeck",
+        key: "cuello",
+        label: "Cuello",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2898,
+        key: "cuello-aros",
+        label: "Cuello aros",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("pinta el cuello solo cuando Seccion de vivo tiene Cuello", () => {

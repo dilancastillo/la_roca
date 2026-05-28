@@ -209,6 +209,8 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-15-presillas.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-collar.svg",
   "blouse-model-22-estrella.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-collar.svg",
   "blouse-model-24-botones.svg":
@@ -225,6 +227,11 @@ const collarTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-11-fisiopracticas-collar.svg",
   "blouse-model-13-p-paipilla.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-13-p-paipilla-collar.svg",
+};
+
+const collarRingsTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-15-presillas.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
 const completeCollarOnlyFileNames = new Set([
@@ -249,6 +256,7 @@ const noBackNeckTrimFileNames = new Set([
   "blouse-model-33-oriental.svg",
   "blouse-model-39-el-hato.svg",
 ]);
+const collarRingsTrimValueIds = new Set([2897, 2898, 2899]);
 
 function normalize(value: string) {
   return value
@@ -326,6 +334,18 @@ function isInnerCollarTrimSection(
   const key = getTrimSectionText(section);
 
   return key.includes("cuello interno") || key.includes("cuello-interno");
+}
+
+function isCollarRingsSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    collarRingsTrimValueIds.has(section.valueId) ||
+    key.includes("cuello aros") ||
+    key.includes("cuello-aros")
+  );
 }
 
 function isLeftInternalCollarSection(
@@ -1120,6 +1140,33 @@ async function createInnerCollarTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+async function createCollarRingsTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath =
+    collarRingsTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
 async function createExternalCollarTrimOverlayBuffer(
   assetPath: string,
   side: "left" | "right",
@@ -1638,6 +1685,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isInnerCollarTrimSection,
     );
+    const collarRingsTrimColor = getTrimSectionColor(
+      scene,
+      isCollarRingsSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1733,6 +1784,24 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       layers.push(
         `<image href="${toDataUri(innerCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(innerCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    const collarRingsTrimOverlayBuffer =
+      await createCollarRingsTrimOverlayBuffer(
+        baseAssetPath,
+        collarRingsTrimColor,
+      );
+
+    if (collarRingsTrimOverlayBuffer) {
+      const collarRingsTrimOutlineBuffer = await createPngInkOutlineBuffer(
+        collarRingsTrimOverlayBuffer,
+        "#f8fafc",
+        7,
+      );
+      layers.push(
+        `<image href="${toDataUri(collarRingsTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        `<image href="${toDataUri(collarRingsTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 
