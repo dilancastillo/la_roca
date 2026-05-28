@@ -1609,6 +1609,10 @@ async function drawCollarTrimFromAsset(
   drawCanvasInRegions(context, inkCanvas, collarRegions);
 }
 
+function getCollarLineOutlineRadius(sourceSrc: string) {
+  return getFileNameFromSource(sourceSrc) === "blouse-model-01.svg" ? 3 : 7;
+}
+
 async function drawInternalCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -1626,7 +1630,15 @@ async function drawInternalCollarTrimFromAsset(
 
   if (overlaySrc) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-    context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+    context.drawImage(
+      createCanvasInkOutline(
+        overlayCanvas,
+        "#f8fafc",
+        getCollarLineOutlineRadius(sourceSrc),
+      ),
+      0,
+      0,
+    );
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
     return;
   }
@@ -1660,7 +1672,15 @@ async function drawInnerCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(
+    createCanvasInkOutline(
+      overlayCanvas,
+      "#f8fafc",
+      getCollarLineOutlineRadius(sourceSrc),
+    ),
+    0,
+    0,
+  );
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 

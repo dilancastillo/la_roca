@@ -1257,6 +1257,10 @@ function allowsBackNeckTrim(assetPath: string) {
   return !noBackNeckTrimFileNames.has(getAssetFileName(assetPath));
 }
 
+function getCollarLineOutlineRadius(assetPath: string) {
+  return getAssetFileName(assetPath) === "blouse-model-01.svg" ? 3 : 7;
+}
+
 async function pngBufferToRaw(buffer: Buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -1769,6 +1773,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
       const internalCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
         internalCollarTrimOverlayBuffer,
+        "#f8fafc",
+        getCollarLineOutlineRadius(baseAssetPath),
       );
       layers.push(
         `<image href="${toDataUri(internalCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
@@ -1793,6 +1799,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
       const externalCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
         externalCollarTrimOverlayBuffer,
+        "#f8fafc",
+        getCollarLineOutlineRadius(baseAssetPath),
       );
       layers.push(
         `<image href="${toDataUri(externalCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,

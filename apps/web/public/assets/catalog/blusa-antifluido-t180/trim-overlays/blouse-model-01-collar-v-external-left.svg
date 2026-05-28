@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 1350">
   <g id="cuello-v-lineal-externo-izquierdo">
-    <polygon points="348 162 537 472 537 446 360 155" fill="#000000"/>
+    <path d="M354 158.5 L537 459" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>
