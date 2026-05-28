@@ -29,6 +29,12 @@ describe("getProductAssetCatalog", () => {
   it("resuelve los nuevos modelos de cuello por PTAV ID", () => {
     const catalog = getProductAssetCatalog("blusa-antifluido-t180");
 
+    expect(catalog?.garmentModelsByValueId?.[2866]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(catalog?.garmentModelsByValueId?.[2867]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[338]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg",
     );
@@ -179,6 +185,30 @@ describe("getProductAssetCatalog", () => {
   });
 
   it("resuelve assets por nombre cuando Odoo cambia los IDs de PTAV", () => {
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        811,
+        999976,
+        "Modelo de Blusa",
+        "Pespunte",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        811,
+        999977,
+        "Modelo de Blusa",
+        "Lizo",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+
     expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",

@@ -79,6 +79,12 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular-v2.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
 };
+
+const garmentDetailOverlayByFileName: Record<string, string> = {
+  "blouse-model-45-pespunte.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+};
+
 const CHEST_POCKET_LOGO_MARKER_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
 
@@ -894,6 +900,32 @@ async function createChestPocketLogoMarkerBuffer(placementAssetPath: string) {
   );
 }
 
+async function createGarmentModelDetailOverlayBuffer(
+  garmentAssetPath: string | undefined,
+  placementAssetPath: string,
+) {
+  if (!garmentAssetPath || garmentAssetPath === placementAssetPath) {
+    return undefined;
+  }
+
+  const overlayPath =
+    garmentDetailOverlayByFileName[getAssetFileName(garmentAssetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
 async function createCollarTrimOverlayBuffer(
   assetPath: string,
   trimColor: string,
@@ -1472,6 +1504,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   }
 
   if (baseAssetPath) {
+    const garmentDetailOverlayBuffer =
+      await createGarmentModelDetailOverlayBuffer(
+        scene.garmentAssetPath,
+        baseAssetPath,
+      );
+
+    if (garmentDetailOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(garmentDetailOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetPath);
     const innerCollarTrimColor = getTrimSectionColor(
       scene,

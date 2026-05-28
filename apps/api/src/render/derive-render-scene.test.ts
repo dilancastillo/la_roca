@@ -129,6 +129,27 @@ const session: ConfiguratorSession = {
       ],
     },
     {
+      id: 811,
+      name: "Modelo de Blusa",
+      displayType: "image",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 2866,
+          name: "Lizo",
+          attributeId: 811,
+          attributeName: "Modelo de Blusa",
+        },
+        {
+          id: 2867,
+          name: "Pespunte",
+          attributeId: 811,
+          attributeName: "Modelo de Blusa",
+        },
+      ],
+    },
+    {
       id: 90,
       name: "Color",
       displayType: "color",
@@ -376,6 +397,7 @@ const session: ConfiguratorSession = {
   ],
   selectedValueIds: {
     "63": [2601],
+    "811": [2866],
     "69": [2561],
     "70": [2578],
     "90": [4845],
@@ -403,7 +425,29 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg",
     );
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
     expect(scene.trimSections).toEqual([]);
+  });
+
+  it("carga Pespunte como modelo de blusa base sin reemplazar cuello ni bolsillos", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "811": [2867],
+      "63": [2956],
+      "70": [2965],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+    expect(scene.lowerPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
   });
 
   it("pinta el cuello solo cuando Seccion de vivo tiene Cuello", () => {

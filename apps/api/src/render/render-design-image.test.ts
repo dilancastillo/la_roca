@@ -369,6 +369,74 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("superpone las lineas de Pespunte sobre cualquier cuello sin traer bolsillo de pecho", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+    const pespunteAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
+    const withLizo = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+        neckAssetPath,
+      }),
+    );
+    const withPespunte = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath: pespunteAssetPath,
+        neckAssetPath,
+      }),
+    );
+    const pespunteWithoutNeck = await readRawPng(
+      await renderDesignImage({
+        productName: baseScene.productName,
+        baseColorHex: baseScene.baseColorHex,
+        garmentAssetPath: pespunteAssetPath,
+        lowerPocketLayout: baseScene.lowerPocketLayout,
+        trimSections: [],
+      }),
+    );
+    const lizoSideInk =
+      countDarkPixelsInRegion(withLizo.data, withLizo.info.width, {
+        x: 230,
+        y: 300,
+        width: 180,
+        height: 650,
+      }) +
+      countDarkPixelsInRegion(withLizo.data, withLizo.info.width, {
+        x: 490,
+        y: 300,
+        width: 180,
+        height: 650,
+      });
+    const pespunteSideInk =
+      countDarkPixelsInRegion(withPespunte.data, withPespunte.info.width, {
+        x: 230,
+        y: 300,
+        width: 180,
+        height: 650,
+      }) +
+      countDarkPixelsInRegion(withPespunte.data, withPespunte.info.width, {
+        x: 490,
+        y: 300,
+        width: 180,
+        height: 650,
+      });
+    const chestPocketInk = countDarkPixelsInRegion(
+      pespunteWithoutNeck.data,
+      pespunteWithoutNeck.info.width,
+      { x: 500, y: 280, width: 180, height: 220 },
+    );
+
+    expect(
+      countDifferentPixels(withLizo.data, withPespunte.data),
+    ).toBeGreaterThan(300);
+    expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 300);
+    expect(chestPocketInk).toBeLessThan(800);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const withoutBackNeck = await readRawPng(
       await renderDesignImage({

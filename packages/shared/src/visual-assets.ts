@@ -60,6 +60,8 @@ const BLUSA_MARIPOSA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-40-mariposa.svg`;
 const BLUSA_MATRIOSKA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-41-matrioska.svg`;
+const BLUSA_PESPUNTE_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-45-pespunte.svg`;
 const BLUSA_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-27-cremallera.svg`;
 const BLUSA_CUELLO_REDONDO_ASSET =
@@ -217,6 +219,10 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   lowerPocketModelNoneValueIds: [392, 5425],
   defaultGarmentAsset: blouseModelAsset(1),
   defaultChestPocketModelAsset: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
+  garmentModelsByValueId: {
+    2866: blouseModelAsset(1), // Lizo en Blusa.
+    2867: BLUSA_PESPUNTE_ASSET, // Pespunte en Blusa.
+  },
   neckModelsByValueId: {
     // IDs historicos de product.template.attribute.value.
     2590: blouseModelAsset(1), // CUELLO V.
@@ -315,6 +321,10 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "p paipilla": BLUSA_P_PAIPILLA_ASSET,
     "p-paipilla": BLUSA_P_PAIPILLA_ASSET,
     cherokee: BLUSA_CHEROKEE_ASSET,
+  },
+  garmentModelsByValueName: {
+    lizo: blouseModelAsset(1),
+    pespunte: BLUSA_PESPUNTE_ASSET,
   },
   lowerPocketModelsByValueId: {
     // IDs historicos. Los SVG disponibles para bolsillos inferiores son Modelo 14, 15, 16, 18, 19 y 20.

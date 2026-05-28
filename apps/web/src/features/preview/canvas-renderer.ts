@@ -73,6 +73,12 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular-v2.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
 };
+
+const garmentDetailOverlayByFileName: Record<string, string> = {
+  "blouse-model-45-pespunte.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+};
+
 const CHEST_POCKET_LOGO_MARKER_SRC =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
 
@@ -1404,6 +1410,26 @@ async function drawChestPocketLogoMarker(
   context.drawImage(markerCanvas, 0, 0);
 }
 
+async function drawGarmentModelDetails(
+  context: CanvasRenderingContext2D,
+  garmentSrc: string | undefined,
+  placementSrc: string,
+) {
+  if (!garmentSrc || garmentSrc === placementSrc) {
+    return;
+  }
+
+  const overlaySrc =
+    garmentDetailOverlayByFileName[getFileNameFromSource(garmentSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, placementSrc);
+  context.drawImage(overlayCanvas, 0, 0);
+}
+
 function createBackNeckTrimPath(pathData?: string) {
   if (pathData) {
     return new Path2D(pathData);
@@ -1716,6 +1742,12 @@ export async function composeDesign(
   }
 
   if (baseAssetSrc) {
+    await drawGarmentModelDetails(
+      context,
+      scene.garmentImageSrc,
+      baseAssetSrc,
+    );
+
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
     const innerCollarTrimColor = getTrimSectionColor(
       scene,

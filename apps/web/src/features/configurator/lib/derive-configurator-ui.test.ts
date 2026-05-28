@@ -136,6 +136,27 @@ const session: ConfiguratorSession = {
       ],
     },
     {
+      id: 811,
+      name: "Modelo de Blusa",
+      displayType: "image",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 2866,
+          name: "Lizo",
+          attributeId: 811,
+          attributeName: "Modelo de Blusa",
+        },
+        {
+          id: 2867,
+          name: "Pespunte",
+          attributeId: 811,
+          attributeName: "Modelo de Blusa",
+        },
+      ],
+    },
+    {
       id: 69,
       name: "Tipo de bolsillos inferiores",
       displayType: "radio",
@@ -395,6 +416,7 @@ const session: ConfiguratorSession = {
   ],
   selectedValueIds: {
     "63": [2590],
+    "811": [2866],
     "69": [5354],
     "70": [2578],
     "90": [4845],
@@ -473,6 +495,9 @@ describe("deriveConfiguratorUi", () => {
     const ui = deriveConfiguratorUi(session, session.selectedValueIds);
 
     expect(ui.previewScene.baseColorHex).toBe("#B2D4D1");
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
     expect(ui.previewScene.neckImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
@@ -482,6 +507,25 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketLayout).toBe("double");
     expect(ui.groups.find((group) => group.attributeId === 63)?.controlType).toBe(
       "image",
+    );
+  });
+
+  it("carga Pespunte como modelo de blusa base sin reemplazar cuello ni bolsillos", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "811": [2867],
+      "63": [2956],
+      "70": [2965],
+    });
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+    expect(ui.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
   });
 
