@@ -74,6 +74,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 341,
+          name: "ENFERMERA UB",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 352,
           name: "MATRIOSKA",
           attributeId: 63,
@@ -1508,6 +1514,35 @@ describe("deriveConfiguratorUi", () => {
         valueId: 2901,
         key: "cuello-interno",
         label: "Cuello interno",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga ENFERMERA UB con Cuello completo y cogotera ovalada", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [341],
+      "91": [5152],
+      "92": [5154, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5154,
+        role: "upperNeck",
+        key: "cuello-completo",
+        label: "Cuello completo",
         colorHex: "#f4c7cc",
       },
     ]);

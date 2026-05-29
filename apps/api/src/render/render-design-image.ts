@@ -215,6 +215,7 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-40-mariposa.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-41-matrioska.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-42.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-43.svg": "M305 140 C365 121 535 121 595 140",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -240,6 +241,8 @@ const collarTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-24-botones-collar.svg",
   "blouse-model-26-cuello-redondo.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-26-cuello-redondo-collar.svg",
+  "blouse-model-43.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-43-enfermera-ub-collar.svg",
   "blouse-model-08.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-collar.svg",
   "blouse-model-34-cuello-alto-cremallera.svg":
@@ -259,6 +262,7 @@ const collarRingsTrimOverlayByFileName: Record<string, string> = {
 
 const completeCollarOnlyFileNames = new Set([
   "blouse-model-39-el-hato.svg",
+  "blouse-model-43.svg",
   "blouse-model-11-fisiopracticas.svg",
   "blouse-model-13-p-paipilla.svg",
 ]);
