@@ -2024,6 +2024,11 @@ describe("renderDesignImage", () => {
       withBackNeck.info.width,
       { x: 280, y: 90, width: 340, height: 80 },
     );
+    const lowerHorizontalPinkPixels = countPastelPinkPixelsInRegion(
+      withCompleteCollar.data,
+      withCompleteCollar.info.width,
+      { x: 560, y: 470, width: 110, height: 40 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -2032,6 +2037,7 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
     ).toBeGreaterThan(100);
     expect(collarPinkPixels).toBeGreaterThan(500);
+    expect(lowerHorizontalPinkPixels).toBeLessThan(120);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
