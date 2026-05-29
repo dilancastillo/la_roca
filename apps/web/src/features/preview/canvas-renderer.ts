@@ -261,6 +261,18 @@ const collarRingsTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
+const dividedCollarTrimOverlayByFileName: Record<
+  string,
+  { upper: string; lower: string }
+> = {
+  "blouse-model-04.svg": {
+    upper:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-04-mariposa-dividido-upper.svg",
+    lower:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-04-mariposa-dividido-lower.svg",
+  },
+};
+
 const completeCollarOnlyFileNames = new Set([
   "blouse-model-39-el-hato.svg",
   "blouse-model-43.svg",
@@ -270,6 +282,7 @@ const completeCollarOnlyFileNames = new Set([
 
 const noCollarTrimFileNames = new Set([
   "blouse-model-02-jdc.svg",
+  "blouse-model-04.svg",
   "blouse-model-44-cucuta.svg",
   "blouse-model-09.svg",
   "blouse-model-21-deportivo.svg",
@@ -380,6 +393,28 @@ function isCollarStitchesSection(section: PreviewScene["trimSections"][number]) 
   const key = getTrimSectionText(section);
 
   return key.includes("cuello puntadas") || key.includes("cuello-puntadas");
+}
+
+function isUpperDividedCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello borde dividido superior") ||
+    key.includes("cuello-borde-dividido-superior")
+  );
+}
+
+function isLowerDividedCollarSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello borde dividido inferior") ||
+    key.includes("cuello-borde-dividido-inferior")
+  );
 }
 
 function isLeftInternalCollarSection(
@@ -1792,6 +1827,30 @@ async function drawCollarRingsTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawDividedCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  section: "upper" | "lower",
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    dividedCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)]?.[
+      section
+    ];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 7), 0, 0);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 async function drawExternalCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -2001,6 +2060,14 @@ export async function composeDesign(
       scene,
       isCollarStitchesSection,
     );
+    const upperDividedCollarTrimColor = getTrimSectionColor(
+      scene,
+      isUpperDividedCollarSection,
+    );
+    const lowerDividedCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLowerDividedCollarSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -2053,6 +2120,18 @@ export async function composeDesign(
       context,
       baseAssetSrc,
       collarRingsTrimColor,
+    );
+    await drawDividedCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "upper",
+      upperDividedCollarTrimColor,
+    );
+    await drawDividedCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      "lower",
+      lowerDividedCollarTrimColor,
     );
     await drawCompleteInteriorCollarTrimFromAsset(
       context,

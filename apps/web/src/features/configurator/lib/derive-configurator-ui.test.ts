@@ -104,6 +104,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 7013,
+          name: "MARIPOSA DIVIDIDO",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 354,
           name: "20-20",
           attributeId: 63,
@@ -400,6 +406,18 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 7011,
+          name: "Cuello Borde Dividido superior",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 7012,
+          name: "Cuello Borde Dividido inferior",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 7009,
           name: "Cuello arco",
           attributeId: 92,
@@ -682,6 +700,42 @@ describe("deriveConfiguratorUi", () => {
         valueId: 7010,
         key: "cuello-puntadas",
         label: "Cuello puntadas",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga MARIPOSA DIVIDIDO con bordes divididos y cogotera recta", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [7013],
+      "91": [5152],
+      "92": [5146, 7011, 7012],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7011,
+        role: "upperNeck",
+        key: "cuello-borde-dividido-superior",
+        label: "Cuello Borde Dividido superior",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7012,
+        role: "lowerNeck",
+        key: "cuello-borde-dividido-inferior",
+        label: "Cuello Borde Dividido inferior",
         colorHex: "#f4c7cc",
       },
     ]);

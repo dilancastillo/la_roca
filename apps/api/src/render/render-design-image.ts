@@ -267,6 +267,18 @@ const collarRingsTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
+const dividedCollarTrimOverlayByFileName: Record<
+  string,
+  { upper: string; lower: string }
+> = {
+  "blouse-model-04.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-04-mariposa-dividido-upper.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-04-mariposa-dividido-lower.svg",
+  },
+};
+
 const completeCollarOnlyFileNames = new Set([
   "blouse-model-39-el-hato.svg",
   "blouse-model-43.svg",
@@ -276,6 +288,7 @@ const completeCollarOnlyFileNames = new Set([
 
 const noCollarTrimFileNames = new Set([
   "blouse-model-02-jdc.svg",
+  "blouse-model-04.svg",
   "blouse-model-44-cucuta.svg",
   "blouse-model-09.svg",
   "blouse-model-21-deportivo.svg",
@@ -397,6 +410,28 @@ function isCollarStitchesSection(
   const key = getTrimSectionText(section);
 
   return key.includes("cuello puntadas") || key.includes("cuello-puntadas");
+}
+
+function isUpperDividedCollarSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello borde dividido superior") ||
+    key.includes("cuello-borde-dividido-superior")
+  );
+}
+
+function isLowerDividedCollarSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cuello borde dividido inferior") ||
+    key.includes("cuello-borde-dividido-inferior")
+  );
 }
 
 function isLeftInternalCollarSection(
@@ -1218,6 +1253,34 @@ async function createCollarRingsTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+async function createDividedCollarTrimOverlayBuffer(
+  assetPath: string,
+  section: "upper" | "lower",
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath =
+    dividedCollarTrimOverlayByFileName[getAssetFileName(assetPath)]?.[section];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
 async function createExternalCollarTrimOverlayBuffer(
   assetPath: string,
   side: "left" | "right",
@@ -1766,6 +1829,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isCollarStitchesSection,
     );
+    const upperDividedCollarTrimColor = getTrimSectionColor(
+      scene,
+      isUpperDividedCollarSection,
+    );
+    const lowerDividedCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLowerDividedCollarSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1898,6 +1969,32 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       layers.push(
         `<image href="${toDataUri(collarRingsTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(collarRingsTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    for (const [section, trimColor] of [
+      ["upper", upperDividedCollarTrimColor],
+      ["lower", lowerDividedCollarTrimColor],
+    ] as const) {
+      const dividedCollarTrimOverlayBuffer =
+        await createDividedCollarTrimOverlayBuffer(
+          baseAssetPath,
+          section,
+          trimColor,
+        );
+
+      if (!dividedCollarTrimOverlayBuffer) {
+        continue;
+      }
+
+      const dividedCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
+        dividedCollarTrimOverlayBuffer,
+        "#f8fafc",
+        7,
+      );
+      layers.push(
+        `<image href="${toDataUri(dividedCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        `<image href="${toDataUri(dividedCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 

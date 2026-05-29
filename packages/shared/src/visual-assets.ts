@@ -58,6 +58,7 @@ const BLUSA_ESTRELLA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-22-estrella.svg`;
 const BLUSA_MARIPOSA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-40-mariposa.svg`;
+const BLUSA_MARIPOSA_DIVIDIDO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-04.svg`;
 const BLUSA_MATRIOSKA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-41-matrioska.svg`;
 const BLUSA_JDC_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-02-jdc.svg`;
@@ -315,6 +316,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "modelo 13": blouseModelAsset(7),
     matrioska: BLUSA_MATRIOSKA_ASSET,
     mariposa: BLUSA_MARIPOSA_ASSET,
+    "mariposa dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
     "20 20": BLUSA_2020_ASSET,
     "20-20": BLUSA_2020_ASSET,
     "2020": BLUSA_2020_ASSET,
@@ -508,23 +510,38 @@ export function getVisualAssetPathForValue(
     return undefined;
   }
 
-  if (isNeckModelAttribute(attributeName)) {
+  if (
+    matchesVisualAssetAttributeId(catalog, "neckModel", attributeId) ||
+    isNeckModelAttribute(attributeName)
+  ) {
     return findByNormalizedName(catalog.neckModelsByValueName, valueName);
   }
 
-  if (isGarmentModelAttribute(attributeName)) {
+  if (
+    matchesVisualAssetAttributeId(catalog, "garmentModel", attributeId) ||
+    isGarmentModelAttribute(attributeName)
+  ) {
     return findByNormalizedName(catalog.garmentModelsByValueName, valueName);
   }
 
-  if (isLowerPocketModelAttribute(attributeName)) {
+  if (
+    matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attributeId) ||
+    isLowerPocketModelAttribute(attributeName)
+  ) {
     return findByNormalizedName(catalog.lowerPocketModelsByValueName, valueName);
   }
 
-  if (isChestPocketModelAttribute(attributeName)) {
+  if (
+    matchesVisualAssetAttributeId(catalog, "chestPocketModel", attributeId) ||
+    isChestPocketModelAttribute(attributeName)
+  ) {
     return findByNormalizedName(catalog.chestPocketModelsByValueName, valueName);
   }
 
-  if (isAuxiliaryPocketModelAttribute(attributeName)) {
+  if (
+    matchesVisualAssetAttributeId(catalog, "auxiliaryPocketModel", attributeId) ||
+    isAuxiliaryPocketModelAttribute(attributeName)
+  ) {
     return findByNormalizedName(catalog.auxiliaryPocketModelsByValueName, valueName);
   }
 
