@@ -61,6 +61,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 343,
+          name: "OVALADO",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 2956,
           name: "EL HATO",
           attributeId: 63,
@@ -365,6 +371,12 @@ const session: ConfiguratorSession = {
         {
           id: 2898,
           name: "Cuello aros",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 7009,
+          name: "Cuello arco",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -1203,6 +1215,33 @@ describe("deriveAutomationRenderScene", () => {
         role: "upperNeck",
         key: "cuello-completo",
         label: "Cuello completo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga OVALADO con Cuello arco y cogotera curva", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [343],
+      "92": [7009, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-09.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7009,
+        key: "cuello-arco",
+        label: "Cuello arco",
         colorHex: "#f4c7cc",
       },
     ]);

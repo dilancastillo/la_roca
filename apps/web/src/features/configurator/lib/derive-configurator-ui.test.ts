@@ -62,6 +62,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 343,
+          name: "OVALADO",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 2956,
           name: "EL HATO",
           attributeId: 63,
@@ -378,6 +384,12 @@ const session: ConfiguratorSession = {
         {
           id: 2898,
           name: "Cuello aros",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 7009,
+          name: "Cuello arco",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -1543,6 +1555,34 @@ describe("deriveConfiguratorUi", () => {
         role: "upperNeck",
         key: "cuello-completo",
         label: "Cuello completo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga OVALADO con Cuello arco y cogotera curva", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [343],
+      "91": [5152],
+      "92": [7009, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-09.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7009,
+        key: "cuello-arco",
+        label: "Cuello arco",
         colorHex: "#f4c7cc",
       },
     ]);

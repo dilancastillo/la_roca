@@ -100,7 +100,6 @@ const CHEST_POCKET_LOGO_MARKER_SRC =
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-  "blouse-model-09.svg": [3],
   "blouse-model-10.svg": [3, 4],
   "blouse-model-37-cirugia.svg": [3, 4, 5, 6, 8, 9, 10],
   "blouse-model-39-el-hato.svg": [11, 12, 13, 14, 15, 19, 20, 21],
@@ -210,6 +209,7 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-41-matrioska.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-42.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-43.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-09.svg": "M316 130 C390 150 478 163 568 127",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -250,6 +250,8 @@ const collarTrimOverlayByFileName: Record<string, string> = {
 };
 
 const collarRingsTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-09.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-09-ovalado-collar-arc.svg",
   "blouse-model-15-presillas.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
@@ -264,6 +266,7 @@ const completeCollarOnlyFileNames = new Set([
 const noCollarTrimFileNames = new Set([
   "blouse-model-02-jdc.svg",
   "blouse-model-44-cucuta.svg",
+  "blouse-model-09.svg",
   "blouse-model-21-deportivo.svg",
   "blouse-model-50-20-20.svg",
   "blouse-model-06-puntas.svg",
@@ -359,7 +362,11 @@ function isCollarRingsSection(section: PreviewScene["trimSections"][number]) {
   return (
     collarRingsTrimValueIds.has(section.valueId) ||
     key.includes("cuello aros") ||
-    key.includes("cuello-aros")
+    key.includes("cuello-aros") ||
+    key.includes("cuello arco") ||
+    key.includes("cuello-arco") ||
+    key.includes("cuello arcos") ||
+    key.includes("cuello-arcos")
   );
 }
 
