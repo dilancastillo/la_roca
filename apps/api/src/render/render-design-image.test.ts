@@ -1375,6 +1375,50 @@ describe("renderDesignImage", () => {
     expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza JEAN con cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftCurveEndPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 292, y: 135, width: 42, height: 22 },
+    );
+    const rightCurveEndPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 565, y: 135, width: 42, height: 22 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(leftCurveEndPinkPixels).toBeGreaterThan(20);
+    expect(rightCurveEndPinkPixels).toBeGreaterThan(20);
+  }, 20000);
+
   it("renderiza ESTRELLA con vivo de cuello, aletas y cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22-estrella.svg";

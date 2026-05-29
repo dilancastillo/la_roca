@@ -201,6 +201,7 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-29-pedagogia.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-40-mariposa.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-41-matrioska.svg": "M305 140 C365 121 535 121 595 140",
+  "blouse-model-42.svg": "M305 140 C365 121 535 121 595 140",
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
