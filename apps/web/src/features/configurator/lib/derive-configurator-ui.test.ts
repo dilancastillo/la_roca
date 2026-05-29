@@ -38,6 +38,12 @@ const session: ConfiguratorSession = {
           attributeName: "Nombre editable en Odoo",
         },
         {
+          id: 346,
+          name: "PUNTADAS",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
+        {
           id: 338,
           name: "JDC",
           attributeId: 63,
@@ -388,6 +394,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 7010,
+          name: "Cuello puntadas",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 7009,
           name: "Cuello arco",
           attributeId: 92,
@@ -645,6 +657,34 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg",
     );
+  });
+
+  it("carga PUNTADAS con Cuello puntadas y cogotera", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [346],
+      "91": [5152],
+      "92": [7010, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-07.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7010,
+        key: "cuello-puntadas",
+        label: "Cuello puntadas",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("usa miniaturas de Odoo en la barra lateral sin enviarlas al canvas", () => {

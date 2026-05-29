@@ -37,6 +37,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo de cuello",
         },
         {
+          id: 346,
+          name: "PUNTADAS",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
+        {
           id: 338,
           name: "JDC",
           attributeId: 63,
@@ -375,6 +381,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 7010,
+          name: "Cuello puntadas",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 7009,
           name: "Cuello arco",
           attributeId: 92,
@@ -572,6 +584,33 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-06-puntas.svg",
     );
+  });
+
+  it("carga PUNTADAS con Cuello puntadas y cogotera", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [346],
+      "92": [7010, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-07.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7010,
+        key: "cuello-puntadas",
+        label: "Cuello puntadas",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("pinta el cuello solo cuando Seccion de vivo tiene Cuello", () => {

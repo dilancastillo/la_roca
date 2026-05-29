@@ -391,6 +391,14 @@ function isCollarRingsSection(
   );
 }
 
+function isCollarStitchesSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello puntadas") || key.includes("cuello-puntadas");
+}
+
 function isLeftInternalCollarSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -1754,6 +1762,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isCollarRingsSection,
     );
+    const collarStitchesTrimColor = getTrimSectionColor(
+      scene,
+      isCollarStitchesSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -1832,6 +1844,23 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             toDataUri(collarInkBuffer),
             trimRegionPresets.collar,
           ),
+        );
+      }
+    }
+
+    if (collarStitchesTrimColor) {
+      const collarStitchesTrimOverlayBuffer = await createCollarTrimOverlayBuffer(
+        baseAssetPath,
+        collarStitchesTrimColor,
+      );
+
+      if (collarStitchesTrimOverlayBuffer) {
+        const collarStitchesTrimOutlineBuffer = await createPngInkOutlineBuffer(
+          collarStitchesTrimOverlayBuffer,
+        );
+        layers.push(
+          `<image href="${toDataUri(collarStitchesTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(collarStitchesTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       }
     }

@@ -376,6 +376,12 @@ function isCollarRingsSection(section: PreviewScene["trimSections"][number]) {
   );
 }
 
+function isCollarStitchesSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello puntadas") || key.includes("cuello-puntadas");
+}
+
 function isLeftInternalCollarSection(
   section: PreviewScene["trimSections"][number],
 ) {
@@ -1991,6 +1997,10 @@ export async function composeDesign(
       scene,
       isCollarRingsSection,
     );
+    const collarStitchesTrimColor = getTrimSectionColor(
+      scene,
+      isCollarStitchesSection,
+    );
     const leftInternalCollarTrimColor = getTrimSectionColor(
       scene,
       isLeftInternalCollarSection,
@@ -2033,6 +2043,7 @@ export async function composeDesign(
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
 
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
+    await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
     await drawInnerCollarTrimFromAsset(
       context,
       baseAssetSrc,

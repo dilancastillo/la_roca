@@ -2925,4 +2925,77 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(topBackNeckPinkPixels).toBeGreaterThan(100);
   }, 20000);
+
+  it("renderiza PUNTADAS con Cuello puntadas y cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-07.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withStitches = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 7010,
+            key: "cuello-puntadas",
+            label: "Cuello puntadas",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const centerStitchPinkPixels = countPastelPinkPixelsInRegion(
+      withStitches.data,
+      withStitches.info.width,
+      { x: 275, y: 140, width: 345, height: 220 },
+    );
+    const leftShoulderStitchPinkPixels = countPastelPinkPixelsInRegion(
+      withStitches.data,
+      withStitches.info.width,
+      { x: 165, y: 180, width: 250, height: 175 },
+    );
+    const rightShoulderStitchPinkPixels = countPastelPinkPixelsInRegion(
+      withStitches.data,
+      withStitches.info.width,
+      { x: 510, y: 170, width: 225, height: 190 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withStitches.data),
+    ).toBeGreaterThan(100);
+    expect(centerStitchPinkPixels).toBeGreaterThan(200);
+    expect(leftShoulderStitchPinkPixels).toBeGreaterThan(100);
+    expect(rightShoulderStitchPinkPixels).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+  }, 20000);
 });
