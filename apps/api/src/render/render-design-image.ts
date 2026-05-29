@@ -148,6 +148,8 @@ const internalCollarTrimOverlayByFileName: Record<
 };
 
 const innerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-44-cucuta.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-44-cucuta-inner-collar.svg",
   "blouse-model-41-matrioska.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-41-matrioska-inner-collar.svg",
 };
@@ -192,6 +194,11 @@ const completeInteriorCollarTrimOverlayByFileName: Record<
 const flapTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-22-estrella.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-aletas.svg",
+};
+
+const backNeckTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-44-cucuta.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-44-cucuta-back-neck.svg",
 };
 
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
@@ -258,6 +265,7 @@ const completeCollarOnlyFileNames = new Set([
 
 const noCollarTrimFileNames = new Set([
   "blouse-model-02-jdc.svg",
+  "blouse-model-44-cucuta.svg",
   "blouse-model-21-deportivo.svg",
   "blouse-model-50-20-20.svg",
   "blouse-model-06-puntas.svg",
@@ -1277,6 +1285,22 @@ async function createBackNeckTrimOverlayBuffer(
     return undefined;
   }
 
+  const overlayPath =
+    backNeckTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (overlayPath) {
+    const [overlayProcessed, placementProcessed] = await Promise.all([
+      loadProcessedImage(overlayPath),
+      loadProcessedImage(assetPath),
+    ]);
+    const overlayBuffer = await createOverlayBufferFromProcessed(
+      overlayProcessed,
+      placementProcessed,
+    );
+
+    return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  }
+
   const trimIndexes =
     backNeckTrimElementIndexesByFileName[getAssetFileName(assetPath)];
 
@@ -1323,9 +1347,11 @@ function allowsBackNeckTrim(assetPath: string) {
 }
 
 function getCollarLineOutlineRadius(assetPath: string) {
-  return ["blouse-model-01.svg", "blouse-model-02-jdc.svg"].includes(
-    getAssetFileName(assetPath),
-  )
+  return [
+    "blouse-model-01.svg",
+    "blouse-model-02-jdc.svg",
+    "blouse-model-44-cucuta.svg",
+  ].includes(getAssetFileName(assetPath))
     ? 3
     : 7;
 }
@@ -1802,6 +1828,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     if (innerCollarTrimOverlayBuffer) {
       const innerCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
         innerCollarTrimOverlayBuffer,
+        "#f8fafc",
+        getCollarLineOutlineRadius(baseAssetPath),
       );
       layers.push(
         `<image href="${toDataUri(innerCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
@@ -1926,6 +1954,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       if (backNeckTrimOverlayBuffer) {
         const backNeckTrimOutlineBuffer = await createPngInkOutlineBuffer(
           backNeckTrimOverlayBuffer,
+          "#f8fafc",
+          getCollarLineOutlineRadius(baseAssetPath),
         );
         layers.push(
           `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,

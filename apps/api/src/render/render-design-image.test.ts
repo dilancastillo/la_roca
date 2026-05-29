@@ -1877,6 +1877,89 @@ describe("renderDesignImage", () => {
     expect(necklinePinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza CUCUTA con vivo de Cuello interno y cogotera especial", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-44-cucuta.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 415,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withInnerCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2901,
+            key: "cuello-interno",
+            label: "Cuello interno",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const innerCollarPinkPixels = countPastelPinkPixelsInRegion(
+      withInnerCollar.data,
+      withInnerCollar.info.width,
+      { x: 420, y: 190, width: 90, height: 220 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 300, y: 100, width: 300, height: 120 },
+    );
+    const bodyBaseColorPixels = countBaseColorPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 330, y: 380, width: 260, height: 420 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(bodyBaseColorPixels).toBeGreaterThan(20000);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withInnerCollar.data),
+    ).toBeGreaterThan(100);
+    expect(innerCollarPinkPixels).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+  }, 20000);
+
   it("renderiza 20-21 con vivos externos independientes y cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg";

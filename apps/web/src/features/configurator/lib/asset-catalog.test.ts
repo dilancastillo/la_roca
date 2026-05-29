@@ -62,6 +62,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[339]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg",
     );
+    expect(catalog?.neckModelsByValueId?.[340]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-44-cucuta.svg",
+    );
+    expect(catalog?.neckModelsByValueId?.[1162]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-44-cucuta.svg",
+    );
     expect(catalog?.neckModelsByValueId?.[341]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
     );
@@ -266,6 +272,18 @@ describe("getProductAssetCatalog", () => {
         145,
         999978,
         "Modelo de cuello",
+        "CUCUTA",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-44-cucuta.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999979,
+        "Modelo de cuello",
         "MATRIOSKA",
       ),
     ).toBe(
@@ -276,7 +294,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999979,
+        999980,
         "Modelo de cuello",
         "MARIPOSA",
       ),
@@ -288,7 +306,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999980,
+        999981,
         "Modelo de cuello",
         "20-20",
       ),
@@ -300,7 +318,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999981,
+        999982,
         "Modelo de cuello",
         "DEPORTIVO",
       ),
@@ -312,7 +330,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999982,
+        999983,
         "Modelo de cuello",
         "ESTRELLA",
       ),
@@ -324,7 +342,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999983,
+        999984,
         "Modelo de cuello",
         "POLO",
       ),
@@ -336,7 +354,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999984,
+        999985,
         "Modelo de cuello",
         "BOTONES",
       ),
@@ -348,7 +366,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999985,
+        999986,
         "Modelo de cuello",
         "20-21",
       ),
@@ -360,7 +378,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999986,
+        999987,
         "Modelo de cuello",
         "CUELLO REDONDO",
       ),
@@ -372,7 +390,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999987,
+        999988,
         "Modelo de cuello",
         "CREMALLERA",
       ),
@@ -384,7 +402,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999988,
+        999989,
         "Modelo de cuello",
         "PEDAGOGIA",
       ),
@@ -396,7 +414,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
-        999989,
+        999990,
         "Modelo de cuello",
         "ORIENTAL",
       ),

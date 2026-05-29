@@ -142,6 +142,8 @@ const internalCollarTrimOverlayByFileName: Record<
 };
 
 const innerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-44-cucuta.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-44-cucuta-inner-collar.svg",
   "blouse-model-41-matrioska.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-41-matrioska-inner-collar.svg",
 };
@@ -186,6 +188,11 @@ const completeInteriorCollarTrimOverlayByFileName: Record<
 const flapTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-22-estrella.svg":
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-22-estrella-aletas.svg",
+};
+
+const backNeckTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-44-cucuta.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-44-cucuta-back-neck.svg",
 };
 
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
@@ -252,6 +259,7 @@ const completeCollarOnlyFileNames = new Set([
 
 const noCollarTrimFileNames = new Set([
   "blouse-model-02-jdc.svg",
+  "blouse-model-44-cucuta.svg",
   "blouse-model-21-deportivo.svg",
   "blouse-model-50-20-20.svg",
   "blouse-model-06-puntas.svg",
@@ -1598,6 +1606,20 @@ async function drawBackNeckTrimFromAsset(
   sourceSrc: string,
   trimColor: string | undefined,
 ) {
+  if (!trimColor) {
+    return false;
+  }
+
+  const overlaySrc =
+    backNeckTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (overlaySrc) {
+    const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+    context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 3), 0, 0);
+    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    return true;
+  }
+
   const trimIndexes =
     backNeckTrimElementIndexesByFileName[getFileNameFromSource(sourceSrc)];
 
@@ -1646,9 +1668,11 @@ async function drawCollarTrimFromAsset(
 }
 
 function getCollarLineOutlineRadius(sourceSrc: string) {
-  return ["blouse-model-01.svg", "blouse-model-02-jdc.svg"].includes(
-    getFileNameFromSource(sourceSrc),
-  )
+  return [
+    "blouse-model-01.svg",
+    "blouse-model-02-jdc.svg",
+    "blouse-model-44-cucuta.svg",
+  ].includes(getFileNameFromSource(sourceSrc))
     ? 3
     : 7;
 }
