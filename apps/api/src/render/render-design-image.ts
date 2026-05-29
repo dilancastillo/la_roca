@@ -139,6 +139,11 @@ const internalCollarTrimOverlayByFileName: Record<
     right:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-internal-right.svg",
   },
+  "blouse-model-08.svg": {
+    left: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-internal-left.svg",
+    right:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-08-internal-right.svg",
+  },
   "blouse-model-50-20-20.svg": {
     left: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-50-20-20-internal-left.svg",
     right:
@@ -286,6 +291,7 @@ const noCollarTrimFileNames = new Set([
 ]);
 
 const noBackNeckTrimFileNames = new Set([
+  "blouse-model-08.svg",
   "blouse-model-33-oriental.svg",
   "blouse-model-39-el-hato.svg",
 ]);

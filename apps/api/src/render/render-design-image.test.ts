@@ -683,6 +683,106 @@ describe("renderDesignImage", () => {
     expect(curvedBackNeckPinkPixels).toBeGreaterThan(100);
   }, 20000);
 
+  it("renderiza CUELLO ALTO con vivos internos y sin cogotera", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withHighCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 421,
+            role: "upperNeck",
+            key: "cuello-alto",
+            label: "Cuello alto",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLeftInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5155,
+            key: "cuello-v-lineal-interno-izquierdo",
+            label: "Cuello V lineal interno izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightInternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5156,
+            key: "cuello-v-lineal-interno-derecho",
+            label: "Cuello V lineal interno derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const highCollarPinkPixels = countPastelPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 330, y: 105, width: 250, height: 100 },
+    );
+    const leftInternalPinkPixels = countPastelPinkPixelsInRegion(
+      withLeftInternal.data,
+      withLeftInternal.info.width,
+      { x: 385, y: 165, width: 75, height: 235 },
+    );
+    const rightInternalPinkPixels = countPastelPinkPixelsInRegion(
+      withRightInternal.data,
+      withRightInternal.info.width,
+      { x: 440, y: 165, width: 75, height: 235 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withHighCollar.data),
+    ).toBeGreaterThan(100);
+    expect(highCollarPinkPixels).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLeftInternal.data),
+    ).toBeGreaterThan(100);
+    expect(leftInternalPinkPixels).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightInternal.data),
+    ).toBeGreaterThan(100);
+    expect(rightInternalPinkPixels).toBeGreaterThan(100);
+    expect(countDifferentPixels(withoutTrim.data, withBackNeck.data)).toBe(0);
+  }, 20000);
+
   it("renderiza lados internos independientes en cuello 20-19", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg";

@@ -638,6 +638,39 @@ describe("deriveAutomationRenderScene", () => {
     ]);
   });
 
+  it("carga CUELLO ALTO con cuello alto y lineas internas independientes", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2601],
+      "92": [421, 5155, 5156],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 421,
+        role: "upperNeck",
+        key: "cuello-alto",
+        label: "Cuello alto",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5155,
+        key: "cuello-v-lineal-interno-izquierdo",
+        label: "Cuello V lineal interno izquierdo",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 5156,
+        key: "cuello-v-lineal-interno-derecho",
+        label: "Cuello V lineal interno derecho",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
   it("carga 20-20 y pasa los vivos internos independientes con cogotera recta", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
