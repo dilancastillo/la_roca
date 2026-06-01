@@ -180,6 +180,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Modelo de cuello",
         },
+        {
+          id: 2962,
+          name: "CHEROKEE",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
       ],
     },
     {
@@ -1381,6 +1387,39 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 416,
+        key: "cuello-v-lineal-externo-derecho",
+        label: "Cuello V lineal externo derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2907,
+        key: "cuello-v-lineal-externo-izquierdo",
+        label: "Cuello V lineal externo izquierdo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2962],
+      "92": [416, 2907, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
     );
     expect(scene.trimSections).toEqual([
       {

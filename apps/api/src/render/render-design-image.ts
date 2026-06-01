@@ -177,6 +177,11 @@ const externalCollarTrimOverlayByFileName: Record<
     right:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-25-20-21-external-right.svg",
   },
+  "blouse-model-12-cherokee.svg": {
+    left: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-12-cherokee-external-left.svg",
+    right:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-12-cherokee-external-right.svg",
+  },
 };
 
 const completeInteriorCollarTrimOverlayByFileName: Record<

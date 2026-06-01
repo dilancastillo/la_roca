@@ -181,6 +181,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2962,
+          name: "CHEROKEE",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -1726,6 +1732,40 @@ describe("deriveConfiguratorUi", () => {
 
     expect(ui.previewScene.neckImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-25-20-21.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 5146,
+        role: "backNeck",
+        key: "cogotera",
+        label: "Cogotera",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 416,
+        key: "cuello-v-lineal-externo-derecho",
+        label: "Cuello V lineal externo derecho",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 2907,
+        key: "cuello-v-lineal-externo-izquierdo",
+        label: "Cuello V lineal externo izquierdo",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+  });
+
+  it("carga CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2962],
+      "91": [5152],
+      "92": [416, 2907, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
     );
     expect(ui.previewScene.trimSections).toEqual([
       {

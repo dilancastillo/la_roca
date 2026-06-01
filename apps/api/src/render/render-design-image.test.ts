@@ -438,18 +438,46 @@ describe("renderDesignImage", () => {
   }, 20000);
 
   it("renderiza Cherokee con color base y cogotera", async () => {
-    const withoutBackNeck = await readRawPng(
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";
+    const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
-        neckAssetPath:
-          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+        neckAssetPath,
+      }),
+    );
+    const withLeftExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 2907,
+            key: "cuello-v-lineal-externo-izquierdo",
+            label: "Cuello V lineal externo izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightExternal = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 416,
+            key: "cuello-v-lineal-externo-derecho",
+            label: "Cuello V lineal externo derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
       }),
     );
     const withBackNeck = await readRawPng(
       await renderDesignImage({
         ...baseScene,
-        neckAssetPath:
-          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+        neckAssetPath,
         trimSections: [
           {
             valueId: 414,
@@ -461,12 +489,35 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const basePinkPixels = countPastelPinkPixelsByHalf(
+      withoutTrim.data,
+      withoutTrim.info.width,
+    );
+    const leftPinkPixels = countPastelPinkPixelsByHalf(
+      withLeftExternal.data,
+      withLeftExternal.info.width,
+    );
+    const rightPinkPixels = countPastelPinkPixelsByHalf(
+      withRightExternal.data,
+      withRightExternal.info.width,
+    );
 
-    expect(withoutBackNeck.info.width).toBe(900);
-    expect(withoutBackNeck.info.height).toBe(1200);
-    expect(countNeonGreenPixels(withoutBackNeck.data)).toBe(0);
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countNeonGreenPixels(withoutTrim.data)).toBe(0);
+    expect(basePinkPixels.left + basePinkPixels.right).toBe(0);
     expect(
-      countDifferentPixels(withoutBackNeck.data, withBackNeck.data),
+      countDifferentPixels(withoutTrim.data, withLeftExternal.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRightExternal.data),
+    ).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(100);
+    expect(leftPinkPixels.left).toBeGreaterThan(leftPinkPixels.right);
+    expect(rightPinkPixels.right).toBeGreaterThan(100);
+    expect(rightPinkPixels.right).toBeGreaterThan(rightPinkPixels.left);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
   }, 20000);
 
