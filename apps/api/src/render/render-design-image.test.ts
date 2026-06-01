@@ -1429,6 +1429,21 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withHighCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 421,
+            role: "upperNeck",
+            key: "cuello-alto",
+            label: "Cuello alto",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withBackNeck = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -1444,6 +1459,26 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const highCollarPinkPixels = countPastelPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 320, y: 110, width: 310, height: 120 },
+    );
+    const highCollarLowerVPinkPixels = countPastelPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 390, y: 250, width: 150, height: 270 },
+    );
+    const completeCollarTopPinkPixels = countPastelPinkPixelsInRegion(
+      withCompleteCollar.data,
+      withCompleteCollar.info.width,
+      { x: 320, y: 110, width: 310, height: 120 },
+    );
+    const completeCollarVPinkPixels = countPastelPinkPixelsInRegion(
+      withCompleteCollar.data,
+      withCompleteCollar.info.width,
+      { x: 390, y: 250, width: 150, height: 270 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -1454,8 +1489,15 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withPresillasPocket.data),
     ).toBeGreaterThan(500);
     expect(
+      countDifferentPixels(withoutTrim.data, withHighCollar.data),
+    ).toBeGreaterThan(100);
+    expect(highCollarPinkPixels).toBeGreaterThan(250);
+    expect(highCollarLowerVPinkPixels).toBeLessThan(80);
+    expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
     ).toBeGreaterThan(100);
+    expect(completeCollarTopPinkPixels).toBeGreaterThan(250);
+    expect(completeCollarVPinkPixels).toBeGreaterThan(250);
   }, 20000);
 
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {

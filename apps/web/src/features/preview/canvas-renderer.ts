@@ -266,6 +266,16 @@ const collarRingsTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
+const filledCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-complete-collar-fill.svg",
+};
+
+const highCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-high-collar-fill.svg",
+};
+
 const dividedCollarTrimOverlayByFileName: Record<
   string,
   { upper: string; lower: string }
@@ -364,6 +374,12 @@ function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
     key.includes("cuello alto") ||
     key.includes("cuello-alto")
   );
+}
+
+function isHighCollarSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello alto") || key.includes("cuello-alto");
 }
 
 function isCompleteCollarSection(section: PreviewScene["trimSections"][number]) {
@@ -1704,6 +1720,15 @@ async function drawCollarTrimFromAsset(
     return;
   }
 
+  const filledOverlaySrc =
+    filledCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (filledOverlaySrc && !trimIndexesOverride) {
+    const overlayCanvas = await createRasterCanvas(filledOverlaySrc, sourceSrc);
+    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    return;
+  }
+
   const overlaySrc = collarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
 
   if (overlaySrc && !trimIndexesOverride) {
@@ -1728,6 +1753,26 @@ async function drawCollarTrimFromAsset(
 
   drawCanvasInRegions(context, tintedCanvas, collarRegions);
   drawCanvasInRegions(context, inkCanvas, collarRegions);
+}
+
+async function drawHighCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    highCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
 function getCollarLineOutlineRadius(sourceSrc: string) {
@@ -2065,6 +2110,7 @@ export async function composeDesign(
       scene,
       isCollarStitchesSection,
     );
+    const highCollarTrimColor = getTrimSectionColor(scene, isHighCollarSection);
     const upperDividedCollarTrimColor = getTrimSectionColor(
       scene,
       isUpperDividedCollarSection,
@@ -2116,6 +2162,11 @@ export async function composeDesign(
 
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
+    await drawHighCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      highCollarTrimColor,
+    );
     await drawInnerCollarTrimFromAsset(
       context,
       baseAssetSrc,

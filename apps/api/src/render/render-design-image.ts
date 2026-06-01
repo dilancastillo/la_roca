@@ -272,6 +272,16 @@ const collarRingsTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-15-presillas-rings.svg",
 };
 
+const filledCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-complete-collar-fill.svg",
+};
+
+const highCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-high-collar-fill.svg",
+};
+
 const dividedCollarTrimOverlayByFileName: Record<
   string,
   { upper: string; lower: string }
@@ -375,6 +385,14 @@ function isWholeCollarSection(
     key.includes("cuello alto") ||
     key.includes("cuello-alto")
   );
+}
+
+function isHighCollarSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello alto") || key.includes("cuello-alto");
 }
 
 function isCompleteCollarSection(
@@ -1163,6 +1181,59 @@ async function createCollarTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+async function createFilledCollarTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath =
+    filledCollarTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
+async function createHighCollarTrimOverlayBuffer(
+  assetPath: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return undefined;
+  }
+
+  const overlayPath = highCollarTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(assetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
 async function createInternalCollarTrimOverlayBuffer(
   assetPath: string,
   side: "left" | "right",
@@ -1834,6 +1905,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isCollarStitchesSection,
     );
+    const highCollarTrimColor = getTrimSectionColor(scene, isHighCollarSection);
     const upperDividedCollarTrimColor = getTrimSectionColor(
       scene,
       isUpperDividedCollarSection,
@@ -1886,12 +1958,23 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
 
     if (collarTrimColor) {
-      const collarTrimOverlayBuffer = await createCollarTrimOverlayBuffer(
-        baseAssetPath,
-        collarTrimColor,
-      );
+      const filledCollarTrimOverlayBuffer =
+        await createFilledCollarTrimOverlayBuffer(
+          baseAssetPath,
+          collarTrimColor,
+        );
+      const collarTrimOverlayBuffer = filledCollarTrimOverlayBuffer
+        ? undefined
+        : await createCollarTrimOverlayBuffer(
+            baseAssetPath,
+            collarTrimColor,
+          );
 
-      if (collarTrimOverlayBuffer) {
+      if (filledCollarTrimOverlayBuffer) {
+        layers.push(
+          `<image href="${toDataUri(filledCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        );
+      } else if (collarTrimOverlayBuffer) {
         const collarTrimOutlineBuffer = await createPngInkOutlineBuffer(
           collarTrimOverlayBuffer,
         );
@@ -1922,6 +2005,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           ),
         );
       }
+    }
+
+    const highCollarTrimOverlayBuffer =
+      await createHighCollarTrimOverlayBuffer(
+        baseAssetPath,
+        highCollarTrimColor,
+      );
+
+    if (highCollarTrimOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(highCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
     }
 
     if (collarStitchesTrimColor) {
