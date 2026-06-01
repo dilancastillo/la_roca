@@ -2892,6 +2892,16 @@ describe("renderDesignImage", () => {
       withHighCollar.info.width,
       { x: 420, y: 130, width: 60, height: 20 },
     );
+    const highCollarLeftJoinPinkPixels = countPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 398, y: 188, width: 34, height: 45 },
+    );
+    const highCollarRightJoinPinkPixels = countPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 500, y: 188, width: 34, height: 45 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -2906,6 +2916,8 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(500);
     expect(highCollarInteriorPinkPixels).toBeLessThan(80);
     expect(highCollarBackPinkPixels).toBeGreaterThan(900);
+    expect(highCollarLeftJoinPinkPixels).toBeGreaterThan(100);
+    expect(highCollarRightJoinPinkPixels).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
