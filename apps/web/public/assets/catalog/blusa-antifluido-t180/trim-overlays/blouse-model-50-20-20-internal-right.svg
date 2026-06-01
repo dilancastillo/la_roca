@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1082 1350">
   <g id="cuello-20-20-interno-derecho">
-    <path fill="#000000" d="M629.3204,234.1123 657.7989,243.7017 567.7056,389.0347 533.959,389.0347Z"/>
+    <path d="M629.3204,234.1123 657.7989,243.7017 567.7056,389.0347 533.959,389.0347Z" fill="none" stroke="#000000" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
   </g>
 </svg>
