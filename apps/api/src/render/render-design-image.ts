@@ -285,6 +285,8 @@ const filledCollarTrimOverlayByFileName: Record<string, string> = {
 const highCollarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-39-el-hato.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-high-collar-fill.svg",
+  "blouse-model-37-cirugia.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-37-cirugia-high-collar.svg",
 };
 
 const dividedCollarTrimOverlayByFileName: Record<
@@ -301,6 +303,7 @@ const dividedCollarTrimOverlayByFileName: Record<
 
 const completeCollarOnlyFileNames = new Set([
   "blouse-model-39-el-hato.svg",
+  "blouse-model-37-cirugia.svg",
   "blouse-model-43.svg",
   "blouse-model-11-fisiopracticas.svg",
   "blouse-model-13-p-paipilla.svg",
