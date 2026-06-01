@@ -1464,6 +1464,11 @@ describe("renderDesignImage", () => {
       withHighCollar.info.width,
       { x: 320, y: 110, width: 310, height: 120 },
     );
+    const highCollarCenterPinkPixels = countPastelPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 390, y: 130, width: 140, height: 45 },
+    );
     const highCollarLowerVPinkPixels = countPastelPinkPixelsInRegion(
       withHighCollar.data,
       withHighCollar.info.width,
@@ -1479,6 +1484,11 @@ describe("renderDesignImage", () => {
       withCompleteCollar.info.width,
       { x: 390, y: 250, width: 150, height: 270 },
     );
+    const completeCollarButtonDarkPixels = countDarkPixelsInRegion(
+      withCompleteCollar.data,
+      withCompleteCollar.info.width,
+      { x: 445, y: 430, width: 35, height: 90 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -1492,12 +1502,14 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);
     expect(highCollarPinkPixels).toBeGreaterThan(250);
+    expect(highCollarCenterPinkPixels).toBeGreaterThan(900);
     expect(highCollarLowerVPinkPixels).toBeLessThan(80);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
     ).toBeGreaterThan(100);
     expect(completeCollarTopPinkPixels).toBeGreaterThan(250);
     expect(completeCollarVPinkPixels).toBeGreaterThan(250);
+    expect(completeCollarButtonDarkPixels).toBeGreaterThan(80);
   }, 20000);
 
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {

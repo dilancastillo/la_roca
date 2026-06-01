@@ -95,6 +95,11 @@ const garmentDetailOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
 };
 
+const neckModelDetailOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
+};
+
 const CHEST_POCKET_LOGO_MARKER_SRC =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
 
@@ -1642,6 +1647,21 @@ async function drawGarmentModelDetails(
   context.drawImage(overlayCanvas, 0, 0);
 }
 
+async function drawNeckModelDetails(
+  context: CanvasRenderingContext2D,
+  neckSrc: string,
+) {
+  const overlaySrc =
+    neckModelDetailOverlayByFileName[getFileNameFromSource(neckSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, neckSrc);
+  context.drawImage(overlayCanvas, 0, 0);
+}
+
 function createBackNeckTrimPath(pathData?: string) {
   if (pathData) {
     return new Path2D(pathData);
@@ -2239,6 +2259,8 @@ export async function composeDesign(
         backNeckTrimPathDataByFileName[getFileNameFromSource(baseAssetSrc)],
       );
     }
+
+    await drawNeckModelDetails(context, baseAssetSrc);
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
       await drawLowerPocketOverlay(

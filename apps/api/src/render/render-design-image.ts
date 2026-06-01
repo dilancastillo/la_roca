@@ -101,6 +101,11 @@ const garmentDetailOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
 };
 
+const neckModelDetailOverlayByFileName: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
+};
+
 const CHEST_POCKET_LOGO_MARKER_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
 
@@ -1130,6 +1135,25 @@ async function createGarmentModelDetailOverlayBuffer(
   const [overlayProcessed, placementProcessed] = await Promise.all([
     loadProcessedImage(overlayPath),
     loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
+async function createNeckModelDetailOverlayBuffer(neckAssetPath: string) {
+  const overlayPath =
+    neckModelDetailOverlayByFileName[getAssetFileName(neckAssetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(neckAssetPath),
   ]);
 
   return await createOverlayBufferFromProcessed(
@@ -2212,6 +2236,15 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           ),
         );
       }
+    }
+
+    const neckModelDetailOverlayBuffer =
+      await createNeckModelDetailOverlayBuffer(baseAssetPath);
+
+    if (neckModelDetailOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(neckModelDetailOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
     }
 
     if (scene.lowerPocketAssetPath && scene.lowerPocketLayout !== "none") {
