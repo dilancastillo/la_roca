@@ -1469,6 +1469,11 @@ describe("renderDesignImage", () => {
       withHighCollar.info.width,
       { x: 390, y: 130, width: 140, height: 45 },
     );
+    const highCollarFrontJoinPinkPixels = countPastelPinkPixelsInRegion(
+      withHighCollar.data,
+      withHighCollar.info.width,
+      { x: 420, y: 185, width: 80, height: 35 },
+    );
     const highCollarLowerVPinkPixels = countPastelPinkPixelsInRegion(
       withHighCollar.data,
       withHighCollar.info.width,
@@ -1503,6 +1508,7 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(highCollarPinkPixels).toBeGreaterThan(250);
     expect(highCollarCenterPinkPixels).toBeGreaterThan(900);
+    expect(highCollarFrontJoinPinkPixels).toBeGreaterThan(1200);
     expect(highCollarLowerVPinkPixels).toBeLessThan(80);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
