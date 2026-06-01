@@ -2243,12 +2243,12 @@ describe("renderDesignImage", () => {
     const upperDividedPinkPixels = countPastelPinkPixelsInRegion(
       withUpperDivided.data,
       withUpperDivided.info.width,
-      { x: 425, y: 260, width: 145, height: 105 },
+      { x: 365, y: 250, width: 140, height: 95 },
     );
     const lowerDividedPinkPixels = countPastelPinkPixelsInRegion(
       withLowerDivided.data,
       withLowerDivided.info.width,
-      { x: 365, y: 250, width: 140, height: 95 },
+      { x: 425, y: 260, width: 145, height: 105 },
     );
     const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
       withBackNeck.data,
@@ -2261,12 +2261,12 @@ describe("renderDesignImage", () => {
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withUpperDivided.data),
-    ).toBeGreaterThan(500);
+    ).toBeGreaterThan(250);
     expect(
       countDifferentPixels(withoutTrim.data, withLowerDivided.data),
-    ).toBeGreaterThan(250);
-    expect(upperDividedPinkPixels).toBeGreaterThan(450);
-    expect(lowerDividedPinkPixels).toBeGreaterThan(200);
+    ).toBeGreaterThan(500);
+    expect(upperDividedPinkPixels).toBeGreaterThan(200);
+    expect(lowerDividedPinkPixels).toBeGreaterThan(450);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
