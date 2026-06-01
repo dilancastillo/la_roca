@@ -2171,6 +2171,108 @@ describe("renderDesignImage", () => {
     expect(topBackNeckPinkPixels).toBeGreaterThan(100);
   }, 20000);
 
+  it("renderiza MODELO 29 con bordes divididos y cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-28-modelo-29.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withGenericCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5147,
+            role: "upperNeck",
+            key: "cuello",
+            label: "Cuello",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withUpperDivided = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 7011,
+            role: "upperNeck",
+            key: "cuello-borde-dividido-superior",
+            label: "Cuello Borde Dividido superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerDivided = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 7012,
+            role: "lowerNeck",
+            key: "cuello-borde-dividido-inferior",
+            label: "Cuello Borde Dividido inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5146,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const upperDividedPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperDivided.data,
+      withUpperDivided.info.width,
+      { x: 425, y: 260, width: 145, height: 105 },
+    );
+    const lowerDividedPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerDivided.data,
+      withLowerDivided.info.width,
+      { x: 365, y: 250, width: 140, height: 95 },
+    );
+    const topBackNeckPinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 280, y: 90, width: 340, height: 80 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperDivided.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerDivided.data),
+    ).toBeGreaterThan(250);
+    expect(upperDividedPinkPixels).toBeGreaterThan(450);
+    expect(lowerDividedPinkPixels).toBeGreaterThan(200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(topBackNeckPinkPixels).toBeGreaterThan(100);
+  }, 20000);
+
   it("renderiza MATRIOSKA con vivo de Cuello interno y cogotera ovalada", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-41-matrioska.svg";

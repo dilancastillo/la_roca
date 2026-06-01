@@ -480,6 +480,18 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         145,
+        888001,
+        "Modelo de cuello",
+        "MODELO 29",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-28-modelo-29.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
         999990,
         "Modelo de cuello",
         "ORIENTAL",

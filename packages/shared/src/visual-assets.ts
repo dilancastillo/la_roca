@@ -74,6 +74,8 @@ const BLUSA_CUELLO_REDONDO_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-26-cuello-redondo.svg`;
 const BLUSA_PEDAGOGIA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-29-pedagogia.svg`;
+const BLUSA_MODELO_29_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-28-modelo-29.svg`;
 const BLUSA_ORIENTAL_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-33-oriental.svg`;
 const BLUSA_ORIENTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-33-oriental-lower-pocket.svg`;
@@ -331,6 +333,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "cuello alto con cremallera": BLUSA_CUELLO_ALTO_CREMALLERA_ASSET,
     cremallera: BLUSA_CREMALLERA_ASSET,
     pedagogia: BLUSA_PEDAGOGIA_ASSET,
+    "modelo 29": BLUSA_MODELO_29_ASSET,
     oriental: BLUSA_ORIENTAL_ASSET,
     cirugia: BLUSA_CIRUGIA_ASSET,
     "el hato": BLUSA_EL_HATO_ASSET,
