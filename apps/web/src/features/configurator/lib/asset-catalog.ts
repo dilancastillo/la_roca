@@ -1,6 +1,7 @@
 import {
   getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
+  getVisualBootAssetPathForValue,
   getVisualGarmentDetailAssetPathForValue,
   getVisualAssetPath,
   getVisualAssetPathForValue,
@@ -54,6 +55,24 @@ export function getGarmentDetailImageSourceForValue(
   valueName?: string,
 ) {
   const path = getVisualGarmentDetailAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
+
+  return path ? `/${path}` : undefined;
+}
+
+export function getBootImageSourceForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const path = getVisualBootAssetPathForValue(
     graphicManifestKey,
     attributeId,
     valueId,

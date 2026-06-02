@@ -1097,6 +1097,42 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa Tipo bota Tradicional como overlay independiente del pantalon", () => {
+    const sessionWithTraditionalBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: pantalonSession.attributes.map((attribute) =>
+        attribute.id === 84
+          ? {
+              ...attribute,
+              values: [
+                {
+                  id: 999999,
+                  name: "Tradicional",
+                  attributeId: 84,
+                  attributeName: "Tipo bota",
+                },
+              ],
+            }
+          : attribute,
+      ),
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999999],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithTraditionalBoot,
+      sessionWithTraditionalBoot.selectedValueIds,
+    );
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.bootImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-tradicional.svg",
+    );
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

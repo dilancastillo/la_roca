@@ -648,6 +648,45 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa Tipo bota Tradicional como overlay independiente del pantalon", () => {
+    const sessionWithTraditionalBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999999,
+              name: "Tradicional",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999999],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithTraditionalBoot,
+      sessionWithTraditionalBoot.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-tradicional.svg",
+    );
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

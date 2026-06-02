@@ -7,6 +7,7 @@ import {
 import {
   getDefaultChestPocketImageSource,
   getDefaultImageSource,
+  getBootImageSourceForValue,
   getGarmentDetailImageSourceForValue,
   getImageSourceForValue,
   getProductAssetCatalog,
@@ -34,6 +35,7 @@ export type PreviewScene = {
   baseColorHex: string;
   garmentImageSrc?: string | undefined;
   garmentDetailImageSrc?: string | undefined;
+  bootImageSrc?: string | undefined;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
@@ -387,6 +389,18 @@ export function deriveConfiguratorUi(
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
+  const bootModelAttribute =
+    session.attributes.find(
+      (attribute) => matchesCatalogAttribute(catalog, "bootModel", attribute),
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("tipo bota") ||
+        name.includes("tipo de bota") ||
+        name.includes("modelo bota") ||
+        name.includes("modelo de bota"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -427,6 +441,10 @@ export function deriveConfiguratorUi(
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
+  const selectedBootModel = findSelectedValue(
+    bootModelAttribute,
+    selectedValueIds,
+  );
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
@@ -461,6 +479,15 @@ export function deriveConfiguratorUi(
         selectedGarment.id,
         garmentAttribute!.name,
         selectedGarment.name,
+      )
+    : undefined;
+  const bootImageSrc = selectedBootModel
+    ? getBootImageSourceForValue(
+        session.graphicManifestKey,
+        bootModelAttribute!.id,
+        selectedBootModel.id,
+        bootModelAttribute!.name,
+        selectedBootModel.name,
       )
     : undefined;
   const neckImageSrc = selectedNeck
@@ -498,6 +525,7 @@ export function deriveConfiguratorUi(
       baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
       garmentImageSrc,
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
+      ...(bootImageSrc ? { bootImageSrc } : {}),
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,

@@ -2028,6 +2028,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
+    const bootAssetOverlayBuffer =
+      await createGarmentDetailAssetOverlayBuffer(
+        scene.bootAssetPath,
+        baseAssetPath,
+      );
+
+    if (bootAssetOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(bootAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetPath);
     const innerCollarTrimColor = getTrimSectionColor(
       scene,

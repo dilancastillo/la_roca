@@ -8,6 +8,7 @@ import {
   getServerDefaultAssetPath,
   getServerDefaultChestPocketAssetPath,
   getServerAssetPathForValue,
+  getServerBootAssetPathForValue,
   getServerGarmentDetailAssetPathForValue,
   getServerProductAssetCatalog,
 } from "./server-asset-catalog.js";
@@ -17,6 +18,7 @@ export type AutomationRenderScene = {
   baseColorHex: string;
   garmentAssetPath?: string;
   garmentDetailAssetPath?: string;
+  bootAssetPath?: string;
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -287,6 +289,18 @@ export function deriveAutomationRenderScene(
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
+  const bootModelAttribute =
+    session.attributes.find(
+      (attribute) => matchesCatalogAttribute(catalog, "bootModel", attribute),
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("tipo bota") ||
+        name.includes("tipo de bota") ||
+        name.includes("modelo bota") ||
+        name.includes("modelo de bota"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -327,6 +341,10 @@ export function deriveAutomationRenderScene(
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
+  const selectedBootModel = findSelectedValue(
+    bootModelAttribute,
+    selectedValueIds,
+  );
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
@@ -362,6 +380,15 @@ export function deriveAutomationRenderScene(
         selectedGarment.name,
       )
     : undefined;
+  const bootAssetPath = selectedBootModel
+    ? getServerBootAssetPathForValue(
+        session.graphicManifestKey,
+        bootModelAttribute!.id,
+        selectedBootModel.id,
+        bootModelAttribute!.name,
+        selectedBootModel.name,
+      )
+    : undefined;
   const neckAssetPath = selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
@@ -384,6 +411,7 @@ export function deriveAutomationRenderScene(
     baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
+    ...(bootAssetPath ? { bootAssetPath } : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }

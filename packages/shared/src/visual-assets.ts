@@ -6,6 +6,7 @@ export type VisualAssetCatalog = {
     neckModel?: number;
     lowerPocketType?: number;
     lowerPocketModel?: number;
+    bootModel?: number;
     chestPocketModel?: number;
     auxiliaryPocketModel?: number;
     baseColor: number;
@@ -33,12 +34,14 @@ export type VisualAssetCatalog = {
   defaultChestPocketModelAsset?: string;
   garmentModelsByValueId?: Record<number, string>;
   garmentDetailModelsByValueId?: Record<number, string>;
+  bootModelsByValueId?: Record<number, string>;
   neckModelsByValueId?: Record<number, string>;
   lowerPocketModelsByValueId?: Record<number, string>;
   chestPocketModelsByValueId?: Record<number, string>;
   auxiliaryPocketModelsByValueId?: Record<number, string>;
   garmentModelsByValueName?: Record<string, string>;
   garmentDetailModelsByValueName?: Record<string, string>;
+  bootModelsByValueName?: Record<string, string>;
   neckModelsByValueName?: Record<string, string>;
   lowerPocketModelsByValueName?: Record<string, string>;
   chestPocketModelsByValueName?: Record<string, string>;
@@ -52,6 +55,8 @@ const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
 const PANTALON_DETAIL_OVERLAY_BASE = "assets/catalog/pantalon/detail-overlays";
 const PANTALON_PESPUNTE_STITCHING_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-pespunte-stitching.svg`;
+const PANTALON_TRADICIONAL_BOOT_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-tradicional.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
@@ -166,6 +171,17 @@ function isGarmentModelAttribute(attributeName: string | undefined) {
     normalized.includes("modelo de pantalon") ||
     normalized.includes("modelo pantalon") ||
     normalized.includes("modelo de prenda")
+  );
+}
+
+function isBootModelAttribute(attributeName: string | undefined) {
+  const normalized = normalizeLookupKey(attributeName ?? "");
+
+  return (
+    normalized.includes("tipo bota") ||
+    normalized.includes("tipo de bota") ||
+    normalized.includes("modelo bota") ||
+    normalized.includes("modelo de bota")
   );
 }
 
@@ -423,6 +439,7 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   aliases: ["pantalon"],
   attributeIds: {
     garmentModel: 810,
+    bootModel: 84,
     baseColor: 798,
     trimColor: 802,
     trimSections: 157,
@@ -448,6 +465,9 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   },
   garmentDetailModelsByValueName: {
     pespunte: PANTALON_PESPUNTE_STITCHING_ASSET,
+  },
+  bootModelsByValueName: {
+    tradicional: PANTALON_TRADICIONAL_BOOT_ASSET,
   },
   neckModelsByValueId: {},
   lowerPocketModelsByValueId: {},
@@ -501,6 +521,10 @@ export function getVisualAssetPath(
     return catalog.garmentModelsByValueId?.[valueId];
   }
 
+  if (matchesVisualAssetAttributeId(catalog, "bootModel", attributeId)) {
+    return catalog.bootModelsByValueId?.[valueId];
+  }
+
   if (matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attributeId)) {
     return catalog.lowerPocketModelsByValueId?.[valueId];
   }
@@ -550,6 +574,13 @@ export function getVisualAssetPathForValue(
   }
 
   if (
+    matchesVisualAssetAttributeId(catalog, "bootModel", attributeId) ||
+    isBootModelAttribute(attributeName)
+  ) {
+    return findByNormalizedName(catalog.bootModelsByValueName, valueName);
+  }
+
+  if (
     matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attributeId) ||
     isLowerPocketModelAttribute(attributeName)
   ) {
@@ -568,6 +599,32 @@ export function getVisualAssetPathForValue(
     isAuxiliaryPocketModelAttribute(attributeName)
   ) {
     return findByNormalizedName(catalog.auxiliaryPocketModelsByValueName, valueName);
+  }
+
+  return undefined;
+}
+
+export function getVisualBootAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const catalog = resolveVisualAssetCatalog(graphicManifestKey);
+
+  if (!catalog) {
+    return undefined;
+  }
+
+  if (
+    matchesVisualAssetAttributeId(catalog, "bootModel", attributeId) ||
+    isBootModelAttribute(attributeName)
+  ) {
+    return (
+      catalog.bootModelsByValueId?.[valueId] ??
+      findByNormalizedName(catalog.bootModelsByValueName, valueName)
+    );
   }
 
   return undefined;

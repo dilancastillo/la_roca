@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getBootImageSourceForValue,
   getDefaultImageSource,
   getGarmentDetailImageSourceForValue,
   getImageSourceByIds,
@@ -769,5 +770,19 @@ describe("getProductAssetCatalog", () => {
         "Lizo",
       ),
     ).toBeUndefined();
+  });
+
+  it("resuelve la bota Tradicional de pantalon por Tipo bota", () => {
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999999,
+        "Tipo bota",
+        "Tradicional",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-tradicional.svg",
+    );
   });
 });

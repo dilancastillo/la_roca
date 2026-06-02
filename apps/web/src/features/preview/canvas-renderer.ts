@@ -2219,6 +2219,11 @@ export async function composeDesign(
       scene.garmentDetailImageSrc,
       baseAssetSrc,
     );
+    await drawGarmentDetailOverlay(
+      context,
+      scene.bootImageSrc,
+      baseAssetSrc,
+    );
 
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
     const innerCollarTrimColor = getTrimSectionColor(
