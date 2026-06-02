@@ -1399,6 +1399,38 @@ describe("renderDesignImage", () => {
         lowerPocketAssetPath,
       }),
     );
+    const withPresillasPocketUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 419,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withPresillasPocketLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 420,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withGenericCollar = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -1494,15 +1526,40 @@ describe("renderDesignImage", () => {
       withCompleteCollar.info.width,
       { x: 445, y: 430, width: 35, height: 90 },
     );
+    const upperLowerPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withPresillasPocketUpperTrim.data,
+      withPresillasPocketUpperTrim.info.width,
+      { x: 250, y: 680, width: 450, height: 250 },
+    );
+    const lowerLowerPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withPresillasPocketLowerTrim.data,
+      withPresillasPocketLowerTrim.info.width,
+      { x: 250, y: 680, width: 450, height: 250 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(countPurplePixels(withoutTrim.data)).toBe(0);
+    expect(countPurplePixels(withPresillasPocket.data)).toBe(0);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(countDifferentPixels(withoutTrim.data, withBackNeck.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withPresillasPocket.data),
     ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(
+        withPresillasPocket.data,
+        withPresillasPocketUpperTrim.data,
+      ),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(
+        withPresillasPocket.data,
+        withPresillasPocketLowerTrim.data,
+      ),
+    ).toBeGreaterThan(100);
+    expect(upperLowerPocketTrimPinkPixels).toBeGreaterThan(100);
+    expect(lowerLowerPocketTrimPinkPixels).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);

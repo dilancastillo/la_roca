@@ -81,6 +81,11 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   "blouse-model-20-costura-maria-lower-pocket.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-costura-maria-lower-pocket-upper.svg",
   },
+  "blouse-model-39-el-hato-lower-pocket.svg": {
+    top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-lower-pocket-presillas-trim.svg",
+    bottom:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-lower-pocket-presillas-trim.svg",
+  },
 };
 
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
