@@ -3007,6 +3007,38 @@ describe("renderDesignImage", () => {
         lowerPocketAssetPath,
       }),
     );
+    const withOvalPocketUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withOvalPocketLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withHighCollar = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -3061,12 +3093,33 @@ describe("renderDesignImage", () => {
       withHighCollar.info.width,
       { x: 500, y: 188, width: 34, height: 45 },
     );
+    const ovalUpperPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withOvalPocketUpperTrim.data,
+      withOvalPocketUpperTrim.info.width,
+      { x: 280, y: 760, width: 340, height: 90 },
+    );
+    const ovalLowerPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withOvalPocketLowerTrim.data,
+      withOvalPocketLowerTrim.info.width,
+      { x: 280, y: 760, width: 340, height: 90 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(
       countDifferentPixels(withoutTrim.data, withOvalPocket.data),
     ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withOvalPocket.data, withOvalPocketUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(
+        withOvalPocketUpperTrim.data,
+        withOvalPocketLowerTrim.data,
+      ),
+    ).toBe(0);
+    expect(ovalUpperPocketTrimPinkPixels).toBeGreaterThan(100);
+    expect(ovalLowerPocketTrimPinkPixels).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);
