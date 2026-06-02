@@ -110,6 +110,10 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   },
 };
 
+const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
+  "blouse-model-47-ribete-horizontal-lower-pocket.svg": 2,
+};
+
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
@@ -2301,6 +2305,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         ];
 
       if (sectionTrimOverlays) {
+        const sectionTrimOutlineRadius =
+          lowerPocketSectionTrimOutlineRadiusByFileName[
+            getAssetFileName(scene.lowerPocketAssetPath)
+          ] ?? 7;
+
         for (const [section, trimColor] of [
           ["top", lowerPocketUpperTrimColor],
           ["bottom", lowerPocketLowerTrimColor],
@@ -2322,7 +2331,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           const trimOutlineBuffer = await createPngInkOutlineBuffer(
             trimOverlayBuffer,
             "#f8fafc",
-            7,
+            sectionTrimOutlineRadius,
           );
           const trimColorBuffer = await recolorPngInkBuffer(
             trimOverlayBuffer,

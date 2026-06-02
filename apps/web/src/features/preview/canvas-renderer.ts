@@ -104,6 +104,10 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   },
 };
 
+const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
+  "blouse-model-47-ribete-horizontal-lower-pocket.svg": 2,
+};
+
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
@@ -1574,6 +1578,8 @@ async function drawLowerPocketOverlay(
       ["bottom", trimColors?.bottom],
     ] as const) {
       const trimSrc = sectionTrimOverlays[section];
+      const outlineRadius =
+        lowerPocketSectionTrimOutlineRadiusByFileName[fileName] ?? 7;
 
       if (!trimSrc || !trimColor) {
         continue;
@@ -1582,7 +1588,7 @@ async function drawLowerPocketOverlay(
       const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
       drawCanvasInRegions(
         context,
-        createCanvasInkOutline(trimCanvas, "#f8fafc", 7),
+        createCanvasInkOutline(trimCanvas, "#f8fafc", outlineRadius),
         regions,
       );
       drawCanvasInRegions(
