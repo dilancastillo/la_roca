@@ -109,6 +109,13 @@ const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
 
+const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
+  "blouse-model-48-los-andes-lower-pocket.svg": [
+    { x: 225, y: 675, width: 245, height: 385 },
+    { x: 470, y: 675, width: 245, height: 385 },
+  ],
+};
+
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
@@ -364,6 +371,23 @@ export function getOverlayRegionPreset(
   key: keyof typeof overlayRegionPresets,
 ): OverlayRegion[] {
   return overlayRegionPresets[key];
+}
+
+function getLowerPocketOverlayRegions(
+  sourceSrc: string,
+  layout: PreviewScene["lowerPocketLayout"],
+) {
+  const fileName = getFileNameFromSource(sourceSrc);
+  const override = lowerPocketOverlayRegionsByFileName[fileName];
+
+  if (override) {
+    const singleRegion = override[1] ?? override[0];
+    return layout === "single" && singleRegion ? [singleRegion] : override;
+  }
+
+  return getOverlayRegionPreset(
+    layout === "single" ? "lowerPocketSingleRight" : "lowerPocketPair",
+  );
 }
 
 type ProcessedImage = {
@@ -2307,10 +2331,9 @@ export async function composeDesign(
       await drawLowerPocketOverlay(
         context,
         scene.lowerPocketImageSrc,
-        getOverlayRegionPreset(
-          scene.lowerPocketLayout === "single"
-            ? "lowerPocketSingleRight"
-            : "lowerPocketPair",
+        getLowerPocketOverlayRegions(
+          scene.lowerPocketImageSrc,
+          scene.lowerPocketLayout,
         ),
         {
           top: lowerPocketUpperTrimColor,

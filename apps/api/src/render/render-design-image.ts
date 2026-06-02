@@ -115,6 +115,13 @@ const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
 
+const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
+  "blouse-model-48-los-andes-lower-pocket.svg": [
+    { x: 225, y: 675, width: 245, height: 385 },
+    { x: 470, y: 675, width: 245, height: 385 },
+  ],
+};
+
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-rectangular.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
@@ -1721,6 +1728,23 @@ function getOverlaySvg(
   `;
 }
 
+function getLowerPocketOverlayRegions(
+  assetPath: string,
+  layout: AutomationRenderScene["lowerPocketLayout"],
+) {
+  const override =
+    lowerPocketOverlayRegionsByFileName[getAssetFileName(assetPath)];
+
+  if (override) {
+    const singleRegion = override[1] ?? override[0];
+    return layout === "single" && singleRegion ? [singleRegion] : override;
+  }
+
+  return layout === "single"
+    ? overlayRegionPresets.lowerPocketSingleRight
+    : overlayRegionPresets.lowerPocketPair;
+}
+
 function getImageSvg(imageDataUri: string) {
   return `<image href="${imageDataUri}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
 }
@@ -2285,10 +2309,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (scene.lowerPocketAssetPath && scene.lowerPocketLayout !== "none") {
-      const lowerPocketRegions =
-        scene.lowerPocketLayout === "single"
-          ? overlayRegionPresets.lowerPocketSingleRight
-          : overlayRegionPresets.lowerPocketPair;
+      const lowerPocketRegions = getLowerPocketOverlayRegions(
+        scene.lowerPocketAssetPath,
+        scene.lowerPocketLayout,
+      );
       const overlayBuffer = await createLowerPocketOverlayBuffer(
         scene.lowerPocketAssetPath,
       );
