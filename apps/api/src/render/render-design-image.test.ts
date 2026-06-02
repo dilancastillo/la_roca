@@ -2989,6 +2989,80 @@ describe("renderDesignImage", () => {
     expect(upperRightPinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza COSTURA TRIANGULO con vivo solo en las secciones superiores", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-46-costura-triangulo-lower-pocket.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 245, y: 740, width: 200, height: 95 },
+    );
+    const upperRightPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 500, y: 740, width: 210, height: 95 },
+    );
+    const lowerLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 290, y: 860, width: 95, height: 180 },
+    );
+    const lowerRightPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 515, y: 860, width: 95, height: 180 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
+    ).toBe(0);
+    expect(upperLeftPinkPixels).toBeGreaterThan(120);
+    expect(upperRightPinkPixels).toBeGreaterThan(120);
+    expect(lowerLeftPinkPixels).toBeLessThan(20);
+    expect(lowerRightPinkPixels).toBeLessThan(20);
+  }, 20000);
+
   it("renderiza RIBETE HORIZONTAL con el mismo vivo lineal en parte superior o baja", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg";

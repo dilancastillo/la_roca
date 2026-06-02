@@ -194,6 +194,12 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.lowerPocketModelsByValueId?.[386]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg",
     );
+    expect(catalog?.lowerPocketModelsByValueId?.[2583]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-46-costura-triangulo-lower-pocket.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[385]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-46-costura-triangulo-lower-pocket.svg",
+    );
     expect(catalog?.lowerPocketModelsByValueId?.[2580]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
     );
@@ -624,6 +630,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-18-costura-lower-pocket.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999990,
+        "Modelo bolsillo inferior",
+        "COSTURA TRIANGULO",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-46-costura-triangulo-lower-pocket.svg",
     );
 
     expect(

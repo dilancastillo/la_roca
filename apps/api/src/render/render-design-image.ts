@@ -61,6 +61,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": [67, 68, 69],
   "blouse-model-37-cirugia-lower-pocket.svg": [1, 2, 11, 12],
   "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
+  "blouse-model-46-costura-triangulo-lower-pocket.svg": [1, 2, 3, 4],
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": [1, 2],
   "blouse-model-48-los-andes-lower-pocket.svg": [0, 1, 2, 3, 4],
   "blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg": [0, 1, 2],
@@ -105,6 +106,11 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
     bottom:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-lower-pocket-presillas-trim.svg",
   },
+  "blouse-model-46-costura-triangulo-lower-pocket.svg": {
+    top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-trim.svg",
+    bottom:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-trim.svg",
+  },
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-47-ribete-horizontal-lower-pocket-trim.svg",
     bottom:
@@ -113,6 +119,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
 };
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
+  "blouse-model-46-costura-triangulo-lower-pocket.svg": 0,
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
 

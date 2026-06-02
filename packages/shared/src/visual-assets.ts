@@ -93,6 +93,8 @@ const BLUSA_COSTURA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-18-costura-lower-pocket.svg`;
 const BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-20-costura-maria-lower-pocket.svg`;
+const BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-46-costura-triangulo-lower-pocket.svg`;
 const BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-47-ribete-horizontal-lower-pocket.svg`;
 const BLUSA_LOS_ANDES_LOWER_POCKET_ASSET =
@@ -360,14 +362,14 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2580: BLUSA_COSTURA_LOWER_POCKET_ASSET,
     2581: blouseModelAsset(18),
     2582: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
-    2583: blouseModelAsset(20),
+    2583: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
     // IDs actuales en pstest-traininglaroca.
     380: blouseModelAsset(14), // RECTANGULAR.
     381: blouseModelAsset(15), // AROS.
     382: BLUSA_COSTURA_LOWER_POCKET_ASSET, // COSTURA en Blusa.
     383: blouseModelAsset(18), // RIBETE.
     384: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Blusa.
-    385: blouseModelAsset(20), // COSTURA TRIANGULO.
+    385: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET, // COSTURA TRIANGULO.
     386: BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET, // BOLSILLO INTERNO RECTANGULAR.
     388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
     389: BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET, // RIBETE HORIZONTAL.
@@ -387,7 +389,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     costura: BLUSA_COSTURA_LOWER_POCKET_ASSET,
     ribete: blouseModelAsset(18),
     "costura maria": BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
-    "costura triangulo": blouseModelAsset(20),
+    "costura triangulo": BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
     "bolsillo interno rectangular": BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET,
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
     "ribete horizontal": BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
