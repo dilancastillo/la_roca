@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDefaultImageSource,
+  getGarmentDetailImageSourceForValue,
   getImageSourceByIds,
   getImageSourceForValue,
   getProductAssetCatalog,
@@ -725,5 +726,48 @@ describe("getProductAssetCatalog", () => {
     expect(getDefaultImageSource("pantalon")).toBe(
       "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
     );
+  });
+
+  it("resuelve Pespunte de pantalon como detalle global sobre la base liza", () => {
+    expect(
+      getImageSourceForValue(
+        "pantalon",
+        810,
+        2864,
+        "Modelo de pantalon",
+        "Pespunte",
+      ),
+    ).toBe("/assets/catalog/pantalon/svg-clean/pants-model-01.svg");
+    expect(
+      getGarmentDetailImageSourceForValue(
+        "pantalon",
+        810,
+        2864,
+        "Modelo de pantalon",
+        "Pespunte",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+    );
+    expect(
+      getGarmentDetailImageSourceForValue(
+        "pantalon",
+        810,
+        999999,
+        "Modelo de pantalon",
+        "Pespunte",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+    );
+    expect(
+      getGarmentDetailImageSourceForValue(
+        "pantalon",
+        810,
+        2863,
+        "Modelo de pantalon",
+        "Lizo",
+      ),
+    ).toBeUndefined();
   });
 });

@@ -1207,6 +1207,25 @@ async function createGarmentModelDetailOverlayBuffer(
   );
 }
 
+async function createGarmentDetailAssetOverlayBuffer(
+  overlayAssetPath: string | undefined,
+  placementAssetPath: string,
+) {
+  if (!overlayAssetPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayAssetPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
 async function createNeckModelDetailOverlayBuffer(neckAssetPath: string) {
   const overlayPath =
     neckModelDetailOverlayByFileName[getAssetFileName(neckAssetPath)];
@@ -1994,6 +2013,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     if (garmentDetailOverlayBuffer) {
       layers.push(
         `<image href="${toDataUri(garmentDetailOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    const garmentDetailAssetOverlayBuffer =
+      await createGarmentDetailAssetOverlayBuffer(
+        scene.garmentDetailAssetPath,
+        baseAssetPath,
+      );
+
+    if (garmentDetailAssetOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(garmentDetailAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 

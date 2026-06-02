@@ -479,6 +479,56 @@ describe("renderDesignImage", () => {
     expect(chestPocketInk).toBeLessThan(800);
   }, 20000);
 
+  it("superpone las lineas de Pespunte del pantalon sobre la base liza", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withLizo = await readRawPng(await renderDesignImage(pantsScene));
+    const withPespunte = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        garmentDetailAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+      }),
+    );
+    const lizoSideInk =
+      countDarkPixelsInRegion(withLizo.data, withLizo.info.width, {
+        x: 290,
+        y: 260,
+        width: 85,
+        height: 610,
+      }) +
+      countDarkPixelsInRegion(withLizo.data, withLizo.info.width, {
+        x: 525,
+        y: 260,
+        width: 85,
+        height: 610,
+      });
+    const pespunteSideInk =
+      countDarkPixelsInRegion(withPespunte.data, withPespunte.info.width, {
+        x: 290,
+        y: 260,
+        width: 85,
+        height: 610,
+      }) +
+      countDarkPixelsInRegion(withPespunte.data, withPespunte.info.width, {
+        x: 525,
+        y: 260,
+        width: 85,
+        height: 610,
+      });
+
+    expect(
+      countDifferentPixels(withLizo.data, withPespunte.data),
+    ).toBeGreaterThan(300);
+    expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 200);
+    expect(countNeonGreenPixels(withPespunte.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

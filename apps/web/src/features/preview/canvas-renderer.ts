@@ -1732,6 +1732,19 @@ async function drawGarmentModelDetails(
   context.drawImage(overlayCanvas, 0, 0);
 }
 
+async function drawGarmentDetailOverlay(
+  context: CanvasRenderingContext2D,
+  overlaySrc: string | undefined,
+  placementSrc: string,
+) {
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, placementSrc);
+  context.drawImage(overlayCanvas, 0, 0);
+}
+
 async function drawNeckModelDetails(
   context: CanvasRenderingContext2D,
   neckSrc: string,
@@ -2199,6 +2212,11 @@ export async function composeDesign(
     await drawGarmentModelDetails(
       context,
       scene.garmentImageSrc,
+      baseAssetSrc,
+    );
+    await drawGarmentDetailOverlay(
+      context,
+      scene.garmentDetailImageSrc,
       baseAssetSrc,
     );
 

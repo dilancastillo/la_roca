@@ -8,6 +8,7 @@ import {
   getServerDefaultAssetPath,
   getServerDefaultChestPocketAssetPath,
   getServerAssetPathForValue,
+  getServerGarmentDetailAssetPathForValue,
   getServerProductAssetCatalog,
 } from "./server-asset-catalog.js";
 
@@ -15,6 +16,7 @@ export type AutomationRenderScene = {
   productName: string;
   baseColorHex: string;
   garmentAssetPath?: string;
+  garmentDetailAssetPath?: string;
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -351,6 +353,15 @@ export function deriveAutomationRenderScene(
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
+  const garmentDetailAssetPath = selectedGarment
+    ? getServerGarmentDetailAssetPathForValue(
+        session.graphicManifestKey,
+        garmentAttribute!.id,
+        selectedGarment.id,
+        garmentAttribute!.name,
+        selectedGarment.name,
+      )
+    : undefined;
   const neckAssetPath = selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
@@ -372,6 +383,7 @@ export function deriveAutomationRenderScene(
     productName: session.productName,
     baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
+    ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }

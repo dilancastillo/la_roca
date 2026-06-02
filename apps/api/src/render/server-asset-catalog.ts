@@ -1,6 +1,7 @@
 import {
   getDefaultChestPocketAssetPath,
   getDefaultVisualAssetPath,
+  getVisualGarmentDetailAssetPathForValue,
   getVisualAssetPath,
   getVisualAssetPathForValue,
   resolveVisualAssetCatalog,
@@ -29,6 +30,22 @@ export function getServerAssetPathForValue(
   valueName?: string,
 ) {
   return getVisualAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
+}
+
+export function getServerGarmentDetailAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  return getVisualGarmentDetailAssetPathForValue(
     graphicManifestKey,
     attributeId,
     valueId,

@@ -32,11 +32,13 @@ export type VisualAssetCatalog = {
   defaultGarmentAsset?: string;
   defaultChestPocketModelAsset?: string;
   garmentModelsByValueId?: Record<number, string>;
+  garmentDetailModelsByValueId?: Record<number, string>;
   neckModelsByValueId?: Record<number, string>;
   lowerPocketModelsByValueId?: Record<number, string>;
   chestPocketModelsByValueId?: Record<number, string>;
   auxiliaryPocketModelsByValueId?: Record<number, string>;
   garmentModelsByValueName?: Record<string, string>;
+  garmentDetailModelsByValueName?: Record<string, string>;
   neckModelsByValueName?: Record<string, string>;
   lowerPocketModelsByValueName?: Record<string, string>;
   chestPocketModelsByValueName?: Record<string, string>;
@@ -47,6 +49,9 @@ const BLUSA_ASSET_BASE = "assets/catalog/blusa-antifluido-t180/svg-clean";
 const BLUSA_DETAIL_OVERLAY_BASE =
   "assets/catalog/blusa-antifluido-t180/detail-overlays";
 const PANTALON_ASSET_BASE = "assets/catalog/pantalon/svg-clean";
+const PANTALON_DETAIL_OVERLAY_BASE = "assets/catalog/pantalon/detail-overlays";
+const PANTALON_PESPUNTE_STITCHING_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-pespunte-stitching.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
@@ -427,16 +432,22 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
     trimColor: [91],
     trimSections: [92],
   },
-  // El producto Pantalon aun no tiene un atributo unico de modelo. Mientras se
-  // define el mapeo funcional, usamos el primer SVG como base limpia por defecto.
+  // Modelo de pantalon controla detalles globales: Lizo usa solo la base limpia
+  // y Pespunte agrega sus costuras encima de cualquier configuracion futura.
   defaultGarmentAsset: pantsModelAsset(1),
   garmentModelsByValueId: {
     2863: pantsModelAsset(1), // Lizo.
-    2864: pantsModelAsset(2), // Pespunte.
+    2864: pantsModelAsset(1), // Pespunte conserva la base limpia.
+  },
+  garmentDetailModelsByValueId: {
+    2864: PANTALON_PESPUNTE_STITCHING_ASSET,
   },
   garmentModelsByValueName: {
     lizo: pantsModelAsset(1),
-    pespunte: pantsModelAsset(2),
+    pespunte: pantsModelAsset(1),
+  },
+  garmentDetailModelsByValueName: {
+    pespunte: PANTALON_PESPUNTE_STITCHING_ASSET,
   },
   neckModelsByValueId: {},
   lowerPocketModelsByValueId: {},
@@ -557,6 +568,32 @@ export function getVisualAssetPathForValue(
     isAuxiliaryPocketModelAttribute(attributeName)
   ) {
     return findByNormalizedName(catalog.auxiliaryPocketModelsByValueName, valueName);
+  }
+
+  return undefined;
+}
+
+export function getVisualGarmentDetailAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const catalog = resolveVisualAssetCatalog(graphicManifestKey);
+
+  if (!catalog) {
+    return undefined;
+  }
+
+  if (
+    matchesVisualAssetAttributeId(catalog, "garmentModel", attributeId) ||
+    isGarmentModelAttribute(attributeName)
+  ) {
+    return (
+      catalog.garmentDetailModelsByValueId?.[valueId] ??
+      findByNormalizedName(catalog.garmentDetailModelsByValueName, valueName)
+    );
   }
 
   return undefined;

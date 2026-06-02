@@ -1056,6 +1056,47 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });
 
+  it("usa Pespunte de pantalon como capa global sobre la base liza", () => {
+    const sessionWithPantsModel: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 810,
+          name: "Modelo de pantalón",
+          displayType: "image",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 2863,
+              name: "Lizo",
+              attributeId: 810,
+              attributeName: "Modelo de pantalón",
+            },
+            {
+              id: 2864,
+              name: "Pespunte",
+              attributeId: 810,
+              attributeName: "Modelo de pantalón",
+            },
+          ],
+        },
+      ],
+    };
+    const ui = deriveConfiguratorUi(sessionWithPantsModel, {
+      ...pantalonSession.selectedValueIds,
+      "810": [2864],
+    });
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.garmentDetailImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+    );
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

@@ -7,6 +7,7 @@ import {
 import {
   getDefaultChestPocketImageSource,
   getDefaultImageSource,
+  getGarmentDetailImageSourceForValue,
   getImageSourceForValue,
   getProductAssetCatalog,
 } from "./asset-catalog";
@@ -32,6 +33,7 @@ export type PreviewScene = {
   productName: string;
   baseColorHex: string;
   garmentImageSrc?: string | undefined;
+  garmentDetailImageSrc?: string | undefined;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
@@ -448,6 +450,19 @@ export function deriveConfiguratorUi(
   );
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
+  const garmentImageSrc = selectedGarment
+    ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
+      getDefaultImageSource(session.graphicManifestKey)
+    : getDefaultImageSource(session.graphicManifestKey);
+  const garmentDetailImageSrc = selectedGarment
+    ? getGarmentDetailImageSourceForValue(
+        session.graphicManifestKey,
+        garmentAttribute!.id,
+        selectedGarment.id,
+        garmentAttribute!.name,
+        selectedGarment.name,
+      )
+    : undefined;
   const neckImageSrc = selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
@@ -481,10 +496,8 @@ export function deriveConfiguratorUi(
     previewScene: {
       productName: session.productName,
       baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
-      garmentImageSrc: selectedGarment
-        ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
-          getDefaultImageSource(session.graphicManifestKey)
-        : getDefaultImageSource(session.graphicManifestKey),
+      garmentImageSrc,
+      ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,

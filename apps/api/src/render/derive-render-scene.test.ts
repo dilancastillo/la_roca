@@ -536,6 +536,70 @@ const session: ConfiguratorSession = {
   warnings: [],
 };
 
+const pantalonSession: ConfiguratorSession = {
+  saleOrderLineId: 289,
+  saleOrderId: 118,
+  orderName: "S00118",
+  productId: 54857,
+  productTemplateId: 19,
+  productName: "Pantalon",
+  graphicManifestKey: "pantalon",
+  attributes: [
+    {
+      id: 90,
+      name: "Color",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "variant",
+      values: [
+        {
+          id: 6921,
+          name: "110601 - Blanco",
+          attributeId: 90,
+          attributeName: "Color",
+          colorHex: "#F0F0F0",
+        },
+      ],
+    },
+    {
+      id: 810,
+      name: "Modelo de pantalón",
+      displayType: "image",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 2863,
+          name: "Lizo",
+          attributeId: 810,
+          attributeName: "Modelo de pantalón",
+        },
+        {
+          id: 2864,
+          name: "Pespunte",
+          attributeId: 810,
+          attributeName: "Modelo de pantalón",
+        },
+      ],
+    },
+  ],
+  selectedValueIds: {
+    "90": [6921],
+    "810": [2864],
+  },
+  customValuesByValueId: {},
+  exclusions: [],
+  status: {
+    orderState: "draft",
+    canEdit: true,
+    isLocked: false,
+    version: 0,
+    generatedAt: null,
+  },
+  existingDesignBase64: null,
+  warnings: [],
+};
+
 describe("deriveAutomationRenderScene", () => {
   it("no pinta vivos solo con escoger color de vivo", () => {
     const scene = deriveAutomationRenderScene(session, {
@@ -567,6 +631,20 @@ describe("deriveAutomationRenderScene", () => {
     );
     expect(scene.lowerPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
+  });
+
+  it("usa Pespunte de pantalon como capa global sobre la base liza", () => {
+    const scene = deriveAutomationRenderScene(
+      pantalonSession,
+      pantalonSession.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(scene.garmentDetailAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
     );
   });
 
