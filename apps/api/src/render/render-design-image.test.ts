@@ -3153,6 +3153,38 @@ describe("renderDesignImage", () => {
         lowerPocketAssetPath,
       }),
     );
+    const withAndesPocketUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withAndesPocketLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withHighCollar = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -3188,12 +3220,27 @@ describe("renderDesignImage", () => {
       withHighCollar.info.width,
       { x: 380, y: 125, width: 170, height: 60 },
     );
+    const andesAuxPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withAndesPocketUpperTrim.data,
+      withAndesPocketUpperTrim.info.width,
+      { x: 260, y: 735, width: 150, height: 80 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(
       countDifferentPixels(withoutTrim.data, withAndesPocket.data),
     ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withAndesPocket.data, withAndesPocketUpperTrim.data),
+    ).toBeGreaterThan(50);
+    expect(
+      countDifferentPixels(
+        withAndesPocketUpperTrim.data,
+        withAndesPocketLowerTrim.data,
+      ),
+    ).toBe(0);
+    expect(andesAuxPocketTrimPinkPixels).toBeGreaterThan(40);
     expect(
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);

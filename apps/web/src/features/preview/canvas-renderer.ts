@@ -81,6 +81,11 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   "blouse-model-20-costura-maria-lower-pocket.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-20-costura-maria-lower-pocket-upper.svg",
   },
+  "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg": {
+    top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-34-cuello-alto-cremallera-lower-pocket-andes-hombre-trim.svg",
+    bottom:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-34-cuello-alto-cremallera-lower-pocket-andes-hombre-trim.svg",
+  },
   "blouse-model-37-cirugia-lower-pocket.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-37-cirugia-lower-pocket-costura-ovalado-trim.svg",
     bottom:
