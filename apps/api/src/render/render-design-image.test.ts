@@ -2929,6 +2929,95 @@ describe("renderDesignImage", () => {
     expect(lowerRightPinkPixels).toBeLessThan(20);
   }, 20000);
 
+  it("renderiza RIBETE con vivos separados para franja superior e inferior", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-19-ribete-lower-pocket.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 290, y: 770, width: 150, height: 25 },
+    );
+    const upperRightPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 505, y: 770, width: 155, height: 25 },
+    );
+    const lowerLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 290, y: 792, width: 150, height: 32 },
+    );
+    const lowerRightPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 505, y: 792, width: 155, height: 32 },
+    );
+    const upperRenderLowerBandPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 290, y: 800, width: 150, height: 22 },
+    );
+    const lowerRenderUpperBandPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 290, y: 770, width: 150, height: 25 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(500);
+    expect(upperLeftPinkPixels).toBeGreaterThan(300);
+    expect(upperRightPinkPixels).toBeGreaterThan(300);
+    expect(lowerLeftPinkPixels).toBeGreaterThan(300);
+    expect(lowerRightPinkPixels).toBeGreaterThan(300);
+    expect(upperRenderLowerBandPinkPixels).toBeLessThan(50);
+    expect(lowerRenderUpperBandPinkPixels).toBeLessThan(50);
+  }, 20000);
+
   it("renderiza COSTURA MARIA con vivo superior sin responder a parte baja", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-20-costura-maria-lower-pocket.svg";

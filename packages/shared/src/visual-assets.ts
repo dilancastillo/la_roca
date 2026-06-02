@@ -91,6 +91,8 @@ const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
 const BLUSA_COSTURA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-18-costura-lower-pocket.svg`;
+const BLUSA_RIBETE_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-19-ribete-lower-pocket.svg`;
 const BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-20-costura-maria-lower-pocket.svg`;
 const BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET =
@@ -360,14 +362,14 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2578: blouseModelAsset(14),
     2579: blouseModelAsset(15),
     2580: BLUSA_COSTURA_LOWER_POCKET_ASSET,
-    2581: blouseModelAsset(18),
+    2581: BLUSA_RIBETE_LOWER_POCKET_ASSET,
     2582: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     2583: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
     // IDs actuales en pstest-traininglaroca.
     380: blouseModelAsset(14), // RECTANGULAR.
     381: blouseModelAsset(15), // AROS.
     382: BLUSA_COSTURA_LOWER_POCKET_ASSET, // COSTURA en Blusa.
-    383: blouseModelAsset(18), // RIBETE.
+    383: BLUSA_RIBETE_LOWER_POCKET_ASSET, // RIBETE.
     384: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Blusa.
     385: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET, // COSTURA TRIANGULO.
     386: BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET, // BOLSILLO INTERNO RECTANGULAR.
@@ -387,7 +389,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     rectangular: blouseModelAsset(14),
     aros: blouseModelAsset(15),
     costura: BLUSA_COSTURA_LOWER_POCKET_ASSET,
-    ribete: blouseModelAsset(18),
+    ribete: BLUSA_RIBETE_LOWER_POCKET_ASSET,
     "costura maria": BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     "costura triangulo": BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
     "bolsillo interno rectangular": BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET,
