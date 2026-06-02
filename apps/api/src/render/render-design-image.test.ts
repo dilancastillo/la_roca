@@ -3051,6 +3051,53 @@ describe("renderDesignImage", () => {
     expect(rightPocketTrimPinkPixels).toBeGreaterThan(100);
   }, 20000);
 
+  it("renderiza LOS ANDES como bolsillo inferior sin vivos", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket.svg";
+    const withoutPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+      }),
+    );
+    const withLosAndesPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withIgnoredTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutPocket.info.width).toBe(900);
+    expect(withoutPocket.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutPocket.data, withLosAndesPocket.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withLosAndesPocket.data, withIgnoredTrim.data),
+    ).toBe(0);
+  }, 20000);
+
   it("renderiza CIRUGÍA con COSTURA OVALADO, Cuello alto y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg";

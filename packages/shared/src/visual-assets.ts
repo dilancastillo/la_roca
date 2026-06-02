@@ -95,6 +95,8 @@ const BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-20-costura-maria-lower-pocket.svg`;
 const BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-47-ribete-horizontal-lower-pocket.svg`;
+const BLUSA_LOS_ANDES_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-48-los-andes-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;
 const BLUSA_P_PAIPILLA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-13-p-paipilla.svg`;
 
@@ -387,6 +389,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "bolsillo interno rectangular": blouseModelAsset(14),
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
     "ribete horizontal": BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
+    "los andes": BLUSA_LOS_ANDES_LOWER_POCKET_ASSET,
     "andes hombre": BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET,
     "costura ovalado": BLUSA_CIRUGIA_LOWER_POCKET_ASSET,
     "bolsillo presillas": BLUSA_EL_HATO_LOWER_POCKET_ASSET,

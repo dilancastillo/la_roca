@@ -656,6 +656,18 @@ describe("getProductAssetCatalog", () => {
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg",
     );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999996,
+        "Modelo bolsillo inferior",
+        "LOS ANDES",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket.svg",
+    );
   });
 
   it("resuelve el SVG base de pantalon por la llave normalizada de Odoo", () => {
