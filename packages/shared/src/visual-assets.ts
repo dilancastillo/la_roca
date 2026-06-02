@@ -93,6 +93,8 @@ const BLUSA_COSTURA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-18-costura-lower-pocket.svg`;
 const BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-20-costura-maria-lower-pocket.svg`;
+const BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-47-ribete-horizontal-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;
 const BLUSA_P_PAIPILLA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-13-p-paipilla.svg`;
 
@@ -364,7 +366,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     385: blouseModelAsset(20), // COSTURA TRIANGULO.
     386: blouseModelAsset(14), // BOLSILLO INTERNO RECTANGULAR.
     388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
-    389: blouseModelAsset(18), // RIBETE HORIZONTAL.
+    389: BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET, // RIBETE HORIZONTAL.
     390: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Blusa.
     391: BLUSA_CIRUGIA_LOWER_POCKET_ASSET, // COSTURA OVALADO en Blusa.
     1204: BLUSA_COSTURA_LOWER_POCKET_ASSET, // COSTURA en Uniforme.
@@ -384,7 +386,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "costura triangulo": blouseModelAsset(20),
     "bolsillo interno rectangular": blouseModelAsset(14),
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
-    "ribete horizontal": blouseModelAsset(18),
+    "ribete horizontal": BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
     "andes hombre": BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET,
     "costura ovalado": BLUSA_CIRUGIA_LOWER_POCKET_ASSET,
     "bolsillo presillas": BLUSA_EL_HATO_LOWER_POCKET_ASSET,

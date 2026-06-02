@@ -215,6 +215,9 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.lowerPocketModelsByValueId?.[2965]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+    expect(catalog?.lowerPocketModelsByValueId?.[389]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg",
+    );
   });
 
   it("resuelve alias cuando Odoo envia el nombre base del producto", () => {
@@ -640,6 +643,18 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        999995,
+        "Modelo bolsillo inferior",
+        "RIBETE HORIZONTAL",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg",
     );
   });
 
