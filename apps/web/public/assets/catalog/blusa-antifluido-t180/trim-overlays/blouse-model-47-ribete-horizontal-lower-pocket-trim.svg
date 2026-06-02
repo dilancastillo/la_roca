@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1082 1350">
   <g id="ribete-horizontal-lower-pocket-vivo">
-    <path d="M359.5657,923.4913h121.9497v19.623h-121.9497Z" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M625.4323,923.4913h121.9502v19.623h-121.9502Z" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M359.5657,923.4913h121.9497v19.623h-121.9497Z" fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M625.4323,923.4913h121.9502v19.623h-121.9502Z" fill="none" stroke="#000000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

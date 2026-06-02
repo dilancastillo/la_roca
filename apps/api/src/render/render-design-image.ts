@@ -111,7 +111,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
 };
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
-  "blouse-model-47-ribete-horizontal-lower-pocket.svg": 2,
+  "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
 
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
@@ -2328,22 +2328,28 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             continue;
           }
 
-          const trimOutlineBuffer = await createPngInkOutlineBuffer(
-            trimOverlayBuffer,
-            "#f8fafc",
-            sectionTrimOutlineRadius,
-          );
           const trimColorBuffer = await recolorPngInkBuffer(
             trimOverlayBuffer,
             trimColor,
           );
 
+          if (sectionTrimOutlineRadius > 0) {
+            const trimOutlineBuffer = await createPngInkOutlineBuffer(
+              trimOverlayBuffer,
+              "#f8fafc",
+              sectionTrimOutlineRadius,
+            );
+
+            layers.push(
+              getOverlaySvg(
+                `lower-pocket-${section}-trim-outline`,
+                toDataUri(trimOutlineBuffer),
+                lowerPocketRegions,
+              ),
+            );
+          }
+
           layers.push(
-            getOverlaySvg(
-              `lower-pocket-${section}-trim-outline`,
-              toDataUri(trimOutlineBuffer),
-              lowerPocketRegions,
-            ),
             getOverlaySvg(
               `lower-pocket-${section}-trim-color`,
               toDataUri(trimColorBuffer),
