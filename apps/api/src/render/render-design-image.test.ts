@@ -255,6 +255,48 @@ function countPastelPinkPixelsInRegion(
   return count;
 }
 
+function getPastelPinkPixelBounds(
+  buffer: Buffer,
+  width: number,
+  height: number,
+) {
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let count = 0;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (
+        alpha <= 200 ||
+        red <= 230 ||
+        red >= 255 ||
+        green <= 180 ||
+        green >= 215 ||
+        blue <= 185 ||
+        blue >= 225
+      ) {
+        continue;
+      }
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      count += 1;
+    }
+  }
+
+  return count > 0 ? { minX, minY, maxX, maxY, count } : undefined;
+}
+
 function countBaseColorPixelsInRegion(
   buffer: Buffer,
   width: number,
@@ -2927,6 +2969,76 @@ describe("renderDesignImage", () => {
     expect(upperRightPinkPixels).toBeGreaterThan(80);
     expect(lowerLeftPinkPixels).toBeGreaterThan(80);
     expect(lowerRightPinkPixels).toBeLessThan(20);
+  }, 20000);
+
+  it("renderiza RECTANGULAR con el vivo inferior mas abajo que el superior", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const upperPinkBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const lowerPinkBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(upperPinkBounds).toBeDefined();
+    expect(lowerPinkBounds).toBeDefined();
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(upperPinkBounds?.count).toBeGreaterThan(100);
+    expect(lowerPinkBounds?.count).toBeGreaterThan(100);
+    expect(lowerPinkBounds?.minY).toBeGreaterThan(
+      (upperPinkBounds?.minY ?? 0) + 5,
+    );
   }, 20000);
 
   it("renderiza RIBETE con vivos separados para franja superior e inferior", async () => {

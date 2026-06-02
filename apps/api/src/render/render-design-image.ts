@@ -84,6 +84,11 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   string,
   { top?: string; bottom?: string }
 > = {
+  "blouse-model-14.svg": {
+    top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-upper.svg",
+    bottom:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-lower.svg",
+  },
   "blouse-model-18-costura-lower-pocket.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
     bottom:
@@ -125,6 +130,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
 };
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
+  "blouse-model-14.svg": 3,
   "blouse-model-46-costura-triangulo-lower-pocket.svg": 3,
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
