@@ -119,7 +119,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
 };
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
-  "blouse-model-46-costura-triangulo-lower-pocket.svg": 0,
+  "blouse-model-46-costura-triangulo-lower-pocket.svg": 3,
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
 

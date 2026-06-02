@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 861.0099 1037.5283">
   <g id="costura-triangulo-lower-pocket-vivo">
+    <polyline points="214.8399 711.4154 367.8045 711.4154" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="6"/>
+    <polyline points="666.73 711.4154 513.7653 711.4154" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="6"/>
     <polyline points="214.6531 737.4698 272.9254 737.4698 285.6257 763.8044 299.8202 738.2169 365.9368 738.2169" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="6"/>
     <polyline points="514.6992 737.4698 587.1768 737.4698 600.52 763.8044 615.433 738.2169 673.6405 738.2169" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="6"/>
   </g>
