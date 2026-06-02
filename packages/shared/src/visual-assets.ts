@@ -97,6 +97,8 @@ const BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-47-ribete-horizontal-lower-pocket.svg`;
 const BLUSA_LOS_ANDES_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-48-los-andes-lower-pocket.svg`;
+const BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;
 const BLUSA_P_PAIPILLA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-13-p-paipilla.svg`;
 
@@ -366,7 +368,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     383: blouseModelAsset(18), // RIBETE.
     384: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Blusa.
     385: blouseModelAsset(20), // COSTURA TRIANGULO.
-    386: blouseModelAsset(14), // BOLSILLO INTERNO RECTANGULAR.
+    386: BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET, // BOLSILLO INTERNO RECTANGULAR.
     388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
     389: BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET, // RIBETE HORIZONTAL.
     390: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Blusa.
@@ -386,7 +388,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     ribete: blouseModelAsset(18),
     "costura maria": BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     "costura triangulo": blouseModelAsset(20),
-    "bolsillo interno rectangular": blouseModelAsset(14),
+    "bolsillo interno rectangular": BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET,
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
     "ribete horizontal": BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
     "los andes": BLUSA_LOS_ANDES_LOWER_POCKET_ASSET,

@@ -3098,6 +3098,60 @@ describe("renderDesignImage", () => {
     ).toBe(0);
   }, 20000);
 
+  it("renderiza BOLSILLO INTERNO RECTANGULAR sin color amarillo ni vivos", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg";
+    const withoutPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+      }),
+    );
+    const withInternalRectangularPocket = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withIgnoredTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 5153,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-baja",
+            label: "Bolsillos inferiores parte baja",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(withoutPocket.info.width).toBe(900);
+    expect(withoutPocket.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(
+        withoutPocket.data,
+        withInternalRectangularPocket.data,
+      ),
+    ).toBeGreaterThan(500);
+    expect(countYellowPixels(withInternalRectangularPocket.data)).toBe(0);
+    expect(
+      countDifferentPixels(
+        withInternalRectangularPocket.data,
+        withIgnoredTrim.data,
+      ),
+    ).toBe(0);
+  }, 20000);
+
   it("renderiza CIRUGÍA con COSTURA OVALADO, Cuello alto y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg";
