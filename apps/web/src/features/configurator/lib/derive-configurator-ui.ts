@@ -39,7 +39,12 @@ export type PreviewScene = {
   bootImageSrc?: string | undefined;
   waistbandImageSrc?: string | undefined;
   pantsSidePocketType?: "doubleZipper" | undefined;
-  pantsKneePatchRightModel?: "square" | "camouflage" | "point" | undefined;
+  pantsKneePatchRightModel?:
+    | "square"
+    | "camouflage"
+    | "point"
+    | "triangularFlap"
+    | undefined;
   pantsKneePatchRightType?:
     | "button"
     | "penSeam"
@@ -47,7 +52,12 @@ export type PreviewScene = {
     | "horizontalZipper"
     | "verticalZipper"
     | undefined;
-  pantsKneePatchLeftModel?: "square" | "camouflage" | "point" | undefined;
+  pantsKneePatchLeftModel?:
+    | "square"
+    | "camouflage"
+    | "point"
+    | "triangularFlap"
+    | undefined;
   pantsKneePatchLeftType?:
     | "button"
     | "penSeam"
@@ -412,6 +422,16 @@ function isPointKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("punta") : false;
 }
 
+function isTriangularFlapKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("pestana") && normalized.includes("triangular");
+}
+
 function isHorizontalZipperKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -634,7 +654,8 @@ export function deriveConfiguratorUi(
     (option) =>
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
-      isPointKneePatch(option.name),
+      isPointKneePatch(option.name) ||
+      isTriangularFlapKneePatch(option.name),
   );
   const leftKneePatchModel = getSelectedOptions(
     leftKneePatchModelAttribute,
@@ -643,21 +664,26 @@ export function deriveConfiguratorUi(
     (option) =>
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
-      isPointKneePatch(option.name),
+      isPointKneePatch(option.name) ||
+      isTriangularFlapKneePatch(option.name),
   );
   const rightKneePatchModelValue = rightKneePatchModel
     ? isCamouflageKneePatch(rightKneePatchModel.name)
       ? "camouflage"
       : isPointKneePatch(rightKneePatchModel.name)
         ? "point"
-      : "square"
+        : isTriangularFlapKneePatch(rightKneePatchModel.name)
+          ? "triangularFlap"
+          : "square"
     : undefined;
   const leftKneePatchModelValue = leftKneePatchModel
     ? isCamouflageKneePatch(leftKneePatchModel.name)
       ? "camouflage"
       : isPointKneePatch(leftKneePatchModel.name)
         ? "point"
-      : "square"
+        : isTriangularFlapKneePatch(leftKneePatchModel.name)
+          ? "triangularFlap"
+          : "square"
     : undefined;
   const rightKneePatchType =
     rightKneePatchModelValue &&

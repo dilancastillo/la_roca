@@ -1536,6 +1536,96 @@ describe("deriveAutomationRenderScene", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla con pestana triangular", () => {
+    const sessionWithTriangularFlapKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9060,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9061,
+              name: "Pestaña triangular",
+              attributeId: 9060,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9062,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9063,
+              name: "Pestaña triangular",
+              attributeId: 9062,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9064,
+              name: "Parche rodilla",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9065,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9060": [9061],
+        "9062": [9063],
+        "157": [9064],
+        "802": [9065],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithTriangularFlapKneePatches,
+      sessionWithTriangularFlapKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("triangularFlap");
+    expect(scene.pantsKneePatchLeftModel).toBe("triangularFlap");
+    expect(scene.trimSections).toContainEqual({
+      valueId: 9064,
+      key: "parche-rodilla",
+      label: "Parche rodilla",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

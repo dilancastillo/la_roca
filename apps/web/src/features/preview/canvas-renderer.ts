@@ -39,6 +39,12 @@ const PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
   left: "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -91,6 +97,12 @@ const PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_SRC_BY_SIDE = {
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-left.svg",
   right:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-right.svg",
 } as const;
 
 export const overlayRegionPresets: Record<
@@ -2010,7 +2022,7 @@ async function drawPantsKneePatchSideFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   side: "left" | "right",
-  model: "square" | "camouflage" | "point" | undefined,
+  model: "square" | "camouflage" | "point" | "triangularFlap" | undefined,
   type: PreviewScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
@@ -2062,6 +2074,24 @@ async function drawPantsKneePatchSideFromAsset(
       sourceSrc,
     );
     context.drawImage(patchCanvas, 0, 0);
+    return;
+  }
+
+  if (model === "triangularFlap") {
+    const patchCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_TRIANGULAR_FLAP_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(patchCanvas, 0, 0);
+
+    if (trimColor) {
+      const trimCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    }
+
     return;
   }
 

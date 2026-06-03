@@ -31,6 +31,12 @@ const PANTS_KNEE_PATCH_POINT_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE = {
   left: "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -83,6 +89,12 @@ const PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_ASSET_BY_SIDE = {
     "assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-left.svg",
   right:
     "assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-left.svg",
+  right:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-right.svg",
 } as const;
 
 type OverlayRegion = {
@@ -1253,7 +1265,7 @@ async function createPantsSidePocketTrimOverlayBuffer(
 async function createPantsKneePatchSideOverlayBuffers(
   placementAssetPath: string,
   side: "left" | "right",
-  model: "square" | "camouflage" | "point" | undefined,
+  model: "square" | "camouflage" | "point" | "triangularFlap" | undefined,
   type: AutomationRenderScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
@@ -1320,6 +1332,30 @@ async function createPantsKneePatchSideOverlayBuffers(
 
     if (patchOverlayBuffer) {
       buffers.push(patchOverlayBuffer);
+    }
+
+    return buffers;
+  }
+
+  if (model === "triangularFlap") {
+    const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_TRIANGULAR_FLAP_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
+
+    if (patchOverlayBuffer) {
+      buffers.push(patchOverlayBuffer);
+    }
+
+    if (trimColor) {
+      const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (trimOverlayBuffer) {
+        buffers.push(await recolorPngInkBuffer(trimOverlayBuffer, trimColor));
+      }
     }
 
     return buffers;
