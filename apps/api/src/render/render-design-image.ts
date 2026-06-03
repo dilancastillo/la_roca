@@ -12,6 +12,9 @@ const TARGET_RECT = {
   height: 980,
 };
 
+const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
+  "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+
 type OverlayRegion = {
   x: number;
   y: number;
@@ -623,6 +626,18 @@ function isLowerPocketUpperTrimSection(
   );
 }
 
+function isPantsSidePocketTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo lateral de pantalon") ||
+    key.includes("bolsillo-lateral-de-pantalon") ||
+    (key.includes("bolsillo lateral") && key.includes("pantalon"))
+  );
+}
+
 function isChestPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -1130,6 +1145,27 @@ async function createLowerPocketSectionTrimOverlayBuffer(
     trimProcessed,
     placementProcessed,
   );
+}
+
+async function createPantsSidePocketTrimOverlayBuffer(
+  placementAssetPath: string,
+  trimColor: string | undefined,
+  sidePocketType: AutomationRenderScene["pantsSidePocketType"],
+) {
+  if (!trimColor || sidePocketType !== "doubleZipper") {
+    return undefined;
+  }
+
+  const [trimProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET),
+    loadProcessedImage(placementAssetPath),
+  ]);
+  const overlayBuffer = await createOverlayBufferFromProcessed(
+    trimProcessed,
+    placementProcessed,
+  );
+
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
 async function createChestPocketOverlayBuffer(
@@ -2116,6 +2152,23 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       isChestPocketTrimSection,
     );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
+    const pantsSidePocketTrimColor = getTrimSectionColor(
+      scene,
+      isPantsSidePocketTrimSection,
+    );
+
+    const pantsSidePocketTrimOverlayBuffer =
+      await createPantsSidePocketTrimOverlayBuffer(
+        baseAssetPath,
+        pantsSidePocketTrimColor,
+        scene.pantsSidePocketType,
+      );
+
+    if (pantsSidePocketTrimOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(pantsSidePocketTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
 
     if (collarTrimColor) {
       const filledCollarTrimOverlayBuffer =

@@ -21,6 +21,7 @@ export type AutomationRenderScene = {
   garmentDetailAssetPath?: string;
   bootAssetPath?: string;
   waistbandAssetPath?: string;
+  pantsSidePocketType?: "doubleZipper";
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -262,6 +263,24 @@ function getSelectedTrimSections(
   return selectedSections;
 }
 
+function isPantsSidePocketAttributeName(normalizedName: string) {
+  return (
+    normalizedName === "lateral" ||
+    normalizedName === "internos" ||
+    (normalizedName.includes("bolsillo") && normalizedName.includes("lateral"))
+  );
+}
+
+function isDoubleZipperSidePocket(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("doble") && normalized.includes("cremallera");
+}
+
 export function deriveAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -352,6 +371,10 @@ export function deriveAutomationRenderScene(
     session,
     (name) => name === "logo" || name.includes("logo"),
   );
+  const pantsSidePocketAttribute = findAttributeByName(
+    session,
+    isPantsSidePocketAttributeName,
+  );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -384,6 +407,15 @@ export function deriveAutomationRenderScene(
     logoAttribute,
     selectedValueIds,
   ).filter((option) => !isNoLogo(option.name));
+  const selectedPantsSidePocketOptions = getSelectedOptions(
+    pantsSidePocketAttribute,
+    selectedValueIds,
+  );
+  const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
+    isDoubleZipperSidePocket(option.name),
+  )
+    ? "doubleZipper"
+    : undefined;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const garmentAssetPath = selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
@@ -440,6 +472,7 @@ export function deriveAutomationRenderScene(
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),
     ...(waistbandAssetPath ? { waistbandAssetPath } : {}),
+    ...(pantsSidePocketType ? { pantsSidePocketType } : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }

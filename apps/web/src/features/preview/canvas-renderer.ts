@@ -21,6 +21,9 @@ export const previewCanvasSize = {
   height: CANVAS_HEIGHT,
 };
 
+const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC =
+  "/assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+
 export const overlayRegionPresets: Record<
   "lowerPocketPair" | "lowerPocketSingleRight" | "auxiliaryPocketPair",
   OverlayRegion[]
@@ -618,6 +621,18 @@ function isLowerPocketUpperTrimSection(
   return (
     isLowerPocketTrimSection(section) &&
     !isLowerPocketLowerTrimSection(section)
+  );
+}
+
+function isPantsSidePocketTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo lateral de pantalon") ||
+    key.includes("bolsillo-lateral-de-pantalon") ||
+    (key.includes("bolsillo lateral") && key.includes("pantalon"))
   );
 }
 
@@ -1893,6 +1908,23 @@ async function drawHighCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawPantsSidePocketTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+  sidePocketType: PreviewScene["pantsSidePocketType"],
+) {
+  if (!trimColor || sidePocketType !== "doubleZipper") {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(
+    PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC,
+    sourceSrc,
+  );
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 function getCollarLineOutlineRadius(sourceSrc: string) {
   return [
     "blouse-model-01.svg",
@@ -2292,7 +2324,17 @@ export async function composeDesign(
       isChestPocketTrimSection,
     );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
+    const pantsSidePocketTrimColor = getTrimSectionColor(
+      scene,
+      isPantsSidePocketTrimSection,
+    );
 
+    await drawPantsSidePocketTrimFromAsset(
+      context,
+      baseAssetSrc,
+      pantsSidePocketTrimColor,
+      scene.pantsSidePocketType,
+    );
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
     await drawHighCollarTrimFromAsset(

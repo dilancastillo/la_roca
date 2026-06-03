@@ -824,6 +824,38 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withButtonWaist.data)).toBe(0);
   }, 20000);
 
+  it("pinta el vivo del bolsillo lateral de pantalon solo con Doble cremallera", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [
+        {
+          valueId: 9003,
+          key: "bolsillo-lateral-de-pantalon",
+          label: "Bolsillo lateral de pantalón",
+          colorHex: "#a000b0",
+        },
+      ],
+    };
+    const withoutDoubleZipper = await readRawPng(
+      await renderDesignImage(pantsScene),
+    );
+    const withDoubleZipper = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsSidePocketType: "doubleZipper",
+      }),
+    );
+
+    expect(countPurplePixels(withoutDoubleZipper.data)).toBeLessThan(20);
+    expect(countPurplePixels(withDoubleZipper.data)).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withoutDoubleZipper.data, withDoubleZipper.data),
+    ).toBeGreaterThan(250);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

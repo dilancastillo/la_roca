@@ -1355,6 +1355,79 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("activa vivo de bolsillo lateral de pantalon solo con Doble cremallera", () => {
+    const sessionWithSidePocket: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9001,
+          name: "Bolsillo lateral",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9002,
+              name: "Doble cremallera",
+              attributeId: 9001,
+              attributeName: "Bolsillo lateral",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Sección de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9003,
+              name: "Bolsillo lateral de pantalón",
+              attributeId: 157,
+              attributeName: "Sección de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9004,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9001": [9002],
+        "157": [9003],
+        "802": [9004],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithSidePocket,
+      sessionWithSidePocket.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsSidePocketType).toBe("doubleZipper");
+    expect(ui.previewScene.trimSections).toContainEqual({
+      valueId: 9003,
+      key: "bolsillo-lateral-de-pantalon",
+      label: "Bolsillo lateral de pantalón",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

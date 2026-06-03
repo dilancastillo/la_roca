@@ -38,6 +38,7 @@ export type PreviewScene = {
   garmentDetailImageSrc?: string | undefined;
   bootImageSrc?: string | undefined;
   waistbandImageSrc?: string | undefined;
+  pantsSidePocketType?: "doubleZipper" | undefined;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
@@ -339,6 +340,24 @@ function isNoLogo(valueName: string | undefined) {
   );
 }
 
+function isPantsSidePocketAttributeName(normalizedName: string) {
+  return (
+    normalizedName === "lateral" ||
+    normalizedName === "internos" ||
+    (normalizedName.includes("bolsillo") && normalizedName.includes("lateral"))
+  );
+}
+
+function isDoubleZipperSidePocket(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("doble") && normalized.includes("cremallera");
+}
+
 export function deriveConfiguratorUi(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -452,6 +471,10 @@ export function deriveConfiguratorUi(
     session,
     (name) => name === "logo" || name.includes("logo"),
   );
+  const pantsSidePocketAttribute = findAttributeByName(
+    session,
+    isPantsSidePocketAttributeName,
+  );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -484,6 +507,15 @@ export function deriveConfiguratorUi(
   const activeLogoOptions = selectedLogoOptions.filter(
     (option) => !isNoLogo(option.name),
   );
+  const selectedPantsSidePocketOptions = getSelectedOptions(
+    pantsSidePocketAttribute,
+    selectedValueIds,
+  );
+  const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
+    isDoubleZipperSidePocket(option.name),
+  )
+    ? "doubleZipper"
+    : undefined;
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const garmentImageSrc = selectedGarment
@@ -554,6 +586,7 @@ export function deriveConfiguratorUi(
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),
       ...(waistbandImageSrc ? { waistbandImageSrc } : {}),
+      ...(pantsSidePocketType ? { pantsSidePocketType } : {}),
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,
