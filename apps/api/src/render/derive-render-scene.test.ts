@@ -1750,6 +1750,130 @@ describe("deriveAutomationRenderScene", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla ribete con lizo y cremallera", () => {
+    const sessionWithRibeteKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9080,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9081,
+              name: "Ribete",
+              attributeId: 9080,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9082,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9083,
+              name: "Lizo",
+              attributeId: 9082,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9084,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9085,
+              name: "Ribete",
+              attributeId: 9084,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9086,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9087,
+              name: "Cremallera",
+              attributeId: 9086,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9088,
+              name: "Parche rodilla",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9089,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9080": [9081],
+        "9082": [9083],
+        "9084": [9085],
+        "9086": [9087],
+        "157": [9088],
+        "802": [9089],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithRibeteKneePatches,
+      sessionWithRibeteKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("ribete");
+    expect(scene.pantsKneePatchRightType).toBe("plain");
+    expect(scene.pantsKneePatchLeftModel).toBe("ribete");
+    expect(scene.pantsKneePatchLeftType).toBe("zipper");
+    expect(scene.trimSections).toContainEqual({
+      valueId: 9088,
+      key: "parche-rodilla",
+      label: "Parche rodilla",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

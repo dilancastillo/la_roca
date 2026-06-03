@@ -26,24 +26,28 @@ export type AutomationRenderScene = {
     | "square"
     | "camouflage"
     | "point"
+    | "ribete"
     | "triangularFlap";
   pantsKneePatchRightType?:
     | "button"
     | "buckle"
     | "penSeam"
     | "plain"
+    | "zipper"
     | "horizontalZipper"
     | "verticalZipper";
   pantsKneePatchLeftModel?:
     | "square"
     | "camouflage"
     | "point"
+    | "ribete"
     | "triangularFlap";
   pantsKneePatchLeftType?:
     | "button"
     | "buckle"
     | "penSeam"
     | "plain"
+    | "zipper"
     | "horizontalZipper"
     | "verticalZipper";
   neckAssetPath?: string;
@@ -353,6 +357,10 @@ function isTriangularFlapKneePatch(valueName: string | undefined) {
   return normalized.includes("pestana") && normalized.includes("triangular");
 }
 
+function isRibeteKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("ribete") : false;
+}
+
 function isHorizontalZipperKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -371,6 +379,20 @@ function isVerticalZipperKneePatch(valueName: string | undefined) {
   const normalized = normalize(valueName);
 
   return normalized.includes("cremallera") && normalized.includes("vertical");
+}
+
+function isGenericZipperKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return (
+    normalized.includes("cremallera") &&
+    !normalized.includes("horizontal") &&
+    !normalized.includes("vertical")
+  );
 }
 
 function isButtonKneePatch(valueName: string | undefined) {
@@ -557,6 +579,7 @@ export function deriveAutomationRenderScene(
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
       isPointKneePatch(option.name) ||
+      isRibeteKneePatch(option.name) ||
       isTriangularFlapKneePatch(option.name),
   );
   const leftKneePatchModel = getSelectedOptions(
@@ -567,6 +590,7 @@ export function deriveAutomationRenderScene(
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
       isPointKneePatch(option.name) ||
+      isRibeteKneePatch(option.name) ||
       isTriangularFlapKneePatch(option.name),
   );
   const rightKneePatchModelValue = rightKneePatchModel
@@ -574,6 +598,8 @@ export function deriveAutomationRenderScene(
       ? "camouflage"
       : isPointKneePatch(rightKneePatchModel.name)
         ? "point"
+        : isRibeteKneePatch(rightKneePatchModel.name)
+          ? "ribete"
         : isTriangularFlapKneePatch(rightKneePatchModel.name)
           ? "triangularFlap"
           : "square"
@@ -583,6 +609,8 @@ export function deriveAutomationRenderScene(
       ? "camouflage"
       : isPointKneePatch(leftKneePatchModel.name)
         ? "point"
+        : isRibeteKneePatch(leftKneePatchModel.name)
+          ? "ribete"
         : isTriangularFlapKneePatch(leftKneePatchModel.name)
           ? "triangularFlap"
           : "square"
@@ -594,6 +622,7 @@ export function deriveAutomationRenderScene(
         isButtonKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
+        isGenericZipperKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
@@ -605,6 +634,7 @@ export function deriveAutomationRenderScene(
         isButtonKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
+        isGenericZipperKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
@@ -616,6 +646,8 @@ export function deriveAutomationRenderScene(
         ? "buckle"
       : isPenSeamKneePatch(rightKneePatchType.name)
         ? "penSeam"
+      : isGenericZipperKneePatch(rightKneePatchType.name)
+        ? "zipper"
       : isHorizontalZipperKneePatch(rightKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(rightKneePatchType.name)
@@ -629,6 +661,8 @@ export function deriveAutomationRenderScene(
         ? "buckle"
       : isPenSeamKneePatch(leftKneePatchType.name)
         ? "penSeam"
+      : isGenericZipperKneePatch(leftKneePatchType.name)
+        ? "zipper"
       : isHorizontalZipperKneePatch(leftKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(leftKneePatchType.name)

@@ -45,6 +45,18 @@ const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_RIBETE_PLAIN_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-ribete-plain-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-ribete-plain-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_RIBETE_ZIPPER_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-ribete-zipper-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-ribete-zipper-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
   left: "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -109,6 +121,18 @@ const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_SRC_BY_SIDE = {
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-left.svg",
   right:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-triangular-flap-trim-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_RIBETE_PLAIN_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-ribete-plain-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-ribete-plain-fill-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_RIBETE_ZIPPER_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-ribete-zipper-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-ribete-zipper-fill-right.svg",
 } as const;
 
 export const overlayRegionPresets: Record<
@@ -2028,7 +2052,13 @@ async function drawPantsKneePatchSideFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   side: "left" | "right",
-  model: "square" | "camouflage" | "point" | "triangularFlap" | undefined,
+  model:
+    | "square"
+    | "camouflage"
+    | "point"
+    | "ribete"
+    | "triangularFlap"
+    | undefined,
   type: PreviewScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
@@ -2089,6 +2119,46 @@ async function drawPantsKneePatchSideFromAsset(
       sourceSrc,
     );
     context.drawImage(patchCanvas, 0, 0);
+    return;
+  }
+
+  if (model === "ribete") {
+    const isZipper =
+      type === "zipper" ||
+      type === "horizontalZipper" ||
+      type === "verticalZipper";
+
+    if (isZipper) {
+      const zipperCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_RIBETE_ZIPPER_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(zipperCanvas, 0, 0);
+
+      if (trimColor) {
+        const zipperFillCanvas = await createRasterCanvas(
+          PANTS_KNEE_PATCH_RIBETE_ZIPPER_FILL_SRC_BY_SIDE[side],
+          sourceSrc,
+        );
+        context.drawImage(recolorCanvasInk(zipperFillCanvas, trimColor), 0, 0);
+      }
+
+      return;
+    }
+
+    if (trimColor) {
+      const plainFillCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_RIBETE_PLAIN_FILL_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(plainFillCanvas, trimColor), 0, 0);
+    }
+
+    const plainCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_RIBETE_PLAIN_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(plainCanvas, 0, 0);
     return;
   }
 
