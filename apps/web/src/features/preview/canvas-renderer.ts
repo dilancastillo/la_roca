@@ -33,6 +33,12 @@ const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-right.svg",
+} as const;
 
 export const overlayRegionPresets: Record<
   "lowerPocketPair" | "lowerPocketSingleRight" | "auxiliaryPocketPair",
@@ -1969,8 +1975,11 @@ async function drawPantsKneePatchSideFromAsset(
     return;
   }
 
+  const zipperSrc = trimColor
+    ? PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE[side]
+    : PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side];
   const zipperCanvas = await createRasterCanvas(
-    PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side],
+    zipperSrc,
     sourceSrc,
   );
   context.drawImage(

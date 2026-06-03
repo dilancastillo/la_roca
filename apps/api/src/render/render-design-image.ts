@@ -24,6 +24,12 @@ const PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_ZIPPER_FILL_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-left.svg",
+  right:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-right.svg",
+} as const;
 
 type OverlayRegion = {
   x: number;
@@ -1216,7 +1222,9 @@ async function createPantsKneePatchSideOverlayBuffers(
   }
 
   const zipperOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-    PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE[side],
+    trimColor
+      ? PANTS_KNEE_PATCH_ZIPPER_FILL_ASSET_BY_SIDE[side]
+      : PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE[side],
     placementAssetPath,
   );
 
