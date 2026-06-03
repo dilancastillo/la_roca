@@ -765,6 +765,45 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa Tipo bota Campana como bota limpia independiente del pantalon", () => {
+    const sessionWithBellBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999996,
+              name: "Campana",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999996],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithBellBoot,
+      sessionWithBellBoot.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-campana.svg",
+    );
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

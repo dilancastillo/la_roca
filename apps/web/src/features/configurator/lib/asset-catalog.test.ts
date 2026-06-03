@@ -806,5 +806,15 @@ describe("getProductAssetCatalog", () => {
     ).toBe(
       "/assets/catalog/pantalon/detail-overlays/pants-boot-con-abertura.svg",
     );
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999996,
+        "Tipo bota",
+        "Campana",
+      ),
+    ).toBe("/assets/catalog/pantalon/detail-overlays/pants-boot-campana.svg");
   });
 });

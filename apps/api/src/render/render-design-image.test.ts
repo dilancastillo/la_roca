@@ -679,6 +679,27 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withBoot.data)).toBe(0);
   }, 20000);
 
+  it("mantiene la bota Campana limpia sin agregar trazos", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutBoot = await readRawPng(await renderDesignImage(pantsScene));
+    const withBellBoot = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        bootAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-boot-campana.svg",
+      }),
+    );
+
+    expect(countDifferentPixels(withoutBoot.data, withBellBoot.data)).toBe(0);
+    expect(countNeonGreenPixels(withBellBoot.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";
