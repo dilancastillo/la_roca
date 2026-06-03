@@ -1846,6 +1846,130 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla punta con costura esfero", () => {
+    const sessionWithPointKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9050,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9051,
+              name: "Punta",
+              attributeId: 9050,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9052,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9053,
+              name: "Costura esfero",
+              attributeId: 9052,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9054,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9055,
+              name: "Punta",
+              attributeId: 9054,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9056,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9057,
+              name: "Costura esfero",
+              attributeId: 9056,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9058,
+              name: "Parche rodilla",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9059,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9050": [9051],
+        "9052": [9053],
+        "9054": [9055],
+        "9056": [9057],
+        "157": [9058],
+        "802": [9059],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithPointKneePatches,
+      sessionWithPointKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("point");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("penSeam");
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("point");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBe("penSeam");
+    expect(ui.previewScene.trimSections).toContainEqual({
+      valueId: 9058,
+      key: "parche-rodilla",
+      label: "Parche rodilla",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

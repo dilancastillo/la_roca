@@ -1201,6 +1201,117 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
   }, 20000);
 
+  it("superpone bolsillos de parche de rodilla punta y pinta la costura esfero con Parche rodilla", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutPatch = await readRawPng(await renderDesignImage(pantsScene));
+    const withPointPatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "point",
+        pantsKneePatchLeftModel: "point",
+      }),
+    );
+    const withPenSeam = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "point",
+        pantsKneePatchRightType: "penSeam",
+        pantsKneePatchLeftModel: "point",
+        pantsKneePatchLeftType: "penSeam",
+      }),
+    );
+    const withTrimmedPenSeam = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "point",
+        pantsKneePatchRightType: "penSeam",
+        pantsKneePatchLeftModel: "point",
+        pantsKneePatchLeftType: "penSeam",
+        trimSections: [
+          {
+            valueId: 9018,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const patchRegions = [
+      { x: 195, y: 520, width: 145, height: 125 },
+      { x: 560, y: 520, width: 145, height: 125 },
+    ];
+    const penSeamRegions = [
+      { x: 225, y: 535, width: 85, height: 105 },
+      { x: 630, y: 535, width: 85, height: 105 },
+    ];
+    const basePatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutPatch.data,
+          withoutPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const pointPatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withPointPatch.data,
+          withPointPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const basePenSeamInk = penSeamRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withPointPatch.data,
+          withPointPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const penSeamInk = penSeamRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withPenSeam.data,
+          withPenSeam.info.width,
+          region,
+        ),
+      0,
+    );
+    const purplePenSeamPixels = penSeamRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withTrimmedPenSeam.data,
+          withTrimmedPenSeam.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(countDifferentPixels(withoutPatch.data, withPointPatch.data)).toBeGreaterThan(
+      220,
+    );
+    expect(pointPatchInk).toBeGreaterThan(basePatchInk + 150);
+    expect(penSeamInk).toBeGreaterThan(basePenSeamInk + 35);
+    expect(countPurplePixels(withPenSeam.data)).toBeLessThan(20);
+    expect(purplePenSeamPixels).toBeGreaterThan(160);
+    expect(countBrightCyanPixels(withTrimmedPenSeam.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

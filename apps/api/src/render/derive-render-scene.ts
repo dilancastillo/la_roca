@@ -22,15 +22,17 @@ export type AutomationRenderScene = {
   bootAssetPath?: string;
   waistbandAssetPath?: string;
   pantsSidePocketType?: "doubleZipper";
-  pantsKneePatchRightModel?: "square" | "camouflage";
+  pantsKneePatchRightModel?: "square" | "camouflage" | "point";
   pantsKneePatchRightType?:
     | "button"
+    | "penSeam"
     | "plain"
     | "horizontalZipper"
     | "verticalZipper";
-  pantsKneePatchLeftModel?: "square" | "camouflage";
+  pantsKneePatchLeftModel?: "square" | "camouflage" | "point";
   pantsKneePatchLeftType?:
     | "button"
+    | "penSeam"
     | "plain"
     | "horizontalZipper"
     | "verticalZipper";
@@ -327,6 +329,10 @@ function isCamouflageKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("camuflado") : false;
 }
 
+function isPointKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("punta") : false;
+}
+
 function isHorizontalZipperKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -355,6 +361,16 @@ function isButtonKneePatch(valueName: string | undefined) {
   const normalized = normalize(valueName);
 
   return normalized.includes("broche") || normalized.includes("boton");
+}
+
+function isPenSeamKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("costura") && normalized.includes("esfero");
 }
 
 function isPlainKneePatch(valueName: string | undefined) {
@@ -514,23 +530,31 @@ export function deriveAutomationRenderScene(
     selectedValueIds,
   ).find(
     (option) =>
-      isSquareKneePatch(option.name) || isCamouflageKneePatch(option.name),
+      isSquareKneePatch(option.name) ||
+      isCamouflageKneePatch(option.name) ||
+      isPointKneePatch(option.name),
   );
   const leftKneePatchModel = getSelectedOptions(
     leftKneePatchModelAttribute,
     selectedValueIds,
   ).find(
     (option) =>
-      isSquareKneePatch(option.name) || isCamouflageKneePatch(option.name),
+      isSquareKneePatch(option.name) ||
+      isCamouflageKneePatch(option.name) ||
+      isPointKneePatch(option.name),
   );
   const rightKneePatchModelValue = rightKneePatchModel
     ? isCamouflageKneePatch(rightKneePatchModel.name)
       ? "camouflage"
+      : isPointKneePatch(rightKneePatchModel.name)
+        ? "point"
       : "square"
     : undefined;
   const leftKneePatchModelValue = leftKneePatchModel
     ? isCamouflageKneePatch(leftKneePatchModel.name)
       ? "camouflage"
+      : isPointKneePatch(leftKneePatchModel.name)
+        ? "point"
       : "square"
     : undefined;
   const rightKneePatchType =
@@ -538,6 +562,7 @@ export function deriveAutomationRenderScene(
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isPenSeamKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
@@ -547,6 +572,7 @@ export function deriveAutomationRenderScene(
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isPenSeamKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
@@ -554,6 +580,8 @@ export function deriveAutomationRenderScene(
   const rightKneePatchTypeValue = rightKneePatchType
     ? isButtonKneePatch(rightKneePatchType.name)
       ? "button"
+      : isPenSeamKneePatch(rightKneePatchType.name)
+        ? "penSeam"
       : isHorizontalZipperKneePatch(rightKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(rightKneePatchType.name)
@@ -563,6 +591,8 @@ export function deriveAutomationRenderScene(
   const leftKneePatchTypeValue = leftKneePatchType
     ? isButtonKneePatch(leftKneePatchType.name)
       ? "button"
+      : isPenSeamKneePatch(leftKneePatchType.name)
+        ? "penSeam"
       : isHorizontalZipperKneePatch(leftKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(leftKneePatchType.name)

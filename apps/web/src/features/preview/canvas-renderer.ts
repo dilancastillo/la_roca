@@ -34,6 +34,11 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE = {
+  left: "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
   left: "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -74,6 +79,18 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_SRC_BY_SIDE = {
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-left.svg",
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_POINT_PEN_SEAM_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-right.svg",
 } as const;
 
 export const overlayRegionPresets: Record<
@@ -1993,7 +2010,7 @@ async function drawPantsKneePatchSideFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   side: "left" | "right",
-  model: "square" | "camouflage" | undefined,
+  model: "square" | "camouflage" | "point" | undefined,
   type: PreviewScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
@@ -2024,6 +2041,29 @@ async function drawPantsKneePatchSideFromAsset(
       context.drawImage(buttonCanvas, 0, 0);
     }
 
+    return;
+  }
+
+  if (model === "point") {
+    if (type === "penSeam") {
+      const seamCanvas = await createRasterCanvas(
+        trimColor
+          ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_SRC_BY_SIDE[side]
+          : PANTS_KNEE_PATCH_POINT_PEN_SEAM_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(
+        trimColor ? recolorCanvasInk(seamCanvas, trimColor) : seamCanvas,
+        0,
+        0,
+      );
+    }
+
+    const patchCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(patchCanvas, 0, 0);
     return;
   }
 

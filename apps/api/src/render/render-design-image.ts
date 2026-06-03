@@ -25,6 +25,12 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_POINT_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE = {
   left: "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -65,6 +71,18 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_ASSET_BY_SIDE = {
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-left.svg",
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_POINT_PEN_SEAM_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-left.svg",
+  right:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-point-pen-seam-fill-right.svg",
 } as const;
 
 type OverlayRegion = {
@@ -1235,7 +1253,7 @@ async function createPantsSidePocketTrimOverlayBuffer(
 async function createPantsKneePatchSideOverlayBuffers(
   placementAssetPath: string,
   side: "left" | "right",
-  model: "square" | "camouflage" | undefined,
+  model: "square" | "camouflage" | "point" | undefined,
   type: AutomationRenderScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
@@ -1274,6 +1292,36 @@ async function createPantsKneePatchSideOverlayBuffers(
       if (buttonOverlayBuffer) {
         buffers.push(buttonOverlayBuffer);
       }
+    }
+
+    return buffers;
+  }
+
+  if (model === "point") {
+    if (type === "penSeam") {
+      const seamOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        trimColor
+          ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_ASSET_BY_SIDE[side]
+          : PANTS_KNEE_PATCH_POINT_PEN_SEAM_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (seamOverlayBuffer) {
+        buffers.push(
+          trimColor
+            ? await recolorPngInkBuffer(seamOverlayBuffer, trimColor)
+            : seamOverlayBuffer,
+        );
+      }
+    }
+
+    const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_POINT_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
+
+    if (patchOverlayBuffer) {
+      buffers.push(patchOverlayBuffer);
     }
 
     return buffers;
