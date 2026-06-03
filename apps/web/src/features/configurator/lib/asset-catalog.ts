@@ -3,6 +3,7 @@ import {
   getDefaultVisualAssetPath,
   getVisualBootAssetPathForValue,
   getVisualGarmentDetailAssetPathForValue,
+  getVisualWaistbandAssetPathForValue,
   getVisualAssetPath,
   getVisualAssetPathForValue,
   resolveVisualAssetCatalog,
@@ -73,6 +74,24 @@ export function getBootImageSourceForValue(
   valueName?: string,
 ) {
   const path = getVisualBootAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
+
+  return path ? `/${path}` : undefined;
+}
+
+export function getWaistbandImageSourceForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const path = getVisualWaistbandAssetPathForValue(
     graphicManifestKey,
     attributeId,
     valueId,

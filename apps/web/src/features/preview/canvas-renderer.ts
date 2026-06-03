@@ -2221,6 +2221,11 @@ export async function composeDesign(
     );
     await drawGarmentDetailOverlay(
       context,
+      scene.waistbandImageSrc,
+      baseAssetSrc,
+    );
+    await drawGarmentDetailOverlay(
+      context,
       scene.bootImageSrc,
       baseAssetSrc,
     );

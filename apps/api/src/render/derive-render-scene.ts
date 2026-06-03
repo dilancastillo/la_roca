@@ -11,6 +11,7 @@ import {
   getServerBootAssetPathForValue,
   getServerGarmentDetailAssetPathForValue,
   getServerProductAssetCatalog,
+  getServerWaistbandAssetPathForValue,
 } from "./server-asset-catalog.js";
 
 export type AutomationRenderScene = {
@@ -19,6 +20,7 @@ export type AutomationRenderScene = {
   garmentAssetPath?: string;
   garmentDetailAssetPath?: string;
   bootAssetPath?: string;
+  waistbandAssetPath?: string;
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -301,6 +303,18 @@ export function deriveAutomationRenderScene(
         name.includes("modelo bota") ||
         name.includes("modelo de bota"),
     );
+  const waistbandModelAttribute =
+    session.attributes.find(
+      (attribute) => matchesCatalogAttribute(catalog, "waistbandModel", attribute),
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("cinturilla") ||
+        name.includes("pretina") ||
+        name.includes("modelo de cintura") ||
+        name.includes("modelo cintura"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -343,6 +357,10 @@ export function deriveAutomationRenderScene(
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedBootModel = findSelectedValue(
     bootModelAttribute,
+    selectedValueIds,
+  );
+  const selectedWaistbandModel = findSelectedValue(
+    waistbandModelAttribute,
     selectedValueIds,
   );
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
@@ -389,6 +407,15 @@ export function deriveAutomationRenderScene(
         selectedBootModel.name,
       )
     : undefined;
+  const waistbandAssetPath = selectedWaistbandModel
+    ? getServerWaistbandAssetPathForValue(
+        session.graphicManifestKey,
+        waistbandModelAttribute!.id,
+        selectedWaistbandModel.id,
+        waistbandModelAttribute!.name,
+        selectedWaistbandModel.name,
+      )
+    : undefined;
   const neckAssetPath = selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
@@ -412,6 +439,7 @@ export function deriveAutomationRenderScene(
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),
+    ...(waistbandAssetPath ? { waistbandAssetPath } : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }

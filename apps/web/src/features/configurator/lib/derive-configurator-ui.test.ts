@@ -1277,6 +1277,84 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa Cinturilla Completa resortada como overlay independiente del pantalon", () => {
+    const sessionWithWaistband: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9999,
+          name: "Cinturilla",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999994,
+              name: "Completa resortada",
+              attributeId: 9999,
+              attributeName: "Cinturilla",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9999": [999994],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithWaistband,
+      sessionWithWaistband.selectedValueIds,
+    );
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.waistbandImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-waist-resortada.svg",
+    );
+  });
+
+  it("usa Cinturilla Pretina de boton como overlay independiente del pantalon", () => {
+    const sessionWithWaistband: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9999,
+          name: "Cinturilla",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999993,
+              name: "Pretina de botón",
+              attributeId: 9999,
+              attributeName: "Cinturilla",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9999": [999993],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithWaistband,
+      sessionWithWaistband.selectedValueIds,
+    );
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.waistbandImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-waist-pretina-boton.svg",
+    );
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

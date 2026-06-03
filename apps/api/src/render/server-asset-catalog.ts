@@ -3,6 +3,7 @@ import {
   getDefaultVisualAssetPath,
   getVisualBootAssetPathForValue,
   getVisualGarmentDetailAssetPathForValue,
+  getVisualWaistbandAssetPathForValue,
   getVisualAssetPath,
   getVisualAssetPathForValue,
   resolveVisualAssetCatalog,
@@ -63,6 +64,22 @@ export function getServerBootAssetPathForValue(
   valueName?: string,
 ) {
   return getVisualBootAssetPathForValue(
+    graphicManifestKey,
+    attributeId,
+    valueId,
+    attributeName,
+    valueName,
+  );
+}
+
+export function getServerWaistbandAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  return getVisualWaistbandAssetPathForValue(
     graphicManifestKey,
     attributeId,
     valueId,

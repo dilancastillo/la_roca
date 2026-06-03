@@ -735,6 +735,95 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withZipperBoot.data)).toBe(0);
   }, 20000);
 
+  it("superpone la Cinturilla Completa resortada sin dejarla fija en la base", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutWaist = await readRawPng(await renderDesignImage(pantsScene));
+    const withWaist = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        waistbandAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-waist-resortada.svg",
+      }),
+    );
+    const waistbandRegion = { x: 300, y: 65, width: 330, height: 235 };
+    const baseWaistInk = countDarkPixelsInRegion(
+      withoutWaist.data,
+      withoutWaist.info.width,
+      waistbandRegion,
+    );
+    const resortedWaistInk = countDarkPixelsInRegion(
+      withWaist.data,
+      withWaist.info.width,
+      waistbandRegion,
+    );
+
+    expect(
+      countDifferentPixels(withoutWaist.data, withWaist.data),
+    ).toBeGreaterThan(300);
+    expect(resortedWaistInk).toBeGreaterThan(baseWaistInk + 300);
+    expect(countNeonGreenPixels(withWaist.data)).toBe(0);
+  }, 20000);
+
+  it("superpone la Cinturilla Pretina de boton sin activar el resorte", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutWaist = await readRawPng(await renderDesignImage(pantsScene));
+    const withResortedWaist = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        waistbandAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-waist-resortada.svg",
+      }),
+    );
+    const withButtonWaist = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        waistbandAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-waist-pretina-boton.svg",
+      }),
+    );
+    const buttonRegion = { x: 425, y: 65, width: 90, height: 85 };
+    const waistbandRegion = { x: 300, y: 65, width: 330, height: 235 };
+    const baseButtonInk = countDarkPixelsInRegion(
+      withoutWaist.data,
+      withoutWaist.info.width,
+      buttonRegion,
+    );
+    const buttonInk = countDarkPixelsInRegion(
+      withButtonWaist.data,
+      withButtonWaist.info.width,
+      buttonRegion,
+    );
+    const buttonWaistInk = countDarkPixelsInRegion(
+      withButtonWaist.data,
+      withButtonWaist.info.width,
+      waistbandRegion,
+    );
+    const resortedWaistInk = countDarkPixelsInRegion(
+      withResortedWaist.data,
+      withResortedWaist.info.width,
+      waistbandRegion,
+    );
+
+    expect(
+      countDifferentPixels(withoutWaist.data, withButtonWaist.data),
+    ).toBeGreaterThan(40);
+    expect(buttonInk).toBeGreaterThan(baseButtonInk + 20);
+    expect(resortedWaistInk).toBeGreaterThan(buttonWaistInk + 150);
+    expect(countNeonGreenPixels(withButtonWaist.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

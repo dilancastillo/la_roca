@@ -7,6 +7,7 @@ export type VisualAssetCatalog = {
     lowerPocketType?: number;
     lowerPocketModel?: number;
     bootModel?: number;
+    waistbandModel?: number;
     chestPocketModel?: number;
     auxiliaryPocketModel?: number;
     baseColor: number;
@@ -35,6 +36,7 @@ export type VisualAssetCatalog = {
   garmentModelsByValueId?: Record<number, string>;
   garmentDetailModelsByValueId?: Record<number, string>;
   bootModelsByValueId?: Record<number, string>;
+  waistbandModelsByValueId?: Record<number, string>;
   neckModelsByValueId?: Record<number, string>;
   lowerPocketModelsByValueId?: Record<number, string>;
   chestPocketModelsByValueId?: Record<number, string>;
@@ -42,6 +44,7 @@ export type VisualAssetCatalog = {
   garmentModelsByValueName?: Record<string, string>;
   garmentDetailModelsByValueName?: Record<string, string>;
   bootModelsByValueName?: Record<string, string>;
+  waistbandModelsByValueName?: Record<string, string>;
   neckModelsByValueName?: Record<string, string>;
   lowerPocketModelsByValueName?: Record<string, string>;
   chestPocketModelsByValueName?: Record<string, string>;
@@ -65,6 +68,10 @@ const PANTALON_CAMPANA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-campana.svg`;
 const PANTALON_CREMALLERA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-cremallera.svg`;
+const PANTALON_RESORTADA_WAIST_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-waist-resortada.svg`;
+const PANTALON_PRETINA_BOTON_WAIST_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-waist-pretina-boton.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
@@ -190,6 +197,17 @@ function isBootModelAttribute(attributeName: string | undefined) {
     normalized.includes("tipo de bota") ||
     normalized.includes("modelo bota") ||
     normalized.includes("modelo de bota")
+  );
+}
+
+function isWaistbandModelAttribute(attributeName: string | undefined) {
+  const normalized = normalizeLookupKey(attributeName ?? "");
+
+  return (
+    normalized.includes("cinturilla") ||
+    normalized.includes("pretina") ||
+    normalized.includes("modelo de cintura") ||
+    normalized.includes("modelo cintura")
   );
 }
 
@@ -481,6 +499,15 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
     resorte: PANTALON_RESORTE_BOOT_ASSET,
     tradicional: PANTALON_TRADICIONAL_BOOT_ASSET,
   },
+  waistbandModelsByValueName: {
+    "completa resortada": PANTALON_RESORTADA_WAIST_ASSET,
+    completa: PANTALON_RESORTADA_WAIST_ASSET,
+    "media lisa": PANTALON_RESORTADA_WAIST_ASSET,
+    media: PANTALON_RESORTADA_WAIST_ASSET,
+    embarazo: PANTALON_RESORTADA_WAIST_ASSET,
+    "pretina de boton": PANTALON_PRETINA_BOTON_WAIST_ASSET,
+    "pretina boton": PANTALON_PRETINA_BOTON_WAIST_ASSET,
+  },
   neckModelsByValueId: {},
   lowerPocketModelsByValueId: {},
   auxiliaryPocketModelsByValueId: {},
@@ -535,6 +562,10 @@ export function getVisualAssetPath(
 
   if (matchesVisualAssetAttributeId(catalog, "bootModel", attributeId)) {
     return catalog.bootModelsByValueId?.[valueId];
+  }
+
+  if (matchesVisualAssetAttributeId(catalog, "waistbandModel", attributeId)) {
+    return catalog.waistbandModelsByValueId?.[valueId];
   }
 
   if (matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attributeId)) {
@@ -593,6 +624,13 @@ export function getVisualAssetPathForValue(
   }
 
   if (
+    matchesVisualAssetAttributeId(catalog, "waistbandModel", attributeId) ||
+    isWaistbandModelAttribute(attributeName)
+  ) {
+    return findByNormalizedName(catalog.waistbandModelsByValueName, valueName);
+  }
+
+  if (
     matchesVisualAssetAttributeId(catalog, "lowerPocketModel", attributeId) ||
     isLowerPocketModelAttribute(attributeName)
   ) {
@@ -636,6 +674,32 @@ export function getVisualBootAssetPathForValue(
     return (
       catalog.bootModelsByValueId?.[valueId] ??
       findByNormalizedName(catalog.bootModelsByValueName, valueName)
+    );
+  }
+
+  return undefined;
+}
+
+export function getVisualWaistbandAssetPathForValue(
+  graphicManifestKey: string,
+  attributeId: number,
+  valueId: number,
+  attributeName?: string,
+  valueName?: string,
+) {
+  const catalog = resolveVisualAssetCatalog(graphicManifestKey);
+
+  if (!catalog) {
+    return undefined;
+  }
+
+  if (
+    matchesVisualAssetAttributeId(catalog, "waistbandModel", attributeId) ||
+    isWaistbandModelAttribute(attributeName)
+  ) {
+    return (
+      catalog.waistbandModelsByValueId?.[valueId] ??
+      findByNormalizedName(catalog.waistbandModelsByValueName, valueName)
     );
   }
 

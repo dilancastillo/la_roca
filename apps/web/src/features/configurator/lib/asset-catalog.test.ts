@@ -6,6 +6,7 @@ import {
   getImageSourceByIds,
   getImageSourceForValue,
   getProductAssetCatalog,
+  getWaistbandImageSourceForValue,
 } from "./asset-catalog";
 
 describe("getProductAssetCatalog", () => {
@@ -827,6 +828,53 @@ describe("getProductAssetCatalog", () => {
       ),
     ).toBe(
       "/assets/catalog/pantalon/detail-overlays/pants-boot-cremallera.svg",
+    );
+  });
+
+  it("resuelve cinturillas de pantalon por Cinturilla", () => {
+    const resortadaAsset =
+      "/assets/catalog/pantalon/detail-overlays/pants-waist-resortada.svg";
+
+    expect(
+      getWaistbandImageSourceForValue(
+        "pantalon",
+        999999,
+        999999,
+        "Cinturilla",
+        "Completa resortada",
+      ),
+    ).toBe(resortadaAsset);
+
+    expect(
+      getWaistbandImageSourceForValue(
+        "pantalon",
+        999999,
+        999998,
+        "Cinturilla",
+        "Media lisa",
+      ),
+    ).toBe(resortadaAsset);
+
+    expect(
+      getWaistbandImageSourceForValue(
+        "pantalon",
+        999999,
+        999997,
+        "Cinturilla",
+        "Embarazo",
+      ),
+    ).toBe(resortadaAsset);
+
+    expect(
+      getWaistbandImageSourceForValue(
+        "pantalon",
+        999999,
+        999996,
+        "Cinturilla",
+        "Pretina de botón",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-waist-pretina-boton.svg",
     );
   });
 });

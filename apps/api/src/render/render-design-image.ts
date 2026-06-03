@@ -2028,6 +2028,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
+    const waistbandAssetOverlayBuffer =
+      await createGarmentDetailAssetOverlayBuffer(
+        scene.waistbandAssetPath,
+        baseAssetPath,
+      );
+
+    if (waistbandAssetOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(waistbandAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
     const bootAssetOverlayBuffer =
       await createGarmentDetailAssetOverlayBuffer(
         scene.bootAssetPath,

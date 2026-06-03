@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="pants_waist_pretina_boton" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 1350">
+  <g fill="none" stroke="#000" stroke-miterlimit="10">
+    <path d="M378.5192,271.1778s52.9467-31.9394,72.2573-140.2467" stroke-dasharray="3.6033" stroke-linecap="round" stroke-width="1.2011"/>
+    <path d="M718.1338,272.857s-49.4834-38.6562-66.2752-141.5061" stroke-dasharray="3.6033" stroke-linecap="round" stroke-width="1.2011"/>
+    <line x1="550.2156" y1="121.3108" x2="547.9067" y2="369.4799" stroke-dasharray="3.6033" stroke-linecap="round" stroke-width="1.2011"/>
+    <path d="M543.3126,91.4744s18.4861,5.6521,5.9596,28.6554" stroke-width="3.6033"/>
+  </g>
+  <circle cx="541.2281" cy="106.6175" r="5.7587"/>
+</svg>

@@ -11,6 +11,7 @@ import {
   getGarmentDetailImageSourceForValue,
   getImageSourceForValue,
   getProductAssetCatalog,
+  getWaistbandImageSourceForValue,
 } from "./asset-catalog";
 
 export type UiOption = {
@@ -36,6 +37,7 @@ export type PreviewScene = {
   garmentImageSrc?: string | undefined;
   garmentDetailImageSrc?: string | undefined;
   bootImageSrc?: string | undefined;
+  waistbandImageSrc?: string | undefined;
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
@@ -401,6 +403,18 @@ export function deriveConfiguratorUi(
         name.includes("modelo bota") ||
         name.includes("modelo de bota"),
     );
+  const waistbandModelAttribute =
+    session.attributes.find(
+      (attribute) => matchesCatalogAttribute(catalog, "waistbandModel", attribute),
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("cinturilla") ||
+        name.includes("pretina") ||
+        name.includes("modelo de cintura") ||
+        name.includes("modelo cintura"),
+    );
   const lowerPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -443,6 +457,10 @@ export function deriveConfiguratorUi(
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedBootModel = findSelectedValue(
     bootModelAttribute,
+    selectedValueIds,
+  );
+  const selectedWaistbandModel = findSelectedValue(
+    waistbandModelAttribute,
     selectedValueIds,
   );
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
@@ -490,6 +508,15 @@ export function deriveConfiguratorUi(
         selectedBootModel.name,
       )
     : undefined;
+  const waistbandImageSrc = selectedWaistbandModel
+    ? getWaistbandImageSourceForValue(
+        session.graphicManifestKey,
+        waistbandModelAttribute!.id,
+        selectedWaistbandModel.id,
+        waistbandModelAttribute!.name,
+        selectedWaistbandModel.name,
+      )
+    : undefined;
   const neckImageSrc = selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
@@ -526,6 +553,7 @@ export function deriveConfiguratorUi(
       garmentImageSrc,
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),
+      ...(waistbandImageSrc ? { waistbandImageSrc } : {}),
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,
