@@ -1298,21 +1298,19 @@ async function createPantsKneePatchSideOverlayBuffers(
   }
 
   if (model === "point") {
-    if (type === "penSeam") {
-      const seamOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        trimColor
-          ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_ASSET_BY_SIDE[side]
-          : PANTS_KNEE_PATCH_POINT_PEN_SEAM_ASSET_BY_SIDE[side],
-        placementAssetPath,
-      );
+    const seamOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      trimColor
+        ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_ASSET_BY_SIDE[side]
+        : PANTS_KNEE_PATCH_POINT_PEN_SEAM_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
 
-      if (seamOverlayBuffer) {
-        buffers.push(
-          trimColor
-            ? await recolorPngInkBuffer(seamOverlayBuffer, trimColor)
-            : seamOverlayBuffer,
-        );
-      }
+    if (seamOverlayBuffer) {
+      buffers.push(
+        trimColor
+          ? await recolorPngInkBuffer(seamOverlayBuffer, trimColor)
+          : seamOverlayBuffer,
+      );
     }
 
     const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(

@@ -1217,22 +1217,11 @@ describe("renderDesignImage", () => {
         pantsKneePatchLeftModel: "point",
       }),
     );
-    const withPenSeam = await readRawPng(
+    const withTrimmedPointPatch = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
         pantsKneePatchRightModel: "point",
-        pantsKneePatchRightType: "penSeam",
         pantsKneePatchLeftModel: "point",
-        pantsKneePatchLeftType: "penSeam",
-      }),
-    );
-    const withTrimmedPenSeam = await readRawPng(
-      await renderDesignImage({
-        ...pantsScene,
-        pantsKneePatchRightModel: "point",
-        pantsKneePatchRightType: "penSeam",
-        pantsKneePatchLeftModel: "point",
-        pantsKneePatchLeftType: "penSeam",
         trimSections: [
           {
             valueId: 9018,
@@ -1275,8 +1264,8 @@ describe("renderDesignImage", () => {
       (total, region) =>
         total +
         countDarkPixelsInRegion(
-          withPointPatch.data,
-          withPointPatch.info.width,
+          withoutPatch.data,
+          withoutPatch.info.width,
           region,
         ),
       0,
@@ -1285,8 +1274,8 @@ describe("renderDesignImage", () => {
       (total, region) =>
         total +
         countDarkPixelsInRegion(
-          withPenSeam.data,
-          withPenSeam.info.width,
+          withPointPatch.data,
+          withPointPatch.info.width,
           region,
         ),
       0,
@@ -1295,8 +1284,8 @@ describe("renderDesignImage", () => {
       (total, region) =>
         total +
         countPurplePixelsInRegion(
-          withTrimmedPenSeam.data,
-          withTrimmedPenSeam.info.width,
+          withTrimmedPointPatch.data,
+          withTrimmedPointPatch.info.width,
           region,
         ),
       0,
@@ -1307,9 +1296,9 @@ describe("renderDesignImage", () => {
     );
     expect(pointPatchInk).toBeGreaterThan(basePatchInk + 150);
     expect(penSeamInk).toBeGreaterThan(basePenSeamInk + 35);
-    expect(countPurplePixels(withPenSeam.data)).toBeLessThan(20);
+    expect(countPurplePixels(withPointPatch.data)).toBeLessThan(20);
     expect(purplePenSeamPixels).toBeGreaterThan(160);
-    expect(countBrightCyanPixels(withTrimmedPenSeam.data)).toBe(0);
+    expect(countBrightCyanPixels(withTrimmedPointPatch.data)).toBe(0);
   }, 20000);
 
   it("renderiza Cherokee con color base y cogotera", async () => {

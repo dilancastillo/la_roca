@@ -2045,19 +2045,17 @@ async function drawPantsKneePatchSideFromAsset(
   }
 
   if (model === "point") {
-    if (type === "penSeam") {
-      const seamCanvas = await createRasterCanvas(
-        trimColor
-          ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_SRC_BY_SIDE[side]
-          : PANTS_KNEE_PATCH_POINT_PEN_SEAM_SRC_BY_SIDE[side],
-        sourceSrc,
-      );
-      context.drawImage(
-        trimColor ? recolorCanvasInk(seamCanvas, trimColor) : seamCanvas,
-        0,
-        0,
-      );
-    }
+    const seamCanvas = await createRasterCanvas(
+      trimColor
+        ? PANTS_KNEE_PATCH_POINT_PEN_SEAM_FILL_SRC_BY_SIDE[side]
+        : PANTS_KNEE_PATCH_POINT_PEN_SEAM_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(
+      trimColor ? recolorCanvasInk(seamCanvas, trimColor) : seamCanvas,
+      0,
+      0,
+    );
 
     const patchCanvas = await createRasterCanvas(
       PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE[side],
