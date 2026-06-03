@@ -39,14 +39,16 @@ export type PreviewScene = {
   bootImageSrc?: string | undefined;
   waistbandImageSrc?: string | undefined;
   pantsSidePocketType?: "doubleZipper" | undefined;
-  pantsKneePatchRightModel?: "square" | undefined;
+  pantsKneePatchRightModel?: "square" | "camouflage" | undefined;
   pantsKneePatchRightType?:
+    | "button"
     | "plain"
     | "horizontalZipper"
     | "verticalZipper"
     | undefined;
-  pantsKneePatchLeftModel?: "square" | undefined;
+  pantsKneePatchLeftModel?: "square" | "camouflage" | undefined;
   pantsKneePatchLeftType?:
+    | "button"
     | "plain"
     | "horizontalZipper"
     | "verticalZipper"
@@ -400,6 +402,10 @@ function isSquareKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("cuadrado") : false;
 }
 
+function isCamouflageKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("camuflado") : false;
+}
+
 function isHorizontalZipperKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -418,6 +424,16 @@ function isVerticalZipperKneePatch(valueName: string | undefined) {
   const normalized = normalize(valueName);
 
   return normalized.includes("cremallera") && normalized.includes("vertical");
+}
+
+function isButtonKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("broche") || normalized.includes("boton");
 }
 
 function isPlainKneePatch(valueName: string | undefined) {
@@ -598,40 +614,58 @@ export function deriveConfiguratorUi(
   const rightKneePatchModel = getSelectedOptions(
     rightKneePatchModelAttribute,
     selectedValueIds,
-  ).some((option) => isSquareKneePatch(option.name))
-    ? "square"
-    : undefined;
+  ).find(
+    (option) =>
+      isSquareKneePatch(option.name) || isCamouflageKneePatch(option.name),
+  );
   const leftKneePatchModel = getSelectedOptions(
     leftKneePatchModelAttribute,
     selectedValueIds,
-  ).some((option) => isSquareKneePatch(option.name))
-    ? "square"
+  ).find(
+    (option) =>
+      isSquareKneePatch(option.name) || isCamouflageKneePatch(option.name),
+  );
+  const rightKneePatchModelValue = rightKneePatchModel
+    ? isCamouflageKneePatch(rightKneePatchModel.name)
+      ? "camouflage"
+      : "square"
+    : undefined;
+  const leftKneePatchModelValue = leftKneePatchModel
+    ? isCamouflageKneePatch(leftKneePatchModel.name)
+      ? "camouflage"
+      : "square"
     : undefined;
   const rightKneePatchType =
-    rightKneePatchModel &&
+    rightKneePatchModelValue &&
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
+        isButtonKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
     );
   const leftKneePatchType =
-    leftKneePatchModel &&
+    leftKneePatchModelValue &&
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
+        isButtonKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
         isPlainKneePatch(option.name),
     );
   const rightKneePatchTypeValue = rightKneePatchType
-    ? isHorizontalZipperKneePatch(rightKneePatchType.name)
+    ? isButtonKneePatch(rightKneePatchType.name)
+      ? "button"
+      : isHorizontalZipperKneePatch(rightKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(rightKneePatchType.name)
         ? "verticalZipper"
         : "plain"
     : undefined;
   const leftKneePatchTypeValue = leftKneePatchType
-    ? isHorizontalZipperKneePatch(leftKneePatchType.name)
+    ? isButtonKneePatch(leftKneePatchType.name)
+      ? "button"
+      : isHorizontalZipperKneePatch(leftKneePatchType.name)
       ? "horizontalZipper"
       : isVerticalZipperKneePatch(leftKneePatchType.name)
         ? "verticalZipper"
@@ -713,14 +747,14 @@ export function deriveConfiguratorUi(
       ...(bootImageSrc ? { bootImageSrc } : {}),
       ...(waistbandImageSrc ? { waistbandImageSrc } : {}),
       ...(pantsSidePocketType ? { pantsSidePocketType } : {}),
-      ...(rightKneePatchModel
-        ? { pantsKneePatchRightModel: rightKneePatchModel }
+      ...(rightKneePatchModelValue
+        ? { pantsKneePatchRightModel: rightKneePatchModelValue }
         : {}),
       ...(rightKneePatchTypeValue
         ? { pantsKneePatchRightType: rightKneePatchTypeValue }
         : {}),
-      ...(leftKneePatchModel
-        ? { pantsKneePatchLeftModel: leftKneePatchModel }
+      ...(leftKneePatchModelValue
+        ? { pantsKneePatchLeftModel: leftKneePatchModelValue }
         : {}),
       ...(leftKneePatchTypeValue
         ? { pantsKneePatchLeftType: leftKneePatchTypeValue }

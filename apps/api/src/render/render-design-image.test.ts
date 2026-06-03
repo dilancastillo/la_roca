@@ -1111,6 +1111,96 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrim.data)).toBe(0);
   }, 20000);
 
+  it("superpone bolsillos de parche de rodilla camuflados y pinta la pieza superior con Parche rodilla", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutPatch = await readRawPng(await renderDesignImage(pantsScene));
+    const withCamouflagePatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchLeftModel: "camouflage",
+      }),
+    );
+    const withButtonWithoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "button",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "button",
+      }),
+    );
+    const withTrimmedButton = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "button",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "button",
+        trimSections: [
+          {
+            valueId: 9018,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const patchRegions = [
+      { x: 195, y: 520, width: 145, height: 125 },
+      { x: 560, y: 520, width: 145, height: 125 },
+    ];
+    const flapRegions = [
+      { x: 210, y: 535, width: 130, height: 30 },
+      { x: 560, y: 535, width: 140, height: 30 },
+    ];
+    const basePatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutPatch.data,
+          withoutPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const camouflagePatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withCamouflagePatch.data,
+          withCamouflagePatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const purpleFlapPixels = flapRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withTrimmedButton.data,
+          withTrimmedButton.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(
+      countDifferentPixels(withoutPatch.data, withCamouflagePatch.data),
+    ).toBeGreaterThan(260);
+    expect(camouflagePatchInk).toBeGreaterThan(basePatchInk + 180);
+    expect(countPurplePixels(withButtonWithoutTrim.data)).toBeLessThan(20);
+    expect(purpleFlapPixels).toBeGreaterThan(1200);
+    expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

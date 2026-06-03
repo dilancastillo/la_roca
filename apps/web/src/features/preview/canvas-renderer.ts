@@ -28,6 +28,12 @@ const PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
   left: "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
   right:
@@ -56,6 +62,18 @@ const PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE = {
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-square-trim-left.svg",
   right:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-square-trim-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-camouflage-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-camouflage-fill-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
 } as const;
 
 export const overlayRegionPresets: Record<
@@ -1975,11 +1993,37 @@ async function drawPantsKneePatchSideFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   side: "left" | "right",
-  model: "square" | undefined,
+  model: "square" | "camouflage" | undefined,
   type: PreviewScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
-  if (model !== "square") {
+  if (!model) {
+    return;
+  }
+
+  if (model === "camouflage") {
+    if (type === "button" && trimColor) {
+      const fillCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(fillCanvas, trimColor), 0, 0);
+    }
+
+    const patchCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_CAMOUFLAGE_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(patchCanvas, 0, 0);
+
+    if (type === "button") {
+      const buttonCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(buttonCanvas, 0, 0);
+    }
+
     return;
   }
 

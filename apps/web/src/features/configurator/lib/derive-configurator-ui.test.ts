@@ -1722,6 +1722,130 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.pantsKneePatchLeftType).toBe("verticalZipper");
   });
 
+  it("activa bolsillos de parche de rodilla camuflados con broche y boton", () => {
+    const sessionWithCamouflageKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9040,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9041,
+              name: "Camuflado",
+              attributeId: 9040,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9042,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9043,
+              name: "Broche",
+              attributeId: 9042,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9044,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9045,
+              name: "Camuflado",
+              attributeId: 9044,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9046,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9047,
+              name: "Boton",
+              attributeId: 9046,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9048,
+              name: "Parche rodilla",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9049,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9040": [9041],
+        "9042": [9043],
+        "9044": [9045],
+        "9046": [9047],
+        "157": [9048],
+        "802": [9049],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithCamouflageKneePatches,
+      sessionWithCamouflageKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("button");
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBe("button");
+    expect(ui.previewScene.trimSections).toContainEqual({
+      valueId: 9048,
+      key: "parche-rodilla",
+      label: "Parche rodilla",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
