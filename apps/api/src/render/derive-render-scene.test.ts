@@ -687,6 +687,45 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa Tipo bota Resorte como overlay independiente del pantalon", () => {
+    const sessionWithElasticBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999998,
+              name: "Resorte",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999998],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithElasticBoot,
+      sessionWithElasticBoot.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-resorte.svg",
+    );
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

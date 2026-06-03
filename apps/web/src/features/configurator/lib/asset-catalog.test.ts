@@ -772,7 +772,7 @@ describe("getProductAssetCatalog", () => {
     ).toBeUndefined();
   });
 
-  it("resuelve la bota Tradicional de pantalon por Tipo bota", () => {
+  it("resuelve botas de pantalon por Tipo bota", () => {
     expect(
       getBootImageSourceForValue(
         "pantalon",
@@ -784,5 +784,15 @@ describe("getProductAssetCatalog", () => {
     ).toBe(
       "/assets/catalog/pantalon/detail-overlays/pants-boot-tradicional.svg",
     );
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999998,
+        "Tipo bota",
+        "Resorte",
+      ),
+    ).toBe("/assets/catalog/pantalon/detail-overlays/pants-boot-resorte.svg");
   });
 });

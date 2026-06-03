@@ -57,6 +57,8 @@ const PANTALON_PESPUNTE_STITCHING_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-pespunte-stitching.svg`;
 const PANTALON_TRADICIONAL_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-tradicional.svg`;
+const PANTALON_RESORTE_BOOT_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-resorte.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
@@ -467,6 +469,7 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
     pespunte: PANTALON_PESPUNTE_STITCHING_ASSET,
   },
   bootModelsByValueName: {
+    resorte: PANTALON_RESORTE_BOOT_ASSET,
     tradicional: PANTALON_TRADICIONAL_BOOT_ASSET,
   },
   neckModelsByValueId: {},
