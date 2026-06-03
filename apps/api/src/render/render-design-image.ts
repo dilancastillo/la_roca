@@ -30,6 +30,12 @@ const PANTS_KNEE_PATCH_ZIPPER_FILL_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-square-trim-left.svg",
+  right:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-square-trim-right.svg",
+} as const;
 
 type OverlayRegion = {
   x: number;
@@ -1200,7 +1206,7 @@ async function createPantsKneePatchSideOverlayBuffers(
   placementAssetPath: string,
   side: "left" | "right",
   model: "square" | undefined,
-  type: "horizontalZipper" | undefined,
+  type: AutomationRenderScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
 ) {
   if (model !== "square") {
@@ -1215,6 +1221,19 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   if (patchOverlayBuffer) {
     buffers.push(patchOverlayBuffer);
+  }
+
+  if (type === "plain" && trimColor) {
+    const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
+
+    if (trimOverlayBuffer) {
+      buffers.push(await recolorPngInkBuffer(trimOverlayBuffer, trimColor));
+    }
+
+    return buffers;
   }
 
   if (type !== "horizontalZipper") {

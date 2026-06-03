@@ -1118,6 +1118,91 @@ describe("deriveAutomationRenderScene", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla cuadrados lisos", () => {
+    const sessionWithPlainKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9020,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9021,
+              name: "Cuadrado",
+              attributeId: 9020,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9022,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9023,
+              name: "Lizo",
+              attributeId: 9022,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9024,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9025,
+              name: "Cuadrado",
+              attributeId: 9024,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9026,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9027,
+              name: "Lizo",
+              attributeId: 9026,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9020": [9021],
+        "9022": [9023],
+        "9024": [9025],
+        "9026": [9027],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithPlainKneePatches,
+      sessionWithPlainKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("square");
+    expect(scene.pantsKneePatchRightType).toBe("plain");
+    expect(scene.pantsKneePatchLeftModel).toBe("square");
+    expect(scene.pantsKneePatchLeftType).toBe("plain");
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

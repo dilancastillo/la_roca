@@ -23,9 +23,9 @@ export type AutomationRenderScene = {
   waistbandAssetPath?: string;
   pantsSidePocketType?: "doubleZipper";
   pantsKneePatchRightModel?: "square";
-  pantsKneePatchRightType?: "horizontalZipper";
+  pantsKneePatchRightType?: "plain" | "horizontalZipper";
   pantsKneePatchLeftModel?: "square";
-  pantsKneePatchLeftType?: "horizontalZipper";
+  pantsKneePatchLeftType?: "plain" | "horizontalZipper";
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -325,6 +325,16 @@ function isHorizontalZipperKneePatch(valueName: string | undefined) {
   return normalized.includes("cremallera") && normalized.includes("horizontal");
 }
 
+function isPlainKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("lizo") || normalized.includes("liso");
+}
+
 export function deriveAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -481,18 +491,28 @@ export function deriveAutomationRenderScene(
     : undefined;
   const rightKneePatchType =
     rightKneePatchModel &&
-    getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).some(
-      (option) => isHorizontalZipperKneePatch(option.name),
-    )
-      ? "horizontalZipper"
-      : undefined;
+    getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
+      (option) =>
+        isHorizontalZipperKneePatch(option.name) ||
+        isPlainKneePatch(option.name),
+    );
   const leftKneePatchType =
     leftKneePatchModel &&
-    getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).some(
-      (option) => isHorizontalZipperKneePatch(option.name),
-    )
+    getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
+      (option) =>
+        isHorizontalZipperKneePatch(option.name) ||
+        isPlainKneePatch(option.name),
+    );
+  const rightKneePatchTypeValue = rightKneePatchType
+    ? isHorizontalZipperKneePatch(rightKneePatchType.name)
       ? "horizontalZipper"
-      : undefined;
+      : "plain"
+    : undefined;
+  const leftKneePatchTypeValue = leftKneePatchType
+    ? isHorizontalZipperKneePatch(leftKneePatchType.name)
+      ? "horizontalZipper"
+      : "plain"
+    : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
     isDoubleZipperSidePocket(option.name),
   )
@@ -558,14 +578,14 @@ export function deriveAutomationRenderScene(
     ...(rightKneePatchModel
       ? { pantsKneePatchRightModel: rightKneePatchModel }
       : {}),
-    ...(rightKneePatchType
-      ? { pantsKneePatchRightType: rightKneePatchType }
+    ...(rightKneePatchTypeValue
+      ? { pantsKneePatchRightType: rightKneePatchTypeValue }
       : {}),
     ...(leftKneePatchModel
       ? { pantsKneePatchLeftModel: leftKneePatchModel }
       : {}),
-    ...(leftKneePatchType
-      ? { pantsKneePatchLeftType: leftKneePatchType }
+    ...(leftKneePatchTypeValue
+      ? { pantsKneePatchLeftType: leftKneePatchTypeValue }
       : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath

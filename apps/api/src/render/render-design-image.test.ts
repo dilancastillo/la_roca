@@ -145,6 +145,30 @@ function countPurplePixels(buffer: Buffer) {
   return count;
 }
 
+function countPurplePixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (alpha > 0 && red > 100 && red < 180 && green < 110 && blue > 110) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 function countPinkPixelsByHalf(buffer: Buffer, width: number) {
   const counts = { left: 0, right: 0 };
 
@@ -972,6 +996,62 @@ describe("renderDesignImage", () => {
     expect(countPurplePixels(withHorizontalZipper.data)).toBeLessThan(20);
     expect(countPurplePixels(withTrimmedZipper.data)).toBeGreaterThan(120);
     expect(countBrightCyanPixels(withTrimmedZipper.data)).toBe(0);
+  }, 20000);
+
+  it("pinta solo los lineales superior e inferior del parche de rodilla liso", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchRightType: "plain",
+      pantsKneePatchLeftModel: "square",
+      pantsKneePatchLeftType: "plain",
+      trimSections: [
+        {
+          valueId: 9018,
+          key: "parche-rodilla",
+          label: "Parche rodilla",
+          colorHex: "#a000b0",
+        },
+      ],
+    };
+    const withPlainTrim = await readRawPng(await renderDesignImage(pantsScene));
+    const topAndBottomRegions = [
+      { x: 215, y: 520, width: 140, height: 18 },
+      { x: 215, y: 630, width: 140, height: 22 },
+      { x: 548, y: 520, width: 145, height: 18 },
+      { x: 548, y: 630, width: 145, height: 22 },
+    ];
+    const middleRegions = [
+      { x: 230, y: 550, width: 105, height: 60 },
+      { x: 565, y: 550, width: 105, height: 60 },
+    ];
+    const linePurplePixels = topAndBottomRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withPlainTrim.data,
+          withPlainTrim.info.width,
+          region,
+        ),
+      0,
+    );
+    const middlePurplePixels = middleRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withPlainTrim.data,
+          withPlainTrim.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(linePurplePixels).toBeGreaterThan(350);
+    expect(middlePurplePixels).toBeLessThan(20);
+    expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
   it("renderiza Cherokee con color base y cogotera", async () => {
