@@ -86,6 +86,12 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-buckle-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-buckle-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_POINT_PEN_SEAM_SRC_BY_SIDE = {
   left:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-left.svg",
@@ -2031,6 +2037,15 @@ async function drawPantsKneePatchSideFromAsset(
   }
 
   if (model === "camouflage") {
+    if (type === "buckle") {
+      const buckleCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(buckleCanvas, 0, 0);
+      return;
+    }
+
     if (type === "button" && trimColor) {
       const fillCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_SRC_BY_SIDE[side],

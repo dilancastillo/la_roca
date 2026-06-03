@@ -78,6 +78,12 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-buckle-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-buckle-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_POINT_PEN_SEAM_ASSET_BY_SIDE = {
   left:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-pen-seam-left.svg",
@@ -1275,6 +1281,19 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   const buffers: Buffer[] = [];
   if (model === "camouflage") {
+    if (type === "buckle") {
+      const buckleOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (buckleOverlayBuffer) {
+        buffers.push(buckleOverlayBuffer);
+      }
+
+      return buffers;
+    }
+
     if (type === "button" && trimColor) {
       const fillOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_ASSET_BY_SIDE[side],

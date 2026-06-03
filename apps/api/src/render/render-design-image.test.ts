@@ -1201,6 +1201,88 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
   }, 20000);
 
+  it("superpone bolsillos camuflados con hebilla sin color ni vivo", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutPatch = await readRawPng(await renderDesignImage(pantsScene));
+    const withBucklePatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "buckle",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "buckle",
+      }),
+    );
+    const withTrimmedBucklePatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "buckle",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "buckle",
+        trimSections: [
+          {
+            valueId: 9078,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const patchRegions = [
+      { x: 195, y: 520, width: 145, height: 125 },
+      { x: 560, y: 520, width: 145, height: 125 },
+    ];
+    const buckleRegions = [
+      { x: 245, y: 560, width: 45, height: 60 },
+      { x: 615, y: 560, width: 45, height: 60 },
+    ];
+    const baseBuckleInk = buckleRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutPatch.data,
+          withoutPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const buckleInk = buckleRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withBucklePatch.data,
+          withBucklePatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const purplePatchPixels = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withTrimmedBucklePatch.data,
+          withTrimmedBucklePatch.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(
+      countDifferentPixels(withoutPatch.data, withBucklePatch.data),
+    ).toBeGreaterThan(300);
+    expect(buckleInk).toBeGreaterThan(baseBuckleInk + 80);
+    expect(purplePatchPixels).toBeLessThan(30);
+    expect(countBrightCyanPixels(withTrimmedBucklePatch.data)).toBe(0);
+  }, 20000);
+
   it("superpone bolsillos de parche de rodilla punta y pinta la costura esfero con Parche rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

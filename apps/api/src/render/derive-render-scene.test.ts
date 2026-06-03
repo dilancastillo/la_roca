@@ -1412,6 +1412,130 @@ describe("deriveAutomationRenderScene", () => {
     });
   });
 
+  it("activa bolsillos camuflados de rodilla con hebilla", () => {
+    const sessionWithCamouflageBuckleKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9070,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9071,
+              name: "Camuflado",
+              attributeId: 9070,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9072,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9073,
+              name: "Hebilla",
+              attributeId: 9072,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9074,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9075,
+              name: "Camuflado",
+              attributeId: 9074,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9076,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9077,
+              name: "Hebilla",
+              attributeId: 9076,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9078,
+              name: "Parche rodilla",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9079,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9070": [9071],
+        "9072": [9073],
+        "9074": [9075],
+        "9076": [9077],
+        "157": [9078],
+        "802": [9079],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithCamouflageBuckleKneePatches,
+      sessionWithCamouflageBuckleKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("camouflage");
+    expect(scene.pantsKneePatchRightType).toBe("buckle");
+    expect(scene.pantsKneePatchLeftModel).toBe("camouflage");
+    expect(scene.pantsKneePatchLeftType).toBe("buckle");
+    expect(scene.trimSections).toContainEqual({
+      valueId: 9078,
+      key: "parche-rodilla",
+      label: "Parche rodilla",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("activa bolsillos de parche de rodilla punta con costura esfero", () => {
     const sessionWithPointKneePatches: ConfiguratorSession = {
       ...pantalonSession,

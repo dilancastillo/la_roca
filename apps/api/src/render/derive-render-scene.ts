@@ -29,6 +29,7 @@ export type AutomationRenderScene = {
     | "triangularFlap";
   pantsKneePatchRightType?:
     | "button"
+    | "buckle"
     | "penSeam"
     | "plain"
     | "horizontalZipper"
@@ -40,6 +41,7 @@ export type AutomationRenderScene = {
     | "triangularFlap";
   pantsKneePatchLeftType?:
     | "button"
+    | "buckle"
     | "penSeam"
     | "plain"
     | "horizontalZipper"
@@ -381,6 +383,10 @@ function isButtonKneePatch(valueName: string | undefined) {
   return normalized.includes("broche") || normalized.includes("boton");
 }
 
+function isBuckleKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("hebilla") : false;
+}
+
 function isPenSeamKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -586,6 +592,7 @@ export function deriveAutomationRenderScene(
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
@@ -596,6 +603,7 @@ export function deriveAutomationRenderScene(
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isHorizontalZipperKneePatch(option.name) ||
         isVerticalZipperKneePatch(option.name) ||
@@ -604,6 +612,8 @@ export function deriveAutomationRenderScene(
   const rightKneePatchTypeValue = rightKneePatchType
     ? isButtonKneePatch(rightKneePatchType.name)
       ? "button"
+      : isBuckleKneePatch(rightKneePatchType.name)
+        ? "buckle"
       : isPenSeamKneePatch(rightKneePatchType.name)
         ? "penSeam"
       : isHorizontalZipperKneePatch(rightKneePatchType.name)
@@ -615,6 +625,8 @@ export function deriveAutomationRenderScene(
   const leftKneePatchTypeValue = leftKneePatchType
     ? isButtonKneePatch(leftKneePatchType.name)
       ? "button"
+      : isBuckleKneePatch(leftKneePatchType.name)
+        ? "buckle"
       : isPenSeamKneePatch(leftKneePatchType.name)
         ? "penSeam"
       : isHorizontalZipperKneePatch(leftKneePatchType.name)
