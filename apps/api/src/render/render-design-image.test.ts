@@ -94,6 +94,23 @@ function countSourceTealPixels(buffer: Buffer) {
   return count;
 }
 
+function countBrightCyanPixels(buffer: Buffer) {
+  let count = 0;
+
+  for (let offset = 0; offset < buffer.length; offset += 4) {
+    const red = buffer[offset] ?? 0;
+    const green = buffer[offset + 1] ?? 0;
+    const blue = buffer[offset + 2] ?? 0;
+    const alpha = buffer[offset + 3] ?? 0;
+
+    if (alpha > 0 && red < 80 && green > 200 && blue > 180) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function countYellowPixels(buffer: Buffer) {
   let count = 0;
 
@@ -854,6 +871,107 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutDoubleZipper.data, withDoubleZipper.data),
     ).toBeGreaterThan(250);
+  }, 20000);
+
+  it("superpone bolsillos de parche de rodilla cuadrados y pinta la cremallera con Parche rodilla", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutPatch = await readRawPng(await renderDesignImage(pantsScene));
+    const withSquarePatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchLeftModel: "square",
+      }),
+    );
+    const withHorizontalZipper = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchRightType: "horizontalZipper",
+        pantsKneePatchLeftModel: "square",
+        pantsKneePatchLeftType: "horizontalZipper",
+      }),
+    );
+    const withTrimmedZipper = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchRightType: "horizontalZipper",
+        pantsKneePatchLeftModel: "square",
+        pantsKneePatchLeftType: "horizontalZipper",
+        trimSections: [
+          {
+            valueId: 9018,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const patchRegions = [
+      { x: 195, y: 520, width: 145, height: 125 },
+      { x: 560, y: 520, width: 145, height: 125 },
+    ];
+    const zipperRegions = [
+      { x: 215, y: 535, width: 105, height: 35 },
+      { x: 585, y: 535, width: 105, height: 35 },
+    ];
+    const basePatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutPatch.data,
+          withoutPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const squarePatchInk = patchRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withSquarePatch.data,
+          withSquarePatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const squareZipperInk = zipperRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withSquarePatch.data,
+          withSquarePatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const zipperInk = zipperRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withHorizontalZipper.data,
+          withHorizontalZipper.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(
+      countDifferentPixels(withoutPatch.data, withSquarePatch.data),
+    ).toBeGreaterThan(200);
+    expect(squarePatchInk).toBeGreaterThan(basePatchInk + 120);
+    expect(zipperInk).toBeGreaterThan(squareZipperInk + 80);
+    expect(countPurplePixels(withHorizontalZipper.data)).toBeLessThan(20);
+    expect(countPurplePixels(withTrimmedZipper.data)).toBeGreaterThan(120);
+    expect(countBrightCyanPixels(withTrimmedZipper.data)).toBe(0);
   }, 20000);
 
   it("renderiza Cherokee con color base y cogotera", async () => {

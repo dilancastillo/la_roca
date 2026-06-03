@@ -14,6 +14,16 @@ const TARGET_RECT = {
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
   "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+const PANTS_KNEE_PATCH_SQUARE_ASSET_BY_SIDE = {
+  left: "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE = {
+  left: "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
+  right:
+    "assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-right.svg",
+} as const;
 
 type OverlayRegion = {
   x: number;
@@ -638,6 +648,18 @@ function isPantsSidePocketTrimSection(
   );
 }
 
+function isPantsKneePatchTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("parche rodilla") ||
+    key.includes("parche-rodilla") ||
+    (key.includes("parche") && key.includes("rodilla"))
+  );
+}
+
 function isChestPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -1166,6 +1188,72 @@ async function createPantsSidePocketTrimOverlayBuffer(
   );
 
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
+}
+
+async function createPantsKneePatchSideOverlayBuffers(
+  placementAssetPath: string,
+  side: "left" | "right",
+  model: "square" | undefined,
+  type: "horizontalZipper" | undefined,
+  trimColor: string | undefined,
+) {
+  if (model !== "square") {
+    return [];
+  }
+
+  const buffers: Buffer[] = [];
+  const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+    PANTS_KNEE_PATCH_SQUARE_ASSET_BY_SIDE[side],
+    placementAssetPath,
+  );
+
+  if (patchOverlayBuffer) {
+    buffers.push(patchOverlayBuffer);
+  }
+
+  if (type !== "horizontalZipper") {
+    return buffers;
+  }
+
+  const zipperOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+    PANTS_KNEE_PATCH_ZIPPER_ASSET_BY_SIDE[side],
+    placementAssetPath,
+  );
+
+  if (!zipperOverlayBuffer) {
+    return buffers;
+  }
+
+  buffers.push(
+    trimColor
+      ? await recolorPngInkBuffer(zipperOverlayBuffer, trimColor)
+      : zipperOverlayBuffer,
+  );
+
+  return buffers;
+}
+
+async function createPantsKneePatchOverlayBuffers(
+  scene: AutomationRenderScene,
+  placementAssetPath: string,
+  trimColor: string | undefined,
+) {
+  const rightBuffers = await createPantsKneePatchSideOverlayBuffers(
+    placementAssetPath,
+    "right",
+    scene.pantsKneePatchRightModel,
+    scene.pantsKneePatchRightType,
+    trimColor,
+  );
+  const leftBuffers = await createPantsKneePatchSideOverlayBuffers(
+    placementAssetPath,
+    "left",
+    scene.pantsKneePatchLeftModel,
+    scene.pantsKneePatchLeftType,
+    trimColor,
+  );
+
+  return [...rightBuffers, ...leftBuffers];
 }
 
 async function createChestPocketOverlayBuffer(
@@ -2156,6 +2244,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isPantsSidePocketTrimSection,
     );
+    const pantsKneePatchTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchTrimSection,
+    );
 
     const pantsSidePocketTrimOverlayBuffer =
       await createPantsSidePocketTrimOverlayBuffer(
@@ -2163,11 +2255,21 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         pantsSidePocketTrimColor,
         scene.pantsSidePocketType,
       );
+    const pantsKneePatchOverlayBuffers =
+      await createPantsKneePatchOverlayBuffers(
+        scene,
+        baseAssetPath,
+        pantsKneePatchTrimColor,
+      );
 
     if (pantsSidePocketTrimOverlayBuffer) {
       layers.push(
         `<image href="${toDataUri(pantsSidePocketTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
+    }
+
+    for (const pantsKneePatchOverlayBuffer of pantsKneePatchOverlayBuffers) {
+      layers.push(getImageSvg(toDataUri(pantsKneePatchOverlayBuffer)));
     }
 
     if (collarTrimColor) {

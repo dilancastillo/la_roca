@@ -22,6 +22,10 @@ export type AutomationRenderScene = {
   bootAssetPath?: string;
   waistbandAssetPath?: string;
   pantsSidePocketType?: "doubleZipper";
+  pantsKneePatchRightModel?: "square";
+  pantsKneePatchRightType?: "horizontalZipper";
+  pantsKneePatchLeftModel?: "square";
+  pantsKneePatchLeftType?: "horizontalZipper";
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -281,6 +285,46 @@ function isDoubleZipperSidePocket(valueName: string | undefined) {
   return normalized.includes("doble") && normalized.includes("cremallera");
 }
 
+function isKneePatchModelAttributeName(
+  normalizedName: string,
+  side: "derecha" | "izquierda",
+) {
+  return (
+    normalizedName.includes("modelo") &&
+    normalizedName.includes("bolsillo") &&
+    normalizedName.includes("parche") &&
+    normalizedName.includes("rodilla") &&
+    normalizedName.includes(side)
+  );
+}
+
+function isKneePatchTypeAttributeName(
+  normalizedName: string,
+  side: "derecha" | "izquierda",
+) {
+  return (
+    normalizedName.includes("tipo") &&
+    normalizedName.includes("bolsillo") &&
+    normalizedName.includes("parche") &&
+    normalizedName.includes("rodilla") &&
+    normalizedName.includes(side)
+  );
+}
+
+function isSquareKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("cuadrado") : false;
+}
+
+function isHorizontalZipperKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("cremallera") && normalized.includes("horizontal");
+}
+
 export function deriveAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -375,6 +419,18 @@ export function deriveAutomationRenderScene(
     session,
     isPantsSidePocketAttributeName,
   );
+  const rightKneePatchModelAttribute = findAttributeByName(session, (name) =>
+    isKneePatchModelAttributeName(name, "derecha"),
+  );
+  const leftKneePatchModelAttribute = findAttributeByName(session, (name) =>
+    isKneePatchModelAttributeName(name, "izquierda"),
+  );
+  const rightKneePatchTypeAttribute = findAttributeByName(session, (name) =>
+    isKneePatchTypeAttributeName(name, "derecha"),
+  );
+  const leftKneePatchTypeAttribute = findAttributeByName(session, (name) =>
+    isKneePatchTypeAttributeName(name, "izquierda"),
+  );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -411,6 +467,32 @@ export function deriveAutomationRenderScene(
     pantsSidePocketAttribute,
     selectedValueIds,
   );
+  const rightKneePatchModel = getSelectedOptions(
+    rightKneePatchModelAttribute,
+    selectedValueIds,
+  ).some((option) => isSquareKneePatch(option.name))
+    ? "square"
+    : undefined;
+  const leftKneePatchModel = getSelectedOptions(
+    leftKneePatchModelAttribute,
+    selectedValueIds,
+  ).some((option) => isSquareKneePatch(option.name))
+    ? "square"
+    : undefined;
+  const rightKneePatchType =
+    rightKneePatchModel &&
+    getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).some(
+      (option) => isHorizontalZipperKneePatch(option.name),
+    )
+      ? "horizontalZipper"
+      : undefined;
+  const leftKneePatchType =
+    leftKneePatchModel &&
+    getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).some(
+      (option) => isHorizontalZipperKneePatch(option.name),
+    )
+      ? "horizontalZipper"
+      : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
     isDoubleZipperSidePocket(option.name),
   )
@@ -473,6 +555,18 @@ export function deriveAutomationRenderScene(
     ...(bootAssetPath ? { bootAssetPath } : {}),
     ...(waistbandAssetPath ? { waistbandAssetPath } : {}),
     ...(pantsSidePocketType ? { pantsSidePocketType } : {}),
+    ...(rightKneePatchModel
+      ? { pantsKneePatchRightModel: rightKneePatchModel }
+      : {}),
+    ...(rightKneePatchType
+      ? { pantsKneePatchRightType: rightKneePatchType }
+      : {}),
+    ...(leftKneePatchModel
+      ? { pantsKneePatchLeftModel: leftKneePatchModel }
+      : {}),
+    ...(leftKneePatchType
+      ? { pantsKneePatchLeftType: leftKneePatchType }
+      : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }

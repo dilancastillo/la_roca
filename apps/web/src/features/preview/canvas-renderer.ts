@@ -23,6 +23,16 @@ export const previewCanvasSize = {
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC =
   "/assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+const PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE = {
+  left: "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE = {
+  left: "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-right.svg",
+} as const;
 
 export const overlayRegionPresets: Record<
   "lowerPocketPair" | "lowerPocketSingleRight" | "auxiliaryPocketPair",
@@ -633,6 +643,18 @@ function isPantsSidePocketTrimSection(
     key.includes("bolsillo lateral de pantalon") ||
     key.includes("bolsillo-lateral-de-pantalon") ||
     (key.includes("bolsillo lateral") && key.includes("pantalon"))
+  );
+}
+
+function isPantsKneePatchTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("parche rodilla") ||
+    key.includes("parche-rodilla") ||
+    (key.includes("parche") && key.includes("rodilla"))
   );
 }
 
@@ -1925,6 +1947,63 @@ async function drawPantsSidePocketTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawPantsKneePatchSideFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  side: "left" | "right",
+  model: "square" | undefined,
+  type: "horizontalZipper" | undefined,
+  trimColor: string | undefined,
+) {
+  if (model !== "square") {
+    return;
+  }
+
+  const patchCanvas = await createRasterCanvas(
+    PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE[side],
+    sourceSrc,
+  );
+  context.drawImage(patchCanvas, 0, 0);
+
+  if (type !== "horizontalZipper") {
+    return;
+  }
+
+  const zipperCanvas = await createRasterCanvas(
+    PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side],
+    sourceSrc,
+  );
+  context.drawImage(
+    trimColor ? recolorCanvasInk(zipperCanvas, trimColor) : zipperCanvas,
+    0,
+    0,
+  );
+}
+
+async function drawPantsKneePatchOverlaysFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  scene: PreviewScene,
+  trimColor: string | undefined,
+) {
+  await drawPantsKneePatchSideFromAsset(
+    context,
+    sourceSrc,
+    "right",
+    scene.pantsKneePatchRightModel,
+    scene.pantsKneePatchRightType,
+    trimColor,
+  );
+  await drawPantsKneePatchSideFromAsset(
+    context,
+    sourceSrc,
+    "left",
+    scene.pantsKneePatchLeftModel,
+    scene.pantsKneePatchLeftType,
+    trimColor,
+  );
+}
+
 function getCollarLineOutlineRadius(sourceSrc: string) {
   return [
     "blouse-model-01.svg",
@@ -2328,12 +2407,22 @@ export async function composeDesign(
       scene,
       isPantsSidePocketTrimSection,
     );
+    const pantsKneePatchTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchTrimSection,
+    );
 
     await drawPantsSidePocketTrimFromAsset(
       context,
       baseAssetSrc,
       pantsSidePocketTrimColor,
       scene.pantsSidePocketType,
+    );
+    await drawPantsKneePatchOverlaysFromAsset(
+      context,
+      baseAssetSrc,
+      scene,
+      pantsKneePatchTrimColor,
     );
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
