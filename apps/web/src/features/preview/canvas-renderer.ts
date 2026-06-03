@@ -39,6 +39,12 @@ const PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_INTERNAL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-internal-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-internal-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_SRC_BY_SIDE = {
   left:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-left.svg",
@@ -2056,6 +2062,7 @@ async function drawPantsKneePatchSideFromAsset(
     | "square"
     | "camouflage"
     | "point"
+    | "internal"
     | "ribete"
     | "triangularFlap"
     | undefined,
@@ -2116,6 +2123,15 @@ async function drawPantsKneePatchSideFromAsset(
 
     const patchCanvas = await createRasterCanvas(
       PANTS_KNEE_PATCH_POINT_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(patchCanvas, 0, 0);
+    return;
+  }
+
+  if (model === "internal") {
+    const patchCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_INTERNAL_SRC_BY_SIDE[side],
       sourceSrc,
     );
     context.drawImage(patchCanvas, 0, 0);

@@ -26,6 +26,7 @@ export type AutomationRenderScene = {
     | "square"
     | "camouflage"
     | "point"
+    | "internal"
     | "ribete"
     | "triangularFlap";
   pantsKneePatchRightType?:
@@ -40,6 +41,7 @@ export type AutomationRenderScene = {
     | "square"
     | "camouflage"
     | "point"
+    | "internal"
     | "ribete"
     | "triangularFlap";
   pantsKneePatchLeftType?:
@@ -347,6 +349,10 @@ function isPointKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("punta") : false;
 }
 
+function isInternalKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("interno") : false;
+}
+
 function isTriangularFlapKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -579,6 +585,7 @@ export function deriveAutomationRenderScene(
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
       isPointKneePatch(option.name) ||
+      isInternalKneePatch(option.name) ||
       isRibeteKneePatch(option.name) ||
       isTriangularFlapKneePatch(option.name),
   );
@@ -590,6 +597,7 @@ export function deriveAutomationRenderScene(
       isSquareKneePatch(option.name) ||
       isCamouflageKneePatch(option.name) ||
       isPointKneePatch(option.name) ||
+      isInternalKneePatch(option.name) ||
       isRibeteKneePatch(option.name) ||
       isTriangularFlapKneePatch(option.name),
   );
@@ -598,6 +606,8 @@ export function deriveAutomationRenderScene(
       ? "camouflage"
       : isPointKneePatch(rightKneePatchModel.name)
         ? "point"
+        : isInternalKneePatch(rightKneePatchModel.name)
+          ? "internal"
         : isRibeteKneePatch(rightKneePatchModel.name)
           ? "ribete"
         : isTriangularFlapKneePatch(rightKneePatchModel.name)
@@ -609,6 +619,8 @@ export function deriveAutomationRenderScene(
       ? "camouflage"
       : isPointKneePatch(leftKneePatchModel.name)
         ? "point"
+        : isInternalKneePatch(leftKneePatchModel.name)
+          ? "internal"
         : isRibeteKneePatch(leftKneePatchModel.name)
           ? "ribete"
         : isTriangularFlapKneePatch(leftKneePatchModel.name)

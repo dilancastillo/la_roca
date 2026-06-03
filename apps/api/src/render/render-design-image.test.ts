@@ -1557,6 +1557,77 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedRibetePatch.data)).toBe(0);
   }, 20000);
 
+  it("superpone bolsillos de parche de rodilla internos sin color ni vivo", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutPatch = await readRawPng(await renderDesignImage(pantsScene));
+    const withInternalPatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "internal",
+        pantsKneePatchLeftModel: "internal",
+      }),
+    );
+    const withTrimmedInternalPatch = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "internal",
+        pantsKneePatchLeftModel: "internal",
+        trimSections: [
+          {
+            valueId: 9094,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const internalRegions = [
+      { x: 235, y: 540, width: 120, height: 120 },
+      { x: 545, y: 540, width: 120, height: 120 },
+    ];
+    const baseInternalInk = internalRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutPatch.data,
+          withoutPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const internalInk = internalRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withInternalPatch.data,
+          withInternalPatch.info.width,
+          region,
+        ),
+      0,
+    );
+    const internalPurple = countPurplePixels(withInternalPatch.data);
+    const trimmedInternalPurple = countPurplePixels(
+      withTrimmedInternalPatch.data,
+    );
+
+    expect(countDifferentPixels(withoutPatch.data, withInternalPatch.data)).toBeGreaterThan(
+      500,
+    );
+    expect(internalInk).toBeGreaterThan(baseInternalInk + 380);
+    expect(countNeonGreenPixels(withInternalPatch.data)).toBe(0);
+    expect(trimmedInternalPurple).toBeLessThanOrEqual(internalPurple + 5);
+    expect(
+      countDifferentPixels(withInternalPatch.data, withTrimmedInternalPatch.data),
+    ).toBeLessThan(10);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

@@ -1874,6 +1874,59 @@ describe("deriveAutomationRenderScene", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla internos sin tipo", () => {
+    const sessionWithInternalKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9090,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9091,
+              name: "Interno",
+              attributeId: 9090,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9092,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9093,
+              name: "Interno",
+              attributeId: 9092,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9090": [9091],
+        "9092": [9093],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithInternalKneePatches,
+      sessionWithInternalKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("internal");
+    expect(scene.pantsKneePatchRightType).toBeUndefined();
+    expect(scene.pantsKneePatchLeftModel).toBe("internal");
+    expect(scene.pantsKneePatchLeftType).toBeUndefined();
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

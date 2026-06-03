@@ -31,6 +31,12 @@ const PANTS_KNEE_PATCH_POINT_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-point-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_INTERNAL_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-internal-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-internal-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_TRIANGULAR_FLAP_ASSET_BY_SIDE = {
   left:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-triangular-flap-left.svg",
@@ -1299,6 +1305,7 @@ async function createPantsKneePatchSideOverlayBuffers(
     | "square"
     | "camouflage"
     | "point"
+    | "internal"
     | "ribete"
     | "triangularFlap"
     | undefined,
@@ -1376,6 +1383,19 @@ async function createPantsKneePatchSideOverlayBuffers(
 
     const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
       PANTS_KNEE_PATCH_POINT_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
+
+    if (patchOverlayBuffer) {
+      buffers.push(patchOverlayBuffer);
+    }
+
+    return buffers;
+  }
+
+  if (model === "internal") {
+    const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_INTERNAL_ASSET_BY_SIDE[side],
       placementAssetPath,
     );
 

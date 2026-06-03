@@ -2308,6 +2308,59 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("activa bolsillos de parche de rodilla internos sin tipo", () => {
+    const sessionWithInternalKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9090,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9091,
+              name: "Interno",
+              attributeId: 9090,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9092,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9093,
+              name: "Interno",
+              attributeId: 9092,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9090": [9091],
+        "9092": [9093],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithInternalKneePatches,
+      sessionWithInternalKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("internal");
+    expect(ui.previewScene.pantsKneePatchRightType).toBeUndefined();
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("internal");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBeUndefined();
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
