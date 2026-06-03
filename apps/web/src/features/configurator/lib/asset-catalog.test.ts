@@ -794,5 +794,17 @@ describe("getProductAssetCatalog", () => {
         "Resorte",
       ),
     ).toBe("/assets/catalog/pantalon/detail-overlays/pants-boot-resorte.svg");
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999997,
+        "Tipo bota",
+        "Con abertura",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-con-abertura.svg",
+    );
   });
 });

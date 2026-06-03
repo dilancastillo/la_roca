@@ -1169,6 +1169,42 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa Tipo bota Con abertura como overlay independiente del pantalon", () => {
+    const sessionWithOpenBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: pantalonSession.attributes.map((attribute) =>
+        attribute.id === 84
+          ? {
+              ...attribute,
+              values: [
+                {
+                  id: 999997,
+                  name: "Con abertura",
+                  attributeId: 84,
+                  attributeName: "Tipo bota",
+                },
+              ],
+            }
+          : attribute,
+      ),
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999997],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithOpenBoot,
+      sessionWithOpenBoot.selectedValueIds,
+    );
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.bootImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-con-abertura.svg",
+    );
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

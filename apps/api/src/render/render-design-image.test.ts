@@ -629,6 +629,56 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withBoot.data)).toBe(0);
   }, 20000);
 
+  it("superpone la bota Con abertura sin traer pespunte ni bota tradicional", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutBoot = await readRawPng(await renderDesignImage(pantsScene));
+    const withBoot = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        bootAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-boot-con-abertura.svg",
+      }),
+    );
+    const baseOpeningInk =
+      countDarkPixelsInRegion(withoutBoot.data, withoutBoot.info.width, {
+        x: 250,
+        y: 870,
+        width: 120,
+        height: 200,
+      }) +
+      countDarkPixelsInRegion(withoutBoot.data, withoutBoot.info.width, {
+        x: 535,
+        y: 870,
+        width: 120,
+        height: 200,
+      });
+    const openBootInk =
+      countDarkPixelsInRegion(withBoot.data, withBoot.info.width, {
+        x: 250,
+        y: 870,
+        width: 120,
+        height: 200,
+      }) +
+      countDarkPixelsInRegion(withBoot.data, withBoot.info.width, {
+        x: 535,
+        y: 870,
+        width: 120,
+        height: 200,
+      });
+
+    expect(
+      countDifferentPixels(withoutBoot.data, withBoot.data),
+    ).toBeGreaterThan(100);
+    expect(openBootInk).toBeGreaterThan(baseOpeningInk + 100);
+    expect(countNeonGreenPixels(withBoot.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";
