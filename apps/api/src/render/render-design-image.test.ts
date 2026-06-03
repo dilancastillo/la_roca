@@ -1054,6 +1054,63 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
+  it("pinta la cremallera vertical del parche de rodilla con Parche rodilla", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchRightType: "verticalZipper",
+      pantsKneePatchLeftModel: "square",
+      pantsKneePatchLeftType: "verticalZipper",
+      trimSections: [],
+    };
+    const withoutTrim = await readRawPng(await renderDesignImage(pantsScene));
+    const withTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9018,
+            key: "parche-rodilla",
+            label: "Parche rodilla",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const verticalZipperRegions = [
+      { x: 220, y: 535, width: 40, height: 95 },
+      { x: 640, y: 535, width: 40, height: 95 },
+    ];
+    const darkVerticalPixels = verticalZipperRegions.reduce(
+      (total, region) =>
+        total +
+        countDarkPixelsInRegion(
+          withoutTrim.data,
+          withoutTrim.info.width,
+          region,
+        ),
+      0,
+    );
+    const purpleVerticalPixels = verticalZipperRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withTrim.data,
+          withTrim.info.width,
+          region,
+        ),
+      0,
+    );
+
+    expect(darkVerticalPixels).toBeGreaterThan(120);
+    expect(countPurplePixels(withoutTrim.data)).toBeLessThan(20);
+    expect(purpleVerticalPixels).toBeGreaterThan(800);
+    expect(countBrightCyanPixels(withTrim.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

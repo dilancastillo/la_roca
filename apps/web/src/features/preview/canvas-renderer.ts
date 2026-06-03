@@ -39,6 +39,18 @@ const PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-fill-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_VERTICAL_ZIPPER_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-vertical-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-vertical-right.svg",
+} as const;
+const PANTS_KNEE_PATCH_VERTICAL_ZIPPER_FILL_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-vertical-fill-left.svg",
+  right:
+    "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-zipper-vertical-fill-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE = {
   left:
     "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-square-trim-left.svg",
@@ -1986,13 +1998,18 @@ async function drawPantsKneePatchSideFromAsset(
     return;
   }
 
-  if (type !== "horizontalZipper") {
+  if (type !== "horizontalZipper" && type !== "verticalZipper") {
     return;
   }
 
-  const zipperSrc = trimColor
-    ? PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE[side]
-    : PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side];
+  const zipperSrc =
+    type === "verticalZipper"
+      ? trimColor
+        ? PANTS_KNEE_PATCH_VERTICAL_ZIPPER_FILL_SRC_BY_SIDE[side]
+        : PANTS_KNEE_PATCH_VERTICAL_ZIPPER_SRC_BY_SIDE[side]
+      : trimColor
+        ? PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE[side]
+        : PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side];
   const zipperCanvas = await createRasterCanvas(
     zipperSrc,
     sourceSrc,

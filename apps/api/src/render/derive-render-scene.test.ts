@@ -1203,6 +1203,91 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.pantsKneePatchLeftType).toBe("plain");
   });
 
+  it("activa bolsillos de parche de rodilla cuadrados con cremallera vertical", () => {
+    const sessionWithVerticalKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9030,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9031,
+              name: "Cuadrado",
+              attributeId: 9030,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9032,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9033,
+              name: "Cremallera vertical",
+              attributeId: 9032,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 9034,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9035,
+              name: "Cuadrado",
+              attributeId: 9034,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 9036,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9037,
+              name: "Cremallera vertical",
+              attributeId: 9036,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9030": [9031],
+        "9032": [9033],
+        "9034": [9035],
+        "9036": [9037],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithVerticalKneePatches,
+      sessionWithVerticalKneePatches.selectedValueIds,
+    );
+
+    expect(scene.pantsKneePatchRightModel).toBe("square");
+    expect(scene.pantsKneePatchRightType).toBe("verticalZipper");
+    expect(scene.pantsKneePatchLeftModel).toBe("square");
+    expect(scene.pantsKneePatchLeftType).toBe("verticalZipper");
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
