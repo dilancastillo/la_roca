@@ -804,6 +804,45 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa Tipo bota Cremallera como overlay lateral independiente del pantalon", () => {
+    const sessionWithZipperBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999995,
+              name: "Cremallera",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999995],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithZipperBoot,
+      sessionWithZipperBoot.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-cremallera.svg",
+    );
+  });
+
   it("carga PRESILLAS por ID con cuello, aros y cogotera como vivos independientes", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

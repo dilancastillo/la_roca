@@ -700,6 +700,41 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withBellBoot.data)).toBe(0);
   }, 20000);
 
+  it("superpone la bota Cremallera solo como lateral derecho", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+    };
+    const withoutBoot = await readRawPng(await renderDesignImage(pantsScene));
+    const withZipperBoot = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        bootAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-boot-cremallera.svg",
+      }),
+    );
+    const zipperRegion = { x: 570, y: 800, width: 130, height: 270 };
+    const baseZipperInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      zipperRegion,
+    );
+    const zipperInk = countDarkPixelsInRegion(
+      withZipperBoot.data,
+      withZipperBoot.info.width,
+      zipperRegion,
+    );
+
+    expect(
+      countDifferentPixels(withoutBoot.data, withZipperBoot.data),
+    ).toBeGreaterThan(100);
+    expect(zipperInk).toBeGreaterThan(baseZipperInk + 100);
+    expect(countNeonGreenPixels(withZipperBoot.data)).toBe(0);
+  }, 20000);
+
   it("renderiza Cherokee con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";

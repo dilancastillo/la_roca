@@ -816,5 +816,17 @@ describe("getProductAssetCatalog", () => {
         "Campana",
       ),
     ).toBe("/assets/catalog/pantalon/detail-overlays/pants-boot-campana.svg");
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999995,
+        "Tipo bota",
+        "Cremallera",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-cremallera.svg",
+    );
   });
 });

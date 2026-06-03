@@ -1241,6 +1241,42 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa Tipo bota Cremallera como overlay lateral independiente del pantalon", () => {
+    const sessionWithZipperBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: pantalonSession.attributes.map((attribute) =>
+        attribute.id === 84
+          ? {
+              ...attribute,
+              values: [
+                {
+                  id: 999995,
+                  name: "Cremallera",
+                  attributeId: 84,
+                  attributeName: "Tipo bota",
+                },
+              ],
+            }
+          : attribute,
+      ),
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999995],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithZipperBoot,
+      sessionWithZipperBoot.selectedValueIds,
+    );
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+    expect(ui.previewScene.bootImageSrc).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-cremallera.svg",
+    );
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

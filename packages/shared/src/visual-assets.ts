@@ -63,6 +63,8 @@ const PANTALON_CON_ABERTURA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-con-abertura.svg`;
 const PANTALON_CAMPANA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-campana.svg`;
+const PANTALON_CREMALLERA_BOOT_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-cremallera.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
 const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
@@ -475,6 +477,7 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   bootModelsByValueName: {
     campana: PANTALON_CAMPANA_BOOT_ASSET,
     "con abertura": PANTALON_CON_ABERTURA_BOOT_ASSET,
+    cremallera: PANTALON_CREMALLERA_BOOT_ASSET,
     resorte: PANTALON_RESORTE_BOOT_ASSET,
     tradicional: PANTALON_TRADICIONAL_BOOT_ASSET,
   },
