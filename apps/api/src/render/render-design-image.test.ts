@@ -1337,8 +1337,8 @@ describe("renderDesignImage", () => {
       { x: 560, y: 520, width: 145, height: 125 },
     ];
     const topLineRegions = [
-      { x: 205, y: 540, width: 140, height: 25 },
-      { x: 555, y: 540, width: 145, height: 25 },
+      { x: 205, y: 520, width: 140, height: 15 },
+      { x: 555, y: 520, width: 145, height: 15 },
     ];
     const lowerLineRegions = [
       { x: 220, y: 565, width: 115, height: 85 },
