@@ -681,8 +681,8 @@ main {
   gap: 0;
   grid-template-rows: minmax(0, 1fr) auto;
   position: relative;
-  --preview-canvas-zoom: 1.28;
-  --preview-canvas-shift-y: 1%;
+  --preview-canvas-zoom: 1.14;
+  --preview-canvas-shift-y: 0;
 }
 
 .preview-card__status-strip {
@@ -1054,8 +1054,8 @@ main {
   .preview-card {
     height: 100%;
     min-height: 0;
-    --preview-canvas-zoom: 1.34;
-    --preview-canvas-shift-y: 1.5%;
+    --preview-canvas-zoom: 1.18;
+    --preview-canvas-shift-y: 0;
   }
 
   .preview-panel {
@@ -1087,8 +1087,8 @@ main {
   }
 
   .preview-card {
-    --preview-canvas-zoom: 1.2;
-    --preview-canvas-shift-y: 1%;
+    --preview-canvas-zoom: 1.12;
+    --preview-canvas-shift-y: 0;
     position: static;
   }
 
@@ -1136,7 +1136,7 @@ main {
   }
 
   .preview-card {
-    --preview-canvas-zoom: 1.08;
+    --preview-canvas-zoom: 1.04;
     --preview-canvas-shift-y: 0;
   }
 
