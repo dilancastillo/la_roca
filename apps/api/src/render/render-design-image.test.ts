@@ -570,7 +570,7 @@ describe("renderDesignImage", () => {
     const pocketScene: AutomationRenderScene = {
       ...baseScene,
       chestPocketAssetPath:
-        "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
+        "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-model.svg",
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));

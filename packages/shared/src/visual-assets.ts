@@ -448,10 +448,10 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "bolsillo presillas": BLUSA_EL_HATO_LOWER_POCKET_ASSET,
   },
   chestPocketModelsByValueId: {
-    376: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
+    376: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
   },
   chestPocketModelsByValueName: {
-    rectangular: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
+    rectangular: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
     "cremallera externo": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
     punta: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
     "cremallera interno": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
