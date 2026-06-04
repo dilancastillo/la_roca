@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1082 1350" width="1082" height="1350">
+  <g id="chest-pocket-zipper-internal-trim" fill="none" stroke="#1d1d1b" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M604 424h166v30H604Z" stroke-width="4" />
+    <path d="M618 439h138" stroke-width="11" stroke-dasharray="7 7" />
+    <path d="M600 432h20" stroke-width="7" />
+    <path d="M600 447h20" stroke-width="7" />
+    <path d="M755 432h19" stroke-width="7" />
+    <path d="M755 447h19" stroke-width="7" />
+    <path d="M621 430h18v22h-18Z" stroke-width="4" />
+    <path d="M639 442c12-8 35-7 45 3-6 9-29 10-45 4Z" stroke-width="4" />
+    <path d="M636 453c-8 20-13 48-15 76" stroke-width="5" />
+    <path d="M648 453c9 23 13 51 10 80" stroke-width="5" />
+    <ellipse cx="637" cy="548" rx="27" ry="22" stroke-width="5" />
+    <ellipse cx="637" cy="548" rx="16" ry="11" stroke-width="4" />
+  </g>
+</svg>

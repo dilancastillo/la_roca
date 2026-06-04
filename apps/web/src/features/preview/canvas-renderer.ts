@@ -261,11 +261,14 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-trim.svg",
   "chest-pocket-zipper-external.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-trim.svg",
+  "chest-pocket-zipper-internal.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal-trim.svg",
 };
 
 const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-point-zipper.svg",
   "chest-pocket-zipper-external.svg",
+  "chest-pocket-zipper-internal.svg",
 ]);
 
 const CHEST_POCKET_VERTICAL_OFFSET = 28;

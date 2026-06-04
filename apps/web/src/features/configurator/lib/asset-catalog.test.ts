@@ -344,6 +344,18 @@ describe("getProductAssetCatalog", () => {
     expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",
+        153,
+        999984,
+        "Modelo bolsillo de pecho",
+        "Cremallera interno",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
         145,
         999991,
         "Modelo de cuello",
