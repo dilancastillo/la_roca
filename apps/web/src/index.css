@@ -680,7 +680,8 @@ main {
   display: grid;
   gap: 8px;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  --preview-canvas-zoom: 1.32;
+  --preview-canvas-zoom: 1.28;
+  --preview-canvas-shift-y: 4%;
 }
 
 .preview-card__headline {
@@ -728,7 +729,7 @@ main {
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 3 / 4;
-  transform: scale(var(--preview-canvas-zoom));
+  transform: translateY(var(--preview-canvas-shift-y)) scale(var(--preview-canvas-zoom));
   transform-origin: center;
 }
 
@@ -1065,7 +1066,13 @@ main {
   .preview-card {
     height: 100%;
     min-height: 0;
-    --preview-canvas-zoom: 1.38;
+    --preview-canvas-zoom: 1.34;
+    --preview-canvas-shift-y: 5.5%;
+  }
+
+  .preview-panel {
+    margin-top: -48px;
+    height: calc(100% + 48px);
   }
 
   .preview-card__canvas-wrap {
@@ -1092,7 +1099,8 @@ main {
   }
 
   .preview-card {
-    --preview-canvas-zoom: 1.24;
+    --preview-canvas-zoom: 1.2;
+    --preview-canvas-shift-y: 4%;
     position: static;
   }
 
@@ -1140,7 +1148,8 @@ main {
   }
 
   .preview-card {
-    --preview-canvas-zoom: 1.12;
+    --preview-canvas-zoom: 1.08;
+    --preview-canvas-shift-y: 2%;
   }
 
   .asset-lab-controls,
