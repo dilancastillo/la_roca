@@ -2453,8 +2453,8 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     },
   })
     .composite([
-      { input: blouseLayer, left: 0, top: 145 },
-      { input: pantsLayer, left: 600, top: 92 },
+      { input: blouseLayer, left: 0, top: 188 },
+      { input: pantsLayer, left: 600, top: 145 },
     ])
     .png()
     .toBuffer();

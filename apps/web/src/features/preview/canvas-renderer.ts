@@ -2873,7 +2873,7 @@ async function composeUniformDesign(
     756,
     990,
     0,
-    145,
+    188,
     525,
     820,
   );
@@ -2884,7 +2884,7 @@ async function composeUniformDesign(
     466,
     1090,
     600,
-    92,
+    145,
     300,
     900,
   );
