@@ -348,6 +348,12 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo bolsillo de pecho",
         },
         {
+          id: 6106,
+          name: "Punta",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
+        {
           id: 6105,
           name: "Cremallera externo",
           attributeId: 102,
@@ -3236,6 +3242,18 @@ describe("deriveConfiguratorUi", () => {
         colorHex: "#1d4ed8",
       },
     ]);
+  });
+
+  it("muestra bolsillo de pecho Punta por nombre", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "102": [6106],
+    });
+
+    expect(ui.previewScene.chestPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([]);
   });
 
   it("muestra bolsillo de pecho Cremallera externo por nombre y pinta superior o inferior", () => {

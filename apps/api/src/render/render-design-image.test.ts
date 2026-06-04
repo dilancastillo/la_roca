@@ -646,6 +646,46 @@ describe("renderDesignImage", () => {
     ).toBe(0);
   }, 20000);
 
+  it("mantiene el bolsillo de pecho punta sin vivo", async () => {
+    const pocketScene: AutomationRenderScene = {
+      ...baseScene,
+      chestPocketAssetPath:
+        "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point.svg",
+      trimSections: [],
+    };
+    const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
+    const withTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7040,
+            role: "chestPocket",
+            key: "bolsillo-pecho-superior",
+            label: "Bolsillo pecho superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const pocketInk = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 500, y: 345, width: 180, height: 250 },
+    );
+
+    expect(pocketInk).toBeGreaterThan(350);
+    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBe(0);
+    expect(
+      countPastelPinkPixelsInRegion(withTrim.data, withTrim.info.width, {
+        x: 500,
+        y: 345,
+        width: 180,
+        height: 250,
+      }),
+    ).toBe(0);
+  }, 20000);
+
   it("superpone las lineas de Pespunte del pantalon sobre la base liza", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
