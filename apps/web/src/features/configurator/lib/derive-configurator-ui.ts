@@ -277,7 +277,10 @@ function getSelectedTrimSections(
       return "lowerNeck";
     }
 
-    if (normalizedSection.includes("bolsillo pecho")) {
+    if (
+      normalizedSection.includes("bolsillo pecho") ||
+      normalizedSection.includes("bolsillo de pecho")
+    ) {
       return "chestPocket";
     }
 

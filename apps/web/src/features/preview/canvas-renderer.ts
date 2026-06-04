@@ -261,7 +261,13 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
   "chest-pocket-rectangular-v2.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-trim.svg",
+  "chest-pocket-point-zipper.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-trim.svg",
 };
+
+const fullChestPocketTrimOverlayFileNames = new Set([
+  "chest-pocket-point-zipper.svg",
+]);
 
 const garmentDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-45-pespunte.svg":
@@ -1841,6 +1847,13 @@ async function drawChestPocketOverlay(
   }
 
   const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
+
+  if (fullChestPocketTrimOverlayFileNames.has(getFileNameFromSource(sourceSrc))) {
+    context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 4), 0, 0);
+    context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    return;
+  }
+
   drawPocketTrimTopLine(context, trimCanvas, trimColor);
 }
 

@@ -328,6 +328,12 @@ const session: ConfiguratorSession = {
           attributeId: 102,
           attributeName: "Modelo bolsillo de pecho",
         },
+        {
+          id: 6104,
+          name: "Cremallera punta",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
       ],
     },
     {
@@ -383,6 +389,18 @@ const session: ConfiguratorSession = {
         {
           id: 5149,
           name: "Bolsillo pecho",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 7040,
+          name: "Bolsillo pecho superior",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
+          id: 7041,
+          name: "Bolsillo pecho inferior",
           attributeId: 92,
           attributeName: "Seccion de vivo",
         },
@@ -1944,14 +1962,14 @@ describe("deriveAutomationRenderScene", () => {
         role: "backNeck",
         key: "cogotera",
         label: "Cogotera",
-        colorHex: "#f4c7cc",
+        colorHex: "#1d4ed8",
       },
       {
         valueId: 5147,
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
-        colorHex: "#f4c7cc",
+        colorHex: "#1d4ed8",
       },
       {
         valueId: 2898,
@@ -3031,6 +3049,34 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.chestPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-v2.svg",
     );
+  });
+
+  it("muestra bolsillo de pecho Cremallera punta por nombre y pinta superior o inferior", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "102": [6104],
+      "92": [7040, 7041],
+    });
+
+    expect(scene.chestPocketAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper.svg",
+    );
+    expect(scene.trimSections).toEqual([
+      {
+        valueId: 7040,
+        role: "chestPocket",
+        key: "bolsillo-pecho-superior",
+        label: "Bolsillo pecho superior",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7041,
+        role: "chestPocket",
+        key: "bolsillo-pecho-inferior",
+        label: "Bolsillo pecho inferior",
+        colorHex: "#f4c7cc",
+      },
+    ]);
   });
 
   it("pinta vivo de bolsillo de pecho solo con la seccion Bolsillo pecho", () => {
