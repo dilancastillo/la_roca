@@ -2434,13 +2434,13 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     renderDesignImage(scene.uniformParts.pants),
   ]);
   const blouseLayer = await sharp(blouseBuffer)
-    .extract({ left: 130, top: 85, width: 620, height: 980 })
-    .resize(430, 820, { fit: "fill" })
+    .extract({ left: 72, top: 80, width: 756, height: 990 })
+    .resize(455, 820, { fit: "fill" })
     .png()
     .toBuffer();
   const pantsLayer = await sharp(pantsBuffer)
     .extract({ left: 218, top: 56, width: 466, height: 1090 })
-    .resize(360, 900, { fit: "fill" })
+    .resize(340, 900, { fit: "fill" })
     .png()
     .toBuffer();
 
@@ -2453,8 +2453,8 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     },
   })
     .composite([
-      { input: blouseLayer, left: 34, top: 146 },
-      { input: pantsLayer, left: 480, top: 92 },
+      { input: blouseLayer, left: 4, top: 145 },
+      { input: pantsLayer, left: 548, top: 92 },
     ])
     .png()
     .toBuffer();
