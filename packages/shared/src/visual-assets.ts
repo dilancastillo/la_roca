@@ -452,7 +452,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   },
   chestPocketModelsByValueName: {
     rectangular: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
-    "cremallera externo": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
+    "cremallera externo": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-zipper-external.svg`,
+    "cremallera externa": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-zipper-external.svg`,
     punta: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
     "cremallera interno": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
     "cremallera punta": `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-point-zipper.svg`,

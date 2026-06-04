@@ -308,6 +308,30 @@ describe("getProductAssetCatalog", () => {
     expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",
+        153,
+        999982,
+        "Modelo bolsillo de pecho",
+        "Cremallera externo",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        153,
+        999983,
+        "Modelo bolsillo de pecho",
+        "Cremallera externa",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
         145,
         999991,
         "Modelo de cuello",

@@ -347,6 +347,12 @@ const session: ConfiguratorSession = {
           attributeId: 102,
           attributeName: "Modelo bolsillo de pecho",
         },
+        {
+          id: 6105,
+          name: "Cremallera externo",
+          attributeId: 102,
+          attributeName: "Modelo bolsillo de pecho",
+        },
       ],
     },
     {
@@ -3213,6 +3219,34 @@ describe("deriveConfiguratorUi", () => {
 
     expect(ui.previewScene.chestPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper.svg",
+    );
+    expect(ui.previewScene.trimSections).toEqual([
+      {
+        valueId: 7040,
+        role: "chestPocket",
+        key: "bolsillo-pecho-superior",
+        label: "Bolsillo pecho superior",
+        colorHex: "#1d4ed8",
+      },
+      {
+        valueId: 7041,
+        role: "chestPocket",
+        key: "bolsillo-pecho-inferior",
+        label: "Bolsillo pecho inferior",
+        colorHex: "#1d4ed8",
+      },
+    ]);
+  });
+
+  it("muestra bolsillo de pecho Cremallera externo por nombre y pinta superior o inferior", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "102": [6105],
+      "92": [7040, 7041],
+    });
+
+    expect(ui.previewScene.chestPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external.svg",
     );
     expect(ui.previewScene.trimSections).toEqual([
       {

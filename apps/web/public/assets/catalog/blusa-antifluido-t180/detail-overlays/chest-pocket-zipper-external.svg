@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1082 1350" width="1082" height="1350">
+  <g id="chest-pocket-zipper-external" fill="none" stroke="#1d1d1b" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M606 397h168v170c0 21-16 38-37 38h-94c-21 0-37-17-37-38V397Z" stroke-width="3.2"/>
+    <path d="M606 426h168" stroke-width="3"/>
+    <path d="M606 454h168" stroke-width="3"/>
+    <path d="M621 419h148" stroke-width="3" stroke-dasharray="12 10"/>
+    <path d="M634 461v104c0 8 6 14 14 14h86c8 0 14-6 14-14V461" stroke-width="3" stroke-dasharray="13 11"/>
+    <path d="M621 397v18" stroke-width="3"/>
+    <path d="M759 397v18" stroke-width="3"/>
+  </g>
+  <g id="chest-pocket-zipper-external-zipper" fill="#1d1d1b" stroke="#1d1d1b" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M606 431h168v22H606Z" fill="none" stroke-width="3"/>
+    <path d="M645 434c8-5 24-4 31 2-3 7-20 8-31 5Z" fill="none" stroke-width="3"/>
+    <rect x="622" y="433" width="12" height="18" fill="none" stroke-width="3"/>
+    <rect x="758" y="433" width="12" height="18" fill="none" stroke-width="3"/>
+    <rect x="682" y="434" width="5" height="17" rx="1"/>
+    <rect x="691" y="434" width="5" height="17" rx="1"/>
+    <rect x="700" y="434" width="5" height="17" rx="1"/>
+    <rect x="709" y="434" width="5" height="17" rx="1"/>
+    <rect x="718" y="434" width="5" height="17" rx="1"/>
+    <rect x="727" y="434" width="5" height="17" rx="1"/>
+    <rect x="736" y="434" width="5" height="17" rx="1"/>
+    <rect x="745" y="434" width="5" height="17" rx="1"/>
+    <path d="M643 442c-7 5-8 13-6 22" fill="none" stroke-width="3"/>
+    <path d="M650 442c5 13 8 27 6 42" fill="none" stroke-width="3"/>
+    <ellipse cx="648" cy="483" rx="11" ry="14" fill="none" stroke-width="3"/>
+  </g>
+</svg>

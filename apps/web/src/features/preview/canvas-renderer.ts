@@ -259,10 +259,13 @@ const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
   "chest-pocket-point-zipper.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-trim.svg",
+  "chest-pocket-zipper-external.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-trim.svg",
 };
 
 const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-point-zipper.svg",
+  "chest-pocket-zipper-external.svg",
 ]);
 
 const garmentDetailOverlayByFileName: Record<string, string> = {

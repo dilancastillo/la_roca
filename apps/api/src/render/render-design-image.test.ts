@@ -566,6 +566,52 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("pinta la cremallera externa del bolsillo de pecho", async () => {
+    const pocketScene: AutomationRenderScene = {
+      ...baseScene,
+      chestPocketAssetPath:
+        "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external.svg",
+      trimSections: [],
+    };
+    const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
+    const withTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7040,
+            role: "chestPocket",
+            key: "bolsillo-pecho-superior",
+            label: "Bolsillo pecho superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const pocketInk = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 500, y: 330, width: 185, height: 250 },
+    );
+    const zipperPinkWithoutTrim = countPastelPinkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 500, y: 335, width: 180, height: 90 },
+    );
+    const zipperPinkWithTrim = countPastelPinkPixelsInRegion(
+      withTrim.data,
+      withTrim.info.width,
+      { x: 500, y: 335, width: 180, height: 90 },
+    );
+
+    expect(pocketInk).toBeGreaterThan(900);
+    expect(zipperPinkWithoutTrim).toBeLessThan(20);
+    expect(zipperPinkWithTrim).toBeGreaterThan(180);
+    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBeGreaterThan(
+      250,
+    );
+  }, 20000);
+
   it("mantiene el bolsillo de pecho rectangular sin vivo", async () => {
     const pocketScene: AutomationRenderScene = {
       ...baseScene,
