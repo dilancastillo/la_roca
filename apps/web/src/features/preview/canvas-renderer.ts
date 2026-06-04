@@ -2872,9 +2872,9 @@ async function composeUniformDesign(
     80,
     756,
     990,
-    4,
+    0,
     145,
-    455,
+    525,
     820,
   );
   context.drawImage(
@@ -2883,9 +2883,9 @@ async function composeUniformDesign(
     56,
     466,
     1090,
-    548,
+    600,
     92,
-    340,
+    300,
     900,
   );
 
