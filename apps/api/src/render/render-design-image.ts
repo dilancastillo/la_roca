@@ -2424,7 +2424,47 @@ function getFallbackGarmentSvg(fillColor: string) {
   `;
 }
 
+async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
+  if (!scene.uniformParts) {
+    throw new Error("La escena de uniforme no tiene partes configuradas.");
+  }
+
+  const [blouseBuffer, pantsBuffer] = await Promise.all([
+    renderDesignImage(scene.uniformParts.blouse),
+    renderDesignImage(scene.uniformParts.pants),
+  ]);
+  const blouseLayer = await sharp(blouseBuffer)
+    .extract({ left: 130, top: 85, width: 620, height: 980 })
+    .resize(430, 820, { fit: "fill" })
+    .png()
+    .toBuffer();
+  const pantsLayer = await sharp(pantsBuffer)
+    .extract({ left: 218, top: 56, width: 466, height: 1090 })
+    .resize(360, 900, { fit: "fill" })
+    .png()
+    .toBuffer();
+
+  return await sharp({
+    create: {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      channels: 4,
+      background: "#ffffff",
+    },
+  })
+    .composite([
+      { input: blouseLayer, left: 34, top: 146 },
+      { input: pantsLayer, left: 480, top: 92 },
+    ])
+    .png()
+    .toBuffer();
+}
+
 export async function renderDesignImage(scene: AutomationRenderScene): Promise<Buffer> {
+  if (scene.uniformParts) {
+    return await createUniformCompositeBuffer(scene);
+  }
+
   const layers: string[] = [
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,
   ];

@@ -2573,7 +2573,7 @@ export async function createDetailOverlayCanvas(
   return await getDetailOverlay(sourceSrc, baseSrc, regions, inkRadius);
 }
 
-export async function composeDesign(
+async function composeSingleDesign(
   canvas: HTMLCanvasElement,
   scene: PreviewScene,
 ): Promise<Blob> {
@@ -2832,4 +2832,81 @@ export async function composeDesign(
       resolve(blob);
     }, "image/png");
   });
+}
+
+function createInternalCanvas() {
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+
+  return canvas;
+}
+
+async function composeUniformDesign(
+  canvas: HTMLCanvasElement,
+  scene: PreviewScene,
+): Promise<Blob> {
+  if (!scene.uniformParts) {
+    return await composeSingleDesign(canvas, scene);
+  }
+
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvas 2D no disponible");
+  }
+
+  const blouseCanvas = createInternalCanvas();
+  const pantsCanvas = createInternalCanvas();
+
+  await composeSingleDesign(blouseCanvas, scene.uniformParts.blouse);
+  await composeSingleDesign(pantsCanvas, scene.uniformParts.pants);
+
+  context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  context.drawImage(
+    blouseCanvas,
+    130,
+    85,
+    620,
+    980,
+    34,
+    146,
+    430,
+    820,
+  );
+  context.drawImage(
+    pantsCanvas,
+    218,
+    56,
+    466,
+    1090,
+    480,
+    92,
+    360,
+    900,
+  );
+
+  return await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("No se pudo generar el PNG final."));
+        return;
+      }
+      resolve(blob);
+    }, "image/png");
+  });
+}
+
+export async function composeDesign(
+  canvas: HTMLCanvasElement,
+  scene: PreviewScene,
+): Promise<Blob> {
+  if (scene.uniformParts) {
+    return await composeUniformDesign(canvas, scene);
+  }
+
+  return await composeSingleDesign(canvas, scene);
 }

@@ -17,6 +17,10 @@ import {
 export type AutomationRenderScene = {
   productName: string;
   baseColorHex: string;
+  uniformParts?: {
+    blouse: AutomationRenderScene;
+    pants: AutomationRenderScene;
+  };
   garmentAssetPath?: string;
   garmentDetailAssetPath?: string;
   bootAssetPath?: string;
@@ -102,6 +106,30 @@ function findSelectedValue(
 
   const selectedIds = new Set(selectedValueIds[String(attribute.id)] ?? []);
   return attribute.values.find((value) => selectedIds.has(value.id));
+}
+
+const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
+
+function isUniformeSession(session: ConfiguratorSession) {
+  return (
+    session.productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
+    normalize(session.graphicManifestKey) === "uniforme"
+  );
+}
+
+function getPartColorHex(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+  part: "blouse" | "pants",
+) {
+  const partColorAttribute = findAttributeByName(session, (name) =>
+    part === "blouse"
+      ? name.includes("color blusa") || name.includes("color de blusa")
+      : name.includes("color pantalon") || name.includes("color de pantalon"),
+  );
+  const selectedPartColor = findSelectedValue(partColorAttribute, selectedValueIds);
+
+  return selectedPartColor?.colorHex;
 }
 
 function matchesCatalogAttribute(
@@ -438,7 +466,7 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
-export function deriveAutomationRenderScene(
+function deriveSingleAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ): AutomationRenderScene {
@@ -776,5 +804,53 @@ export function deriveAutomationRenderScene(
         }
       : {}),
     trimSections: getSelectedTrimSections(session, selectedValueIds),
+  };
+}
+
+export function deriveAutomationRenderScene(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+): AutomationRenderScene {
+  if (!isUniformeSession(session)) {
+    return deriveSingleAutomationRenderScene(session, selectedValueIds);
+  }
+
+  const baseScene = deriveSingleAutomationRenderScene(session, selectedValueIds);
+  const blouseScene = deriveSingleAutomationRenderScene(
+    {
+      ...session,
+      productName: "Blusa",
+      graphicManifestKey: "blusa-antifluido-t180",
+    },
+    selectedValueIds,
+  );
+  const pantsScene = deriveSingleAutomationRenderScene(
+    {
+      ...session,
+      productName: "Pantalon",
+      graphicManifestKey: "pantalon",
+    },
+    selectedValueIds,
+  );
+
+  return {
+    productName: session.productName,
+    baseColorHex: baseScene.baseColorHex,
+    lowerPocketLayout: "none",
+    trimSections: [],
+    uniformParts: {
+      blouse: {
+        ...blouseScene,
+        baseColorHex:
+          getPartColorHex(session, selectedValueIds, "blouse") ??
+          blouseScene.baseColorHex,
+      },
+      pants: {
+        ...pantsScene,
+        baseColorHex:
+          getPartColorHex(session, selectedValueIds, "pants") ??
+          pantsScene.baseColorHex,
+      },
+    },
   };
 }

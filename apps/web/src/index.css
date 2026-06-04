@@ -341,6 +341,15 @@ main {
   gap: 10px;
 }
 
+.attribute-category-label {
+  margin: 6px 4px 2px;
+  color: var(--brand-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .config-section,
 .preview-card,
 .save-panel,
@@ -694,6 +703,35 @@ main {
   justify-content: space-between;
   gap: 10px;
   pointer-events: none;
+}
+
+.preview-card__view-toggle {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(16, 33, 51, 0.08);
+}
+
+.preview-card__view-toggle button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.preview-card__view-toggle button.is-active {
+  background: var(--primary-soft);
+  color: var(--brand-strong);
 }
 
 .preview-card__canvas-wrap {

@@ -696,14 +696,14 @@ describe("deriveConfiguratorUi", () => {
         role: "backNeck",
         key: "cogotera",
         label: "Cogotera",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 5147,
         role: "upperNeck",
         key: "cuello",
         label: "Cuello",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 2898,

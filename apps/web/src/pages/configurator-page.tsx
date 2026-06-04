@@ -290,20 +290,25 @@ export function ConfiguratorPage() {
     return <Navigate to={nextUrl} replace />;
   }
 
+  if (sessionQuery.isError) {
+    const errorMessage =
+      sessionQuery.error instanceof Error
+        ? sessionQuery.error.message
+        : "Revisa la conexion con Odoo o valida que la linea siga disponible.";
+
+    return (
+      <main className="page-state">
+        <h1>No se pudo cargar la linea</h1>
+        <p>{errorMessage}</p>
+      </main>
+    );
+  }
+
   if (sessionQuery.isLoading || !uiModel || !sessionQuery.data) {
     return (
       <main className="page-state">
         <h1>Cargando configurador</h1>
         <p>Estamos reconstruyendo los atributos y el diseno de la linea.</p>
-      </main>
-    );
-  }
-
-  if (sessionQuery.isError) {
-    return (
-      <main className="page-state">
-        <h1>No se pudo cargar la linea</h1>
-        <p>Revisa la conexion con Odoo o valida que la linea siga disponible.</p>
       </main>
     );
   }
@@ -530,6 +535,7 @@ export function ConfiguratorPage() {
       const result = await saveDesign(
         lineId,
         previewBlob,
+        ui.previewScene,
         state.selectedValueIds,
         state.customValuesByValueId,
         ui.logoSelection ? logoAttachment : null,
@@ -658,41 +664,53 @@ export function ConfiguratorPage() {
           <div className="configurator-shell">
             <form className="configurator-form" onSubmit={handleSave}>
               <div className="configurator-form__scroll">
-                {ui.groups.map((group) => (
-                  <div
-                    key={group.attributeId}
-                    ref={(node) => {
-                      if (node) {
-                        attributeSectionRefs.current.set(group.attributeId, node);
-                      } else {
-                        attributeSectionRefs.current.delete(group.attributeId);
-                      }
-                    }}
-                  >
-                    <AttributeSection
-                      group={group}
-                      selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
-                      disabledValueIds={disabledValueIds}
-                      disabled={isReadOnly}
-                      expanded={expandedAttributeId === group.attributeId}
-                      selectionLabel={getSelectionLabel(group.attributeId)}
-                      customValuesByValueId={state.customValuesByValueId}
-                      onExpandToggle={() =>
-                        setExpandedAttributeId((current) =>
-                          current === group.attributeId ? null : group.attributeId,
-                        )
-                      }
-                      onSelect={(valueId) =>
-                        handleSingleSelect(group.attributeId, valueId)
-                      }
-                      onToggle={(valueId) =>
-                        handleMultiToggle(group.attributeId, valueId)
-                      }
-                      onCustomValueChange={handleCustomValueChange}
-                      invalidCustomValueIds={invalidCustomValueIds}
-                    />
-                  </div>
-                ))}
+                {ui.groups.map((group, index) => {
+                  const previousGroup = ui.groups[index - 1];
+                  const showCategory =
+                    group.category &&
+                    group.category !== previousGroup?.category;
+
+                  return (
+                    <div
+                      key={group.attributeId}
+                      ref={(node) => {
+                        if (node) {
+                          attributeSectionRefs.current.set(group.attributeId, node);
+                        } else {
+                          attributeSectionRefs.current.delete(group.attributeId);
+                        }
+                      }}
+                    >
+                      {showCategory ? (
+                        <div className="attribute-category-label">
+                          {group.category}
+                        </div>
+                      ) : null}
+                      <AttributeSection
+                        group={group}
+                        selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
+                        disabledValueIds={disabledValueIds}
+                        disabled={isReadOnly}
+                        expanded={expandedAttributeId === group.attributeId}
+                        selectionLabel={getSelectionLabel(group.attributeId)}
+                        customValuesByValueId={state.customValuesByValueId}
+                        onExpandToggle={() =>
+                          setExpandedAttributeId((current) =>
+                            current === group.attributeId ? null : group.attributeId,
+                          )
+                        }
+                        onSelect={(valueId) =>
+                          handleSingleSelect(group.attributeId, valueId)
+                        }
+                        onToggle={(valueId) =>
+                          handleMultiToggle(group.attributeId, valueId)
+                        }
+                        onCustomValueChange={handleCustomValueChange}
+                        invalidCustomValueIds={invalidCustomValueIds}
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="save-panel save-panel--sticky">

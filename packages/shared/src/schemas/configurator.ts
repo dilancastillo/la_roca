@@ -71,6 +71,14 @@ export const saveDesignRequestSchema = z.object({
   saleOrderLineId: z.number(),
   filename: z.string().min(1).max(140),
   imageBase64: z.string().min(1),
+  additionalImages: z
+    .array(
+      z.object({
+        filename: z.string().min(1).max(140),
+        imageBase64: z.string().min(1),
+      }),
+    )
+    .optional(),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
   customValuesByValueId: z.record(z.string(), z.string()).optional(),
   logoAttachment: uploadedAttachmentSchema.optional(),

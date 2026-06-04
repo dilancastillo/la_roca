@@ -515,9 +515,48 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   auxiliaryPocketModelsByValueId: {},
 };
 
+export const uniformeVisualCatalog: VisualAssetCatalog = {
+  productKey: "uniforme",
+  aliases: ["uniforme"],
+  attributeIds: {
+    neckModel: 145,
+    lowerPocketType: 155,
+    lowerPocketModel: 154,
+    bootModel: 160,
+    waistbandModel: 164,
+    chestPocketModel: 153,
+    baseColor: 798,
+    trimColor: 814,
+    trimSections: 157,
+  },
+  attributeIdAliases: {
+    waistbandModel: [165],
+    baseColor: [90],
+    trimColor: [802, 91],
+    trimSections: [92],
+  },
+  defaultGarmentAsset: blouseModelAsset(1),
+  defaultChestPocketModelAsset:
+    `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
+  neckModelsByValueId: blusaAntifluidoT180VisualCatalog.neckModelsByValueId!,
+  neckModelsByValueName: blusaAntifluidoT180VisualCatalog.neckModelsByValueName!,
+  lowerPocketModelsByValueId:
+    blusaAntifluidoT180VisualCatalog.lowerPocketModelsByValueId!,
+  lowerPocketModelsByValueName:
+    blusaAntifluidoT180VisualCatalog.lowerPocketModelsByValueName!,
+  chestPocketModelsByValueId:
+    blusaAntifluidoT180VisualCatalog.chestPocketModelsByValueId!,
+  chestPocketModelsByValueName:
+    blusaAntifluidoT180VisualCatalog.chestPocketModelsByValueName!,
+  bootModelsByValueName: pantalonVisualCatalog.bootModelsByValueName!,
+  waistbandModelsByValueName: pantalonVisualCatalog.waistbandModelsByValueName!,
+  auxiliaryPocketModelsByValueId: {},
+};
+
 export const visualAssetCatalogs: VisualAssetCatalog[] = [
   blusaAntifluidoT180VisualCatalog,
   pantalonVisualCatalog,
+  uniformeVisualCatalog,
 ];
 
 function normalizeCatalogKey(value: string) {

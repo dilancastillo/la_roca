@@ -22,6 +22,8 @@ type VariantResolution =
   | { productId: number; resolution: "product_variant" | "created_product_variant" }
   | { productId: number; resolution: "line_attribute_values" };
 
+const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
+
 function normalizeManyIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
     return [];
@@ -229,6 +231,16 @@ async function resolveVariantProduct(
   session: ConfiguratorSession,
   variantValueIds: number[],
 ): Promise<VariantResolution> {
+  if (
+    session.productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
+    normalizeText(session.graphicManifestKey) === "uniforme"
+  ) {
+    return {
+      productId: session.productId,
+      resolution: "line_attribute_values",
+    };
+  }
+
   const matchingVariant = await findExactVariant(env, session, variantValueIds);
 
   if (matchingVariant) {
@@ -360,6 +372,25 @@ export async function saveConfiguratorDesign(
     designImageStorage,
   );
 
+  const additionalAttachmentIds = await Promise.all(
+    (payload.additionalImages ?? []).map((image) =>
+      createDesignImageAttachment(
+        env,
+        {
+          saleOrderLineId: payload.saleOrderLineId,
+          filename: image.filename,
+          imageBase64: image.imageBase64,
+          currentVersion: session.status.version,
+        },
+        {
+          ...designImageStorage,
+          attachmentName: `design-v${designImageStorage.version}-${image.filename}`,
+          lineValues: designImageStorage.lineValues,
+        },
+      ),
+    ),
+  );
+
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: productId,
     product_template_attribute_value_ids: [[6, 0, variantValueIds]],
@@ -372,6 +403,9 @@ export async function saveConfiguratorDesign(
   return {
     ok: true,
     attachmentId,
+    ...(additionalAttachmentIds.length > 0
+      ? { additionalAttachmentIds }
+      : {}),
     ...(payload.logoAttachment ? { logoImageUpdated: true } : {}),
     version: designImageStorage.version,
     generatedAt: designImageStorage.generatedAtIso,

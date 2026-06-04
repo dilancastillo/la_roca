@@ -25,6 +25,7 @@ export type UiOption = {
 export type UiAttributeGroup = {
   attributeId: number;
   label: string;
+  category?: string | undefined;
   helpText?: string | undefined;
   controlType: "color" | "image" | "chips";
   selectionMode: "single" | "multiple";
@@ -34,6 +35,10 @@ export type UiAttributeGroup = {
 export type PreviewScene = {
   productName: string;
   baseColorHex: string;
+  uniformParts?: {
+    blouse: PreviewScene;
+    pants: PreviewScene;
+  };
   garmentImageSrc?: string | undefined;
   garmentDetailImageSrc?: string | undefined;
   bootImageSrc?: string | undefined;
@@ -115,6 +120,63 @@ function normalize(value: string) {
     .replace(/\p{Diacritic}/gu, "")
     .trim()
     .toLowerCase();
+}
+
+const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
+
+function isUniformeSession(session: ConfiguratorSession) {
+  return (
+    session.productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
+    normalize(session.graphicManifestKey) === "uniforme"
+  );
+}
+
+function getUniformAttributeCategory(attributeName: string) {
+  const normalized = normalize(attributeName);
+
+  if (
+    normalized === "material" ||
+    normalized === "color" ||
+    normalized === "genero" ||
+    normalized.includes("observaciones") ||
+    normalized.includes("logo")
+  ) {
+    return "Base";
+  }
+
+  if (
+    normalized.includes("pantalon") ||
+    normalized.includes("bota") ||
+    normalized.includes("cinturilla") ||
+    normalized.includes("pretina") ||
+    normalized.includes("rodilla") ||
+    normalized.includes("trasero") ||
+    normalized.includes("forrado") ||
+    normalized.includes("forro")
+  ) {
+    return "Pantalon";
+  }
+
+  if (normalized.includes("seccion de vivo") || normalized.includes("vivo")) {
+    return "Vivos";
+  }
+
+  return "Blusa";
+}
+
+function getPartColorHex(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+  part: "blouse" | "pants",
+) {
+  const partColorAttribute = findAttributeByName(session, (name) =>
+    part === "blouse"
+      ? name.includes("color blusa") || name.includes("color de blusa")
+      : name.includes("color pantalon") || name.includes("color de pantalon"),
+  );
+  const selectedPartColor = findSelectedValue(partColorAttribute, selectedValueIds);
+
+  return selectedPartColor?.colorHex;
 }
 
 function getSelectedOptions(
@@ -519,7 +581,7 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
-export function deriveConfiguratorUi(
+function deriveSingleConfiguratorUi(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ): ConfiguratorUiModel {
@@ -527,6 +589,9 @@ export function deriveConfiguratorUi(
   const groups = session.attributes.map((attribute) => ({
     attributeId: attribute.id,
     label: attribute.name,
+    ...(isUniformeSession(session)
+      ? { category: getUniformAttributeCategory(attribute.name) }
+      : {}),
     helpText: getHelpText(attribute.name),
     controlType: getControlType(attribute, session),
     selectionMode: attribute.selectionMode,
@@ -910,6 +975,57 @@ export function deriveConfiguratorUi(
             label: activeLogoOptions.map((option) => option.name).join(", "),
           }
         : undefined,
+  };
+}
+
+export function deriveConfiguratorUi(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+): ConfiguratorUiModel {
+  if (!isUniformeSession(session)) {
+    return deriveSingleConfiguratorUi(session, selectedValueIds);
+  }
+
+  const baseUi = deriveSingleConfiguratorUi(session, selectedValueIds);
+  const blouseUi = deriveSingleConfiguratorUi(
+    {
+      ...session,
+      productName: "Blusa",
+      graphicManifestKey: "blusa-antifluido-t180",
+    },
+    selectedValueIds,
+  );
+  const pantsUi = deriveSingleConfiguratorUi(
+    {
+      ...session,
+      productName: "Pantalon",
+      graphicManifestKey: "pantalon",
+    },
+    selectedValueIds,
+  );
+
+  return {
+    ...baseUi,
+    previewScene: {
+      productName: session.productName,
+      baseColorHex: baseUi.previewScene.baseColorHex,
+      lowerPocketLayout: "none",
+      trimSections: [],
+      uniformParts: {
+        blouse: {
+          ...blouseUi.previewScene,
+          baseColorHex:
+            getPartColorHex(session, selectedValueIds, "blouse") ??
+            blouseUi.previewScene.baseColorHex,
+        },
+        pants: {
+          ...pantsUi.previewScene,
+          baseColorHex:
+            getPartColorHex(session, selectedValueIds, "pants") ??
+            pantsUi.previewScene.baseColorHex,
+        },
+      },
+    },
   };
 }
 
