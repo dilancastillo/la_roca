@@ -275,6 +275,8 @@ const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-zipper-external.svg",
 ]);
 
+const CHEST_POCKET_VERTICAL_OFFSET = 28;
+
 const garmentDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-45-pespunte.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
@@ -2218,8 +2220,8 @@ function getLowerPocketOverlayRegions(
     : overlayRegionPresets.lowerPocketPair;
 }
 
-function getImageSvg(imageDataUri: string) {
-  return `<image href="${imageDataUri}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
+function getImageSvg(imageDataUri: string, y = 0) {
+  return `<image href="${imageDataUri}" x="0" y="${y}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
 }
 
 function getRawInkBoundsInRegion(
@@ -2396,7 +2398,7 @@ async function getChestPocketTrimLineSvg(
   const lineSvg = getPocketTrimLineSvg(
     bounds.x + POCKET_TRIM_LINE_HORIZONTAL_INSET,
     bounds.x + bounds.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
-    bounds.y + POCKET_TRIM_LINE_WIDTH / 2,
+    bounds.y + CHEST_POCKET_VERTICAL_OFFSET + POCKET_TRIM_LINE_WIDTH / 2,
     trimColor,
     "chest-pocket-trim-glow",
   );
@@ -2992,7 +2994,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         scene.chestPocketAssetPath,
         baseAssetPath,
       );
-      layers.push(getImageSvg(toDataUri(overlayBuffer)));
+      layers.push(
+        getImageSvg(toDataUri(overlayBuffer), CHEST_POCKET_VERTICAL_OFFSET),
+      );
 
       if (chestPocketTrimColor) {
         const trimOverlayBuffer = await createChestPocketTrimOverlayBuffer(
@@ -3017,8 +3021,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             );
 
             layers.push(
-              getImageSvg(toDataUri(trimOutlineBuffer)),
-              getImageSvg(toDataUri(trimColorBuffer)),
+              getImageSvg(
+                toDataUri(trimOutlineBuffer),
+                CHEST_POCKET_VERTICAL_OFFSET,
+              ),
+              getImageSvg(
+                toDataUri(trimColorBuffer),
+                CHEST_POCKET_VERTICAL_OFFSET,
+              ),
             );
           } else {
             layers.push(
@@ -3035,7 +3045,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         const markerBuffer = await createChestPocketLogoMarkerBuffer(
           baseAssetPath,
         );
-        layers.push(getImageSvg(toDataUri(markerBuffer)));
+        layers.push(
+          getImageSvg(toDataUri(markerBuffer), CHEST_POCKET_VERTICAL_OFFSET),
+        );
       }
     }
 

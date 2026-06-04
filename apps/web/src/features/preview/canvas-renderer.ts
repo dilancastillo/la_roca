@@ -268,6 +268,8 @@ const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-zipper-external.svg",
 ]);
 
+const CHEST_POCKET_VERTICAL_OFFSET = 28;
+
 const garmentDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-45-pespunte.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
@@ -1833,15 +1835,19 @@ async function drawChestPocketOverlay(
   trimColor?: string,
 ) {
   const overlayCanvas = await createRasterCanvas(sourceSrc, placementSrc);
+  context.save();
+  context.translate(0, CHEST_POCKET_VERTICAL_OFFSET);
   context.drawImage(overlayCanvas, 0, 0);
 
   if (!trimColor) {
+    context.restore();
     return;
   }
 
   const trimSrc = chestPocketTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
 
   if (!trimSrc) {
+    context.restore();
     return;
   }
 
@@ -1850,10 +1856,12 @@ async function drawChestPocketOverlay(
   if (fullChestPocketTrimOverlayFileNames.has(getFileNameFromSource(sourceSrc))) {
     context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 4), 0, 0);
     context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    context.restore();
     return;
   }
 
   drawPocketTrimTopLine(context, trimCanvas, trimColor);
+  context.restore();
 }
 
 async function drawChestPocketLogoMarker(
@@ -1865,7 +1873,7 @@ async function drawChestPocketLogoMarker(
     placementSrc,
   );
 
-  context.drawImage(markerCanvas, 0, 0);
+  context.drawImage(markerCanvas, 0, CHEST_POCKET_VERTICAL_OFFSET);
 }
 
 async function drawGarmentModelDetails(
