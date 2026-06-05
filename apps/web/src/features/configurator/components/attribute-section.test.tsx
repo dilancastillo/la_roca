@@ -201,6 +201,30 @@ describe("AttributeSection", () => {
     ).toBeNull();
   });
 
+  it("filtra opciones de imagen por nombre", () => {
+    const baseProps = createImageProps();
+    render(<AttributeSection {...baseProps} expanded />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /buscar en modelo bolsillo inferior/i,
+      }),
+    );
+    const searchInput = screen.getByLabelText(
+      /buscar modelo en modelo bolsillo inferior/i,
+    );
+
+    fireEvent.change(searchInput, { target: { value: "modelo 2" } });
+
+    const optionList = screen.getByRole("list");
+    expect(
+      within(optionList).getByRole("button", { name: /modelo 2/i }),
+    ).toBeTruthy();
+    expect(
+      within(optionList).queryByRole("button", { name: /modelo 1/i }),
+    ).toBeNull();
+  });
+
   it("permite limpiar la busqueda de color", () => {
     const baseProps = createColorProps();
     render(<AttributeSection {...baseProps} expanded />);

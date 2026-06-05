@@ -33,11 +33,25 @@ export function AttributeSection({
   isActive = false,
 }: Props) {
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [colorSearchOpen, setColorSearchOpen] = useState(false);
-  const [colorQuery, setColorQuery] = useState("");
+  const [optionSearchOpen, setOptionSearchOpen] = useState(false);
+  const [optionQuery, setOptionQuery] = useState("");
   const isColorGroup = group.controlType === "color";
-  const normalizedColorQuery = normalizeSearchTerm(colorQuery);
-  const compactColorQuery = compactSearchTerm(normalizedColorQuery);
+  const isImageGroup = group.controlType === "image";
+  const isSearchableGroup = isColorGroup || isImageGroup;
+  const normalizedOptionQuery = normalizeSearchTerm(optionQuery);
+  const compactOptionQuery = compactSearchTerm(normalizedOptionQuery);
+  const searchInputLabel = isColorGroup
+    ? `Buscar codigo o color en ${group.label}`
+    : `Buscar modelo en ${group.label}`;
+  const searchPlaceholder = isColorGroup
+    ? "Buscar codigo o color..."
+    : "Buscar modelo...";
+  const clearSearchLabel = isColorGroup
+    ? "Limpiar busqueda de color"
+    : "Limpiar busqueda de modelo";
+  const emptySearchMessage = isColorGroup
+    ? "No encontramos ese codigo o color."
+    : "No encontramos esa opcion.";
   const selectedValueIdSet = useMemo(
     () => new Set(selectedValueIds),
     [selectedValueIds],
@@ -58,8 +72,8 @@ export function AttributeSection({
       ),
     [disabledValueIds, group.options, selectedValueIdSet],
   );
-  const visibleColorOptions = useMemo(() => {
-    if (!isColorGroup || !normalizedColorQuery) {
+  const visibleOptions = useMemo(() => {
+    if (!isSearchableGroup || !normalizedOptionQuery) {
       return availableOptions;
     }
 
@@ -68,40 +82,40 @@ export function AttributeSection({
       const compactName = compactSearchTerm(normalizedName);
 
       return (
-        normalizedName.includes(normalizedColorQuery) ||
-        Boolean(compactColorQuery) && compactName.includes(compactColorQuery)
+        normalizedName.includes(normalizedOptionQuery) ||
+        (Boolean(compactOptionQuery) && compactName.includes(compactOptionQuery))
       );
     });
   }, [
     availableOptions,
-    compactColorQuery,
-    isColorGroup,
-    normalizedColorQuery,
+    compactOptionQuery,
+    isSearchableGroup,
+    normalizedOptionQuery,
   ]);
 
   useEffect(() => {
-    if (expanded && colorSearchOpen) {
+    if (expanded && optionSearchOpen) {
       searchInputRef.current?.focus();
     }
-  }, [colorSearchOpen, expanded]);
+  }, [optionSearchOpen, expanded]);
 
   useEffect(() => {
     if (!expanded) {
-      setColorSearchOpen(false);
-      setColorQuery("");
+      setOptionSearchOpen(false);
+      setOptionQuery("");
     }
   }, [expanded]);
 
-  function handleColorSearchToggle() {
+  function handleOptionSearchToggle() {
     if (!expanded) {
       onExpandToggle();
-      setColorSearchOpen(true);
+      setOptionSearchOpen(true);
       return;
     }
 
-    setColorSearchOpen((current) => {
+    setOptionSearchOpen((current) => {
       if (current) {
-        setColorQuery("");
+        setOptionQuery("");
       }
 
       return !current;
@@ -151,18 +165,18 @@ export function AttributeSection({
           </span>
         </button>
 
-        {isColorGroup ? (
+        {isSearchableGroup ? (
           <button
             type="button"
             className={[
               "config-section__search-toggle",
-              colorSearchOpen ? "config-section__search-toggle--active" : "",
+              optionSearchOpen ? "config-section__search-toggle--active" : "",
             ]
               .filter(Boolean)
               .join(" ")}
             aria-label={`Buscar en ${group.label}`}
-            aria-pressed={colorSearchOpen}
-            onClick={handleColorSearchToggle}
+            aria-pressed={optionSearchOpen}
+            onClick={handleOptionSearchToggle}
           >
             <SearchIcon />
           </button>
@@ -178,7 +192,7 @@ export function AttributeSection({
             <p className="config-section__help">{group.helpText}</p>
           ) : null}
 
-          {isColorGroup && colorSearchOpen ? (
+          {isSearchableGroup && optionSearchOpen ? (
             <div className="color-search" role="search">
               <span className="color-search__icon" aria-hidden="true">
                 <SearchIcon />
@@ -186,31 +200,31 @@ export function AttributeSection({
               <input
                 ref={searchInputRef}
                 type="search"
-                value={colorQuery}
-                placeholder="Buscar codigo o color..."
-                aria-label={`Buscar codigo o color en ${group.label}`}
-                onChange={(event) => setColorQuery(event.target.value)}
+                value={optionQuery}
+                placeholder={searchPlaceholder}
+                aria-label={searchInputLabel}
+                onChange={(event) => setOptionQuery(event.target.value)}
               />
-              {colorQuery ? (
+              {optionQuery ? (
                 <button
                   type="button"
                   className="color-search__clear"
-                  aria-label="Limpiar busqueda de color"
-                  onClick={() => setColorQuery("")}
+                  aria-label={clearSearchLabel}
+                  onClick={() => setOptionQuery("")}
                 >
                   x
                 </button>
               ) : null}
               <span className="color-search__count" aria-live="polite">
-                {visibleColorOptions.length}/{availableOptions.length}
+                {visibleOptions.length}/{availableOptions.length}
               </span>
             </div>
           ) : null}
 
           {group.controlType === "image" ? (
-            availableOptions.length > 0 ? (
+            visibleOptions.length > 0 ? (
               <div className="image-option-grid" role="list">
-                {availableOptions.map((option) => {
+                {visibleOptions.map((option) => {
                   const selected = selectedValueIds.includes(option.id);
                   const optionDisabled =
                     disabled || (disabledValueIds.has(option.id) && !selected);
@@ -246,13 +260,15 @@ export function AttributeSection({
               </div>
             ) : (
               <div className="color-search__empty" role="status">
-                No hay opciones disponibles con la combinacion actual.
+                {availableOptions.length > 0
+                  ? emptySearchMessage
+                  : "No hay opciones disponibles con la combinacion actual."}
               </div>
             )
           ) : group.controlType === "color" ? (
-            visibleColorOptions.length > 0 ? (
+            visibleOptions.length > 0 ? (
               <div className="swatch-grid" role="list">
-                {visibleColorOptions.map((option) => {
+                {visibleOptions.map((option) => {
                   const selected = selectedValueIds.includes(option.id);
                   const optionDisabled =
                     disabled || (disabledValueIds.has(option.id) && !selected);
@@ -287,7 +303,7 @@ export function AttributeSection({
               </div>
             ) : (
               <div className="color-search__empty" role="status">
-                No encontramos ese codigo o color.
+                {emptySearchMessage}
               </div>
             )
           ) : availableOptions.length > 0 ? (
