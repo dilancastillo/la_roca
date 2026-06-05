@@ -153,6 +153,9 @@ export function ConfiguratorPage() {
     () => new Set<number>(),
   );
   const [areNoticesExpanded, setAreNoticesExpanded] = useState(false);
+  const [lastEditedAttributeId, setLastEditedAttributeId] = useState<number | null>(
+    null,
+  );
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
   const hasInitializedExpandedAttributeRef = useRef(false);
   const initializedLineIdRef = useRef<number | null>(null);
@@ -219,6 +222,7 @@ export function ConfiguratorPage() {
     previousLineIdRef.current = lineId;
     hasInitializedExpandedAttributeRef.current = false;
     setExpandedAttributeId(null);
+    setLastEditedAttributeId(null);
     setInvalidCustomValueIds(new Set());
     setCurrentPreview(null);
   }, [lineId]);
@@ -256,6 +260,9 @@ export function ConfiguratorPage() {
     const expandedStillExists = uiModel.groups.some(
       (group) => group.attributeId === expandedAttributeId,
     );
+    const lastEditedStillExists = uiModel.groups.some(
+      (group) => group.attributeId === lastEditedAttributeId,
+    );
 
     if (!hasInitializedExpandedAttributeRef.current) {
       hasInitializedExpandedAttributeRef.current = true;
@@ -266,7 +273,11 @@ export function ConfiguratorPage() {
     if (expandedAttributeId !== null && !expandedStillExists) {
       setExpandedAttributeId(null);
     }
-  }, [expandedAttributeId, state.selectedValueIds, uiModel]);
+
+    if (lastEditedAttributeId !== null && !lastEditedStillExists) {
+      setLastEditedAttributeId(null);
+    }
+  }, [expandedAttributeId, lastEditedAttributeId, state.selectedValueIds, uiModel]);
 
   if (!Number.isFinite(lineId) || lineId <= 0) {
     return (
@@ -319,6 +330,24 @@ export function ConfiguratorPage() {
   const completedGroups = ui.groups.filter(
     (group) => (state.selectedValueIds[String(group.attributeId)] ?? []).length > 0,
   ).length;
+  const firstIncompleteGroup =
+    ui.groups.find(
+      (group) =>
+        (state.selectedValueIds[String(group.attributeId)] ?? []).length === 0,
+    ) ?? null;
+  const activeAttributeId =
+    expandedAttributeId ??
+    lastEditedAttributeId ??
+    firstIncompleteGroup?.attributeId ??
+    ui.groups[0]?.attributeId ??
+    null;
+  const activeGroupIndex =
+    activeAttributeId === null
+      ? -1
+      : ui.groups.findIndex((group) => group.attributeId === activeAttributeId);
+  const activeGroup = activeGroupIndex >= 0 ? ui.groups[activeGroupIndex] : null;
+  const completionPercent =
+    ui.groups.length > 0 ? Math.round((completedGroups / ui.groups.length) * 100) : 0;
   const hasNotices = session.warnings.length > 0 || isReadOnly;
   const noticeHeadline = isReadOnly
     ? "Modo lectura activo"
@@ -360,7 +389,18 @@ export function ConfiguratorPage() {
     setExpandedAttributeId(null);
   }
 
+  function handleAttributeExpandToggle(attributeId: number) {
+    const shouldExpand = expandedAttributeId !== attributeId;
+
+    setExpandedAttributeId(shouldExpand ? attributeId : null);
+
+    if (shouldExpand) {
+      setLastEditedAttributeId(attributeId);
+    }
+  }
+
   function handleSingleSelect(attributeId: number, valueId: number) {
+    setLastEditedAttributeId(attributeId);
     const nextSelectedValueIds = {
       ...state.selectedValueIds,
       [String(attributeId)]: [valueId],
@@ -379,6 +419,7 @@ export function ConfiguratorPage() {
   }
 
   function handleMultiToggle(attributeId: number, valueId: number) {
+    setLastEditedAttributeId(attributeId);
     const key = String(attributeId);
     const group = ui.groups.find((item) => item.attributeId === attributeId);
     const toggledOption = group?.options.find((option) => option.id === valueId);
@@ -497,6 +538,7 @@ export function ConfiguratorPage() {
         new Set(missingCustomValues.map((item) => item.valueId)),
       );
       setExpandedAttributeId(firstMissing.attributeId);
+      setLastEditedAttributeId(firstMissing.attributeId);
       window.setTimeout(() => {
         attributeSectionRefs.current
           .get(firstMissing.attributeId)
@@ -692,12 +734,11 @@ export function ConfiguratorPage() {
                         disabledValueIds={disabledValueIds}
                         disabled={isReadOnly}
                         expanded={expandedAttributeId === group.attributeId}
+                        isActive={activeAttributeId === group.attributeId}
                         selectionLabel={getSelectionLabel(group.attributeId)}
                         customValuesByValueId={state.customValuesByValueId}
                         onExpandToggle={() =>
-                          setExpandedAttributeId((current) =>
-                            current === group.attributeId ? null : group.attributeId,
-                          )
+                          handleAttributeExpandToggle(group.attributeId)
                         }
                         onSelect={(valueId) =>
                           handleSingleSelect(group.attributeId, valueId)
@@ -705,7 +746,10 @@ export function ConfiguratorPage() {
                         onToggle={(valueId) =>
                           handleMultiToggle(group.attributeId, valueId)
                         }
-                        onCustomValueChange={handleCustomValueChange}
+                        onCustomValueChange={(valueId, value) => {
+                          setLastEditedAttributeId(group.attributeId);
+                          handleCustomValueChange(valueId, value);
+                        }}
                         invalidCustomValueIds={invalidCustomValueIds}
                       />
                     </div>
@@ -723,6 +767,30 @@ export function ConfiguratorPage() {
                   </div>
                   <span className="save-panel__version">V{session.status.version}</span>
                 </div>
+
+                <div className="save-panel__progress">
+                  <div
+                    className="save-panel__progress-track"
+                    role="progressbar"
+                    aria-label="Progreso de configuracion"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={completionPercent}
+                  >
+                    <span style={{ width: `${completionPercent}%` }} />
+                  </div>
+                </div>
+
+                {activeGroup ? (
+                  <div className="save-panel__current-step" aria-live="polite">
+                    <span>Paso actual</span>
+                    <strong>
+                      {activeGroupIndex + 1}/{ui.groups.length} -{" "}
+                      {activeGroup.label}
+                    </strong>
+                    <small>{getSelectionLabel(activeGroup.attributeId)}</small>
+                  </div>
+                ) : null}
 
                 {ui.logoSelection ? (
                   <div className="logo-upload-panel">

@@ -365,11 +365,28 @@ main {
 .config-section {
   padding: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .config-section--expanded {
   border-color: var(--border-strong);
   box-shadow: 0 14px 28px rgba(16, 33, 51, 0.09);
+}
+
+.config-section--active {
+  border-color: rgba(0, 95, 115, 0.58);
+  box-shadow:
+    0 0 0 2px rgba(0, 95, 115, 0.08),
+    0 14px 28px rgba(16, 33, 51, 0.1);
+}
+
+.config-section--active::before {
+  content: "";
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background: var(--primary);
 }
 
 .config-section__header {
@@ -417,6 +434,20 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.config-section__active-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #dff3f7;
+  color: var(--brand-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .config-section__caret {
@@ -821,6 +852,50 @@ main {
 .save-panel__summary span {
   color: var(--text-muted);
   font-size: 0.82rem;
+}
+
+.save-panel__progress-track {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.save-panel__progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--brand-strong));
+  transition: width 180ms ease;
+}
+
+.save-panel__current-step {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 1px solid rgba(0, 95, 115, 0.18);
+  border-radius: var(--radius-md);
+  background: #f2fbfd;
+}
+
+.save-panel__current-step span,
+.save-panel__current-step small {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.save-panel__current-step strong,
+.save-panel__current-step small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-panel__current-step strong {
+  color: var(--text);
+  font-size: 0.88rem;
 }
 
 .save-panel__version {

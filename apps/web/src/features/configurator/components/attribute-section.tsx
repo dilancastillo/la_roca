@@ -14,6 +14,7 @@ type Props = {
   selectionLabel: string;
   onExpandToggle: () => void;
   disabled?: boolean;
+  isActive?: boolean;
 };
 
 export function AttributeSection({
@@ -29,6 +30,7 @@ export function AttributeSection({
   selectionLabel,
   onExpandToggle,
   disabled = false,
+  isActive = false,
 }: Props) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [colorSearchOpen, setColorSearchOpen] = useState(false);
@@ -111,9 +113,11 @@ export function AttributeSection({
       className={[
         "config-section",
         expanded ? "config-section--expanded" : "",
+        isActive ? "config-section--active" : "",
       ]
         .filter(Boolean)
         .join(" ")}
+      aria-current={isActive ? "step" : undefined}
     >
       <div className="config-section__header">
         <button
@@ -127,6 +131,11 @@ export function AttributeSection({
             <span className="config-section__legend">{group.label}</span>
             <span className="config-section__selection">{selectionLabel}</span>
           </span>
+          {isActive ? (
+            <span className="config-section__active-chip">
+              {expanded ? "Editando" : "Paso actual"}
+            </span>
+          ) : null}
           <span
             className={[
               "config-section__caret",
