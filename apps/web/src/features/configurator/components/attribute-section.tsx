@@ -128,14 +128,16 @@ export function AttributeSection({
           onClick={onExpandToggle}
         >
           <span className="config-section__header-main">
-            <span className="config-section__legend">{group.label}</span>
+            <span className="config-section__title-row">
+              <span className="config-section__legend">{group.label}</span>
+              {isActive ? (
+                <span className="config-section__active-chip">
+                  {expanded ? "Editando" : "Paso actual"}
+                </span>
+              ) : null}
+            </span>
             <span className="config-section__selection">{selectionLabel}</span>
           </span>
-          {isActive ? (
-            <span className="config-section__active-chip">
-              {expanded ? "Editando" : "Paso actual"}
-            </span>
-          ) : null}
           <span
             className={[
               "config-section__caret",
