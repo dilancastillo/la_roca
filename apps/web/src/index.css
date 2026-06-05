@@ -222,9 +222,9 @@ main {
 .success-banner,
 .error-banner {
   margin: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
 }
 
 .warning-banner {
@@ -328,21 +328,21 @@ main {
 
 .configurator-shell {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .configurator-form {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .configurator-form__scroll {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .attribute-category-label {
-  margin: 6px 4px 2px;
+  margin: 4px 4px 0;
   color: var(--brand-strong);
   font-size: 0.78rem;
   font-weight: 900;
@@ -395,7 +395,7 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  min-height: 66px;
+  min-height: 56px;
 }
 
 .config-section__header-button {
@@ -403,15 +403,15 @@ main {
   min-width: 0;
   border: none;
   background: transparent;
-  padding: 14px 16px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 8px;
   text-align: left;
   cursor: pointer;
   color: var(--text);
-  min-height: 66px;
+  min-height: 56px;
 }
 
 .config-section__header-main {
@@ -430,7 +430,7 @@ main {
 .config-section__legend {
   display: block;
   min-width: 0;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -440,7 +440,7 @@ main {
   display: block;
   min-width: 0;
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.86rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -462,8 +462,8 @@ main {
 }
 
 .config-section__caret {
-  inline-size: 34px;
-  block-size: 34px;
+  inline-size: 30px;
+  block-size: 30px;
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--primary);
@@ -479,9 +479,9 @@ main {
 }
 
 .config-section__search-toggle {
-  inline-size: 38px;
-  block-size: 38px;
-  margin-right: 12px;
+  inline-size: 34px;
+  block-size: 34px;
+  margin-right: 10px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: var(--surface-soft);
@@ -503,14 +503,14 @@ main {
 }
 
 .config-section__body {
-  padding: 0 16px 16px;
+  padding: 0 14px 12px;
   border-top: 1px solid var(--border);
 }
 
 .config-section__help {
-  margin: 12px 0;
+  margin: 10px 0;
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .color-search {
@@ -634,8 +634,8 @@ main {
 }
 
 .swatch-button {
-  inline-size: 42px;
-  block-size: 42px;
+  inline-size: 38px;
+  block-size: 38px;
   border-radius: 999px;
   border: 2px solid transparent;
   padding: 4px;
@@ -657,8 +657,8 @@ main {
 }
 
 .option-chip {
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 36px;
+  padding: 0 11px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -674,8 +674,8 @@ main {
 
 .image-option-grid {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
 }
 
 .image-option-card {
@@ -708,7 +708,7 @@ main {
 
 .image-option-card span {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 .image-option-card--selected {
@@ -836,9 +836,9 @@ main {
 }
 
 .save-panel {
-  padding: 12px;
+  padding: 7px;
   display: grid;
-  gap: 10px;
+  gap: 7px;
 }
 
 .save-panel--sticky {
@@ -848,26 +848,28 @@ main {
   backdrop-filter: blur(8px);
 }
 
-.save-panel__topline {
+.save-panel__status-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
 }
 
 .save-panel__summary {
   display: grid;
-  gap: 2px;
+  gap: 1px;
+  flex: 0 0 auto;
+  min-width: 86px;
 }
 
 .save-panel__summary span {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
 }
 
 .save-panel__progress-track {
   width: 100%;
-  height: 7px;
+  height: 5px;
   overflow: hidden;
   border-radius: 999px;
   background: var(--surface-soft);
@@ -882,9 +884,12 @@ main {
 }
 
 .save-panel__current-step {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
-  gap: 2px;
-  padding: 9px 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1px 8px;
+  padding: 6px 8px;
   border: 1px solid rgba(245, 158, 11, 0.34);
   border-radius: var(--radius-md);
   background: #fff7ed;
@@ -894,7 +899,19 @@ main {
 .save-panel__current-step small {
   min-width: 0;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+}
+
+.save-panel__current-step span {
+  grid-row: 1;
+}
+
+.save-panel__current-step strong {
+  grid-row: 1;
+}
+
+.save-panel__current-step small {
+  grid-column: 1 / -1;
 }
 
 .save-panel__current-step strong,
@@ -906,18 +923,18 @@ main {
 
 .save-panel__current-step strong {
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
 }
 
 .save-panel__version {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 26px;
+  padding: 0 9px;
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--primary);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 800;
 }
 
@@ -993,7 +1010,7 @@ main {
 
 .primary-button,
 .secondary-button {
-  min-height: 46px;
+  min-height: 42px;
   border-radius: var(--radius-md);
   padding: 0 16px;
   font-weight: 800;

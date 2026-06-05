@@ -758,39 +758,38 @@ export function ConfiguratorPage() {
               </div>
 
               <div className="save-panel save-panel--sticky">
-                <div className="save-panel__topline">
+                <div className="save-panel__status-row">
                   <div className="save-panel__summary">
                     <strong>
                       {completedGroups}/{ui.groups.length} listos
                     </strong>
-                    <span>Canvas visible mientras editas</span>
+                    <span>{completionPercent}% completo</span>
                   </div>
+
+                  {activeGroup ? (
+                    <div className="save-panel__current-step" aria-live="polite">
+                      <span>Paso actual</span>
+                      <strong>
+                        {activeGroupIndex + 1}/{ui.groups.length} -{" "}
+                        {activeGroup.label}
+                      </strong>
+                      <small>{getSelectionLabel(activeGroup.attributeId)}</small>
+                    </div>
+                  ) : null}
+
                   <span className="save-panel__version">V{session.status.version}</span>
                 </div>
 
-                <div className="save-panel__progress">
-                  <div
-                    className="save-panel__progress-track"
-                    role="progressbar"
-                    aria-label="Progreso de configuracion"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={completionPercent}
-                  >
-                    <span style={{ width: `${completionPercent}%` }} />
-                  </div>
+                <div
+                  className="save-panel__progress-track"
+                  role="progressbar"
+                  aria-label="Progreso de configuracion"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={completionPercent}
+                >
+                  <span style={{ width: `${completionPercent}%` }} />
                 </div>
-
-                {activeGroup ? (
-                  <div className="save-panel__current-step" aria-live="polite">
-                    <span>Paso actual</span>
-                    <strong>
-                      {activeGroupIndex + 1}/{ui.groups.length} -{" "}
-                      {activeGroup.label}
-                    </strong>
-                    <small>{getSelectionLabel(activeGroup.attributeId)}</small>
-                  </div>
-                ) : null}
 
                 {ui.logoSelection ? (
                   <div className="logo-upload-panel">
