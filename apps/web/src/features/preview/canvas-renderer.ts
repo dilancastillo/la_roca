@@ -294,6 +294,14 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
+const SLEEVE_TAB_MARKER_RADIUS = 15;
+const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 20;
+const SLEEVE_TAB_MARKER_POSITIONS = [
+  { x: 248, y: 395 },
+  { x: 248, y: 438 },
+  { x: 682, y: 395 },
+  { x: 682, y: 438 },
+] as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -853,6 +861,12 @@ function isChestPocketTrimSection(
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
   );
+}
+
+function isSleeveTabTrimSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("presilla");
 }
 
 function isFlapTrimSection(section: PreviewScene["trimSections"][number]) {
@@ -1968,6 +1982,39 @@ function drawLogoMarker(
   context.restore();
 }
 
+function drawSleeveTabMarkers(
+  context: CanvasRenderingContext2D,
+  trimColor: string,
+) {
+  context.save();
+
+  for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
+    context.beginPath();
+    context.fillStyle = LOGO_MARKER_OUTLINE;
+    context.arc(
+      position.x,
+      position.y,
+      SLEEVE_TAB_MARKER_OUTLINE_RADIUS,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+
+    context.beginPath();
+    context.fillStyle = trimColor;
+    context.arc(
+      position.x,
+      position.y,
+      SLEEVE_TAB_MARKER_RADIUS,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+  }
+
+  context.restore();
+}
+
 async function drawGarmentModelDetails(
   context: CanvasRenderingContext2D,
   garmentSrc: string | undefined,
@@ -2777,6 +2824,10 @@ async function composeSingleDesign(
       scene,
       isPantsKneePatchTrimSection,
     );
+    const sleeveTabTrimColor = getTrimSectionColor(
+      scene,
+      isSleeveTabTrimSection,
+    );
 
     await drawPantsSidePocketTrimFromAsset(
       context,
@@ -2907,6 +2958,10 @@ async function composeSingleDesign(
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {
       drawLogoMarker(context, scene.logoMarker.placement);
+    }
+
+    if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetSrc)) {
+      drawSleeveTabMarkers(context, sleeveTabTrimColor);
     }
 
     drawTrimSections(context, scene);

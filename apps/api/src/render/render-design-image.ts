@@ -301,6 +301,14 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
+const SLEEVE_TAB_MARKER_RADIUS = 15;
+const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 20;
+const SLEEVE_TAB_MARKER_POSITIONS = [
+  { x: 248, y: 395 },
+  { x: 248, y: 438 },
+  { x: 682, y: 395 },
+  { x: 682, y: 438 },
+] as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -856,6 +864,14 @@ function isChestPocketTrimSection(
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
   );
+}
+
+function isSleeveTabTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("presilla");
 }
 
 function isFlapTrimSection(
@@ -2294,6 +2310,15 @@ function getLogoMarkerSvg(placement: string) {
     .join("");
 }
 
+function getSleeveTabMarkersSvg(trimColor: string) {
+  return SLEEVE_TAB_MARKER_POSITIONS.map(
+    (position) => `
+      <circle cx="${position.x}" cy="${position.y}" r="${SLEEVE_TAB_MARKER_OUTLINE_RADIUS}" fill="${LOGO_MARKER_OUTLINE}" />
+      <circle cx="${position.x}" cy="${position.y}" r="${SLEEVE_TAB_MARKER_RADIUS}" fill="${trimColor}" />
+    `,
+  ).join("");
+}
+
 function getRawInkBoundsInRegion(
   data: Uint8ClampedArray,
   width: number,
@@ -2669,6 +2694,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const pantsKneePatchTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchTrimSection,
+    );
+    const sleeveTabTrimColor = getTrimSectionColor(
+      scene,
+      isSleeveTabTrimSection,
     );
 
     const pantsSidePocketTrimOverlayBuffer =
@@ -3155,6 +3184,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetPath)) {
       layers.push(getLogoMarkerSvg(scene.logoMarker.placement));
+    }
+
+    if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetPath)) {
+      layers.push(getSleeveTabMarkersSvg(sleeveTabTrimColor));
     }
 
     layers.push(getTrimSectionsSvg(scene));
