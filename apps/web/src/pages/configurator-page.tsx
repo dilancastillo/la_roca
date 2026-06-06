@@ -157,6 +157,8 @@ export function ConfiguratorPage() {
     null,
   );
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
+  const configuratorScrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   const hasInitializedExpandedAttributeRef = useRef(false);
   const initializedLineIdRef = useRef<number | null>(null);
   const latestPreviewSceneKeyRef = useRef("");
@@ -279,6 +281,15 @@ export function ConfiguratorPage() {
     }
   }, [expandedAttributeId, lastEditedAttributeId, state.selectedValueIds, uiModel]);
 
+  useEffect(
+    () => () => {
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+      }
+    },
+    [],
+  );
+
   if (!Number.isFinite(lineId) || lineId <= 0) {
     return (
       <main className="page-state">
@@ -389,6 +400,38 @@ export function ConfiguratorPage() {
     setExpandedAttributeId(null);
   }
 
+  function scrollAttributeIntoConfiguratorPanel(attributeId: number) {
+    const scrollContainer = configuratorScrollRef.current;
+    const targetSection = attributeSectionRefs.current.get(attributeId);
+
+    if (!scrollContainer || !targetSection) {
+      return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const targetRect = targetSection.getBoundingClientRect();
+    const targetTop =
+      scrollContainer.scrollTop + targetRect.top - containerRect.top - 8;
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
+  }
+
+  function scheduleAttributeScroll(attributeId: number) {
+    if (scrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollFrameRef.current);
+    }
+
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        scrollFrameRef.current = null;
+        scrollAttributeIntoConfiguratorPanel(attributeId);
+      });
+    });
+  }
+
   function handleAttributeExpandToggle(attributeId: number) {
     const shouldExpand = expandedAttributeId !== attributeId;
 
@@ -396,6 +439,7 @@ export function ConfiguratorPage() {
 
     if (shouldExpand) {
       setLastEditedAttributeId(attributeId);
+      scheduleAttributeScroll(attributeId);
     }
   }
 
@@ -705,7 +749,10 @@ export function ConfiguratorPage() {
         <aside className="configurator-panel" aria-label="Panel de configuracion">
           <div className="configurator-shell">
             <form className="configurator-form" onSubmit={handleSave}>
-              <div className="configurator-form__scroll">
+              <div
+                ref={configuratorScrollRef}
+                className="configurator-form__scroll"
+              >
                 {ui.groups.map((group, index) => {
                   const previousGroup = ui.groups[index - 1];
                   const showCategory =
