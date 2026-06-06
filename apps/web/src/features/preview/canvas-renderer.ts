@@ -290,9 +290,9 @@ const LOGO_MARKER_OUTLINE_RADIUS = 36;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
-  chestPocketLeft: { x: 595, y: 455 },
-  lowerLeft: { x: 585, y: 785 },
-  lowerRight: { x: 355, y: 785 },
+  chestPocketLeft: { x: 570, y: 455 },
+  lowerLeft: { x: 585, y: 850 },
+  lowerRight: { x: 355, y: 850 },
 } as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
