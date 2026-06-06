@@ -305,7 +305,7 @@ const SLEEVE_TAB_MARKER_RADIUS = 22;
 const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 28;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
-  { x: 768, y: 408 },
+  { x: 742, y: 408 },
 ] as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
