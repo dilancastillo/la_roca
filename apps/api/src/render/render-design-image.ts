@@ -554,47 +554,48 @@ function isBlouseScene(scene: AutomationRenderScene, baseAssetPath?: string) {
 }
 
 function getLogoMarkerPositions(placement: string) {
-  const key = normalize(placement);
   const positions: Array<{ x: number; y: number }> = [];
+  const selectedPlacements = placement
+    .split(",")
+    .map((value) => normalize(value))
+    .filter(Boolean);
 
-  if (
-    key.includes("bolsillo") &&
-    key.includes("pecho") &&
-    key.includes("izquierd")
-  ) {
-    positions.push(LOGO_MARKER_POSITIONS.chestPocketLeft);
-  }
+  for (const key of selectedPlacements) {
+    if (
+      key.includes("bolsillo") &&
+      key.includes("pecho") &&
+      key.includes("izquierd")
+    ) {
+      positions.push(LOGO_MARKER_POSITIONS.chestPocketLeft);
+      continue;
+    }
 
-  if (
-    key.includes("bolsillo") &&
-    key.includes("inferior") &&
-    key.includes("izquierd")
-  ) {
-    positions.push(LOGO_MARKER_POSITIONS.lowerLeft);
-  }
+    if (
+      key.includes("bolsillo") &&
+      key.includes("inferior") &&
+      key.includes("izquierd")
+    ) {
+      positions.push(LOGO_MARKER_POSITIONS.lowerLeft);
+      continue;
+    }
 
-  if (
-    key.includes("bolsillo") &&
-    key.includes("inferior") &&
-    key.includes("derech")
-  ) {
-    positions.push(LOGO_MARKER_POSITIONS.lowerRight);
-  }
+    if (
+      key.includes("bolsillo") &&
+      key.includes("inferior") &&
+      key.includes("derech")
+    ) {
+      positions.push(LOGO_MARKER_POSITIONS.lowerRight);
+      continue;
+    }
 
-  if (
-    !key.includes("bolsillo") &&
-    key.includes("pecho") &&
-    key.includes("izquierd")
-  ) {
-    positions.push(LOGO_MARKER_POSITIONS.chestLeft);
-  }
+    if (key.includes("pecho") && key.includes("izquierd")) {
+      positions.push(LOGO_MARKER_POSITIONS.chestLeft);
+      continue;
+    }
 
-  if (
-    !key.includes("bolsillo") &&
-    key.includes("pecho") &&
-    key.includes("derech")
-  ) {
-    positions.push(LOGO_MARKER_POSITIONS.chestRight);
+    if (key.includes("pecho") && key.includes("derech")) {
+      positions.push(LOGO_MARKER_POSITIONS.chestRight);
+    }
   }
 
   return positions;
