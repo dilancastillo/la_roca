@@ -157,7 +157,7 @@ export function ConfiguratorPage() {
     null,
   );
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
-  const configuratorScrollRef = useRef<HTMLDivElement | null>(null);
+  const configuratorPanelRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const hasInitializedExpandedAttributeRef = useRef(false);
   const initializedLineIdRef = useRef<number | null>(null);
@@ -398,13 +398,19 @@ export function ConfiguratorPage() {
     }
 
     setExpandedAttributeId(null);
+    scheduleAttributeScroll(attributeId);
   }
 
   function scrollAttributeIntoConfiguratorPanel(attributeId: number) {
-    const scrollContainer = configuratorScrollRef.current;
+    const scrollContainer = configuratorPanelRef.current;
     const targetSection = attributeSectionRefs.current.get(attributeId);
 
     if (!scrollContainer || !targetSection) {
+      return;
+    }
+
+    if (scrollContainer.scrollHeight <= scrollContainer.clientHeight + 1) {
+      targetSection.scrollIntoView({ behavior: "auto", block: "start" });
       return;
     }
 
@@ -415,7 +421,7 @@ export function ConfiguratorPage() {
 
     scrollContainer.scrollTo({
       top: Math.max(0, targetTop),
-      behavior: "smooth",
+      behavior: "auto",
     });
   }
 
@@ -746,13 +752,14 @@ export function ConfiguratorPage() {
       ) : null}
 
       <div className="configurator-layout">
-        <aside className="configurator-panel" aria-label="Panel de configuracion">
+        <aside
+          ref={configuratorPanelRef}
+          className="configurator-panel"
+          aria-label="Panel de configuracion"
+        >
           <div className="configurator-shell">
             <form className="configurator-form" onSubmit={handleSave}>
-              <div
-                ref={configuratorScrollRef}
-                className="configurator-form__scroll"
-              >
+              <div className="configurator-form__scroll">
                 {ui.groups.map((group, index) => {
                   const previousGroup = ui.groups[index - 1];
                   const showCategory =

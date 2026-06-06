@@ -324,6 +324,7 @@ main {
 
 .configurator-panel {
   min-height: 0;
+  overflow-anchor: none;
 }
 
 .configurator-shell {
