@@ -301,11 +301,11 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
-const SLEEVE_TAB_MARKER_RADIUS = 15;
-const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 20;
+const SLEEVE_TAB_MARKER_RADIUS = 22;
+const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 28;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  { x: 212, y: 410 },
-  { x: 720, y: 410 },
+  { x: 170, y: 408 },
+  { x: 768, y: 408 },
 ] as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
