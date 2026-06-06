@@ -73,7 +73,7 @@ const PANTALON_RESORTADA_WAIST_ASSET =
 const PANTALON_PRETINA_BOTON_WAIST_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-waist-pretina-boton.svg`;
 const BLUSA_BOTONES_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-24-botones.svg`;
-const BLUSA_CHEROKEE_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
+const BLUSA_PICOS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-12-cherokee.svg`;
 const BLUSA_POLO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-23-polo.svg`;
 const BLUSA_2021_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-25-20-21.svg`;
 const BLUSA_2020_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-50-20-20.svg`;
@@ -352,7 +352,6 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2956: BLUSA_EL_HATO_ASSET, // EL HATO.
     2958: BLUSA_FISIOPRACTICAS_ASSET, // FISIOPRACTICAS.
     2960: BLUSA_P_PAIPILLA_ASSET, // P-PAIPILLA.
-    2962: BLUSA_CHEROKEE_ASSET, // CHEROKEE.
   },
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
@@ -398,7 +397,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "fisio practicas": BLUSA_FISIOPRACTICAS_ASSET,
     "p paipilla": BLUSA_P_PAIPILLA_ASSET,
     "p-paipilla": BLUSA_P_PAIPILLA_ASSET,
-    cherokee: BLUSA_CHEROKEE_ASSET,
+    picos: BLUSA_PICOS_ASSET,
   },
   garmentModelsByValueName: {
     lizo: blouseModelAsset(1),

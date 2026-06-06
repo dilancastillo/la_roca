@@ -192,6 +192,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Modelo de cuello",
         },
+        {
+          id: 2963,
+          name: "PICOS",
+          attributeId: 63,
+          attributeName: "Modelo de cuello",
+        },
       ],
     },
     {
@@ -2845,10 +2851,20 @@ describe("deriveAutomationRenderScene", () => {
     ]);
   });
 
-  it("carga CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+  it("deja CHEROKEE pendiente sin modelo de cuello especifico", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
       "63": [2962],
+      "92": [416, 2907, 5146],
+    });
+
+    expect(scene.neckAssetPath).toBeUndefined();
+  });
+
+  it("carga PICOS con el modelo que antes estaba en CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2963],
       "92": [416, 2907, 5146],
     });
 

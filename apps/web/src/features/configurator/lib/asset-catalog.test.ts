@@ -173,9 +173,7 @@ describe("getProductAssetCatalog", () => {
     expect(catalog?.neckModelsByValueId?.[2960]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-13-p-paipilla.svg",
     );
-    expect(catalog?.neckModelsByValueId?.[2962]).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
-    );
+    expect(catalog?.neckModelsByValueId?.[2962]).toBeUndefined();
     expect(catalog?.lowerPocketModelsByValueId?.[388]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-33-oriental-lower-pocket.svg",
     );
@@ -648,6 +646,16 @@ describe("getProductAssetCatalog", () => {
         999997,
         "Modelo de cuello",
         "CHEROKEE",
+      ),
+    ).toBeUndefined();
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        999997,
+        "Modelo de cuello",
+        "PICOS",
       ),
     ).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",

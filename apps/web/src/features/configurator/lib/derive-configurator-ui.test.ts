@@ -193,6 +193,12 @@ const session: ConfiguratorSession = {
           attributeId: 63,
           attributeName: "Nombre editable en Odoo",
         },
+        {
+          id: 2963,
+          name: "PICOS",
+          attributeId: 63,
+          attributeName: "Nombre editable en Odoo",
+        },
       ],
     },
     {
@@ -3139,10 +3145,21 @@ describe("deriveConfiguratorUi", () => {
     ]);
   });
 
-  it("carga CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+  it("deja CHEROKEE pendiente sin modelo de cuello especifico", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
       "63": [2962],
+      "91": [5152],
+      "92": [416, 2907, 5146],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBeUndefined();
+  });
+
+  it("carga PICOS con el modelo que antes estaba en CHEROKEE y pasa vivos externos independientes con cogotera", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2963],
       "91": [5152],
       "92": [416, 2907, 5146],
     });

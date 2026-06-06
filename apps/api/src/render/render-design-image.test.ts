@@ -1840,7 +1840,7 @@ describe("renderDesignImage", () => {
     ).toBeLessThan(10);
   }, 20000);
 
-  it("renderiza Cherokee con color base y cogotera", async () => {
+  it("renderiza Picos con color base y cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg";
     const withoutTrim = await readRawPng(
