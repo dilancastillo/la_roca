@@ -290,8 +290,17 @@ const neckModelDetailOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
 };
 
-const CHEST_POCKET_LOGO_MARKER_ASSET_PATH =
-  "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
+const LOGO_MARKER_FILL = "#1677ff";
+const LOGO_MARKER_OUTLINE = "#f8fafc";
+const LOGO_MARKER_RADIUS = 28;
+const LOGO_MARKER_OUTLINE_RADIUS = 36;
+const LOGO_MARKER_POSITIONS = {
+  chestLeft: { x: 595, y: 430 },
+  chestRight: { x: 330, y: 430 },
+  chestPocketLeft: { x: 595, y: 455 },
+  lowerLeft: { x: 585, y: 785 },
+  lowerRight: { x: 355, y: 785 },
+} as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -531,6 +540,64 @@ function normalize(value: string) {
     .replace(/\p{Diacritic}/gu, "")
     .trim()
     .toLowerCase();
+}
+
+function isBlouseScene(scene: AutomationRenderScene, baseAssetPath?: string) {
+  const normalizedProductName = normalize(scene.productName);
+
+  return (
+    !normalizedProductName.includes("pantalon") &&
+    (normalizedProductName.includes("blusa") ||
+      normalizedProductName.includes("uniforme") ||
+      Boolean(baseAssetPath?.includes("blusa-antifluido")))
+  );
+}
+
+function getLogoMarkerPositions(placement: string) {
+  const key = normalize(placement);
+  const positions: Array<{ x: number; y: number }> = [];
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestPocketLeft);
+  }
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("inferior") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.lowerLeft);
+  }
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("inferior") &&
+    key.includes("derech")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.lowerRight);
+  }
+
+  if (
+    !key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestLeft);
+  }
+
+  if (
+    !key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("derech")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestRight);
+  }
+
+  return positions;
 }
 
 function resolveAssetFilePaths(assetPath: string): [string, string] {
@@ -1608,18 +1675,6 @@ async function createChestPocketTrimOverlayBuffer(
   );
 }
 
-async function createChestPocketLogoMarkerBuffer(placementAssetPath: string) {
-  const [markerProcessed, placementProcessed] = await Promise.all([
-    loadProcessedImage(CHEST_POCKET_LOGO_MARKER_ASSET_PATH),
-    loadProcessedImage(placementAssetPath),
-  ]);
-
-  return await createOverlayBufferFromProcessed(
-    markerProcessed,
-    placementProcessed,
-  );
-}
-
 async function createGarmentModelDetailOverlayBuffer(
   garmentAssetPath: string | undefined,
   placementAssetPath: string,
@@ -2225,6 +2280,17 @@ function getLowerPocketOverlayRegions(
 
 function getImageSvg(imageDataUri: string, y = 0) {
   return `<image href="${imageDataUri}" x="0" y="${y}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
+}
+
+function getLogoMarkerSvg(placement: string) {
+  return getLogoMarkerPositions(placement)
+    .map(
+      (position) => `
+        <circle cx="${position.x}" cy="${position.y}" r="${LOGO_MARKER_OUTLINE_RADIUS}" fill="${LOGO_MARKER_OUTLINE}" />
+        <circle cx="${position.x}" cy="${position.y}" r="${LOGO_MARKER_RADIUS}" fill="${LOGO_MARKER_FILL}" />
+      `,
+    )
+    .join("");
 }
 
 function getRawInkBoundsInRegion(
@@ -3084,14 +3150,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         }
       }
 
-      if (scene.logoMarker) {
-        const markerBuffer = await createChestPocketLogoMarkerBuffer(
-          baseAssetPath,
-        );
-        layers.push(
-          getImageSvg(toDataUri(markerBuffer), CHEST_POCKET_VERTICAL_OFFSET),
-        );
-      }
+    }
+
+    if (scene.logoMarker && isBlouseScene(scene, baseAssetPath)) {
+      layers.push(getLogoMarkerSvg(scene.logoMarker.placement));
     }
 
     layers.push(getTrimSectionsSvg(scene));

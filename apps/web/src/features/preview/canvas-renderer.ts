@@ -283,8 +283,17 @@ const neckModelDetailOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
 };
 
-const CHEST_POCKET_LOGO_MARKER_SRC =
-  "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-logo-marker.svg";
+const LOGO_MARKER_FILL = "#1677ff";
+const LOGO_MARKER_OUTLINE = "#f8fafc";
+const LOGO_MARKER_RADIUS = 28;
+const LOGO_MARKER_OUTLINE_RADIUS = 36;
+const LOGO_MARKER_POSITIONS = {
+  chestLeft: { x: 595, y: 430 },
+  chestRight: { x: 330, y: 430 },
+  chestPocketLeft: { x: 595, y: 455 },
+  lowerLeft: { x: 585, y: 785 },
+  lowerRight: { x: 355, y: 785 },
+} as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -561,6 +570,64 @@ function normalize(value: string) {
     .replace(/\p{Diacritic}/gu, "")
     .trim()
     .toLowerCase();
+}
+
+function isBlouseScene(scene: PreviewScene, baseAssetSrc?: string) {
+  const normalizedProductName = normalize(scene.productName);
+
+  return (
+    !normalizedProductName.includes("pantalon") &&
+    (normalizedProductName.includes("blusa") ||
+      normalizedProductName.includes("uniforme") ||
+      Boolean(baseAssetSrc?.includes("blusa-antifluido")))
+  );
+}
+
+function getLogoMarkerPositions(placement: string) {
+  const key = normalize(placement);
+  const positions: Array<{ x: number; y: number }> = [];
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestPocketLeft);
+  }
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("inferior") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.lowerLeft);
+  }
+
+  if (
+    key.includes("bolsillo") &&
+    key.includes("inferior") &&
+    key.includes("derech")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.lowerRight);
+  }
+
+  if (
+    !key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("izquierd")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestLeft);
+  }
+
+  if (
+    !key.includes("bolsillo") &&
+    key.includes("pecho") &&
+    key.includes("derech")
+  ) {
+    positions.push(LOGO_MARKER_POSITIONS.chestRight);
+  }
+
+  return positions;
 }
 
 function isSvgSource(src: string) {
@@ -1867,16 +1934,37 @@ async function drawChestPocketOverlay(
   context.restore();
 }
 
-async function drawChestPocketLogoMarker(
+function drawLogoMarker(
   context: CanvasRenderingContext2D,
-  placementSrc: string,
+  placement: string,
 ) {
-  const markerCanvas = await createRasterCanvas(
-    CHEST_POCKET_LOGO_MARKER_SRC,
-    placementSrc,
-  );
+  const positions = getLogoMarkerPositions(placement);
 
-  context.drawImage(markerCanvas, 0, CHEST_POCKET_VERTICAL_OFFSET);
+  if (positions.length === 0) {
+    return;
+  }
+
+  context.save();
+
+  for (const position of positions) {
+    context.beginPath();
+    context.fillStyle = LOGO_MARKER_OUTLINE;
+    context.arc(
+      position.x,
+      position.y,
+      LOGO_MARKER_OUTLINE_RADIUS,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+
+    context.beginPath();
+    context.fillStyle = LOGO_MARKER_FILL;
+    context.arc(position.x, position.y, LOGO_MARKER_RADIUS, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.restore();
 }
 
 async function drawGarmentModelDetails(
@@ -2814,10 +2902,10 @@ async function composeSingleDesign(
         baseAssetSrc,
         chestPocketTrimColor,
       );
+    }
 
-      if (scene.logoMarker) {
-        await drawChestPocketLogoMarker(context, baseAssetSrc);
-      }
+    if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {
+      drawLogoMarker(context, scene.logoMarker.placement);
     }
 
     drawTrimSections(context, scene);
