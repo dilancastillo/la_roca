@@ -41,6 +41,7 @@ export type PreviewScene = {
   };
   garmentImageSrc?: string | undefined;
   garmentDetailImageSrc?: string | undefined;
+  garmentDetailImageSrcs?: string[] | undefined;
   bootImageSrc?: string | undefined;
   waistbandImageSrc?: string | undefined;
   pantsSidePocketType?: "doubleZipper" | undefined;
@@ -230,7 +231,14 @@ function getOptionImageSource(
 ) {
   return (
     value.optionImageSrc ??
-    getImageSource(graphicManifestKey, attribute, value)
+    getImageSource(graphicManifestKey, attribute, value) ??
+    getGarmentDetailImageSourceForValue(
+      graphicManifestKey,
+      attribute.id,
+      value.id,
+      attribute.name,
+      value.name,
+    )
   );
 }
 
@@ -271,6 +279,21 @@ function findSelectedValue(
 
   const selectedIds = new Set(selectedValueIds[String(attribute.id)] ?? []);
   return attribute.values.find((value) => selectedIds.has(value.id));
+}
+
+function isSleeveModelAttributeName(normalizedName: string) {
+  return (
+    normalizedName.includes("modelo de mangas") ||
+    normalizedName.includes("modelo mangas") ||
+    normalizedName.includes("modelo de manga") ||
+    normalizedName.includes("modelo manga")
+  );
+}
+
+function compactUnique(values: Array<string | undefined>) {
+  return Array.from(
+    new Set(values.filter((value): value is string => Boolean(value))),
+  );
 }
 
 function matchesCatalogAttribute(
@@ -636,6 +659,10 @@ function deriveSingleConfiguratorUi(
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
+  const sleeveModelAttribute = findAttributeByName(
+    session,
+    isSleeveModelAttributeName,
+  );
   const bootModelAttribute =
     session.attributes.find(
       (attribute) => matchesCatalogAttribute(catalog, "bootModel", attribute),
@@ -716,6 +743,10 @@ function deriveSingleConfiguratorUi(
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
+  const selectedSleeveModel = findSelectedValue(
+    sleeveModelAttribute,
+    selectedValueIds,
+  );
   const selectedBootModel = findSelectedValue(
     bootModelAttribute,
     selectedValueIds,
@@ -864,7 +895,7 @@ function deriveSingleConfiguratorUi(
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);
-  const garmentDetailImageSrc = selectedGarment
+  const garmentModelDetailImageSrc = selectedGarment
     ? getGarmentDetailImageSourceForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
@@ -873,6 +904,20 @@ function deriveSingleConfiguratorUi(
         selectedGarment.name,
       )
     : undefined;
+  const sleeveDetailImageSrc = selectedSleeveModel
+    ? getGarmentDetailImageSourceForValue(
+        session.graphicManifestKey,
+        sleeveModelAttribute!.id,
+        selectedSleeveModel.id,
+        sleeveModelAttribute!.name,
+        selectedSleeveModel.name,
+      )
+    : undefined;
+  const garmentDetailImageSrcs = compactUnique([
+    garmentModelDetailImageSrc,
+    sleeveDetailImageSrc,
+  ]);
+  const garmentDetailImageSrc = garmentDetailImageSrcs[0];
   const bootImageSrc = selectedBootModel
     ? getBootImageSourceForValue(
         session.graphicManifestKey,
@@ -926,6 +971,7 @@ function deriveSingleConfiguratorUi(
       baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
       garmentImageSrc,
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
+      ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),
       ...(waistbandImageSrc ? { waistbandImageSrc } : {}),
       ...(pantsSidePocketType ? { pantsSidePocketType } : {}),

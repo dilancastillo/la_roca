@@ -222,6 +222,21 @@ const session: ConfiguratorSession = {
       ],
     },
     {
+      id: 812,
+      name: "Modelo de mangas",
+      displayType: "image",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 8121,
+          name: "Original",
+          attributeId: 812,
+          attributeName: "Modelo de mangas",
+        },
+      ],
+    },
+    {
       id: 90,
       name: "Color",
       displayType: "color",
@@ -674,6 +689,24 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.lowerPocketAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+  });
+
+  it("agrega mangas Original como overlay independiente del modelo de cuello", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [2963],
+      "812": [8121],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
+    expect(scene.garmentDetailAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+    );
+    expect(scene.garmentDetailAssetPaths).toEqual([
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+    ]);
   });
 
   it("usa Pespunte de pantalon como capa global sobre la base liza", () => {

@@ -280,6 +280,18 @@ describe("getProductAssetCatalog", () => {
     );
 
     expect(
+      getGarmentDetailImageSourceForValue(
+        "blusa-antifluido-t180",
+        999999,
+        999999,
+        "Modelo de mangas",
+        "Original",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+    );
+
+    expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",
         153,

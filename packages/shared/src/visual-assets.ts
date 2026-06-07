@@ -90,6 +90,8 @@ const BLUSA_JDC_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-02-jdc.svg`;
 const BLUSA_CUCUTA_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-44-cucuta.svg`;
 const BLUSA_PESPUNTE_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-45-pespunte.svg`;
+const BLUSA_ORIGINAL_SLEEVES_ASSET =
+  `${BLUSA_DETAIL_OVERLAY_BASE}/blouse-model-32-original-sleeves.svg`;
 const BLUSA_PRESILLAS_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-15-presillas.svg`;
 const BLUSA_PUNTAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-06-puntas.svg`;
@@ -183,6 +185,10 @@ function isGarmentModelAttribute(attributeName: string | undefined) {
   return (
     normalized.includes("modelo de blusa") ||
     normalized.includes("modelo blusa") ||
+    normalized.includes("modelo de mangas") ||
+    normalized.includes("modelo mangas") ||
+    normalized.includes("modelo de manga") ||
+    normalized.includes("modelo manga") ||
     normalized.includes("modelo de pantalon") ||
     normalized.includes("modelo pantalon") ||
     normalized.includes("modelo de prenda")
@@ -403,6 +409,9 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     lizo: blouseModelAsset(1),
     pespunte: BLUSA_PESPUNTE_ASSET,
   },
+  garmentDetailModelsByValueName: {
+    original: BLUSA_ORIGINAL_SLEEVES_ASSET,
+  },
   lowerPocketModelsByValueId: {
     // IDs historicos. Los SVG disponibles para bolsillos inferiores son Modelo 14, 15, 16, 18, 19 y 20.
     2578: blouseModelAsset(14),
@@ -547,6 +556,8 @@ export const uniformeVisualCatalog: VisualAssetCatalog = {
     blusaAntifluidoT180VisualCatalog.chestPocketModelsByValueId!,
   chestPocketModelsByValueName:
     blusaAntifluidoT180VisualCatalog.chestPocketModelsByValueName!,
+  garmentDetailModelsByValueName:
+    blusaAntifluidoT180VisualCatalog.garmentDetailModelsByValueName!,
   bootModelsByValueName: pantalonVisualCatalog.bootModelsByValueName!,
   waistbandModelsByValueName: pantalonVisualCatalog.waistbandModelsByValueName!,
   auxiliaryPocketModelsByValueId: {},

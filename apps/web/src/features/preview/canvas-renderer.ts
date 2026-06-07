@@ -2736,11 +2736,17 @@ async function composeSingleDesign(
       scene.garmentImageSrc,
       baseAssetSrc,
     );
-    await drawGarmentDetailOverlay(
-      context,
-      scene.garmentDetailImageSrc,
-      baseAssetSrc,
-    );
+    const garmentDetailImageSrcs =
+      scene.garmentDetailImageSrcs ??
+      (scene.garmentDetailImageSrc ? [scene.garmentDetailImageSrc] : []);
+
+    for (const garmentDetailImageSrc of garmentDetailImageSrcs) {
+      await drawGarmentDetailOverlay(
+        context,
+        garmentDetailImageSrc,
+        baseAssetSrc,
+      );
+    }
     await drawGarmentDetailOverlay(
       context,
       scene.waistbandImageSrc,

@@ -2585,16 +2585,22 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
-    const garmentDetailAssetOverlayBuffer =
-      await createGarmentDetailAssetOverlayBuffer(
-        scene.garmentDetailAssetPath,
-        baseAssetPath,
-      );
+    const garmentDetailAssetPaths =
+      scene.garmentDetailAssetPaths ??
+      (scene.garmentDetailAssetPath ? [scene.garmentDetailAssetPath] : []);
 
-    if (garmentDetailAssetOverlayBuffer) {
-      layers.push(
-        `<image href="${toDataUri(garmentDetailAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-      );
+    for (const garmentDetailAssetPath of garmentDetailAssetPaths) {
+      const garmentDetailAssetOverlayBuffer =
+        await createGarmentDetailAssetOverlayBuffer(
+          garmentDetailAssetPath,
+          baseAssetPath,
+        );
+
+      if (garmentDetailAssetOverlayBuffer) {
+        layers.push(
+          `<image href="${toDataUri(garmentDetailAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+        );
+      }
     }
 
     const waistbandAssetOverlayBuffer =

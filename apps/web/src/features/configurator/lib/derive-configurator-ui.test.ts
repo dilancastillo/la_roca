@@ -223,6 +223,21 @@ const session: ConfiguratorSession = {
       ],
     },
     {
+      id: 812,
+      name: "Modelo de mangas",
+      displayType: "image",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 8121,
+          name: "Original",
+          attributeId: 812,
+          attributeName: "Modelo de mangas",
+        },
+      ],
+    },
+    {
       id: 69,
       name: "Tipo de bolsillos inferiores",
       displayType: "radio",
@@ -682,6 +697,27 @@ describe("deriveConfiguratorUi", () => {
     );
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
+    );
+  });
+
+  it("agrega mangas Original como overlay independiente del modelo de cuello", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [2963],
+      "812": [8121],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    );
+    expect(ui.previewScene.garmentDetailImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+    );
+    expect(ui.previewScene.garmentDetailImageSrcs).toEqual([
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+    ]);
+    expect(ui.groups.find((group) => group.attributeId === 812)?.controlType).toBe(
+      "image",
     );
   });
 

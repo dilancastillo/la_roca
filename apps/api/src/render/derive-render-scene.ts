@@ -23,6 +23,7 @@ export type AutomationRenderScene = {
   };
   garmentAssetPath?: string;
   garmentDetailAssetPath?: string;
+  garmentDetailAssetPaths?: string[];
   bootAssetPath?: string;
   waistbandAssetPath?: string;
   pantsSidePocketType?: "doubleZipper";
@@ -106,6 +107,21 @@ function findSelectedValue(
 
   const selectedIds = new Set(selectedValueIds[String(attribute.id)] ?? []);
   return attribute.values.find((value) => selectedIds.has(value.id));
+}
+
+function isSleeveModelAttributeName(normalizedName: string) {
+  return (
+    normalizedName.includes("modelo de mangas") ||
+    normalizedName.includes("modelo mangas") ||
+    normalizedName.includes("modelo de manga") ||
+    normalizedName.includes("modelo manga")
+  );
+}
+
+function compactUnique(values: Array<string | undefined>) {
+  return Array.from(
+    new Set(values.filter((value): value is string => Boolean(value))),
+  );
 }
 
 const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
@@ -495,6 +511,10 @@ function deriveSingleAutomationRenderScene(
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
+  const sleeveModelAttribute = findAttributeByName(
+    session,
+    isSleeveModelAttributeName,
+  );
   const bootModelAttribute =
     session.attributes.find(
       (attribute) => matchesCatalogAttribute(catalog, "bootModel", attribute),
@@ -575,6 +595,10 @@ function deriveSingleAutomationRenderScene(
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
+  const selectedSleeveModel = findSelectedValue(
+    sleeveModelAttribute,
+    selectedValueIds,
+  );
   const selectedBootModel = findSelectedValue(
     bootModelAttribute,
     selectedValueIds,
@@ -722,7 +746,7 @@ function deriveSingleAutomationRenderScene(
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
-  const garmentDetailAssetPath = selectedGarment
+  const garmentModelDetailAssetPath = selectedGarment
     ? getServerGarmentDetailAssetPathForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
@@ -731,6 +755,20 @@ function deriveSingleAutomationRenderScene(
         selectedGarment.name,
       )
     : undefined;
+  const sleeveDetailAssetPath = selectedSleeveModel
+    ? getServerGarmentDetailAssetPathForValue(
+        session.graphicManifestKey,
+        sleeveModelAttribute!.id,
+        selectedSleeveModel.id,
+        sleeveModelAttribute!.name,
+        selectedSleeveModel.name,
+      )
+    : undefined;
+  const garmentDetailAssetPaths = compactUnique([
+    garmentModelDetailAssetPath,
+    sleeveDetailAssetPath,
+  ]);
+  const garmentDetailAssetPath = garmentDetailAssetPaths[0];
   const bootAssetPath = selectedBootModel
     ? getServerBootAssetPathForValue(
         session.graphicManifestKey,
@@ -771,6 +809,7 @@ function deriveSingleAutomationRenderScene(
     baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
+    ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),
     ...(waistbandAssetPath ? { waistbandAssetPath } : {}),
     ...(pantsSidePocketType ? { pantsSidePocketType } : {}),
