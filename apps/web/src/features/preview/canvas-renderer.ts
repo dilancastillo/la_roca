@@ -287,6 +287,7 @@ const LOGO_MARKER_FILL = "#1677ff";
 const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
+const BACK_NECK_TRIM_VERTICAL_OFFSET = 10;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
@@ -2290,6 +2291,7 @@ function drawBackNeckTrim(
   const path = createBackNeckTrimPath(pathData);
 
   context.save();
+  context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
   context.lineCap = "round";
   context.lineJoin = "round";
   context.shadowColor = "rgba(248, 250, 252, 0.98)";
@@ -2319,8 +2321,11 @@ async function drawBackNeckTrimFromAsset(
 
   if (overlaySrc) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+    context.save();
+    context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
     context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 3), 0, 0);
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    context.restore();
     return true;
   }
 
@@ -2331,7 +2336,10 @@ async function drawBackNeckTrimFromAsset(
     return false;
   }
 
+  context.save();
+  context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
   await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
+  context.restore();
   return true;
 }
 

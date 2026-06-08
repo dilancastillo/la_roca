@@ -294,6 +294,7 @@ const LOGO_MARKER_FILL = "#1677ff";
 const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
+const BACK_NECK_TRIM_VERTICAL_OFFSET = 10;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
@@ -2310,15 +2311,16 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
 }
 
 function getBackNeckTrimSvg(trimColor: string, pathData = "M305 128 L595 128") {
-
   return `
     <defs>
       <filter id="back-neck-trim-glow" x="-35%" y="-220%" width="170%" height="520%">
         <feGaussianBlur stdDeviation="5" />
       </filter>
     </defs>
-    <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#back-neck-trim-glow)" />
-    <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+    <g transform="translate(0 ${BACK_NECK_TRIM_VERTICAL_OFFSET})">
+      <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#back-neck-trim-glow)" />
+      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
   `;
 }
 
@@ -3183,8 +3185,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           getCollarLineOutlineRadius(baseAssetPath),
         );
         layers.push(
-          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-          `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="${BACK_NECK_TRIM_VERTICAL_OFFSET}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="${BACK_NECK_TRIM_VERTICAL_OFFSET}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
         layers.push(
