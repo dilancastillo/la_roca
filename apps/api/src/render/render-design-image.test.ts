@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
@@ -16,6 +17,21 @@ async function readRawPng(buffer: Buffer) {
   return await sharp(buffer).ensureAlpha().raw().toBuffer({
     resolveWithObject: true,
   });
+}
+
+async function readRawBlouseSvgAsset(fileName: string) {
+  const svgBuffer = await readFile(
+    new URL(
+      `../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+      import.meta.url,
+    ),
+  );
+
+  return await sharp(svgBuffer)
+    .resize(900, 1200, { fit: "fill" })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 }
 
 function countDifferentPixels(left: Buffer, right: Buffer) {
@@ -338,6 +354,40 @@ function getPastelPinkPixelBounds(
   return count > 0 ? { minX, minY, maxX, maxY, count } : undefined;
 }
 
+function getDarkPixelBoundsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let minX = region.x + region.width;
+  let minY = region.y + region.height;
+  let maxX = region.x;
+  let maxY = region.y;
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (alpha <= 0 || red >= 80 || green >= 80 || blue >= 80) {
+        continue;
+      }
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+      count += 1;
+    }
+  }
+
+  return count > 0 ? { minX, minY, maxX, maxY, count } : undefined;
+}
+
 function countBaseColorPixelsInRegion(
   buffer: Buffer,
   width: number,
@@ -424,7 +474,105 @@ function countDarkPixelsInRegion(
   return count;
 }
 
+const straightBackNeckModelFileNames = [
+  "blouse-model-01.svg",
+  "blouse-model-02-jdc.svg",
+  "blouse-model-04.svg",
+  "blouse-model-06-puntas.svg",
+  "blouse-model-07.svg",
+  "blouse-model-10.svg",
+  "blouse-model-11-fisiopracticas.svg",
+  "blouse-model-12-cherokee.svg",
+  "blouse-model-13-p-paipilla.svg",
+  "blouse-model-15-presillas.svg",
+  "blouse-model-30.svg",
+  "blouse-model-34-cuello-alto-cremallera.svg",
+  "blouse-model-37-cirugia.svg",
+  "blouse-model-50-20-20.svg",
+];
+
+const straightBackNeckModelsWithoutUpperContour = new Set([
+  "blouse-model-50-20-20.svg",
+]);
+
 describe("renderDesignImage", () => {
+  it("mantiene la cogotera recta justo debajo del contorno en todos los modelos rectos", async () => {
+    for (const fileName of straightBackNeckModelFileNames) {
+      const neckAssetPath = `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`;
+      const sourceInk = await readRawBlouseSvgAsset(fileName);
+      const withBackNeck = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          neckAssetPath,
+          trimSections: [
+            {
+              valueId: 5146,
+              role: "backNeck",
+              key: "cogotera",
+              label: "Cogotera",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        }),
+      );
+      const pinkBounds = getPastelPinkPixelBounds(
+        withBackNeck.data,
+        withBackNeck.info.width,
+        withBackNeck.info.height,
+      );
+
+      expect(pinkBounds, fileName).toBeDefined();
+
+      if (!pinkBounds) {
+        continue;
+      }
+
+      if (straightBackNeckModelsWithoutUpperContour.has(fileName)) {
+        expect(pinkBounds.minY, fileName).toBe(132);
+        expect(pinkBounds.maxY, fileName).toBe(139);
+        continue;
+      }
+
+      const searchX = Math.max(pinkBounds.minX - 8, 0);
+      const searchY = Math.max(pinkBounds.minY - 55, 0);
+      const contourBounds = getDarkPixelBoundsInRegion(
+        sourceInk.data,
+        sourceInk.info.width,
+        {
+          x: searchX,
+          y: searchY,
+          width: Math.min(
+            pinkBounds.maxX - pinkBounds.minX + 17,
+            sourceInk.info.width - searchX,
+          ),
+          height: pinkBounds.minY - searchY,
+        },
+      );
+
+      expect(
+        contourBounds,
+        `${fileName} pink=${JSON.stringify(pinkBounds)} search=${JSON.stringify({
+          x: searchX,
+          y: searchY,
+          width: Math.min(
+            pinkBounds.maxX - pinkBounds.minX + 17,
+            sourceInk.info.width - searchX,
+          ),
+          height: pinkBounds.minY - searchY,
+        })}`,
+      ).toBeDefined();
+
+      if (!contourBounds) {
+        continue;
+      }
+
+      const verticalGap = pinkBounds.minY - contourBounds.maxY;
+
+      expect(verticalGap, fileName).toBeGreaterThanOrEqual(0);
+      expect(verticalGap, fileName).toBeLessThanOrEqual(12);
+    }
+  }, 60000);
+
   it("pinta capas de cuello y bolsillos aunque exista una base de prenda", async () => {
     const base = await readRawPng(await renderDesignImage(baseScene));
     const withNeck = await readRawPng(
