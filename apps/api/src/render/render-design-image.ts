@@ -294,7 +294,9 @@ const LOGO_MARKER_FILL = "#1677ff";
 const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
-const BACK_NECK_TRIM_VERTICAL_OFFSET = 18;
+const BACK_NECK_STRAIGHT_VERTICAL_OFFSET = 8;
+const BACK_NECK_OVAL_VERTICAL_OFFSET = 28;
+const BACK_NECK_OVERLAY_VERTICAL_OFFSET = 4;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
@@ -2310,14 +2312,31 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
     .join("");
 }
 
-function getBackNeckTrimSvg(trimColor: string, pathData = "M305 128 L595 128") {
+function getBackNeckTrimVerticalOffset(
+  sourceFileName: string,
+  pathData?: string,
+) {
+  if (backNeckTrimOverlayByFileName[sourceFileName]) {
+    return BACK_NECK_OVERLAY_VERTICAL_OFFSET;
+  }
+
+  return pathData
+    ? BACK_NECK_OVAL_VERTICAL_OFFSET
+    : BACK_NECK_STRAIGHT_VERTICAL_OFFSET;
+}
+
+function getBackNeckTrimSvg(
+  trimColor: string,
+  pathData = "M305 128 L595 128",
+  verticalOffset = BACK_NECK_STRAIGHT_VERTICAL_OFFSET,
+) {
   return `
     <defs>
       <filter id="back-neck-trim-glow" x="-35%" y="-220%" width="170%" height="520%">
         <feGaussianBlur stdDeviation="5" />
       </filter>
     </defs>
-    <g transform="translate(0 ${BACK_NECK_TRIM_VERTICAL_OFFSET})">
+    <g transform="translate(0 ${verticalOffset})">
       <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#back-neck-trim-glow)" />
       <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
     </g>
@@ -3172,6 +3191,13 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (backNeckTrimColor) {
+      const baseAssetFileName = getAssetFileName(baseAssetPath);
+      const backNeckPathData =
+        backNeckTrimPathDataByFileName[baseAssetFileName];
+      const backNeckVerticalOffset = getBackNeckTrimVerticalOffset(
+        baseAssetFileName,
+        backNeckPathData,
+      );
       const backNeckTrimOverlayBuffer =
         await createBackNeckTrimOverlayBuffer(
           baseAssetPath,
@@ -3185,14 +3211,15 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           getCollarLineOutlineRadius(baseAssetPath),
         );
         layers.push(
-          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="${BACK_NECK_TRIM_VERTICAL_OFFSET}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-          `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="${BACK_NECK_TRIM_VERTICAL_OFFSET}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="${backNeckVerticalOffset}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+          `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="${backNeckVerticalOffset}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
         layers.push(
           getBackNeckTrimSvg(
             backNeckTrimColor,
-            backNeckTrimPathDataByFileName[getAssetFileName(baseAssetPath)],
+            backNeckPathData,
+            backNeckVerticalOffset,
           ),
         );
       }

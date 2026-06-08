@@ -287,7 +287,9 @@ const LOGO_MARKER_FILL = "#1677ff";
 const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
-const BACK_NECK_TRIM_VERTICAL_OFFSET = 18;
+const BACK_NECK_STRAIGHT_VERTICAL_OFFSET = 8;
+const BACK_NECK_OVAL_VERTICAL_OFFSET = 28;
+const BACK_NECK_OVERLAY_VERTICAL_OFFSET = 4;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
@@ -2279,10 +2281,24 @@ function createBackNeckTrimPath(pathData?: string) {
   return path;
 }
 
+function getBackNeckTrimVerticalOffset(
+  sourceFileName: string,
+  pathData?: string,
+) {
+  if (backNeckTrimOverlayByFileName[sourceFileName]) {
+    return BACK_NECK_OVERLAY_VERTICAL_OFFSET;
+  }
+
+  return pathData
+    ? BACK_NECK_OVAL_VERTICAL_OFFSET
+    : BACK_NECK_STRAIGHT_VERTICAL_OFFSET;
+}
+
 function drawBackNeckTrim(
   context: CanvasRenderingContext2D,
   trimColor: string | undefined,
   pathData?: string,
+  verticalOffset = BACK_NECK_STRAIGHT_VERTICAL_OFFSET,
 ) {
   if (!trimColor) {
     return;
@@ -2291,7 +2307,7 @@ function drawBackNeckTrim(
   const path = createBackNeckTrimPath(pathData);
 
   context.save();
-  context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
+  context.translate(0, verticalOffset);
   context.lineCap = "round";
   context.lineJoin = "round";
   context.shadowColor = "rgba(248, 250, 252, 0.98)";
@@ -2318,11 +2334,14 @@ async function drawBackNeckTrimFromAsset(
 
   const overlaySrc =
     backNeckTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+  const verticalOffset = getBackNeckTrimVerticalOffset(
+    getFileNameFromSource(sourceSrc),
+  );
 
   if (overlaySrc) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
     context.save();
-    context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
+    context.translate(0, verticalOffset);
     context.drawImage(createCanvasInkOutline(overlayCanvas, "#f8fafc", 3), 0, 0);
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
     context.restore();
@@ -2337,7 +2356,7 @@ async function drawBackNeckTrimFromAsset(
   }
 
   context.save();
-  context.translate(0, BACK_NECK_TRIM_VERTICAL_OFFSET);
+  context.translate(0, verticalOffset);
   await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
   context.restore();
   return true;
@@ -3146,10 +3165,14 @@ async function composeSingleDesign(
     );
 
     if (!drewAssetBackNeckTrim) {
+      const baseAssetFileName = getFileNameFromSource(baseAssetSrc);
+      const backNeckPathData =
+        backNeckTrimPathDataByFileName[baseAssetFileName];
       drawBackNeckTrim(
         context,
         backNeckTrimColor,
-        backNeckTrimPathDataByFileName[getFileNameFromSource(baseAssetSrc)],
+        backNeckPathData,
+        getBackNeckTrimVerticalOffset(baseAssetFileName, backNeckPathData),
       );
     }
 
