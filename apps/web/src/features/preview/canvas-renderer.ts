@@ -300,6 +300,42 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
 ] as const;
+const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
+  "blouse-model-32-original-sleeves.svg";
+const ORIGINAL_SLEEVE_TRIM_SHAPES = [
+  {
+    points: [
+      [269.91, 653.14],
+      [118.39, 515.53],
+      [122.27, 500.54],
+      [274.95, 638.85],
+    ],
+    upper: [
+      [122.27, 500.54],
+      [274.95, 638.85],
+    ],
+    lower: [
+      [118.39, 515.53],
+      [269.91, 653.14],
+    ],
+  },
+  {
+    points: [
+      [966.37, 514.83],
+      [825.74, 624.56],
+      [816.49, 613.07],
+      [962.26, 501.39],
+    ],
+    upper: [
+      [962.26, 501.39],
+      [816.49, 613.07],
+    ],
+    lower: [
+      [966.37, 514.83],
+      [825.74, 624.56],
+    ],
+  },
+] as const;
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -865,6 +901,36 @@ function isSleeveTabTrimSection(section: PreviewScene["trimSections"][number]) {
   const key = getTrimSectionText(section);
 
   return key.includes("presilla");
+}
+
+function isSleeveUpperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("manga lineal superior") ||
+    key.includes("manga-lineal-superior")
+  );
+}
+
+function isSleeveLowerTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("manga lineal inferior") ||
+    key.includes("manga-lineal-inferior")
+  );
+}
+
+function isSleeveFillTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("manga rellena") || key.includes("manga-rellena");
 }
 
 function isFlapTrimSection(section: PreviewScene["trimSections"][number]) {
@@ -2013,6 +2079,146 @@ function drawSleeveTabMarkers(
   context.restore();
 }
 
+type OriginalSleevePoint = readonly [number, number];
+
+type AssetToCanvasTransform = {
+  drawX: number;
+  drawY: number;
+  scaleX: number;
+  scaleY: number;
+  sourceX: number;
+  sourceY: number;
+};
+
+type OriginalSleevesTrimColors = {
+  upper?: string | undefined;
+  lower?: string | undefined;
+  fill?: string | undefined;
+};
+
+async function getAssetToCanvasTransform(
+  placementSrc: string,
+): Promise<AssetToCanvasTransform> {
+  const { bounds } = await getProcessedImage(placementSrc);
+  const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
+
+  return {
+    drawX,
+    drawY,
+    scaleX: drawWidth / bounds.width,
+    scaleY: drawHeight / bounds.height,
+    sourceX: bounds.x,
+    sourceY: bounds.y,
+  };
+}
+
+function transformOriginalSleevePoint(
+  point: OriginalSleevePoint,
+  transform: AssetToCanvasTransform,
+) {
+  return {
+    x: transform.drawX + (point[0] - transform.sourceX) * transform.scaleX,
+    y: transform.drawY + (point[1] - transform.sourceY) * transform.scaleY,
+  };
+}
+
+function traceOriginalSleevePolygon(
+  context: CanvasRenderingContext2D,
+  points: readonly OriginalSleevePoint[],
+  transform: AssetToCanvasTransform,
+) {
+  const [firstPoint, ...restPoints] = points;
+
+  if (!firstPoint) {
+    return;
+  }
+
+  const first = transformOriginalSleevePoint(firstPoint, transform);
+  context.beginPath();
+  context.moveTo(first.x, first.y);
+
+  for (const point of restPoints) {
+    const transformed = transformOriginalSleevePoint(point, transform);
+    context.lineTo(transformed.x, transformed.y);
+  }
+
+  context.closePath();
+}
+
+function strokeOriginalSleeveLine(
+  context: CanvasRenderingContext2D,
+  line: readonly [OriginalSleevePoint, OriginalSleevePoint],
+  transform: AssetToCanvasTransform,
+  trimColor: string,
+) {
+  const start = transformOriginalSleevePoint(line[0], transform);
+  const end = transformOriginalSleevePoint(line[1], transform);
+
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.beginPath();
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x, end.y);
+  context.strokeStyle = "#f8fafc";
+  context.lineWidth = 12;
+  context.stroke();
+
+  context.beginPath();
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x, end.y);
+  context.strokeStyle = trimColor;
+  context.lineWidth = 7;
+  context.stroke();
+}
+
+function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
+  return overlaySrcs.some(
+    (src) => getFileNameFromSource(src) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME,
+  );
+}
+
+async function drawOriginalSleevesTrim(
+  context: CanvasRenderingContext2D,
+  placementSrc: string,
+  trimColors: OriginalSleevesTrimColors,
+) {
+  if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
+    return;
+  }
+
+  const transform = await getAssetToCanvasTransform(placementSrc);
+  context.save();
+
+  if (trimColors.fill) {
+    context.fillStyle = trimColors.fill;
+    context.strokeStyle = "#111827";
+    context.lineWidth = 4;
+    context.lineJoin = "round";
+
+    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+      traceOriginalSleevePolygon(context, shape.points, transform);
+      context.fill();
+      context.stroke();
+    }
+  }
+
+  const upperTrimColor = trimColors.upper;
+  if (upperTrimColor) {
+    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+      strokeOriginalSleeveLine(context, shape.upper, transform, upperTrimColor);
+    }
+  }
+
+  const lowerTrimColor = trimColors.lower;
+  if (lowerTrimColor) {
+    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+      strokeOriginalSleeveLine(context, shape.lower, transform, lowerTrimColor);
+    }
+  }
+
+  context.restore();
+}
+
 async function drawGarmentModelDetails(
   context: CanvasRenderingContext2D,
   garmentSrc: string | undefined,
@@ -2739,6 +2945,8 @@ async function composeSingleDesign(
     const garmentDetailImageSrcs =
       scene.garmentDetailImageSrcs ??
       (scene.garmentDetailImageSrc ? [scene.garmentDetailImageSrc] : []);
+    const hasOriginalSleevesOverlay =
+      hasOriginalSleevesDetailOverlay(garmentDetailImageSrcs);
 
     for (const garmentDetailImageSrc of garmentDetailImageSrcs) {
       await drawGarmentDetailOverlay(
@@ -2831,6 +3039,18 @@ async function composeSingleDesign(
     const sleeveTabTrimColor = getTrimSectionColor(
       scene,
       isSleeveTabTrimSection,
+    );
+    const sleeveUpperTrimColor = getTrimSectionColor(
+      scene,
+      isSleeveUpperTrimSection,
+    );
+    const sleeveLowerTrimColor = getTrimSectionColor(
+      scene,
+      isSleeveLowerTrimSection,
+    );
+    const sleeveFillTrimColor = getTrimSectionColor(
+      scene,
+      isSleeveFillTrimSection,
     );
 
     await drawPantsSidePocketTrimFromAsset(
@@ -2958,6 +3178,14 @@ async function composeSingleDesign(
         baseAssetSrc,
         chestPocketTrimColor,
       );
+    }
+
+    if (hasOriginalSleevesOverlay && isBlouseScene(scene, baseAssetSrc)) {
+      await drawOriginalSleevesTrim(context, baseAssetSrc, {
+        upper: sleeveUpperTrimColor,
+        lower: sleeveLowerTrimColor,
+        fill: sleeveFillTrimColor,
+      });
     }
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {
