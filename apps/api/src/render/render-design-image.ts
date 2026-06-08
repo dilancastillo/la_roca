@@ -294,7 +294,7 @@ const LOGO_MARKER_FILL = "#1677ff";
 const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
-const BACK_NECK_TRIM_VERTICAL_OFFSET = 10;
+const BACK_NECK_TRIM_VERTICAL_OFFSET = 18;
 const LOGO_MARKER_POSITIONS = {
   chestLeft: { x: 595, y: 430 },
   chestRight: { x: 330, y: 430 },
