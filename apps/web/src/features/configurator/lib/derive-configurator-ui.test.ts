@@ -1,7 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import { describe, expect, it } from "vitest";
-import { deriveConfiguratorUi } from "./derive-configurator-ui";
+import {
+  deriveConfiguratorUi,
+  sanitizeSelectedValueIdsForHiddenTextAttributes,
+} from "./derive-configurator-ui";
 
 const session: ConfiguratorSession = {
   saleOrderLineId: 56,
@@ -3419,5 +3422,170 @@ describe("deriveConfiguratorUi", () => {
 
     expect(ui.logoSelection).toBeUndefined();
     expect(ui.previewScene.logoMarker).toBeUndefined();
+  });
+
+  it("oculta los atributos de color y fuente de texto cuando el texto esta en No", () => {
+    const textDependencies: Array<readonly [string, string]> = [
+      [
+        "Texto en pecho encima del bolsillo?",
+        "Color y fuente de texto en pecho encima del bolsillo",
+      ],
+      [
+        "Texto en bolsillo superior de pecho?",
+        "Color y fuente de Texto en bolsillo superior de pecho",
+      ],
+      [
+        "Texto en bolsillo inferior de pecho?",
+        "Color y fuente de Texto en bolsillo inferior de pecho",
+      ],
+      [
+        "Texto en manga derecha?",
+        "Color y fuente de Texto en manga derecha",
+      ],
+      [
+        "Texto en manga izquierda?",
+        "Color y fuente de Texto en manga izquierda",
+      ],
+      ["Texto en espalda?", "Color y fuente de Texto en espalda"],
+    ];
+    const textAttributes = textDependencies.flatMap(
+      ([toggleName, styleName], index) => {
+        const baseId = 12000 + index * 10;
+
+        return [
+          {
+            id: baseId,
+            name: toggleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 1,
+                name: "No",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+              {
+                id: baseId + 2,
+                name: "Si",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+            ],
+          },
+          {
+            id: baseId + 3,
+            name: styleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 4,
+                name: "Azul - Arial",
+                attributeId: baseId + 3,
+                attributeName: styleName,
+              },
+            ],
+          },
+        ];
+      },
+    );
+    const sessionWithTextAttributes = {
+      ...session,
+      attributes: [...session.attributes, ...textAttributes],
+    };
+    const selectedValueIds = {
+      ...session.selectedValueIds,
+      ...Object.fromEntries(
+        textDependencies.flatMap((_, index) => {
+          const baseId = 12000 + index * 10;
+
+          return [
+            [String(baseId), [baseId + 1]],
+            [String(baseId + 3), [baseId + 4]],
+          ];
+        }),
+      ),
+    };
+    const ui = deriveConfiguratorUi(sessionWithTextAttributes, selectedValueIds);
+    const labels = ui.groups.map((group) => group.label);
+    const summaryLabels = ui.summary.map((item) => item.label);
+
+    for (const [toggleName, styleName] of textDependencies) {
+      expect(labels).toContain(toggleName);
+      expect(labels).not.toContain(styleName);
+      expect(summaryLabels).not.toContain(styleName);
+    }
+
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithTextAttributes,
+        selectedValueIds,
+      ),
+    ).toMatchObject(
+      Object.fromEntries(
+        textDependencies.map((_, index) => [
+          String(12000 + index * 10 + 3),
+          [],
+        ]),
+      ),
+    );
+  });
+
+  it("muestra los atributos de color y fuente de texto cuando el texto esta en Si", () => {
+    const toggleAttributeId = 12100;
+    const styleAttributeId = 12103;
+    const sessionWithTextAttributes = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: toggleAttributeId,
+          name: "Texto en manga derecha?",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: 12101,
+              name: "No",
+              attributeId: toggleAttributeId,
+              attributeName: "Texto en manga derecha?",
+            },
+            {
+              id: 12102,
+              name: "Si",
+              attributeId: toggleAttributeId,
+              attributeName: "Texto en manga derecha?",
+            },
+          ],
+        },
+        {
+          id: styleAttributeId,
+          name: "Color y fuente de Texto en manga derecha",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: 12104,
+              name: "Negro - Arial",
+              attributeId: styleAttributeId,
+              attributeName: "Color y fuente de Texto en manga derecha",
+            },
+          ],
+        },
+      ],
+    };
+    const ui = deriveConfiguratorUi(sessionWithTextAttributes, {
+      ...session.selectedValueIds,
+      [String(toggleAttributeId)]: [12102],
+    });
+
+    expect(ui.groups.map((group) => group.label)).toContain(
+      "Color y fuente de Texto en manga derecha",
+    );
   });
 });

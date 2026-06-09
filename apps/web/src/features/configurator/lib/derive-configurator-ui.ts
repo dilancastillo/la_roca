@@ -604,12 +604,121 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
+type TextStyleAttributeDependency = {
+  toggleTerms: string[];
+  styleTerms: string[];
+};
+
+const textStyleAttributeDependencies: TextStyleAttributeDependency[] = [
+  {
+    toggleTerms: ["texto", "pecho", "encima", "bolsillo"],
+    styleTerms: ["color", "fuente", "texto", "pecho", "encima", "bolsillo"],
+  },
+  {
+    toggleTerms: ["texto", "bolsillo", "superior", "pecho"],
+    styleTerms: ["color", "fuente", "texto", "bolsillo", "superior", "pecho"],
+  },
+  {
+    toggleTerms: ["texto", "bolsillo", "inferior", "pecho"],
+    styleTerms: ["color", "fuente", "texto", "bolsillo", "inferior", "pecho"],
+  },
+  {
+    toggleTerms: ["texto", "manga", "derecha"],
+    styleTerms: ["color", "fuente", "texto", "manga", "derecha"],
+  },
+  {
+    toggleTerms: ["texto", "manga", "izquierda"],
+    styleTerms: ["color", "fuente", "texto", "manga", "izquierda"],
+  },
+  {
+    toggleTerms: ["texto", "espalda"],
+    styleTerms: ["color", "fuente", "texto", "espalda"],
+  },
+];
+
+function normalizedIncludesAll(normalizedValue: string, terms: string[]) {
+  return terms.every((term) => normalizedValue.includes(term));
+}
+
+function isNoTextToggleValue(valueName: string) {
+  const normalized = normalize(valueName);
+
+  return normalized === "no" || normalized === "sin texto";
+}
+
+export function getHiddenTextStyleAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+
+  for (const dependency of textStyleAttributeDependencies) {
+    const toggleAttribute = findAttributeByName(session, (name) =>
+      normalizedIncludesAll(name, dependency.toggleTerms) &&
+      !name.includes("color") &&
+      !name.includes("fuente"),
+    );
+
+    if (!toggleAttribute) {
+      continue;
+    }
+
+    const isTextDisabled = getSelectedOptions(
+      toggleAttribute,
+      selectedValueIds,
+    ).some((value) => isNoTextToggleValue(value.name));
+
+    if (!isTextDisabled) {
+      continue;
+    }
+
+    for (const attribute of session.attributes) {
+      if (
+        attribute.id !== toggleAttribute.id &&
+        normalizedIncludesAll(normalize(attribute.name), dependency.styleTerms)
+      ) {
+        hiddenAttributeIds.add(attribute.id);
+      }
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
+export function sanitizeSelectedValueIdsForHiddenTextAttributes(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = getHiddenTextStyleAttributeIds(
+    session,
+    selectedValueIds,
+  );
+
+  if (hiddenAttributeIds.size === 0) {
+    return selectedValueIds;
+  }
+
+  return Object.fromEntries(
+    Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
+      attributeId,
+      hiddenAttributeIds.has(Number(attributeId)) ? [] : [...valueIds],
+    ]),
+  );
+}
+
 function deriveSingleConfiguratorUi(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ): ConfiguratorUiModel {
   const catalog = getProductAssetCatalog(session.graphicManifestKey);
-  const groups = session.attributes.map((attribute) => ({
+  const hiddenTextStyleAttributeIds = getHiddenTextStyleAttributeIds(
+    session,
+    selectedValueIds,
+  );
+  const visibleAttributes = session.attributes.filter(
+    (attribute) => !hiddenTextStyleAttributeIds.has(attribute.id),
+  );
+  const groups = visibleAttributes.map((attribute) => ({
     attributeId: attribute.id,
     label: attribute.name,
     ...(isUniformeSession(session)
@@ -948,7 +1057,7 @@ function deriveSingleConfiguratorUi(
         )
       : undefined;
 
-  const summary = session.attributes.flatMap((attribute) => {
+  const summary = visibleAttributes.flatMap((attribute) => {
     const selected = getSelectedOptions(attribute, selectedValueIds);
 
     if (selected.length === 0) {

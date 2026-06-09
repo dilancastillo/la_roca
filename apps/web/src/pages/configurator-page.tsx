@@ -12,6 +12,7 @@ import { useConfiguratorSession } from "../features/configurator/hooks/use-confi
 import {
   computeDisabledValueIds,
   deriveConfiguratorUi,
+  sanitizeSelectedValueIdsForHiddenTextAttributes,
   type UiAttributeGroup,
 } from "../features/configurator/lib/derive-configurator-ui";
 import { sanitizeSelectedValueIdsForExclusions } from "../features/configurator/lib/selection-exclusions";
@@ -180,9 +181,12 @@ export function ConfiguratorPage() {
     dispatch({
       type: "INITIALIZE",
       value: {
-        selectedValueIds: sanitizeSelectedValueIdsForExclusions(
+        selectedValueIds: sanitizeSelectedValueIdsForHiddenTextAttributes(
           sessionQuery.data,
-          sessionQuery.data.selectedValueIds,
+          sanitizeSelectedValueIdsForExclusions(
+            sessionQuery.data,
+            sessionQuery.data.selectedValueIds,
+          ),
         ),
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
@@ -455,10 +459,13 @@ export function ConfiguratorPage() {
       ...state.selectedValueIds,
       [String(attributeId)]: [valueId],
     };
-    const sanitizedSelectedValueIds = sanitizeSelectedValueIdsForExclusions(
+    const sanitizedSelectedValueIds = sanitizeSelectedValueIdsForHiddenTextAttributes(
       session,
-      nextSelectedValueIds,
-      valueId,
+      sanitizeSelectedValueIdsForExclusions(
+        session,
+        nextSelectedValueIds,
+        valueId,
+      ),
     );
 
     dispatch({
@@ -499,10 +506,13 @@ export function ConfiguratorPage() {
 
     dispatch({
       type: "SET_SELECTIONS",
-      value: sanitizeSelectedValueIdsForExclusions(
+      value: sanitizeSelectedValueIdsForHiddenTextAttributes(
         session,
-        nextSelectedValueIds,
-        isSelecting ? valueId : undefined,
+        sanitizeSelectedValueIdsForExclusions(
+          session,
+          nextSelectedValueIds,
+          isSelecting ? valueId : undefined,
+        ),
       ),
     });
     collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
@@ -571,9 +581,13 @@ export function ConfiguratorPage() {
       return;
     }
 
+    const selectedValueIdsForSave = sanitizeSelectedValueIdsForHiddenTextAttributes(
+      session,
+      state.selectedValueIds,
+    );
     const missingCustomValues = getMissingCustomValues(
       ui.groups,
-      state.selectedValueIds,
+      selectedValueIdsForSave,
       state.customValuesByValueId,
     );
 
@@ -628,7 +642,7 @@ export function ConfiguratorPage() {
         lineId,
         previewBlob,
         ui.previewScene,
-        state.selectedValueIds,
+        selectedValueIdsForSave,
         state.customValuesByValueId,
         ui.logoSelection ? logoAttachment : null,
       );
@@ -639,7 +653,7 @@ export function ConfiguratorPage() {
             ? {
                 ...current,
                 productId: result.productId ?? current.productId,
-                selectedValueIds: state.selectedValueIds,
+                selectedValueIds: selectedValueIdsForSave,
                 customValuesByValueId: state.customValuesByValueId,
                 status: {
                   ...current.status,
