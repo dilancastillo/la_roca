@@ -3385,6 +3385,59 @@ describe("renderDesignImage", () => {
     expect(rightBodyStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
+  it("ajusta ambas mangas Original al contorno de OVALADO", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-09.svg";
+    const withSleeveTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 155, y: 450, width: 135, height: 135 },
+    );
+    const rightSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 645, y: 450, width: 125, height: 130 },
+    );
+    const leftBodyStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 285, y: 545, width: 45, height: 85 },
+    );
+    const rightBodyStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 600, y: 535, width: 45, height: 90 },
+    );
+
+    expect(leftSleevePinkPixels).toBeGreaterThan(700);
+    expect(rightSleevePinkPixels).toBeGreaterThan(700);
+    expect(leftBodyStrayPinkPixels).toBeLessThan(80);
+    expect(rightBodyStrayPinkPixels).toBeLessThan(80);
+  }, 20000);
+
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg";

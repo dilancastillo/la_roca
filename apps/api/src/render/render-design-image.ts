@@ -419,6 +419,40 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
       ],
     },
   ],
+  "blouse-model-09.svg": [
+    {
+      points: [
+        [274.07, 659.25],
+        [127.84, 528.62],
+        [131.72, 513.63],
+        [279.11, 644.96],
+      ],
+      upper: [
+        [131.72, 513.63],
+        [279.11, 644.96],
+      ],
+      lower: [
+        [127.84, 528.62],
+        [274.07, 659.25],
+      ],
+    },
+    {
+      points: [
+        [977.71, 526.35],
+        [846.36, 631.78],
+        [837.11, 620.29],
+        [973.6, 512.91],
+      ],
+      upper: [
+        [973.6, 512.91],
+        [837.11, 620.29],
+      ],
+      lower: [
+        [977.71, 526.35],
+        [846.36, 631.78],
+      ],
+    },
+  ],
   "blouse-model-22-estrella.svg": [
     {
       points: [
@@ -495,6 +529,8 @@ const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> 
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-07-puntadas-original-sleeves.svg",
   "blouse-model-08.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-08-cuello-alto-original-sleeves.svg",
+  "blouse-model-09.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-09-ovalado-original-sleeves.svg",
   "blouse-model-22-estrella.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-22-estrella-original-sleeves.svg",
   "blouse-model-39-el-hato.svg":
