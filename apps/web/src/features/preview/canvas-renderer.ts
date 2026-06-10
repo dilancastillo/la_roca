@@ -1054,6 +1054,25 @@ function isLowerPocketUpperTrimSection(
   );
 }
 
+function isAuxiliaryPocketTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  if (
+    key.includes("bolsillos inferiores") ||
+    key.includes("bolsillos-inferiores")
+  ) {
+    return false;
+  }
+
+  return (
+    section.role === "auxiliaryPocket" ||
+    key.includes("bolsillo auxiliar") ||
+    key.includes("bolsillo-auxiliar")
+  );
+}
+
 function isPantsSidePocketTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
@@ -3256,14 +3275,21 @@ async function composeSingleDesign(
     const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
-    const lowerPocketUpperTrimColor = getTrimSectionColor(
+    const lowerPocketFileName = scene.lowerPocketImageSrc
+      ? getFileNameFromSource(scene.lowerPocketImageSrc)
+      : "";
+    const isPresillasLowerPocket =
+      lowerPocketFileName === "blouse-model-39-el-hato-lower-pocket.svg";
+    const auxiliaryPocketTrimColor = getTrimSectionColor(
       scene,
-      isLowerPocketUpperTrimSection,
+      isAuxiliaryPocketTrimSection,
     );
-    const lowerPocketLowerTrimColor = getTrimSectionColor(
-      scene,
-      isLowerPocketLowerTrimSection,
-    );
+    const lowerPocketUpperTrimColor = isPresillasLowerPocket
+      ? auxiliaryPocketTrimColor
+      : getTrimSectionColor(scene, isLowerPocketUpperTrimSection);
+    const lowerPocketLowerTrimColor = isPresillasLowerPocket
+      ? undefined
+      : getTrimSectionColor(scene, isLowerPocketLowerTrimSection);
     const chestPocketTrimColor = getTrimSectionColor(
       scene,
       isChestPocketTrimSection,

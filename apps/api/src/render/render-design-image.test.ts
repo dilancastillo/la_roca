@@ -2982,6 +2982,22 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withPresillasPocketAuxiliaryTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 420,
+            role: "auxiliaryPocket",
+            key: "bolsillo-auxiliar",
+            label: "Bolsillo auxiliar",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withGenericCollar = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -3087,6 +3103,11 @@ describe("renderDesignImage", () => {
       withPresillasPocketLowerTrim.info.width,
       { x: 250, y: 680, width: 450, height: 250 },
     );
+    const auxiliaryLowerPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withPresillasPocketAuxiliaryTrim.data,
+      withPresillasPocketAuxiliaryTrim.info.width,
+      { x: 250, y: 680, width: 450, height: 250 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -3102,15 +3123,22 @@ describe("renderDesignImage", () => {
         withPresillasPocket.data,
         withPresillasPocketUpperTrim.data,
       ),
-    ).toBeGreaterThan(100);
+    ).toBe(0);
     expect(
       countDifferentPixels(
         withPresillasPocket.data,
         withPresillasPocketLowerTrim.data,
       ),
+    ).toBe(0);
+    expect(
+      countDifferentPixels(
+        withPresillasPocket.data,
+        withPresillasPocketAuxiliaryTrim.data,
+      ),
     ).toBeGreaterThan(100);
-    expect(upperLowerPocketTrimPinkPixels).toBeGreaterThan(100);
-    expect(lowerLowerPocketTrimPinkPixels).toBeGreaterThan(100);
+    expect(upperLowerPocketTrimPinkPixels).toBe(0);
+    expect(lowerLowerPocketTrimPinkPixels).toBe(0);
+    expect(auxiliaryLowerPocketTrimPinkPixels).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);
@@ -5512,13 +5540,14 @@ describe("renderDesignImage", () => {
   it("renderiza PRESILLAS sin botones y pinta cuello, aros y cogotera por separado", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";
-    const baseAssetMarkup = await readFile(
-      new URL(
-        "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
-        import.meta.url,
-      ),
-      "utf8",
-    );
+    const baseAssetMarkup = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
