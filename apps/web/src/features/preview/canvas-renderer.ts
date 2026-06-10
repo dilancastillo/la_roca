@@ -340,6 +340,25 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
 ] as const;
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
+  "blouse-model-04.svg": [
+    ORIGINAL_SLEEVE_TRIM_SHAPES[0],
+    {
+      points: [
+        [978.95, 517.44],
+        [846.82, 624.41],
+        [837.57, 612.92],
+        [974.84, 504],
+      ],
+      upper: [
+        [974.84, 504],
+        [837.57, 612.92],
+      ],
+      lower: [
+        [978.95, 517.44],
+        [846.82, 624.41],
+      ],
+    },
+  ],
   "blouse-model-22-estrella.svg": [
     {
       points: [
@@ -410,6 +429,8 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   ],
 } as const;
 const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> = {
+  "blouse-model-04.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-original-sleeves.svg",
   "blouse-model-22-estrella.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-22-estrella-original-sleeves.svg",
   "blouse-model-39-el-hato.svg":

@@ -3238,6 +3238,53 @@ describe("renderDesignImage", () => {
     expect(rightChestStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
+  it("ajusta la manga derecha Original al contorno de MARIPOSA DIVIDIDO", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg";
+    const withSleeveTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 155, y: 450, width: 130, height: 125 },
+    );
+    const rightSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 645, y: 450, width: 115, height: 120 },
+    );
+    const oldRightInnerStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 625, y: 520, width: 18, height: 38 },
+    );
+
+    expect(leftSleevePinkPixels).toBeGreaterThan(700);
+    expect(rightSleevePinkPixels).toBeGreaterThan(700);
+    expect(oldRightInnerStrayPinkPixels).toBeLessThan(80);
+  }, 20000);
+
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg";
