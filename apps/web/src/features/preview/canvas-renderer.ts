@@ -340,6 +340,40 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
 ] as const;
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
+  "blouse-model-22-estrella.svg": [
+    {
+      points: [
+        [167.82, 599.62],
+        [6.14, 455.22],
+        [16.02, 442.48],
+        [177.45, 586.86],
+      ],
+      upper: [
+        [16.02, 442.48],
+        [177.45, 586.86],
+      ],
+      lower: [
+        [6.14, 455.22],
+        [167.82, 599.62],
+      ],
+    },
+    {
+      points: [
+        [945.83, 452.71],
+        [800.6, 569.26],
+        [788.35, 556.57],
+        [933.19, 440.05],
+      ],
+      upper: [
+        [933.19, 440.05],
+        [788.35, 556.57],
+      ],
+      lower: [
+        [945.83, 452.71],
+        [800.6, 569.26],
+      ],
+    },
+  ],
   "blouse-model-39-el-hato.svg": [
     {
       points: [
@@ -376,6 +410,8 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   ],
 } as const;
 const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> = {
+  "blouse-model-22-estrella.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-22-estrella-original-sleeves.svg",
   "blouse-model-39-el-hato.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-original-sleeves.svg",
 };
