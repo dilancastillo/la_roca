@@ -3172,11 +3172,17 @@ describe("renderDesignImage", () => {
       withSleeveTrim.info.width,
       { x: 825, y: 510, width: 70, height: 150 },
     );
+    const rightChestStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 575, y: 455, width: 100, height: 110 },
+    );
 
     expect(leftSleevePinkPixels).toBeGreaterThan(900);
     expect(rightSleevePinkPixels).toBeGreaterThan(900);
     expect(leftBodyStrayPinkPixels).toBeLessThan(80);
     expect(rightOutsideStrayPinkPixels).toBeLessThan(80);
+    expect(rightChestStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {
