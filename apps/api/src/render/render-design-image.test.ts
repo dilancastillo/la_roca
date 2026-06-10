@@ -5512,6 +5512,13 @@ describe("renderDesignImage", () => {
   it("renderiza PRESILLAS sin botones y pinta cuello, aros y cogotera por separado", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";
+    const baseAssetMarkup = await readFile(
+      new URL(
+        "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+        import.meta.url,
+      ),
+      "utf8",
+    );
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -5590,6 +5597,7 @@ describe("renderDesignImage", () => {
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
+    expect(baseAssetMarkup).not.toContain("M486.68,423.96");
     expect(
       countDifferentPixels(withoutTrim.data, withCollar.data),
     ).toBeGreaterThan(100);
