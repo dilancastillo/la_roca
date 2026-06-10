@@ -3126,6 +3126,59 @@ describe("renderDesignImage", () => {
     expect(completeCollarButtonDarkPixels).toBeGreaterThan(80);
   }, 20000);
 
+  it("ajusta las mangas Original al contorno de EL HATO", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+    const withSleeveTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 84, y: 440, width: 155, height: 160 },
+    );
+    const rightSleevePinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 680, y: 438, width: 150, height: 145 },
+    );
+    const leftBodyStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 250, y: 575, width: 110, height: 120 },
+    );
+    const rightOutsideStrayPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTrim.data,
+      withSleeveTrim.info.width,
+      { x: 825, y: 510, width: 70, height: 150 },
+    );
+
+    expect(leftSleevePinkPixels).toBeGreaterThan(900);
+    expect(rightSleevePinkPixels).toBeGreaterThan(900);
+    expect(leftBodyStrayPinkPixels).toBeLessThan(80);
+    expect(rightOutsideStrayPinkPixels).toBeLessThan(80);
+  }, 20000);
+
   it("renderiza PEDAGOGIA sin vivos de cuello y conserva cogotera", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-29-pedagogia.svg";

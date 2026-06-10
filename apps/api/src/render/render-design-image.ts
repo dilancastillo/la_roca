@@ -346,6 +346,46 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
+  "blouse-model-39-el-hato.svg": [
+    {
+      points: [
+        [151.79, 552.35],
+        [5.56, 421.72],
+        [14.5, 410.2],
+        [160.5, 540.8],
+      ],
+      upper: [
+        [14.5, 410.2],
+        [160.5, 540.8],
+      ],
+      lower: [
+        [5.56, 421.72],
+        [151.79, 552.35],
+      ],
+    },
+    {
+      points: [
+        [855.43, 419.45],
+        [724.08, 524.88],
+        [713, 513.4],
+        [844, 408],
+      ],
+      upper: [
+        [844, 408],
+        [713, 513.4],
+      ],
+      lower: [
+        [855.43, 419.45],
+        [724.08, 524.88],
+      ],
+    },
+  ],
+} as const;
+const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-original-sleeves.svg",
+};
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -1793,8 +1833,12 @@ async function createGarmentDetailAssetOverlayBuffer(
     return undefined;
   }
 
+  const resolvedOverlayAssetPath = resolveGarmentDetailOverlayAssetPath(
+    overlayAssetPath,
+    placementAssetPath,
+  );
   const [overlayProcessed, placementProcessed] = await Promise.all([
-    loadProcessedImage(overlayAssetPath),
+    loadProcessedImage(resolvedOverlayAssetPath),
     loadProcessedImage(placementAssetPath),
   ]);
 
@@ -2484,6 +2528,29 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
   );
 }
 
+function getOriginalSleeveTrimShapes(placementAssetPath: string) {
+  return (
+    ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      getAssetFileName(placementAssetPath) as keyof typeof ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME
+    ] ?? ORIGINAL_SLEEVE_TRIM_SHAPES
+  );
+}
+
+function resolveGarmentDetailOverlayAssetPath(
+  overlayAssetPath: string,
+  placementAssetPath: string,
+) {
+  if (getAssetFileName(overlayAssetPath) !== ORIGINAL_SLEEVES_DETAIL_FILE_NAME) {
+    return overlayAssetPath;
+  }
+
+  return (
+    ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME[
+      getAssetFileName(placementAssetPath)
+    ] ?? overlayAssetPath
+  );
+}
+
 async function getOriginalSleevesTrimSvg(
   placementAssetPath: string,
   trimColors: OriginalSleevesTrimColors,
@@ -2495,12 +2562,13 @@ async function getOriginalSleevesTrimSvg(
   const transform = getAssetToCanvasTransformFromProcessed(
     await loadProcessedImage(placementAssetPath),
   );
+  const trimShapes = getOriginalSleeveTrimShapes(placementAssetPath);
   const layers: string[] = [];
 
   const fillTrimColor = trimColors.fill;
   if (fillTrimColor) {
     layers.push(
-      ...ORIGINAL_SLEEVE_TRIM_SHAPES.map(
+      ...trimShapes.map(
         (shape) => `
           <polygon
             points="${getTransformedPolygonPoints(shape.points, transform)}"
@@ -2518,7 +2586,7 @@ async function getOriginalSleevesTrimSvg(
   const upperTrimColor = trimColors.upper;
   if (upperTrimColor) {
     layers.push(
-      ...ORIGINAL_SLEEVE_TRIM_SHAPES.map((shape) =>
+      ...trimShapes.map((shape) =>
         getOriginalSleeveLineSvg(shape.upper, transform, upperTrimColor),
       ),
     );
@@ -2527,7 +2595,7 @@ async function getOriginalSleevesTrimSvg(
   const lowerTrimColor = trimColors.lower;
   if (lowerTrimColor) {
     layers.push(
-      ...ORIGINAL_SLEEVE_TRIM_SHAPES.map((shape) =>
+      ...trimShapes.map((shape) =>
         getOriginalSleeveLineSvg(shape.lower, transform, lowerTrimColor),
       ),
     );

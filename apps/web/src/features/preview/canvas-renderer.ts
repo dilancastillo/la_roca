@@ -339,6 +339,46 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
+  "blouse-model-39-el-hato.svg": [
+    {
+      points: [
+        [151.79, 552.35],
+        [5.56, 421.72],
+        [14.5, 410.2],
+        [160.5, 540.8],
+      ],
+      upper: [
+        [14.5, 410.2],
+        [160.5, 540.8],
+      ],
+      lower: [
+        [5.56, 421.72],
+        [151.79, 552.35],
+      ],
+    },
+    {
+      points: [
+        [855.43, 419.45],
+        [724.08, 524.88],
+        [713, 513.4],
+        [844, 408],
+      ],
+      upper: [
+        [844, 408],
+        [713, 513.4],
+      ],
+      lower: [
+        [855.43, 419.45],
+        [724.08, 524.88],
+      ],
+    },
+  ],
+} as const;
+const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> = {
+  "blouse-model-39-el-hato.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-original-sleeves.svg",
+};
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-07.svg": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
@@ -2180,6 +2220,26 @@ function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
   );
 }
 
+function getOriginalSleeveTrimShapes(placementSrc: string) {
+  return (
+    ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      getFileNameFromSource(placementSrc) as keyof typeof ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME
+    ] ?? ORIGINAL_SLEEVE_TRIM_SHAPES
+  );
+}
+
+function resolveGarmentDetailOverlaySrc(overlaySrc: string, placementSrc: string) {
+  if (getFileNameFromSource(overlaySrc) !== ORIGINAL_SLEEVES_DETAIL_FILE_NAME) {
+    return overlaySrc;
+  }
+
+  return (
+    ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME[
+      getFileNameFromSource(placementSrc)
+    ] ?? overlaySrc
+  );
+}
+
 async function drawOriginalSleevesTrim(
   context: CanvasRenderingContext2D,
   placementSrc: string,
@@ -2190,6 +2250,7 @@ async function drawOriginalSleevesTrim(
   }
 
   const transform = await getAssetToCanvasTransform(placementSrc);
+  const trimShapes = getOriginalSleeveTrimShapes(placementSrc);
   context.save();
 
   if (trimColors.fill) {
@@ -2198,7 +2259,7 @@ async function drawOriginalSleevesTrim(
     context.lineWidth = 4;
     context.lineJoin = "round";
 
-    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+    for (const shape of trimShapes) {
       traceOriginalSleevePolygon(context, shape.points, transform);
       context.fill();
       context.stroke();
@@ -2207,14 +2268,14 @@ async function drawOriginalSleevesTrim(
 
   const upperTrimColor = trimColors.upper;
   if (upperTrimColor) {
-    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+    for (const shape of trimShapes) {
       strokeOriginalSleeveLine(context, shape.upper, transform, upperTrimColor);
     }
   }
 
   const lowerTrimColor = trimColors.lower;
   if (lowerTrimColor) {
-    for (const shape of ORIGINAL_SLEEVE_TRIM_SHAPES) {
+    for (const shape of trimShapes) {
       strokeOriginalSleeveLine(context, shape.lower, transform, lowerTrimColor);
     }
   }
@@ -2251,7 +2312,10 @@ async function drawGarmentDetailOverlay(
     return;
   }
 
-  const overlayCanvas = await createRasterCanvas(overlaySrc, placementSrc);
+  const overlayCanvas = await createRasterCanvas(
+    resolveGarmentDetailOverlaySrc(overlaySrc, placementSrc),
+    placementSrc,
+  );
   context.drawImage(overlayCanvas, 0, 0);
 }
 
