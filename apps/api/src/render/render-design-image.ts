@@ -3137,16 +3137,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const lowerPocketFileName = scene.lowerPocketAssetPath
       ? getAssetFileName(scene.lowerPocketAssetPath)
       : "";
-    const isPresillasLowerPocket =
+    const usesAuxiliaryOnlyLowerPocketTrim =
+      lowerPocketFileName ===
+        "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg" ||
       lowerPocketFileName === "blouse-model-39-el-hato-lower-pocket.svg";
     const auxiliaryPocketTrimColor = getTrimSectionColor(
       scene,
       isAuxiliaryPocketTrimSection,
     );
-    const lowerPocketUpperTrimColor = isPresillasLowerPocket
+    const lowerPocketUpperTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? auxiliaryPocketTrimColor
       : getTrimSectionColor(scene, isLowerPocketUpperTrimSection);
-    const lowerPocketLowerTrimColor = isPresillasLowerPocket
+    const lowerPocketLowerTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? undefined
       : getTrimSectionColor(scene, isLowerPocketLowerTrimSection);
     const lowerPocketTrimColor =

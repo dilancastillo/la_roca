@@ -5472,6 +5472,22 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withAndesPocketAuxiliaryTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 420,
+            role: "auxiliaryPocket",
+            key: "bolsillo-auxiliar",
+            label: "Bolsillo auxiliar",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const withHighCollar = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -5508,8 +5524,8 @@ describe("renderDesignImage", () => {
       { x: 380, y: 125, width: 170, height: 60 },
     );
     const andesAuxPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
-      withAndesPocketUpperTrim.data,
-      withAndesPocketUpperTrim.info.width,
+      withAndesPocketAuxiliaryTrim.data,
+      withAndesPocketAuxiliaryTrim.info.width,
       { x: 260, y: 735, width: 150, height: 80 },
     );
 
@@ -5520,13 +5536,19 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(500);
     expect(
       countDifferentPixels(withAndesPocket.data, withAndesPocketUpperTrim.data),
-    ).toBeGreaterThan(50);
+    ).toBe(0);
     expect(
       countDifferentPixels(
-        withAndesPocketUpperTrim.data,
+        withAndesPocket.data,
         withAndesPocketLowerTrim.data,
       ),
     ).toBe(0);
+    expect(
+      countDifferentPixels(
+        withAndesPocket.data,
+        withAndesPocketAuxiliaryTrim.data,
+      ),
+    ).toBeGreaterThan(50);
     expect(andesAuxPocketTrimPinkPixels).toBeGreaterThan(40);
     expect(
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
