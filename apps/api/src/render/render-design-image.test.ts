@@ -858,7 +858,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
-    const withTrim = await readRawPng(
+    const withUpperTrim = await readRawPng(
       await renderDesignImage({
         ...pocketScene,
         trimSections: [
@@ -867,6 +867,20 @@ describe("renderDesignImage", () => {
             role: "chestPocket",
             key: "bolsillo-pecho-superior",
             label: "Bolsillo pecho superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7041,
+            role: "chestPocket",
+            key: "cremallera",
+            label: "Cremallera",
             colorHex: "#f4c7cc",
           },
         ],
@@ -882,9 +896,14 @@ describe("renderDesignImage", () => {
       withoutTrim.info.width,
       { x: 500, y: 350, width: 185, height: 180 },
     );
-    const zipperPinkWithTrim = countPastelPinkPixelsInRegion(
-      withTrim.data,
-      withTrim.info.width,
+    const zipperPinkWithUpperTrim = countPastelPinkPixelsInRegion(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      { x: 500, y: 350, width: 185, height: 180 },
+    );
+    const zipperPinkWithZipperTrim = countPastelPinkPixelsInRegion(
+      withZipperTrim.data,
+      withZipperTrim.info.width,
       { x: 500, y: 350, width: 185, height: 180 },
     );
 
@@ -894,10 +913,14 @@ describe("renderDesignImage", () => {
     expect(internalZipperPocketMarkup).not.toContain("stroke-dasharray");
     expect(zipperInk).toBeGreaterThan(250);
     expect(zipperPinkWithoutTrim).toBeLessThan(20);
-    expect(zipperPinkWithTrim).toBeGreaterThan(100);
-    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBeGreaterThan(
-      150,
-    );
+    expect(zipperPinkWithUpperTrim).toBeLessThan(20);
+    expect(zipperPinkWithZipperTrim).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withZipperTrim.data),
+    ).toBeGreaterThan(150);
   }, 20000);
 
   it("pinta por separado los vivos superior e inferior del bolsillo rectangular", async () => {
