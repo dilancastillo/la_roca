@@ -979,7 +979,7 @@ describe("renderDesignImage", () => {
     ).toBeUndefined();
   }, 20000);
 
-  it("mantiene el bolsillo de pecho punta sin vivo", async () => {
+  it("pinta por separado los vivos superior e inferior del bolsillo punta", async () => {
     const pointPocketMarkup = (
       await readFile(
         new URL(
@@ -995,7 +995,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
-    const withTrim = await readRawPng(
+    const withUpperTrim = await readRawPng(
       await renderDesignImage({
         ...pocketScene,
         trimSections: [
@@ -1009,25 +1009,58 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7041,
+            role: "chestPocket",
+            key: "bolsillo-pecho-inferior",
+            label: "Bolsillo pecho inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const pocketInk = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
       { x: 500, y: 345, width: 180, height: 250 },
     );
+    const upperTrimBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const lowerTrimBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
+    );
 
     expect(pointPocketMarkup).toContain("L190,430");
-    expect(pointPocketMarkup).toContain('y1="105"');
+    expect(pointPocketMarkup).not.toContain('y1="105"');
     expect(pointPocketMarkup).not.toContain("stroke-dasharray");
     expect(pocketInk).toBeGreaterThan(350);
-    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBe(0);
+    expect(upperTrimBounds?.count).toBeGreaterThan(100);
+    expect(lowerTrimBounds?.count).toBeGreaterThan(100);
+    expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
+      lowerTrimBounds?.minY ?? 0,
+    );
     expect(
-      countPastelPinkPixelsInRegion(withTrim.data, withTrim.info.width, {
-        x: 500,
-        y: 345,
-        width: 180,
-        height: 250,
-      }),
-    ).toBe(0);
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      getPastelPinkPixelBounds(
+        withoutTrim.data,
+        withoutTrim.info.width,
+        withoutTrim.info.height,
+      ),
+    ).toBeUndefined();
   }, 20000);
 
   it("superpone las lineas de Pespunte del pantalon sobre la base liza", async () => {

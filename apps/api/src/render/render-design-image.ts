@@ -276,6 +276,12 @@ const chestPocketSectionTrimOverlayByFileName: Record<
   string,
   { upper?: string; zipper?: string; lower?: string }
 > = {
+  "chest-pocket-point.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-upper-trim.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-lower-trim.svg",
+  },
   "chest-pocket-rectangular-model.svg": {
     upper:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
