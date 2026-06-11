@@ -272,6 +272,18 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
     "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal-trim.svg",
 };
 
+const chestPocketSectionTrimOverlayByFileName: Record<
+  string,
+  { upper?: string; lower?: string }
+> = {
+  "chest-pocket-rectangular-model.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
+};
+
 const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-point-zipper.svg",
   "chest-pocket-zipper-external.svg",
@@ -1109,6 +1121,30 @@ function isChestPocketTrimSection(
     section.role === "chestPocket" ||
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
+  );
+}
+
+function isChestPocketUpperTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho superior") ||
+    key.includes("bolsillo de pecho superior") ||
+    key.includes("bolsillo-pecho-superior")
+  );
+}
+
+function isChestPocketLowerTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho inferior") ||
+    key.includes("bolsillo de pecho inferior") ||
+    key.includes("bolsillo-pecho-inferior")
   );
 }
 
@@ -1952,6 +1988,31 @@ async function createChestPocketTrimOverlayBuffer(
 ) {
   const overlayPath =
     chestPocketTrimOverlayByFileName[getAssetFileName(assetPath)];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
+async function createChestPocketSectionTrimOverlayBuffer(
+  assetPath: string,
+  placementAssetPath: string,
+  section: "upper" | "lower",
+) {
+  const overlayPath =
+    chestPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
+      section
+    ];
 
   if (!overlayPath) {
     return undefined;
@@ -3157,6 +3218,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isChestPocketTrimSection,
     );
+    const chestPocketUpperTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketUpperTrimSection,
+    );
+    const chestPocketLowerTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketLowerTrimSection,
+    );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
     const pantsSidePocketTrimColor = getTrimSectionColor(
       scene,
@@ -3628,7 +3697,53 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         getImageSvg(toDataUri(overlayBuffer), CHEST_POCKET_VERTICAL_OFFSET),
       );
 
-      if (chestPocketTrimColor) {
+      const chestPocketSectionTrimOverlays =
+        chestPocketSectionTrimOverlayByFileName[
+          getAssetFileName(scene.chestPocketAssetPath)
+        ];
+
+      if (chestPocketSectionTrimOverlays) {
+        for (const [section, trimColor] of [
+          ["upper", chestPocketUpperTrimColor],
+          ["lower", chestPocketLowerTrimColor],
+        ] as const) {
+          if (!trimColor) {
+            continue;
+          }
+
+          const trimOverlayBuffer =
+            await createChestPocketSectionTrimOverlayBuffer(
+              scene.chestPocketAssetPath,
+              baseAssetPath,
+              section,
+            );
+
+          if (!trimOverlayBuffer) {
+            continue;
+          }
+
+          const trimOutlineBuffer = await createPngInkOutlineBuffer(
+            trimOverlayBuffer,
+            "#f8fafc",
+            4,
+          );
+          const trimColorBuffer = await recolorPngInkBuffer(
+            trimOverlayBuffer,
+            trimColor,
+          );
+
+          layers.push(
+            getImageSvg(
+              toDataUri(trimOutlineBuffer),
+              CHEST_POCKET_VERTICAL_OFFSET,
+            ),
+            getImageSvg(
+              toDataUri(trimColorBuffer),
+              CHEST_POCKET_VERTICAL_OFFSET,
+            ),
+          );
+        }
+      } else if (chestPocketTrimColor) {
         const trimOverlayBuffer = await createChestPocketTrimOverlayBuffer(
           scene.chestPocketAssetPath,
           baseAssetPath,

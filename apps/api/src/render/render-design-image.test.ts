@@ -841,7 +841,7 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
-  it("mantiene el bolsillo de pecho rectangular sin vivo", async () => {
+  it("pinta por separado los vivos superior e inferior del bolsillo rectangular", async () => {
     const rectangularPocketMarkup = (
       await readFile(
         new URL(
@@ -857,7 +857,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
-    const withTrim = await readRawPng(
+    const withUpperTrim = await readRawPng(
       await renderDesignImage({
         ...pocketScene,
         trimSections: [
@@ -871,19 +871,53 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7041,
+            role: "chestPocket",
+            key: "bolsillo-pecho-inferior",
+            label: "Bolsillo pecho inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
 
     expect(rectangularPocketMarkup).toContain('width="320"');
-    expect(rectangularPocketMarkup).toContain('y1="105"');
+    expect(rectangularPocketMarkup).not.toContain('y1="105"');
     expect(rectangularPocketMarkup).not.toContain("stroke-dasharray");
-    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBe(0);
+    const upperTrimBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const lowerTrimBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
+    );
+
+    expect(upperTrimBounds?.count).toBeGreaterThan(100);
+    expect(lowerTrimBounds?.count).toBeGreaterThan(100);
+    expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
+      lowerTrimBounds?.minY ?? 0,
+    );
     expect(
-      countPastelPinkPixelsInRegion(withTrim.data, withTrim.info.width, {
-        x: 500,
-        y: 345,
-        width: 170,
-        height: 230,
-      }),
-    ).toBe(0);
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      getPastelPinkPixelBounds(
+        withoutTrim.data,
+        withoutTrim.info.width,
+        withoutTrim.info.height,
+      ),
+    ).toBeUndefined();
   }, 20000);
 
   it("mantiene el bolsillo de pecho punta sin vivo", async () => {

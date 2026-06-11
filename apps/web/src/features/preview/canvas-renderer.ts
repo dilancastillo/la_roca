@@ -265,6 +265,18 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal-trim.svg",
 };
 
+const chestPocketSectionTrimOverlayByFileName: Record<
+  string,
+  { upper?: string; lower?: string }
+> = {
+  "chest-pocket-rectangular-model.svg": {
+    upper:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
+    lower:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
+};
+
 const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-point-zipper.svg",
   "chest-pocket-zipper-external.svg",
@@ -1106,6 +1118,30 @@ function isChestPocketTrimSection(
     section.role === "chestPocket" ||
     key.includes("bolsillo pecho") ||
     key.includes("bolsillo de pecho")
+  );
+}
+
+function isChestPocketUpperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho superior") ||
+    key.includes("bolsillo de pecho superior") ||
+    key.includes("bolsillo-pecho-superior")
+  );
+}
+
+function isChestPocketLowerTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho inferior") ||
+    key.includes("bolsillo de pecho inferior") ||
+    key.includes("bolsillo-pecho-inferior")
   );
 }
 
@@ -2008,6 +2044,12 @@ type LowerPocketBandTrimColors = {
   bottom?: string | undefined;
 };
 
+type ChestPocketTrimColors = {
+  generic?: string | undefined;
+  upper?: string | undefined;
+  lower?: string | undefined;
+};
+
 function strokePocketTrimLine(
   context: CanvasRenderingContext2D,
   x1: number,
@@ -2193,19 +2235,45 @@ async function drawChestPocketOverlay(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   placementSrc: string,
-  trimColor?: string,
+  trimColors: ChestPocketTrimColors = {},
 ) {
   const overlayCanvas = await createRasterCanvas(sourceSrc, placementSrc);
+  const fileName = getFileNameFromSource(sourceSrc);
   context.save();
   context.translate(0, CHEST_POCKET_VERTICAL_OFFSET);
   context.drawImage(overlayCanvas, 0, 0);
+
+  const sectionTrimOverlays =
+    chestPocketSectionTrimOverlayByFileName[fileName];
+
+  if (sectionTrimOverlays) {
+    for (const [section, trimColor] of [
+      ["upper", trimColors.upper],
+      ["lower", trimColors.lower],
+    ] as const) {
+      const trimSrc = sectionTrimOverlays[section];
+
+      if (!trimSrc || !trimColor) {
+        continue;
+      }
+
+      const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
+      context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 4), 0, 0);
+      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    }
+
+    context.restore();
+    return;
+  }
+
+  const trimColor = trimColors.generic;
 
   if (!trimColor) {
     context.restore();
     return;
   }
 
-  const trimSrc = chestPocketTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+  const trimSrc = chestPocketTrimOverlayByFileName[fileName];
 
   if (!trimSrc) {
     context.restore();
@@ -2214,7 +2282,7 @@ async function drawChestPocketOverlay(
 
   const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
 
-  if (fullChestPocketTrimOverlayFileNames.has(getFileNameFromSource(sourceSrc))) {
+  if (fullChestPocketTrimOverlayFileNames.has(fileName)) {
     context.drawImage(createCanvasInkOutline(trimCanvas, "#f8fafc", 4), 0, 0);
     context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
     context.restore();
@@ -3296,6 +3364,14 @@ async function composeSingleDesign(
       scene,
       isChestPocketTrimSection,
     );
+    const chestPocketUpperTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketUpperTrimSection,
+    );
+    const chestPocketLowerTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketLowerTrimSection,
+    );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
     const pantsSidePocketTrimColor = getTrimSectionColor(
       scene,
@@ -3449,7 +3525,11 @@ async function composeSingleDesign(
         context,
         scene.chestPocketImageSrc,
         baseAssetSrc,
-        chestPocketTrimColor,
+        {
+          generic: chestPocketTrimColor,
+          upper: chestPocketUpperTrimColor,
+          lower: chestPocketLowerTrimColor,
+        },
       );
     }
 
