@@ -772,6 +772,14 @@ describe("renderDesignImage", () => {
   }, 20000);
 
   it("pinta la cremallera interna del bolsillo de pecho", async () => {
+    const internalZipperPocketMarkup = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const pocketScene: AutomationRenderScene = {
       ...baseScene,
       chestPocketAssetPath:
@@ -809,11 +817,15 @@ describe("renderDesignImage", () => {
       { x: 500, y: 350, width: 185, height: 180 },
     );
 
-    expect(zipperInk).toBeGreaterThan(550);
+    expect(internalZipperPocketMarkup).toContain('width="320"');
+    expect(internalZipperPocketMarkup).toContain("internal-zipper-hatch");
+    expect(internalZipperPocketMarkup).not.toContain("<ellipse");
+    expect(internalZipperPocketMarkup).not.toContain("stroke-dasharray");
+    expect(zipperInk).toBeGreaterThan(250);
     expect(zipperPinkWithoutTrim).toBeLessThan(20);
-    expect(zipperPinkWithTrim).toBeGreaterThan(250);
+    expect(zipperPinkWithTrim).toBeGreaterThan(100);
     expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBeGreaterThan(
-      300,
+      150,
     );
   }, 20000);
 
