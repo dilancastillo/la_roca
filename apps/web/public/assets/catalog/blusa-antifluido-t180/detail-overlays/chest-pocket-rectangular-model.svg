@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1082 1350" width="1082" height="1350">
-  <g id="chest-pocket-rectangular-model" fill="none" stroke="#1d1d1b" stroke-linejoin="round">
-    <rect x="610" y="405" width="154" height="165" stroke-width="3.2"/>
-    <path d="M626 425h118" stroke-width="3" stroke-linecap="round" stroke-dasharray="12 9"/>
-    <path d="M626 558h118" stroke-width="3" stroke-linecap="round" stroke-dasharray="12 9"/>
-    <path d="M626 407v151" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 8"/>
-    <path d="M744 407v151" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 8"/>
+  <g
+    id="chest-pocket-rectangular-model"
+    transform="translate(600 390) scale(.45)"
+  >
+    <rect
+      x="30"
+      y="30"
+      width="320"
+      height="400"
+      fill="#ffffff"
+      stroke="#1d1d1b"
+      stroke-width="6"
+    />
+    <line
+      x1="30"
+      y1="105"
+      x2="350"
+      y2="105"
+      stroke="#1d1d1b"
+      stroke-width="6"
+    />
   </g>
 </svg>

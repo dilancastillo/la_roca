@@ -807,6 +807,14 @@ describe("renderDesignImage", () => {
   }, 20000);
 
   it("mantiene el bolsillo de pecho rectangular sin vivo", async () => {
+    const rectangularPocketMarkup = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-model.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const pocketScene: AutomationRenderScene = {
       ...baseScene,
       chestPocketAssetPath:
@@ -829,6 +837,9 @@ describe("renderDesignImage", () => {
       }),
     );
 
+    expect(rectangularPocketMarkup).toContain('width="320"');
+    expect(rectangularPocketMarkup).toContain('y1="105"');
+    expect(rectangularPocketMarkup).not.toContain("stroke-dasharray");
     expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBe(0);
     expect(
       countPastelPinkPixelsInRegion(withTrim.data, withTrim.info.width, {
