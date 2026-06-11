@@ -668,7 +668,7 @@ describe("renderDesignImage", () => {
     expect(chestPocketInk).toBeLessThan(800);
   }, 20000);
 
-  it("pinta completa la cremallera del bolsillo de pecho punta", async () => {
+  it("pinta por separado los tres vivos de la cremallera punta", async () => {
     const pointZipperPocketMarkup = (
       await readFile(
         new URL(
@@ -684,7 +684,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
-    const withTrim = await readRawPng(
+    const withUpperTrim = await readRawPng(
       await renderDesignImage({
         ...pocketScene,
         trimSections: [
@@ -693,6 +693,34 @@ describe("renderDesignImage", () => {
             role: "chestPocket",
             key: "bolsillo-pecho-superior",
             label: "Bolsillo pecho superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7041,
+            role: "chestPocket",
+            key: "cremallera",
+            label: "Cremallera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7042,
+            role: "chestPocket",
+            key: "bolsillo-pecho-inferior",
+            label: "Bolsillo pecho inferior",
             colorHex: "#f4c7cc",
           },
         ],
@@ -708,10 +736,20 @@ describe("renderDesignImage", () => {
       withoutTrim.info.width,
       { x: 500, y: 345, width: 155, height: 95 },
     );
-    const zipperPinkWithTrim = countPastelPinkPixelsInRegion(
-      withTrim.data,
-      withTrim.info.width,
-      { x: 500, y: 345, width: 155, height: 95 },
+    const upperTrimBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const zipperTrimBounds = getPastelPinkPixelBounds(
+      withZipperTrim.data,
+      withZipperTrim.info.width,
+      withZipperTrim.info.height,
+    );
+    const lowerTrimBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
     );
 
     expect(pointZipperPocketMarkup).toContain("L190,430");
@@ -720,10 +758,26 @@ describe("renderDesignImage", () => {
     expect(pointZipperPocketMarkup).not.toContain("stroke-dasharray");
     expect(pocketInk).toBeGreaterThan(500);
     expect(zipperPinkWithoutTrim).toBeLessThan(20);
-    expect(zipperPinkWithTrim).toBeGreaterThan(180);
-    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBeGreaterThan(
-      250,
+    expect(upperTrimBounds?.count).toBeGreaterThan(100);
+    expect(zipperTrimBounds?.count).toBeGreaterThan(180);
+    expect(lowerTrimBounds?.count).toBeGreaterThan(100);
+    expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
+      lowerTrimBounds?.minY ?? 0,
     );
+    expect(
+      (zipperTrimBounds?.maxY ?? 0) - (zipperTrimBounds?.minY ?? 0),
+    ).toBeGreaterThan(
+      (upperTrimBounds?.maxY ?? 0) - (upperTrimBounds?.minY ?? 0),
+    );
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withZipperTrim.data),
+    ).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
   }, 20000);
 
   it("pinta por separado los tres vivos de la cremallera externa", async () => {

@@ -264,8 +264,6 @@ const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
 };
 
 const chestPocketTrimOverlayByFileName: Record<string, string> = {
-  "chest-pocket-point-zipper.svg":
-    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-trim.svg",
   "chest-pocket-zipper-external.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-trim.svg",
 };
@@ -274,6 +272,14 @@ const chestPocketSectionTrimOverlayByFileName: Record<
   string,
   { upper?: string; zipper?: string; lower?: string }
 > = {
+  "chest-pocket-point-zipper.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-upper-trim.svg",
+    zipper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-trim.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-lower-trim.svg",
+  },
   "chest-pocket-point.svg": {
     upper:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-upper-trim.svg",
@@ -301,7 +307,6 @@ const chestPocketSectionTrimOverlayByFileName: Record<
 };
 
 const fullChestPocketTrimOverlayFileNames = new Set([
-  "chest-pocket-point-zipper.svg",
   "chest-pocket-zipper-external.svg",
 ]);
 

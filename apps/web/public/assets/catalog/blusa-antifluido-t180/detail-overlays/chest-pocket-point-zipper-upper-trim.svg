@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1082 1350" width="1082" height="1350">
+  <g id="chest-pocket-point-zipper-upper-trim" transform="translate(600 390) scale(.45)">
+    <line
+      x1="30"
+      y1="30"
+      x2="350"
+      y2="30"
+      stroke="#1d1d1b"
+      stroke-width="8"
+      stroke-linecap="butt"
+    />
+  </g>
+</svg>
