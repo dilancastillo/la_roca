@@ -863,6 +863,14 @@ describe("renderDesignImage", () => {
   }, 20000);
 
   it("mantiene el bolsillo de pecho punta sin vivo", async () => {
+    const pointPocketMarkup = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const pocketScene: AutomationRenderScene = {
       ...baseScene,
       chestPocketAssetPath:
@@ -890,6 +898,9 @@ describe("renderDesignImage", () => {
       { x: 500, y: 345, width: 180, height: 250 },
     );
 
+    expect(pointPocketMarkup).toContain("L190,430");
+    expect(pointPocketMarkup).toContain('y1="105"');
+    expect(pointPocketMarkup).not.toContain("stroke-dasharray");
     expect(pocketInk).toBeGreaterThan(350);
     expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBe(0);
     expect(
