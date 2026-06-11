@@ -444,6 +444,12 @@ const session: ConfiguratorSession = {
           attributeName: "Seccion de vivo",
         },
         {
+          id: 7042,
+          name: "Cremallera",
+          attributeId: 92,
+          attributeName: "Seccion de vivo",
+        },
+        {
           id: 5147,
           name: "Cuello",
           attributeId: 92,
@@ -3157,11 +3163,11 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
-  it("muestra bolsillo de pecho Cremallera externo por nombre y pinta superior o inferior", () => {
+  it("muestra bolsillo de pecho Cremallera externo y separa sus tres vivos", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
       "102": [6105],
-      "92": [7040, 7041],
+      "92": [7040, 7042, 7041],
     });
 
     expect(scene.chestPocketAssetPath).toBe(
@@ -3180,6 +3186,12 @@ describe("deriveAutomationRenderScene", () => {
         role: "chestPocket",
         key: "bolsillo-pecho-inferior",
         label: "Bolsillo pecho inferior",
+        colorHex: "#f4c7cc",
+      },
+      {
+        valueId: 7042,
+        key: "cremallera",
+        label: "Cremallera",
         colorHex: "#f4c7cc",
       },
     ]);

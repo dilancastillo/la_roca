@@ -267,13 +267,21 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
 
 const chestPocketSectionTrimOverlayByFileName: Record<
   string,
-  { upper?: string; lower?: string }
+  { upper?: string; zipper?: string; lower?: string }
 > = {
   "chest-pocket-rectangular-model.svg": {
     upper:
       "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
     lower:
       "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
+  "chest-pocket-zipper-external.svg": {
+    upper:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-upper-trim.svg",
+    zipper:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-trim.svg",
+    lower:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-lower-trim.svg",
   },
 };
 
@@ -1143,6 +1151,12 @@ function isChestPocketLowerTrimSection(
     key.includes("bolsillo de pecho inferior") ||
     key.includes("bolsillo-pecho-inferior")
   );
+}
+
+function isZipperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  return normalize(section.label || section.key) === "cremallera";
 }
 
 function isSleeveTabTrimSection(section: PreviewScene["trimSections"][number]) {
@@ -2047,6 +2061,7 @@ type LowerPocketBandTrimColors = {
 type ChestPocketTrimColors = {
   generic?: string | undefined;
   upper?: string | undefined;
+  zipper?: string | undefined;
   lower?: string | undefined;
 };
 
@@ -2249,6 +2264,7 @@ async function drawChestPocketOverlay(
   if (sectionTrimOverlays) {
     for (const [section, trimColor] of [
       ["upper", trimColors.upper],
+      ["zipper", trimColors.zipper],
       ["lower", trimColors.lower],
     ] as const) {
       const trimSrc = sectionTrimOverlays[section];
@@ -3372,6 +3388,10 @@ async function composeSingleDesign(
       scene,
       isChestPocketLowerTrimSection,
     );
+    const chestPocketZipperTrimColor = getTrimSectionColor(
+      scene,
+      isZipperTrimSection,
+    );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
     const pantsSidePocketTrimColor = getTrimSectionColor(
       scene,
@@ -3528,6 +3548,7 @@ async function composeSingleDesign(
         {
           generic: chestPocketTrimColor,
           upper: chestPocketUpperTrimColor,
+          zipper: chestPocketZipperTrimColor,
           lower: chestPocketLowerTrimColor,
         },
       );

@@ -726,7 +726,7 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
-  it("pinta la cremallera externa del bolsillo de pecho", async () => {
+  it("pinta por separado los tres vivos de la cremallera externa", async () => {
     const externalZipperPocketMarkup = (
       await readFile(
         new URL(
@@ -742,7 +742,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pocketScene));
-    const withTrim = await readRawPng(
+    const withUpperTrim = await readRawPng(
       await renderDesignImage({
         ...pocketScene,
         trimSections: [
@@ -756,31 +756,90 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7042,
+            key: "cremallera",
+            label: "Cremallera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7041,
+            role: "chestPocket",
+            key: "bolsillo-pecho-inferior",
+            label: "Bolsillo pecho inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const pocketInk = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
       { x: 500, y: 330, width: 185, height: 250 },
     );
-    const zipperPinkWithoutTrim = countPastelPinkPixelsInRegion(
+    const zipperPinkWithoutTrim = getPastelPinkPixelBounds(
       withoutTrim.data,
       withoutTrim.info.width,
-      { x: 500, y: 335, width: 180, height: 90 },
+      withoutTrim.info.height,
     );
-    const zipperPinkWithTrim = countPastelPinkPixelsInRegion(
-      withTrim.data,
-      withTrim.info.width,
-      { x: 500, y: 335, width: 180, height: 90 },
+    const upperTrimBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const zipperTrimBounds = getPastelPinkPixelBounds(
+      withZipperTrim.data,
+      withZipperTrim.info.width,
+      withZipperTrim.info.height,
+    );
+    const lowerTrimBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
     );
 
     expect(externalZipperPocketMarkup).toContain('width="320"');
     expect(externalZipperPocketMarkup).toContain("external-zipper-hatch");
     expect(externalZipperPocketMarkup).not.toContain("stroke-dasharray");
     expect(pocketInk).toBeGreaterThan(900);
-    expect(zipperPinkWithoutTrim).toBeLessThan(20);
-    expect(zipperPinkWithTrim).toBeGreaterThan(180);
-    expect(countDifferentPixels(withoutTrim.data, withTrim.data)).toBeGreaterThan(
-      250,
+    expect(zipperPinkWithoutTrim).toBeUndefined();
+    expect(upperTrimBounds?.count).toBeGreaterThan(100);
+    expect(zipperTrimBounds?.count).toBeGreaterThan(180);
+    expect(lowerTrimBounds?.count).toBeGreaterThan(100);
+    expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
+      lowerTrimBounds?.minY ?? 0,
     );
+    expect(
+      (zipperTrimBounds?.maxY ?? 0) - (zipperTrimBounds?.minY ?? 0),
+    ).toBeGreaterThan(
+      (upperTrimBounds?.maxY ?? 0) - (upperTrimBounds?.minY ?? 0),
+    );
+    expect(
+      countDifferentPixels(withUpperTrim.data, withZipperTrim.data),
+    ).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withZipperTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutTrim.data, withZipperTrim.data),
+    ).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(100);
   }, 20000);
 
   it("pinta la cremallera interna del bolsillo de pecho", async () => {

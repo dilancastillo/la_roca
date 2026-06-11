@@ -274,13 +274,21 @@ const chestPocketTrimOverlayByFileName: Record<string, string> = {
 
 const chestPocketSectionTrimOverlayByFileName: Record<
   string,
-  { upper?: string; lower?: string }
+  { upper?: string; zipper?: string; lower?: string }
 > = {
   "chest-pocket-rectangular-model.svg": {
     upper:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
     lower:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
+  "chest-pocket-zipper-external.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-upper-trim.svg",
+    zipper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-trim.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-external-lower-trim.svg",
   },
 };
 
@@ -1148,6 +1156,12 @@ function isChestPocketLowerTrimSection(
   );
 }
 
+function isZipperTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  return normalize(section.label || section.key) === "cremallera";
+}
+
 function isSleeveTabTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -2007,7 +2021,7 @@ async function createChestPocketTrimOverlayBuffer(
 async function createChestPocketSectionTrimOverlayBuffer(
   assetPath: string,
   placementAssetPath: string,
-  section: "upper" | "lower",
+  section: "upper" | "zipper" | "lower",
 ) {
   const overlayPath =
     chestPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
@@ -3226,6 +3240,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isChestPocketLowerTrimSection,
     );
+    const chestPocketZipperTrimColor = getTrimSectionColor(
+      scene,
+      isZipperTrimSection,
+    );
     const flapTrimColor = getTrimSectionColor(scene, isFlapTrimSection);
     const pantsSidePocketTrimColor = getTrimSectionColor(
       scene,
@@ -3705,6 +3723,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       if (chestPocketSectionTrimOverlays) {
         for (const [section, trimColor] of [
           ["upper", chestPocketUpperTrimColor],
+          ["zipper", chestPocketZipperTrimColor],
           ["lower", chestPocketLowerTrimColor],
         ] as const) {
           if (!trimColor) {
