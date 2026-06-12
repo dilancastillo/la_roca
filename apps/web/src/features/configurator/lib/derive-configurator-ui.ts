@@ -679,6 +679,40 @@ export function getHiddenTextStyleAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenGenderAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const genderAttribute = findAttributeByName(
+    session,
+    (name) => name === "genero",
+  );
+
+  if (!genderAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const isWoman = getSelectedOptions(genderAttribute, selectedValueIds).some(
+    (value) => normalize(value.name) === "mujer",
+  );
+
+  if (isWoman) {
+    return hiddenAttributeIds;
+  }
+
+  for (const attribute of session.attributes) {
+    if (
+      attribute.id === 811 ||
+      normalize(attribute.name) === "modelo de blusa"
+    ) {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 export function sanitizeSelectedValueIdsForHiddenTextAttributes(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -709,8 +743,14 @@ function deriveSingleConfiguratorUi(
     session,
     selectedValueIds,
   );
+  const hiddenGenderAttributeIds = getHiddenGenderAttributeIds(
+    session,
+    selectedValueIds,
+  );
   const visibleAttributes = session.attributes.filter(
-    (attribute) => !hiddenTextStyleAttributeIds.has(attribute.id),
+    (attribute) =>
+      !hiddenTextStyleAttributeIds.has(attribute.id) &&
+      !hiddenGenderAttributeIds.has(attribute.id),
   );
   const groups = visibleAttributes.map((attribute) => {
     const controlType = getControlType(attribute);

@@ -709,6 +709,62 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("muestra Modelo de Blusa solamente cuando Genero es Mujer", () => {
+    const genderAttribute = {
+      id: 813,
+      name: "Género",
+      displayType: "radio" as const,
+      selectionMode: "single" as const,
+      variantMode: "no_variant" as const,
+      values: [
+        {
+          id: 8131,
+          name: "Hombre",
+          attributeId: 813,
+          attributeName: "Género",
+        },
+        {
+          id: 8132,
+          name: "Mujer",
+          attributeId: 813,
+          attributeName: "Género",
+        },
+      ],
+    };
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [genderAttribute, ...session.attributes],
+    };
+
+    const womanUi = deriveConfiguratorUi(sessionWithGender, {
+      ...session.selectedValueIds,
+      "813": [8132],
+    });
+    const manUi = deriveConfiguratorUi(sessionWithGender, {
+      ...session.selectedValueIds,
+      "813": [8131],
+    });
+
+    expect(
+      womanUi.groups.some((group) => group.attributeId === 811),
+    ).toBe(true);
+    expect(
+      womanUi.summary.some((item) => item.label === "Modelo de Blusa"),
+    ).toBe(true);
+    expect(manUi.groups.some((group) => group.attributeId === 811)).toBe(
+      false,
+    );
+    expect(
+      manUi.summary.some((item) => item.label === "Modelo de Blusa"),
+    ).toBe(false);
+  });
+
+  it("mantiene Modelo de Blusa visible si el producto no tiene Genero", () => {
+    const ui = deriveConfiguratorUi(session, session.selectedValueIds);
+
+    expect(ui.groups.some((group) => group.attributeId === 811)).toBe(true);
+  });
+
   it("agrega mangas Original como overlay independiente del modelo de cuello", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
