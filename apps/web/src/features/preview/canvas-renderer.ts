@@ -313,6 +313,8 @@ const garmentDetailOverlayByFileName: Record<string, string> = {
 const neckModelDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-39-el-hato.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
+  "blouse-model-04.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-inner-v.svg",
 };
 
 const LOGO_MARKER_FILL = "#1677ff";
