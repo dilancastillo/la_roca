@@ -244,18 +244,12 @@ function getOptionImageSource(
 
 function getControlType(
   attribute: ConfiguratorSession["attributes"][number],
-  session: ConfiguratorSession,
 ): UiAttributeGroup["controlType"] {
-  if (attribute.values.some((value) => value.colorHex)) {
+  if (attribute.displayType === "color") {
     return "color";
   }
 
-  if (
-    attribute.displayType === "image" ||
-    attribute.values.some((value) =>
-      Boolean(getOptionImageSource(session.graphicManifestKey, attribute, value)),
-    )
-  ) {
+  if (attribute.displayType === "image") {
     return "image";
   }
 
@@ -718,31 +712,38 @@ function deriveSingleConfiguratorUi(
   const visibleAttributes = session.attributes.filter(
     (attribute) => !hiddenTextStyleAttributeIds.has(attribute.id),
   );
-  const groups = visibleAttributes.map((attribute) => ({
-    attributeId: attribute.id,
-    label: attribute.name,
-    ...(isUniformeSession(session)
-      ? { category: getUniformAttributeCategory(attribute.name) }
-      : {}),
-    helpText: getHelpText(attribute.name),
-    controlType: getControlType(attribute, session),
-    selectionMode: attribute.selectionMode,
-    options: attribute.values.map((value) => {
-      const imageSrc = getOptionImageSource(
-        session.graphicManifestKey,
-        attribute,
-        value,
-      );
+  const groups = visibleAttributes.map((attribute) => {
+    const controlType = getControlType(attribute);
 
-      return {
-        id: value.id,
-        name: value.name,
-        allowsCustomValue: Boolean(value.allowsCustomValue),
-        ...(value.colorHex ? { colorHex: value.colorHex } : {}),
-        ...(imageSrc ? { imageSrc } : {}),
-      };
-    }),
-  }));
+    return {
+      attributeId: attribute.id,
+      label: attribute.name,
+      ...(isUniformeSession(session)
+        ? { category: getUniformAttributeCategory(attribute.name) }
+        : {}),
+      helpText: getHelpText(attribute.name),
+      controlType,
+      selectionMode: attribute.selectionMode,
+      options: attribute.values.map((value) => {
+        const imageSrc =
+          controlType === "image"
+            ? getOptionImageSource(
+                session.graphicManifestKey,
+                attribute,
+                value,
+              )
+            : undefined;
+
+        return {
+          id: value.id,
+          name: value.name,
+          allowsCustomValue: Boolean(value.allowsCustomValue),
+          ...(value.colorHex ? { colorHex: value.colorHex } : {}),
+          ...(imageSrc ? { imageSrc } : {}),
+        };
+      }),
+    };
+  });
 
   const colorAttribute =
     session.attributes.find(

@@ -686,7 +686,7 @@ describe("deriveConfiguratorUi", () => {
     );
     expect(ui.previewScene.lowerPocketLayout).toBe("double");
     expect(ui.groups.find((group) => group.attributeId === 63)?.controlType).toBe(
-      "image",
+      "chips",
     );
   });
 
@@ -727,6 +727,37 @@ describe("deriveConfiguratorUi", () => {
     ]);
     expect(ui.groups.find((group) => group.attributeId === 812)?.controlType).toBe(
       "image",
+    );
+  });
+
+  it("respeta el tipo de Odoo aunque una opcion tenga un asset visual local", () => {
+    const sessionWithRadioSleeves: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 812
+          ? {
+              ...attribute,
+              displayType: "radio",
+            }
+          : attribute,
+      ),
+    };
+
+    const ui = deriveConfiguratorUi(
+      sessionWithRadioSleeves,
+      {
+        ...sessionWithRadioSleeves.selectedValueIds,
+        "812": [8121],
+      },
+    );
+    const sleeveGroup = ui.groups.find((group) => group.attributeId === 812);
+
+    expect(sleeveGroup?.controlType).toBe("chips");
+    expect(
+      sleeveGroup?.options.find((option) => option.id === 8121)?.imageSrc,
+    ).toBeUndefined();
+    expect(ui.previewScene.garmentDetailImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
     );
   });
 
