@@ -649,6 +649,8 @@ const externalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const defaultExternalCollarLineFileNames = new Set(["blouse-model-01.svg"]);
+
 const completeInteriorCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -2370,6 +2372,22 @@ async function createExternalCollarTrimOverlayBuffer(
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
+async function createDefaultExternalCollarLineOverlayBuffers(
+  assetPath: string,
+) {
+  if (!defaultExternalCollarLineFileNames.has(getAssetFileName(assetPath))) {
+    return [];
+  }
+
+  const buffers = await Promise.all(
+    (["left", "right"] as const).map((side) =>
+      createExternalCollarTrimOverlayBuffer(assetPath, side, "#1d1d1b"),
+    ),
+  );
+
+  return buffers.filter((buffer): buffer is Buffer => Boolean(buffer));
+}
+
 async function createCompleteInteriorCollarTrimOverlayBuffer(
   assetPath: string,
   side: "left" | "right",
@@ -3464,6 +3482,15 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
       layers.push(
         `<image href="${toDataUri(completeInteriorCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    const defaultExternalCollarLineOverlayBuffers =
+      await createDefaultExternalCollarLineOverlayBuffers(baseAssetPath);
+
+    for (const overlayBuffer of defaultExternalCollarLineOverlayBuffers) {
+      layers.push(
+        `<image href="${toDataUri(overlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 

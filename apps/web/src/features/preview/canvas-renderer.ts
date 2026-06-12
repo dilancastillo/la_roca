@@ -642,6 +642,8 @@ const externalCollarTrimOverlayByFileName: Record<
   },
 };
 
+const defaultExternalCollarLineFileNames = new Set(["blouse-model-01.svg"]);
+
 const completeInteriorCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -3128,6 +3130,28 @@ async function drawExternalCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawDefaultExternalCollarLinesFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+) {
+  const fileName = getFileNameFromSource(sourceSrc);
+
+  if (!defaultExternalCollarLineFileNames.has(fileName)) {
+    return;
+  }
+
+  const overlays = externalCollarTrimOverlayByFileName[fileName];
+
+  if (!overlays) {
+    return;
+  }
+
+  for (const side of ["left", "right"] as const) {
+    const overlayCanvas = await createRasterCanvas(overlays[side], sourceSrc);
+    context.drawImage(recolorCanvasInk(overlayCanvas, "#1d1d1b"), 0, 0);
+  }
+}
+
 async function drawCompleteInteriorCollarTrimFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -3488,6 +3512,7 @@ async function composeSingleDesign(
       "right",
       rightCompleteInteriorCollarTrimColor,
     );
+    await drawDefaultExternalCollarLinesFromAsset(context, baseAssetSrc);
     await drawInternalCollarTrimFromAsset(
       context,
       baseAssetSrc,
