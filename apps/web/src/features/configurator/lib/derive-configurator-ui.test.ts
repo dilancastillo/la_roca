@@ -3724,6 +3724,87 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("solo muestra Opciones de cremallera cuando los bolsillos inferiores llevan cremallera", () => {
+    const toggleAttributeId = 12200;
+    const optionsAttributeId = 12203;
+    const sessionWithZipperOptions = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: toggleAttributeId,
+          name: "¿Bolsillos inferiores con cremallera?",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: 12201,
+              name: "No",
+              attributeId: toggleAttributeId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+            {
+              id: 12202,
+              name: "Sí",
+              attributeId: toggleAttributeId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+          ],
+        },
+        {
+          id: optionsAttributeId,
+          name: "Opciones de cremallera",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: 12204,
+              name: "Cremallera visible",
+              attributeId: optionsAttributeId,
+              attributeName: "Opciones de cremallera",
+            },
+          ],
+        },
+      ],
+    };
+    const selectedWithNo = {
+      ...session.selectedValueIds,
+      [String(toggleAttributeId)]: [12201],
+      [String(optionsAttributeId)]: [12204],
+    };
+
+    const uiWithNo = deriveConfiguratorUi(
+      sessionWithZipperOptions,
+      selectedWithNo,
+    );
+    const uiWithoutAnswer = deriveConfiguratorUi(sessionWithZipperOptions, {
+      ...session.selectedValueIds,
+      [String(optionsAttributeId)]: [12204],
+    });
+    const uiWithYes = deriveConfiguratorUi(sessionWithZipperOptions, {
+      ...session.selectedValueIds,
+      [String(toggleAttributeId)]: [12202],
+    });
+
+    expect(uiWithNo.groups.map((group) => group.label)).not.toContain(
+      "Opciones de cremallera",
+    );
+    expect(uiWithoutAnswer.groups.map((group) => group.label)).not.toContain(
+      "Opciones de cremallera",
+    );
+    expect(uiWithYes.groups.map((group) => group.label)).toContain(
+      "Opciones de cremallera",
+    );
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithZipperOptions,
+        selectedWithNo,
+      )[String(optionsAttributeId)],
+    ).toEqual([]);
+  });
+
   it("selecciona Color y fuente al activar cualquiera de los textos dependientes", () => {
     const textDependencies: Array<readonly [string, string]> = [
       [

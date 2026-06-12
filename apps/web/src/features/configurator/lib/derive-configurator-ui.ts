@@ -763,6 +763,56 @@ export function getHiddenTextStyleAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenLowerPocketZipperOptionAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const toggleAttribute = findAttributeByName(
+    session,
+    (name) =>
+      normalizedIncludesAll(name, [
+        "bolsillos",
+        "inferiores",
+        "cremallera",
+      ]) && !name.includes("opciones"),
+  );
+
+  if (!toggleAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const isEnabled = getSelectedOptions(
+    toggleAttribute,
+    selectedValueIds,
+  ).some((value) => isYesTextToggleValue(value.name));
+
+  if (isEnabled) {
+    return hiddenAttributeIds;
+  }
+
+  for (const attribute of session.attributes) {
+    if (normalize(attribute.name) === "opciones de cremallera") {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
+function getHiddenConditionalAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  return new Set([
+    ...getHiddenTextStyleAttributeIds(session, selectedValueIds),
+    ...getHiddenLowerPocketZipperOptionAttributeIds(
+      session,
+      selectedValueIds,
+    ),
+  ]);
+}
+
 function getHiddenGenderAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -809,7 +859,7 @@ export function sanitizeSelectedValueIdsForHiddenTextAttributes(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const hiddenAttributeIds = getHiddenTextStyleAttributeIds(
+  const hiddenAttributeIds = getHiddenConditionalAttributeIds(
     session,
     selectedValueIds,
   );
@@ -831,7 +881,7 @@ function deriveSingleConfiguratorUi(
   selectedValueIds: Record<string, number[]>,
 ): ConfiguratorUiModel {
   const catalog = getProductAssetCatalog(session.graphicManifestKey);
-  const hiddenTextStyleAttributeIds = getHiddenTextStyleAttributeIds(
+  const hiddenConditionalAttributeIds = getHiddenConditionalAttributeIds(
     session,
     selectedValueIds,
   );
@@ -841,7 +891,7 @@ function deriveSingleConfiguratorUi(
   );
   const visibleAttributes = session.attributes.filter(
     (attribute) =>
-      !hiddenTextStyleAttributeIds.has(attribute.id) &&
+      !hiddenConditionalAttributeIds.has(attribute.id) &&
       !hiddenGenderAttributeIds.has(attribute.id),
   );
   const groups = visibleAttributes.map((attribute) => {
