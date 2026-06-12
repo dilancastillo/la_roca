@@ -5083,6 +5083,14 @@ describe("renderDesignImage", () => {
   it("renderiza RECTANGULAR con el vivo inferior mas abajo que el superior", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg";
+    const lowerPocketSvg = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -5132,6 +5140,8 @@ describe("renderDesignImage", () => {
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
+    expect(lowerPocketSvg).toContain('y1="903.51"');
+    expect(lowerPocketSvg).not.toContain('y1="916.1"');
     expect(upperPinkBounds).toBeDefined();
     expect(lowerPinkBounds).toBeDefined();
     expect(

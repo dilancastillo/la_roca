@@ -163,7 +163,7 @@ const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
 };
 
 const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
-  "blouse-model-14.svg": [1, 2, 3, 4, 5, 6],
+  "blouse-model-14.svg": [1, 2, 3, 4],
   "blouse-model-15.svg": [4, 5, 6, 7],
   "blouse-model-16.svg": [1, 2, 3, 4, 5],
   "blouse-model-18.svg": [1, 2, 3],
@@ -183,7 +183,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
 };
 
 const lowerPocketTrimElementIndexesByFileName: Record<string, number[]> = {
-  "blouse-model-14.svg": [5, 6],
+  "blouse-model-14.svg": [3, 4],
   "blouse-model-15.svg": [5, 7],
   "blouse-model-19.svg": [4, 5, 6, 7],
   "blouse-model-33-oriental-lower-pocket.svg": [8, 9],
