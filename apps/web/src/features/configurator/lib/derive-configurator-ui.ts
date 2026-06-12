@@ -640,6 +640,91 @@ function isNoTextToggleValue(valueName: string) {
   return normalized === "no" || normalized === "sin texto";
 }
 
+function isYesTextToggleValue(valueName: string) {
+  const normalized = normalize(valueName);
+
+  return normalized === "si" || normalized === "con texto";
+}
+
+function findTextStyleAttributes(
+  session: ConfiguratorSession,
+  toggleAttributeId: number,
+  dependency: TextStyleAttributeDependency,
+) {
+  return session.attributes.filter(
+    (attribute) =>
+      attribute.id !== toggleAttributeId &&
+      normalizedIncludesAll(normalize(attribute.name), dependency.styleTerms),
+  );
+}
+
+export function applyDefaultTextStyleSelections(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  let nextSelectedValueIds = selectedValueIds;
+  let hasChanges = false;
+
+  for (const dependency of textStyleAttributeDependencies) {
+    const toggleAttribute = findAttributeByName(session, (name) =>
+      normalizedIncludesAll(name, dependency.toggleTerms) &&
+      !name.includes("color") &&
+      !name.includes("fuente"),
+    );
+
+    if (!toggleAttribute) {
+      continue;
+    }
+
+    const isTextEnabled = getSelectedOptions(
+      toggleAttribute,
+      selectedValueIds,
+    ).some((value) => isYesTextToggleValue(value.name));
+
+    if (!isTextEnabled) {
+      continue;
+    }
+
+    for (const styleAttribute of findTextStyleAttributes(
+      session,
+      toggleAttribute.id,
+      dependency,
+    )) {
+      if (
+        (nextSelectedValueIds[String(styleAttribute.id)] ?? []).length > 0
+      ) {
+        continue;
+      }
+
+      const defaultValue =
+        styleAttribute.values.find(
+          (value) => normalize(value.name) === "color y fuente",
+        ) ??
+        styleAttribute.values.find((value) =>
+          normalizedIncludesAll(normalize(value.name), ["color", "fuente"]),
+        );
+
+      if (!defaultValue) {
+        continue;
+      }
+
+      if (!hasChanges) {
+        nextSelectedValueIds = Object.fromEntries(
+          Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
+            attributeId,
+            [...valueIds],
+          ]),
+        );
+        hasChanges = true;
+      }
+
+      nextSelectedValueIds[String(styleAttribute.id)] = [defaultValue.id];
+    }
+  }
+
+  return nextSelectedValueIds;
+}
+
 export function getHiddenTextStyleAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -666,13 +751,12 @@ export function getHiddenTextStyleAttributeIds(
       continue;
     }
 
-    for (const attribute of session.attributes) {
-      if (
-        attribute.id !== toggleAttribute.id &&
-        normalizedIncludesAll(normalize(attribute.name), dependency.styleTerms)
-      ) {
-        hiddenAttributeIds.add(attribute.id);
-      }
+    for (const attribute of findTextStyleAttributes(
+      session,
+      toggleAttribute.id,
+      dependency,
+    )) {
+      hiddenAttributeIds.add(attribute.id);
     }
   }
 

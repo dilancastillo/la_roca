@@ -11,6 +11,7 @@ import { AttributeSection } from "../features/configurator/components/attribute-
 import { LogoUploadSection } from "../features/configurator/components/logo-upload-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
 import {
+  applyDefaultTextStyleSelections,
   computeDisabledValueIds,
   deriveConfiguratorUi,
   sanitizeSelectedValueIdsForHiddenTextAttributes,
@@ -43,6 +44,32 @@ function normalizeText(value: string) {
     .replace(/\p{Diacritic}/gu, "")
     .trim()
     .toLowerCase();
+}
+
+function synchronizeTextAttributeSelections(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+  preferredValueId?: number,
+) {
+  const validSelections = sanitizeSelectedValueIdsForExclusions(
+    session,
+    selectedValueIds,
+    preferredValueId,
+  );
+  const visibleSelections = sanitizeSelectedValueIdsForHiddenTextAttributes(
+    session,
+    validSelections,
+  );
+  const selectionsWithDefaults = applyDefaultTextStyleSelections(
+    session,
+    visibleSelections,
+  );
+
+  return sanitizeSelectedValueIdsForExclusions(
+    session,
+    selectionsWithDefaults,
+    preferredValueId,
+  );
 }
 
 function isNoTrimValueName(value: string) {
@@ -186,12 +213,9 @@ export function ConfiguratorPage() {
     dispatch({
       type: "INITIALIZE",
       value: {
-        selectedValueIds: sanitizeSelectedValueIdsForHiddenTextAttributes(
+        selectedValueIds: synchronizeTextAttributeSelections(
           sessionQuery.data,
-          sanitizeSelectedValueIdsForExclusions(
-            sessionQuery.data,
-            sessionQuery.data.selectedValueIds,
-          ),
+          sessionQuery.data.selectedValueIds,
         ),
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
@@ -542,13 +566,10 @@ export function ConfiguratorPage() {
       ...state.selectedValueIds,
       [String(attributeId)]: [valueId],
     };
-    const sanitizedSelectedValueIds = sanitizeSelectedValueIdsForHiddenTextAttributes(
+    const sanitizedSelectedValueIds = synchronizeTextAttributeSelections(
       session,
-      sanitizeSelectedValueIdsForExclusions(
-        session,
-        nextSelectedValueIds,
-        valueId,
-      ),
+      nextSelectedValueIds,
+      valueId,
     );
 
     dispatch({
@@ -590,13 +611,10 @@ export function ConfiguratorPage() {
 
     dispatch({
       type: "SET_SELECTIONS",
-      value: sanitizeSelectedValueIdsForHiddenTextAttributes(
+      value: synchronizeTextAttributeSelections(
         session,
-        sanitizeSelectedValueIdsForExclusions(
-          session,
-          nextSelectedValueIds,
-          isSelecting ? valueId : undefined,
-        ),
+        nextSelectedValueIds,
+        isSelecting ? valueId : undefined,
       ),
     });
     collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
@@ -666,7 +684,7 @@ export function ConfiguratorPage() {
       return;
     }
 
-    const selectedValueIdsForSave = sanitizeSelectedValueIdsForHiddenTextAttributes(
+    const selectedValueIdsForSave = synchronizeTextAttributeSelections(
       session,
       state.selectedValueIds,
     );

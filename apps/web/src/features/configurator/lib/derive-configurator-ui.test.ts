@@ -2,6 +2,7 @@ import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import { describe, expect, it } from "vitest";
 import {
+  applyDefaultTextStyleSelections,
   deriveConfiguratorUi,
   sanitizeSelectedValueIdsForHiddenTextAttributes,
 } from "./derive-configurator-ui";
@@ -3721,5 +3722,107 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.groups.map((group) => group.label)).toContain(
       "Color y fuente de Texto en manga derecha",
     );
+  });
+
+  it("selecciona Color y fuente al activar cualquiera de los textos dependientes", () => {
+    const textDependencies: Array<readonly [string, string]> = [
+      [
+        "¿Texto en pecho encima del bolsillo?",
+        "Color y fuente de texto en pecho encima del bolsillo",
+      ],
+      [
+        "¿Texto en bolsillo superior de pecho?",
+        "Color y fuente de Texto en bolsillo superior de pecho",
+      ],
+      [
+        "¿Texto en bolsillo inferior de pecho?",
+        "Color y fuente de Texto en bolsillo inferior de pecho",
+      ],
+      [
+        "¿Texto en manga derecha?",
+        "Color y fuente de Texto en manga derecha",
+      ],
+      [
+        "¿Texto en manga izquierda?",
+        "Color y fuente de Texto en manga izquierda",
+      ],
+      ["¿Texto en espalda?", "Color y fuente de Texto en espalda"],
+    ];
+    const textAttributes = textDependencies.flatMap(
+      ([toggleName, styleName], index) => {
+        const baseId = 13000 + index * 10;
+
+        return [
+          {
+            id: baseId,
+            name: toggleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 1,
+                name: "No",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+              {
+                id: baseId + 2,
+                name: "Sí",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+            ],
+          },
+          {
+            id: baseId + 3,
+            name: styleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 4,
+                name: "Color y fuente",
+                attributeId: baseId + 3,
+                attributeName: styleName,
+              },
+              {
+                id: baseId + 5,
+                name: "Otra configuración",
+                attributeId: baseId + 3,
+                attributeName: styleName,
+              },
+            ],
+          },
+        ];
+      },
+    );
+    const sessionWithTextAttributes = {
+      ...session,
+      attributes: [...session.attributes, ...textAttributes],
+    };
+    const selectedValueIds = {
+      ...session.selectedValueIds,
+      ...Object.fromEntries(
+        textDependencies.map((_, index) => {
+          const baseId = 13000 + index * 10;
+          return [String(baseId), [baseId + 2]];
+        }),
+      ),
+      "13013": [13015],
+    };
+
+    const result = applyDefaultTextStyleSelections(
+      sessionWithTextAttributes,
+      selectedValueIds,
+    );
+
+    for (let index = 0; index < textDependencies.length; index += 1) {
+      const baseId = 13000 + index * 10;
+      const expectedValueId = index === 1 ? baseId + 5 : baseId + 4;
+
+      expect(result[String(baseId + 3)]).toEqual([expectedValueId]);
+    }
   });
 });
