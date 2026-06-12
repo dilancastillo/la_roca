@@ -2705,6 +2705,14 @@ describe("renderDesignImage", () => {
   it("renderiza CUELLO V con vivos lineales, completos interiores y cogotera recta", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+    const neckSvg = (
+      await readFile(
+        new URL(
+          "../../../../apps/web/public/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+          import.meta.url,
+        ),
+      )
+    ).toString("utf8");
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -2840,6 +2848,8 @@ describe("renderDesignImage", () => {
       { x: 300, y: 120, width: 300, height: 35 },
     );
 
+    expect(neckSvg).toContain('id="cuello-v-interior-base"');
+    expect(neckSvg).toContain("M390.5 144 L537.5 388.5 L680 144");
     expect(
       countDifferentPixels(withoutTrim.data, withLeftExternal.data),
     ).toBeGreaterThan(100);
