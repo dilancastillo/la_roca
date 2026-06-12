@@ -702,9 +702,17 @@ function getHiddenGenderAttributeIds(
   }
 
   for (const attribute of session.attributes) {
+    const normalizedName = normalize(attribute.name);
+    const normalizedNameWithoutQuestionMarks = normalizedName.replace(
+      /[¿?]/g,
+      "",
+    );
+
     if (
       attribute.id === 811 ||
-      normalize(attribute.name) === "modelo de blusa"
+      normalizedName === "modelo de blusa" ||
+      attribute.id === 144 ||
+      normalizedNameWithoutQuestionMarks === "pinzas"
     ) {
       hiddenAttributeIds.add(attribute.id);
     }
