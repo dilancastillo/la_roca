@@ -3473,6 +3473,61 @@ describe("renderDesignImage", () => {
     expect(rightChestStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
+  it("oculta las lineas de manga Original hasta seleccionar su vivo", async () => {
+    const originalSleevesAssetPath =
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg";
+    const withoutSleeveModel = await readRawPng(
+      await renderDesignImage(baseScene),
+    );
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentDetailAssetPaths: [originalSleevesAssetPath],
+      }),
+    );
+    const withUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentDetailAssetPaths: [originalSleevesAssetPath],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentDetailAssetPaths: [originalSleevesAssetPath],
+        trimSections: [
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(
+      countDifferentPixels(withoutSleeveModel.data, withoutTrim.data),
+    ).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withUpperTrim.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withoutTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(500);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
+    ).toBeGreaterThan(500);
+  }, 20000);
+
   it("ajusta las mangas Original al contorno de ESTRELLA", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-22-estrella.svg";

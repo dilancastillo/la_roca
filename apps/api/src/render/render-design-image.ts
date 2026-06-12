@@ -2777,11 +2777,12 @@ function getOriginalSleeveLineSvg(
   `;
 }
 
+function isOriginalSleevesDetailAsset(assetPath: string) {
+  return getAssetFileName(assetPath) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME;
+}
+
 function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
-  return assetPaths.some(
-    (assetPath) =>
-      getAssetFileName(assetPath) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME,
-  );
+  return assetPaths.some(isOriginalSleevesDetailAsset);
 }
 
 function getOriginalSleeveTrimShapes(placementAssetPath: string) {
@@ -2829,10 +2830,6 @@ async function getOriginalSleevesTrimSvg(
           <polygon
             points="${getTransformedPolygonPoints(shape.points, transform)}"
             fill="${fillTrimColor}"
-            stroke="#111827"
-            stroke-width="4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
           />
         `,
       ),
@@ -3135,6 +3132,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       hasOriginalSleevesDetailAsset(garmentDetailAssetPaths);
 
     for (const garmentDetailAssetPath of garmentDetailAssetPaths) {
+      if (isOriginalSleevesDetailAsset(garmentDetailAssetPath)) {
+        continue;
+      }
+
       const garmentDetailAssetOverlayBuffer =
         await createGarmentDetailAssetOverlayBuffer(
           garmentDetailAssetPath,

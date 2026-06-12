@@ -2479,10 +2479,14 @@ function strokeOriginalSleeveLine(
   context.stroke();
 }
 
-function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
-  return overlaySrcs.some(
-    (src) => getFileNameFromSource(src) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME,
+function isOriginalSleevesDetailOverlay(overlaySrc: string) {
+  return (
+    getFileNameFromSource(overlaySrc) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME
   );
+}
+
+function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
+  return overlaySrcs.some(isOriginalSleevesDetailOverlay);
 }
 
 function getOriginalSleeveTrimShapes(placementSrc: string) {
@@ -2520,14 +2524,11 @@ async function drawOriginalSleevesTrim(
 
   if (trimColors.fill) {
     context.fillStyle = trimColors.fill;
-    context.strokeStyle = "#111827";
-    context.lineWidth = 4;
     context.lineJoin = "round";
 
     for (const shape of trimShapes) {
       traceOriginalSleevePolygon(context, shape.points, transform);
       context.fill();
-      context.stroke();
     }
   }
 
@@ -3305,6 +3306,10 @@ async function composeSingleDesign(
       hasOriginalSleevesDetailOverlay(garmentDetailImageSrcs);
 
     for (const garmentDetailImageSrc of garmentDetailImageSrcs) {
+      if (isOriginalSleevesDetailOverlay(garmentDetailImageSrc)) {
+        continue;
+      }
+
       await drawGarmentDetailOverlay(
         context,
         garmentDetailImageSrc,
