@@ -8,6 +8,7 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 import { AttributeSection } from "../features/configurator/components/attribute-section";
+import { LogoUploadSection } from "../features/configurator/components/logo-upload-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
 import {
   computeDisabledValueIds,
@@ -149,6 +150,8 @@ export function ConfiguratorPage() {
   const [logoAttachment, setLogoAttachment] =
     useState<UploadedAttachment | null>(null);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [isLogoUploadExpanded, setIsLogoUploadExpanded] = useState(true);
+  const [isLogoUploadActive, setIsLogoUploadActive] = useState(false);
   const [expandedAttributeId, setExpandedAttributeId] = useState<number | null>(null);
   const [invalidCustomValueIds, setInvalidCustomValueIds] = useState<Set<number>>(
     () => new Set<number>(),
@@ -158,12 +161,14 @@ export function ConfiguratorPage() {
     null,
   );
   const attributeSectionRefs = useRef(new Map<number, HTMLDivElement>());
+  const logoUploadSectionRef = useRef<HTMLDivElement | null>(null);
   const configuratorPanelRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const hasInitializedExpandedAttributeRef = useRef(false);
   const initializedLineIdRef = useRef<number | null>(null);
   const latestPreviewSceneKeyRef = useRef("");
   const previousLineIdRef = useRef<number | null>(null);
+  const previousLogoSelectionKeyRef = useRef("");
 
   const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
   const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
@@ -209,6 +214,27 @@ export function ConfiguratorPage() {
 
     setLogoAttachment(null);
     setLogoUploadError(null);
+    setIsLogoUploadActive(false);
+    setIsLogoUploadExpanded(true);
+    previousLogoSelectionKeyRef.current = "";
+  }, [uiModel?.logoSelection]);
+
+  useEffect(() => {
+    if (!uiModel?.logoSelection) {
+      return;
+    }
+
+    const selectionKey = `${uiModel.logoSelection.attributeId}:${uiModel.logoSelection.valueIds.join(",")}`;
+
+    if (selectionKey === previousLogoSelectionKeyRef.current) {
+      return;
+    }
+
+    previousLogoSelectionKeyRef.current = selectionKey;
+    setExpandedAttributeId(null);
+    setIsLogoUploadExpanded(true);
+    setIsLogoUploadActive(true);
+    scheduleLogoUploadScroll();
   }, [uiModel?.logoSelection]);
 
   const previewSceneKey = useMemo(
@@ -229,6 +255,8 @@ export function ConfiguratorPage() {
     hasInitializedExpandedAttributeRef.current = false;
     setExpandedAttributeId(null);
     setLastEditedAttributeId(null);
+    setIsLogoUploadActive(false);
+    setIsLogoUploadExpanded(true);
     setInvalidCustomValueIds(new Set());
     setCurrentPreview(null);
   }, [lineId]);
@@ -345,6 +373,10 @@ export function ConfiguratorPage() {
   const completedGroups = ui.groups.filter(
     (group) => (state.selectedValueIds[String(group.attributeId)] ?? []).length > 0,
   ).length;
+  const hasLogoUploadStep = Boolean(ui.logoSelection);
+  const totalSteps = ui.groups.length + (hasLogoUploadStep ? 1 : 0);
+  const completedSteps =
+    completedGroups + (hasLogoUploadStep && logoAttachment ? 1 : 0);
   const firstIncompleteGroup =
     ui.groups.find(
       (group) =>
@@ -361,8 +393,29 @@ export function ConfiguratorPage() {
       ? -1
       : ui.groups.findIndex((group) => group.attributeId === activeAttributeId);
   const activeGroup = activeGroupIndex >= 0 ? ui.groups[activeGroupIndex] : null;
+  const logoAttributeIndex = ui.logoSelection
+    ? ui.groups.findIndex(
+        (group) => group.attributeId === ui.logoSelection?.attributeId,
+      )
+    : -1;
+  const activeStepIndex = isLogoUploadActive
+    ? logoAttributeIndex + 1
+    : activeGroupIndex +
+      (hasLogoUploadStep &&
+      logoAttributeIndex >= 0 &&
+      activeGroupIndex > logoAttributeIndex
+        ? 1
+        : 0);
+  const activeStepLabel = isLogoUploadActive
+    ? "Imagen de logo"
+    : activeGroup?.label;
+  const activeStepSelection = isLogoUploadActive
+    ? logoAttachment?.filename ?? "Pendiente de cargar"
+    : activeGroup
+      ? getSelectionLabel(activeGroup.attributeId)
+      : "";
   const completionPercent =
-    ui.groups.length > 0 ? Math.round((completedGroups / ui.groups.length) * 100) : 0;
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const hasNotices = session.warnings.length > 0 || isReadOnly;
   const noticeHeadline = isReadOnly
     ? "Modo lectura activo"
@@ -442,10 +495,39 @@ export function ConfiguratorPage() {
     });
   }
 
+  function scheduleLogoUploadScroll() {
+    if (scrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollFrameRef.current);
+    }
+
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        scrollFrameRef.current = null;
+        const scrollContainer = configuratorPanelRef.current;
+        const targetSection = logoUploadSectionRef.current;
+
+        if (!scrollContainer || !targetSection) {
+          return;
+        }
+
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const targetRect = targetSection.getBoundingClientRect();
+        const targetTop =
+          scrollContainer.scrollTop + targetRect.top - containerRect.top - 8;
+
+        scrollContainer.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: "auto",
+        });
+      });
+    });
+  }
+
   function handleAttributeExpandToggle(attributeId: number) {
     const shouldExpand = expandedAttributeId !== attributeId;
 
     setExpandedAttributeId(shouldExpand ? attributeId : null);
+    setIsLogoUploadActive(false);
 
     if (shouldExpand) {
       setLastEditedAttributeId(attributeId);
@@ -455,6 +537,7 @@ export function ConfiguratorPage() {
 
   function handleSingleSelect(attributeId: number, valueId: number) {
     setLastEditedAttributeId(attributeId);
+    setIsLogoUploadActive(false);
     const nextSelectedValueIds = {
       ...state.selectedValueIds,
       [String(attributeId)]: [valueId],
@@ -477,6 +560,7 @@ export function ConfiguratorPage() {
 
   function handleMultiToggle(attributeId: number, valueId: number) {
     setLastEditedAttributeId(attributeId);
+    setIsLogoUploadActive(false);
     const key = String(attributeId);
     const group = ui.groups.find((item) => item.attributeId === attributeId);
     const toggledOption = group?.options.find((option) => option.id === valueId);
@@ -540,6 +624,7 @@ export function ConfiguratorPage() {
     event.currentTarget.value = "";
     setLogoUploadError(null);
     setSaveError(null);
+    setIsLogoUploadActive(true);
 
     if (!file) {
       return;
@@ -623,6 +708,10 @@ export function ConfiguratorPage() {
         `Carga la imagen del logo para "${ui.logoSelection.label}" antes de guardar.`,
       );
       setSaveError("Falta cargar la imagen obligatoria del logo.");
+      setExpandedAttributeId(null);
+      setIsLogoUploadExpanded(true);
+      setIsLogoUploadActive(true);
+      scheduleLogoUploadScroll();
       return;
     }
 
@@ -783,6 +872,7 @@ export function ConfiguratorPage() {
                   return (
                     <div
                       key={group.attributeId}
+                      className="attribute-flow-item"
                       ref={(node) => {
                         if (node) {
                           attributeSectionRefs.current.set(group.attributeId, node);
@@ -802,7 +892,10 @@ export function ConfiguratorPage() {
                         disabledValueIds={disabledValueIds}
                         disabled={isReadOnly}
                         expanded={expandedAttributeId === group.attributeId}
-                        isActive={activeAttributeId === group.attributeId}
+                        isActive={
+                          !isLogoUploadActive &&
+                          activeAttributeId === group.attributeId
+                        }
                         selectionLabel={getSelectionLabel(group.attributeId)}
                         customValuesByValueId={state.customValuesByValueId}
                         onExpandToggle={() =>
@@ -820,6 +913,33 @@ export function ConfiguratorPage() {
                         }}
                         invalidCustomValueIds={invalidCustomValueIds}
                       />
+
+                      {ui.logoSelection?.attributeId === group.attributeId ? (
+                        <div ref={logoUploadSectionRef}>
+                          <LogoUploadSection
+                            placementLabel={ui.logoSelection.label}
+                            attachmentFilename={logoAttachment?.filename}
+                            error={logoUploadError}
+                            accept={LOGO_ATTACHMENT_ACCEPT}
+                            disabled={isReadOnly || isSaving}
+                            expanded={isLogoUploadExpanded}
+                            isActive={isLogoUploadActive}
+                            onExpandToggle={() => {
+                              setExpandedAttributeId(null);
+                              setIsLogoUploadActive(true);
+                              setIsLogoUploadExpanded((current) => !current);
+                              scheduleLogoUploadScroll();
+                            }}
+                            onFileChange={handleLogoFileChange}
+                            onRemove={() => {
+                              setLogoAttachment(null);
+                              setLogoUploadError(null);
+                              setIsLogoUploadActive(true);
+                              setIsLogoUploadExpanded(true);
+                            }}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -829,19 +949,18 @@ export function ConfiguratorPage() {
                 <div className="save-panel__status-row">
                   <div className="save-panel__summary">
                     <strong>
-                      {completedGroups}/{ui.groups.length} listos
+                      {completedSteps}/{totalSteps} listos
                     </strong>
                     <span>{completionPercent}% completo</span>
                   </div>
 
-                  {activeGroup ? (
+                  {activeStepLabel ? (
                     <div className="save-panel__current-step" aria-live="polite">
                       <span>Paso actual</span>
                       <strong>
-                        {activeGroupIndex + 1}/{ui.groups.length} -{" "}
-                        {activeGroup.label}
+                        {activeStepIndex + 1}/{totalSteps} - {activeStepLabel}
                       </strong>
-                      <small>{getSelectionLabel(activeGroup.attributeId)}</small>
+                      <small>{activeStepSelection}</small>
                     </div>
                   ) : null}
 
@@ -858,54 +977,6 @@ export function ConfiguratorPage() {
                 >
                   <span style={{ width: `${completionPercent}%` }} />
                 </div>
-
-                {ui.logoSelection ? (
-                  <div className="logo-upload-panel">
-                    <div className="logo-upload-panel__header">
-                      <div>
-                        <strong>Imagen de logo</strong>
-                        <span>{ui.logoSelection.label}</span>
-                      </div>
-                      {!isReadOnly ? (
-                        <label className="logo-upload-panel__action">
-                          <input
-                            type="file"
-                            accept={LOGO_ATTACHMENT_ACCEPT}
-                            disabled={isSaving}
-                            onChange={handleLogoFileChange}
-                          />
-                          {logoAttachment ? "Cambiar" : "Cargar"}
-                        </label>
-                      ) : null}
-                    </div>
-
-                    {logoAttachment ? (
-                      <div className="logo-upload-panel__file">
-                        <span>{logoAttachment.filename}</span>
-                        {!isReadOnly ? (
-                          <button
-                            type="button"
-                            className="logo-upload-panel__remove"
-                            onClick={() => setLogoAttachment(null)}
-                            disabled={isSaving}
-                          >
-                            Quitar
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <p className="logo-upload-panel__hint">
-                        Obligatorio: adjunta la imagen real del logo para poder guardar.
-                      </p>
-                    )}
-
-                    {logoUploadError ? (
-                      <p className="error-banner" role="alert">
-                        {logoUploadError}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
 
                 <button
                   type="submit"
