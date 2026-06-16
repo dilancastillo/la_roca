@@ -331,8 +331,8 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
-const SLEEVE_TAB_MARKER_RADIUS = 22;
-const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 28;
+const SLEEVE_TAB_MARKER_RADIUS = 24;
+const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 30;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
@@ -2388,28 +2388,30 @@ function drawSleeveTabMarkers(
   for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
     context.beginPath();
     context.fillStyle = LOGO_MARKER_OUTLINE;
-    context.arc(
-      position.x,
-      position.y,
-      SLEEVE_TAB_MARKER_OUTLINE_RADIUS,
-      0,
-      Math.PI * 2,
-    );
+    drawCenteredTrianglePath(context, position, SLEEVE_TAB_MARKER_OUTLINE_RADIUS);
     context.fill();
 
     context.beginPath();
     context.fillStyle = trimColor;
-    context.arc(
-      position.x,
-      position.y,
-      SLEEVE_TAB_MARKER_RADIUS,
-      0,
-      Math.PI * 2,
-    );
+    drawCenteredTrianglePath(context, position, SLEEVE_TAB_MARKER_RADIUS);
     context.fill();
   }
 
   context.restore();
+}
+
+function drawCenteredTrianglePath(
+  context: CanvasRenderingContext2D,
+  position: { x: number; y: number },
+  radius: number,
+) {
+  const halfBase = radius * 0.866;
+  const bottomY = position.y + radius * 0.5;
+
+  context.moveTo(position.x, position.y - radius);
+  context.lineTo(position.x + halfBase, bottomY);
+  context.lineTo(position.x - halfBase, bottomY);
+  context.closePath();
 }
 
 type OriginalSleevePoint = readonly [number, number];

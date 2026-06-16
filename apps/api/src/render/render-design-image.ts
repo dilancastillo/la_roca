@@ -338,8 +338,8 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
-const SLEEVE_TAB_MARKER_RADIUS = 22;
-const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 28;
+const SLEEVE_TAB_MARKER_RADIUS = 24;
+const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 30;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
@@ -2739,10 +2739,26 @@ function getLogoMarkerSvg(placement: string) {
 function getSleeveTabMarkersSvg(trimColor: string) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
     (position) => `
-      <circle cx="${position.x}" cy="${position.y}" r="${SLEEVE_TAB_MARKER_OUTLINE_RADIUS}" fill="${LOGO_MARKER_OUTLINE}" />
-      <circle cx="${position.x}" cy="${position.y}" r="${SLEEVE_TAB_MARKER_RADIUS}" fill="${trimColor}" />
+      ${getSleeveTabMarkerTriangleSvg(position, SLEEVE_TAB_MARKER_OUTLINE_RADIUS, LOGO_MARKER_OUTLINE)}
+      ${getSleeveTabMarkerTriangleSvg(position, SLEEVE_TAB_MARKER_RADIUS, trimColor)}
     `,
   ).join("");
+}
+
+function getSleeveTabMarkerTriangleSvg(
+  position: { x: number; y: number },
+  radius: number,
+  fill: string,
+) {
+  const halfBase = radius * 0.866;
+  const bottomY = position.y + radius * 0.5;
+  const points = [
+    `${position.x},${position.y - radius}`,
+    `${position.x + halfBase},${bottomY}`,
+    `${position.x - halfBase},${bottomY}`,
+  ].join(" ");
+
+  return `<polygon points="${points}" fill="${fill}" />`;
 }
 
 type OriginalSleevePoint = readonly [number, number];
