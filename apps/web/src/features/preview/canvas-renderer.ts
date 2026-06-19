@@ -342,6 +342,8 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
 ] as const;
 const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
   "blouse-model-32-original-sleeves.svg";
+const PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY =
+  "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-07-puntadas-original-sleeves.svg";
 const ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
@@ -376,6 +378,54 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
+  ORIGINAL_SLEEVE_TRIM_SHAPES[0],
+  {
+    points: [
+      [976.14, 517],
+      [844.79, 623.6],
+      [835.54, 612.11],
+      [972.03, 503.56],
+    ],
+    upper: [
+      [972.03, 503.56],
+      [835.54, 612.11],
+    ],
+    lower: [
+      [976.14, 517],
+      [844.79, 623.6],
+    ],
+  },
+] as const;
+const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
+  "blouse-model-01.svg",
+  "blouse-model-02-jdc.svg",
+  "blouse-model-04.svg",
+  "blouse-model-05.svg",
+  "blouse-model-10.svg",
+  "blouse-model-11-fisiopracticas.svg",
+  "blouse-model-12-cherokee.svg",
+  "blouse-model-13-p-paipilla.svg",
+  "blouse-model-15-presillas.svg",
+  "blouse-model-21-deportivo.svg",
+  "blouse-model-23-polo.svg",
+  "blouse-model-24-botones.svg",
+  "blouse-model-25-20-21.svg",
+  "blouse-model-26-cuello-redondo.svg",
+  "blouse-model-27-cremallera.svg",
+  "blouse-model-28-modelo-29.svg",
+  "blouse-model-29-pedagogia.svg",
+  "blouse-model-30.svg",
+  "blouse-model-33-oriental.svg",
+  "blouse-model-34-cuello-alto-cremallera.svg",
+  "blouse-model-37-cirugia.svg",
+  "blouse-model-40-mariposa.svg",
+  "blouse-model-41-matrioska.svg",
+  "blouse-model-42.svg",
+  "blouse-model-43.svg",
+  "blouse-model-44-cucuta.svg",
+  "blouse-model-50-20-20.svg",
+]);
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   "blouse-model-04.svg": [
     ORIGINAL_SLEEVE_TRIM_SHAPES[0],
@@ -397,42 +447,10 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
     },
   ],
   "blouse-model-06-puntas.svg": [
-    ORIGINAL_SLEEVE_TRIM_SHAPES[0],
-    {
-      points: [
-        [976.14, 517],
-        [844.79, 623.6],
-        [835.54, 612.11],
-        [972.03, 503.56],
-      ],
-      upper: [
-        [972.03, 503.56],
-        [835.54, 612.11],
-      ],
-      lower: [
-        [976.14, 517],
-        [844.79, 623.6],
-      ],
-    },
+    ...PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES,
   ],
   "blouse-model-07.svg": [
-    ORIGINAL_SLEEVE_TRIM_SHAPES[0],
-    {
-      points: [
-        [976.14, 517],
-        [844.79, 623.6],
-        [835.54, 612.11],
-        [972.03, 503.56],
-      ],
-      upper: [
-        [972.03, 503.56],
-        [835.54, 612.11],
-      ],
-      lower: [
-        [976.14, 517],
-        [844.79, 623.6],
-      ],
-    },
+    ...PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES,
   ],
   "blouse-model-08.svg": [
     {
@@ -577,7 +595,7 @@ const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> 
   "blouse-model-06-puntas.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-06-puntas-original-sleeves.svg",
   "blouse-model-07.svg":
-    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-07-puntadas-original-sleeves.svg",
+    PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY,
   "blouse-model-08.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-08-cuello-alto-original-sleeves.svg",
   "blouse-model-09.svg":
@@ -2556,9 +2574,15 @@ function isPespunteDetailOverlay(overlaySrc: string) {
 }
 
 function getOriginalSleeveTrimShapes(placementSrc: string) {
+  const placementFileName = getFileNameFromSource(placementSrc);
+
+  if (PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES.has(placementFileName)) {
+    return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
   return (
     ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
-      getFileNameFromSource(placementSrc) as keyof typeof ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME
+      placementFileName as keyof typeof ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME
     ] ?? ORIGINAL_SLEEVE_TRIM_SHAPES
   );
 }
@@ -2568,10 +2592,15 @@ function resolveGarmentDetailOverlaySrc(overlaySrc: string, placementSrc: string
     return overlaySrc;
   }
 
+  const placementFileName = getFileNameFromSource(placementSrc);
+
+  if (PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES.has(placementFileName)) {
+    return PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY;
+  }
+
   return (
-    ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME[
-      getFileNameFromSource(placementSrc)
-    ] ?? overlaySrc
+    ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME[placementFileName] ??
+    overlaySrc
   );
 }
 

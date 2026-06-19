@@ -3723,6 +3723,61 @@ describe("renderDesignImage", () => {
     expect(oldRightInnerStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
+  it("usa las mangas Original alineadas a PUNTADAS en modelos solicitados", async () => {
+    const alignedNeckAssetPaths = [
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",
+    ];
+
+    for (const neckAssetPath of alignedNeckAssetPaths) {
+      const withSleeveTrim = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          neckAssetPath,
+          garmentDetailAssetPaths: [
+            "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+          ],
+          trimSections: [
+            {
+              valueId: 7401,
+              key: "manga-lineal-superior",
+              label: "Manga lineal superior",
+              colorHex: "#f4c7cc",
+            },
+            {
+              valueId: 7402,
+              key: "manga-lineal-inferior",
+              label: "Manga lineal inferior",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        }),
+      );
+      const leftSleevePinkPixels = countPastelPinkPixelsInRegion(
+        withSleeveTrim.data,
+        withSleeveTrim.info.width,
+        { x: 155, y: 450, width: 130, height: 125 },
+      );
+      const rightSleevePinkPixels = countPastelPinkPixelsInRegion(
+        withSleeveTrim.data,
+        withSleeveTrim.info.width,
+        { x: 645, y: 450, width: 115, height: 120 },
+      );
+      const oldRightInnerStrayPinkPixels = countPastelPinkPixelsInRegion(
+        withSleeveTrim.data,
+        withSleeveTrim.info.width,
+        { x: 625, y: 520, width: 18, height: 38 },
+      );
+
+      expect(leftSleevePinkPixels, neckAssetPath).toBeGreaterThan(700);
+      expect(rightSleevePinkPixels, neckAssetPath).toBeGreaterThan(700);
+      expect(oldRightInnerStrayPinkPixels, neckAssetPath).toBeLessThan(80);
+    }
+  }, 40000);
+
   it("ajusta ambas mangas Original al contorno de CUELLO ALTO", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg";
