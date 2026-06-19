@@ -203,12 +203,14 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
 
 const lowerPocketSectionTrimOverlayByFileName: Record<
   string,
-  { top?: string; bottom?: string }
+  { top?: string; bottom?: string; complete?: string }
 > = {
   "blouse-model-14.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-upper.svg",
     bottom:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-lower.svg",
+    complete:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-complete.svg",
   },
   "blouse-model-18-costura-lower-pocket.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
@@ -1116,11 +1118,25 @@ function isLowerPocketLowerTrimSection(
   );
 }
 
+function isLowerPocketCompleteTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    isLowerPocketTrimSection(section) &&
+    (key.includes("completa") ||
+      key.includes("completo") ||
+      key.includes("complete"))
+  );
+}
+
 function isLowerPocketUpperTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
   return (
     isLowerPocketTrimSection(section) &&
+    !isLowerPocketCompleteTrimSection(section) &&
     !isLowerPocketLowerTrimSection(section)
   );
 }
@@ -1723,7 +1739,7 @@ async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
 
 async function createLowerPocketSectionTrimOverlayBuffer(
   assetPath: string,
-  section: "top" | "bottom",
+  section: "top" | "bottom" | "complete",
 ) {
   const overlayPath =
     lowerPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
@@ -3012,6 +3028,7 @@ function buildPocketTrimBand(bounds: {
 type LowerPocketBandTrimColors = {
   top?: string | undefined;
   bottom?: string | undefined;
+  complete?: string | undefined;
 };
 
 function getPocketTrimLineSvg(
@@ -3313,8 +3330,13 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const lowerPocketLowerTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? undefined
       : getTrimSectionColor(scene, isLowerPocketLowerTrimSection);
+    const lowerPocketCompleteTrimColor = usesAuxiliaryOnlyLowerPocketTrim
+      ? undefined
+      : getTrimSectionColor(scene, isLowerPocketCompleteTrimSection);
     const lowerPocketTrimColor =
-      lowerPocketUpperTrimColor ?? lowerPocketLowerTrimColor;
+      lowerPocketUpperTrimColor ??
+      lowerPocketLowerTrimColor ??
+      lowerPocketCompleteTrimColor;
     const chestPocketTrimColor = getTrimSectionColor(
       scene,
       isChestPocketTrimSection,
@@ -3693,6 +3715,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         for (const [section, trimColor] of [
           ["top", lowerPocketUpperTrimColor],
           ["bottom", lowerPocketLowerTrimColor],
+          ["complete", lowerPocketCompleteTrimColor],
         ] as const) {
           if (!trimColor) {
             continue;
@@ -3713,7 +3736,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             trimColor,
           );
 
-          if (sectionTrimOutlineRadius > 0) {
+          if (section !== "complete" && sectionTrimOutlineRadius > 0) {
             const trimOutlineBuffer = await createPngInkOutlineBuffer(
               trimOverlayBuffer,
               "#f8fafc",
@@ -3755,6 +3778,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
                 {
                   top: lowerPocketUpperTrimColor,
                   bottom: lowerPocketLowerTrimColor,
+                  complete: lowerPocketCompleteTrimColor,
                 },
                 lowerPocketRegions,
               ),

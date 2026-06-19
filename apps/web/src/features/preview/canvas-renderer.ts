@@ -196,12 +196,14 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
 
 const lowerPocketSectionTrimOverlayByFileName: Record<
   string,
-  { top?: string; bottom?: string }
+  { top?: string; bottom?: string; complete?: string }
 > = {
   "blouse-model-14.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-upper.svg",
     bottom:
       "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-lower.svg",
+    complete:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-complete.svg",
   },
   "blouse-model-18-costura-lower-pocket.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
@@ -1113,11 +1115,25 @@ function isLowerPocketLowerTrimSection(
   );
 }
 
+function isLowerPocketCompleteTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    isLowerPocketTrimSection(section) &&
+    (key.includes("completa") ||
+      key.includes("completo") ||
+      key.includes("complete"))
+  );
+}
+
 function isLowerPocketUpperTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
   return (
     isLowerPocketTrimSection(section) &&
+    !isLowerPocketCompleteTrimSection(section) &&
     !isLowerPocketLowerTrimSection(section)
   );
 }
@@ -2104,6 +2120,7 @@ function buildPocketTrimBand(bounds: {
 type LowerPocketBandTrimColors = {
   top?: string | undefined;
   bottom?: string | undefined;
+  complete?: string | undefined;
 };
 
 type ChestPocketTrimColors = {
@@ -2238,10 +2255,13 @@ async function drawLowerPocketOverlay(
     for (const [section, trimColor] of [
       ["top", trimColors?.top],
       ["bottom", trimColors?.bottom],
+      ["complete", trimColors?.complete],
     ] as const) {
       const trimSrc = sectionTrimOverlays[section];
       const outlineRadius =
-        lowerPocketSectionTrimOutlineRadiusByFileName[fileName] ?? 7;
+        section === "complete"
+          ? 0
+          : lowerPocketSectionTrimOutlineRadiusByFileName[fileName] ?? 7;
 
       if (!trimSrc || !trimColor) {
         continue;
@@ -2265,7 +2285,7 @@ async function drawLowerPocketOverlay(
     return;
   }
 
-  const trimColor = trimColors?.top ?? trimColors?.bottom;
+  const trimColor = trimColors?.top ?? trimColors?.bottom ?? trimColors?.complete;
 
   if (!trimColor) {
     return;
@@ -3459,6 +3479,9 @@ async function composeSingleDesign(
     const lowerPocketLowerTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? undefined
       : getTrimSectionColor(scene, isLowerPocketLowerTrimSection);
+    const lowerPocketCompleteTrimColor = usesAuxiliaryOnlyLowerPocketTrim
+      ? undefined
+      : getTrimSectionColor(scene, isLowerPocketCompleteTrimSection);
     const chestPocketTrimColor = getTrimSectionColor(
       scene,
       isChestPocketTrimSection,
@@ -3611,6 +3634,7 @@ async function composeSingleDesign(
         {
           top: lowerPocketUpperTrimColor,
           bottom: lowerPocketLowerTrimColor,
+          complete: lowerPocketCompleteTrimColor,
         },
       );
     }

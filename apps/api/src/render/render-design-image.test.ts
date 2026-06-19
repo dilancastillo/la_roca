@@ -5247,6 +5247,21 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withCompleteTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5154,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-completa",
+            label: "Bolsillos inferiores completa",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const upperPinkBounds = getPastelPinkPixelBounds(
       withUpperTrim.data,
       withUpperTrim.info.width,
@@ -5257,6 +5272,11 @@ describe("renderDesignImage", () => {
       withLowerTrim.info.width,
       withLowerTrim.info.height,
     );
+    const completePinkBounds = getPastelPinkPixelBounds(
+      withCompleteTrim.data,
+      withCompleteTrim.info.width,
+      withCompleteTrim.info.height,
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -5264,6 +5284,7 @@ describe("renderDesignImage", () => {
     expect(lowerPocketSvg).not.toContain('y1="916.1"');
     expect(upperPinkBounds).toBeDefined();
     expect(lowerPinkBounds).toBeDefined();
+    expect(completePinkBounds).toBeDefined();
     expect(
       countDifferentPixels(withoutTrim.data, withUpperTrim.data),
     ).toBeGreaterThan(100);
@@ -5273,10 +5294,22 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
     ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withUpperTrim.data, withCompleteTrim.data),
+    ).toBeGreaterThan(100);
     expect(upperPinkBounds?.count).toBeGreaterThan(100);
     expect(lowerPinkBounds?.count).toBeGreaterThan(100);
+    expect(completePinkBounds?.count).toBeGreaterThan(
+      (upperPinkBounds?.count ?? 0) * 1.6,
+    );
     expect(lowerPinkBounds?.minY).toBeGreaterThan(
       (upperPinkBounds?.minY ?? 0) + 5,
+    );
+    expect(completePinkBounds?.minY).toBeLessThan(
+      lowerPinkBounds?.minY ?? Number.POSITIVE_INFINITY,
+    );
+    expect(completePinkBounds?.maxY).toBeGreaterThan(
+      (upperPinkBounds?.maxY ?? 0) + 3,
     );
   }, 20000);
 
