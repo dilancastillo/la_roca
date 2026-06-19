@@ -404,6 +404,40 @@ const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
+  {
+    points: [
+      [266.39, 663.15],
+      [116.33, 523.95],
+      [122.27, 500.54],
+      [274.95, 638.85],
+    ],
+    upper: [
+      [122.27, 500.54],
+      [274.95, 638.85],
+    ],
+    lower: [
+      [116.33, 523.95],
+      [266.39, 663.15],
+    ],
+  },
+  {
+    points: [
+      [978.44, 524.53],
+      [849.42, 629.35],
+      [835.54, 612.11],
+      [972.03, 503.56],
+    ],
+    upper: [
+      [972.03, 503.56],
+      [835.54, 612.11],
+    ],
+    lower: [
+      [978.44, 524.53],
+      [849.42, 629.35],
+    ],
+  },
+] as const;
 const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
   "blouse-model-01.svg",
   "blouse-model-02-jdc.svg",
@@ -2919,6 +2953,10 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
 
 function getOriginalSleeveTrimShapes(placementAssetPath: string) {
   const placementFileName = getAssetFileName(placementAssetPath);
+
+  if (placementFileName === "blouse-model-15-presillas.svg") {
+    return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
 
   if (PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES.has(placementFileName)) {
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
