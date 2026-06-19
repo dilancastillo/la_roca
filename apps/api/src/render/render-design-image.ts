@@ -2954,7 +2954,10 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
 function getOriginalSleeveTrimShapes(placementAssetPath: string) {
   const placementFileName = getAssetFileName(placementAssetPath);
 
-  if (placementFileName === "blouse-model-15-presillas.svg") {
+  if (
+    placementFileName === "blouse-model-10.svg" ||
+    placementFileName === "blouse-model-15-presillas.svg"
+  ) {
     return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
