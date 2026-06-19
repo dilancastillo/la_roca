@@ -619,6 +619,21 @@ describe("renderDesignImage", () => {
         neckAssetPath,
       }),
     );
+    const withPespunteTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath: pespunteAssetPath,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 990001,
+            label: "Pespunte",
+            key: "pespunte",
+            colorHex: "#39ff14",
+          },
+        ],
+      }),
+    );
     const pespunteWithoutNeck = await readRawPng(
       await renderDesignImage({
         productName: baseScene.productName,
@@ -665,6 +680,8 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(300);
     expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 300);
     expect(chestPocketInk).toBeLessThan(800);
+    expect(countNeonGreenPixels(withPespunte.data)).toBe(0);
+    expect(countNeonGreenPixels(withPespunteTrim.data)).toBeGreaterThan(300);
   }, 20000);
 
   it("pinta por separado los tres vivos de la cremallera punta", async () => {
@@ -1155,6 +1172,21 @@ describe("renderDesignImage", () => {
           "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
       }),
     );
+    const withPespunteTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        garmentDetailAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+        trimSections: [
+          {
+            valueId: 990001,
+            label: "Pespunte",
+            key: "pespunte",
+            colorHex: "#39ff14",
+          },
+        ],
+      }),
+    );
     const lizoSideInk =
       countDarkPixelsInRegion(withLizo.data, withLizo.info.width, {
         x: 290,
@@ -1187,6 +1219,7 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(300);
     expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 200);
     expect(countNeonGreenPixels(withPespunte.data)).toBe(0);
+    expect(countNeonGreenPixels(withPespunteTrim.data)).toBeGreaterThan(200);
   }, 20000);
 
   it("superpone la bota Tradicional del pantalon sin reemplazar la base", async () => {

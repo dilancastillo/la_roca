@@ -955,6 +955,10 @@ function getTrimSectionText(section: PreviewScene["trimSections"][number]) {
   return normalize(`${section.label} ${section.key}`);
 }
 
+function isPespunteTrimSection(section: PreviewScene["trimSections"][number]) {
+  return getTrimSectionText(section).includes("pespunte");
+}
+
 function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
   const key = getTrimSectionText(section);
 
@@ -2547,6 +2551,10 @@ function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
   return overlaySrcs.some(isOriginalSleevesDetailOverlay);
 }
 
+function isPespunteDetailOverlay(overlaySrc: string) {
+  return getFileNameFromSource(overlaySrc) === "pants-pespunte-stitching.svg";
+}
+
 function getOriginalSleeveTrimShapes(placementSrc: string) {
   return (
     ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
@@ -2611,8 +2619,9 @@ async function drawGarmentModelDetails(
   context: CanvasRenderingContext2D,
   garmentSrc: string | undefined,
   placementSrc: string,
+  trimColor?: string,
 ) {
-  if (!garmentSrc || garmentSrc === placementSrc) {
+  if (!garmentSrc) {
     return;
   }
 
@@ -2623,24 +2632,40 @@ async function drawGarmentModelDetails(
     return;
   }
 
+  if (garmentSrc === placementSrc && !trimColor) {
+    return;
+  }
+
   const overlayCanvas = await createRasterCanvas(overlaySrc, placementSrc);
-  context.drawImage(overlayCanvas, 0, 0);
+  context.drawImage(
+    trimColor ? recolorCanvasInk(overlayCanvas, trimColor) : overlayCanvas,
+    0,
+    0,
+  );
 }
 
 async function drawGarmentDetailOverlay(
   context: CanvasRenderingContext2D,
   overlaySrc: string | undefined,
   placementSrc: string,
+  trimColor?: string,
 ) {
   if (!overlaySrc) {
     return;
   }
 
-  const overlayCanvas = await createRasterCanvas(
-    resolveGarmentDetailOverlaySrc(overlaySrc, placementSrc),
+  const resolvedOverlaySrc = resolveGarmentDetailOverlaySrc(
+    overlaySrc,
     placementSrc,
   );
-  context.drawImage(overlayCanvas, 0, 0);
+  const overlayCanvas = await createRasterCanvas(resolvedOverlaySrc, placementSrc);
+  context.drawImage(
+    trimColor && isPespunteDetailOverlay(resolvedOverlaySrc)
+      ? recolorCanvasInk(overlayCanvas, trimColor)
+      : overlayCanvas,
+    0,
+    0,
+  );
 }
 
 async function drawNeckModelDetails(
@@ -3380,10 +3405,13 @@ async function composeSingleDesign(
   }
 
   if (baseAssetSrc) {
+    const pespunteTrimColor = getTrimSectionColor(scene, isPespunteTrimSection);
+
     await drawGarmentModelDetails(
       context,
       scene.garmentImageSrc,
       baseAssetSrc,
+      pespunteTrimColor,
     );
     const garmentDetailImageSrcs =
       scene.garmentDetailImageSrcs ??
@@ -3400,6 +3428,7 @@ async function composeSingleDesign(
         context,
         garmentDetailImageSrc,
         baseAssetSrc,
+        pespunteTrimColor,
       );
     }
     await drawGarmentDetailOverlay(

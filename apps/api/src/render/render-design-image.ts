@@ -948,6 +948,12 @@ function getTrimSectionText(
   return normalize(`${section.label} ${section.key}`);
 }
 
+function isPespunteTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  return getTrimSectionText(section).includes("pespunte");
+}
+
 function isWholeCollarSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -2110,8 +2116,9 @@ async function createChestPocketSectionTrimOverlayBuffer(
 async function createGarmentModelDetailOverlayBuffer(
   garmentAssetPath: string | undefined,
   placementAssetPath: string,
+  trimColor?: string,
 ) {
-  if (!garmentAssetPath || garmentAssetPath === placementAssetPath) {
+  if (!garmentAssetPath) {
     return undefined;
   }
 
@@ -2122,20 +2129,33 @@ async function createGarmentModelDetailOverlayBuffer(
     return undefined;
   }
 
+  if (garmentAssetPath === placementAssetPath && !trimColor) {
+    return undefined;
+  }
+
   const [overlayProcessed, placementProcessed] = await Promise.all([
     loadProcessedImage(overlayPath),
     loadProcessedImage(placementAssetPath),
   ]);
 
-  return await createOverlayBufferFromProcessed(
+  const overlayBuffer = await createOverlayBufferFromProcessed(
     overlayProcessed,
     placementProcessed,
   );
+
+  return trimColor
+    ? await recolorPngInkBuffer(overlayBuffer, trimColor)
+    : overlayBuffer;
+}
+
+function isPespunteDetailOverlayAsset(assetPath: string) {
+  return getAssetFileName(assetPath) === "pants-pespunte-stitching.svg";
 }
 
 async function createGarmentDetailAssetOverlayBuffer(
   overlayAssetPath: string | undefined,
   placementAssetPath: string,
+  trimColor?: string,
 ) {
   if (!overlayAssetPath) {
     return undefined;
@@ -2150,10 +2170,14 @@ async function createGarmentDetailAssetOverlayBuffer(
     loadProcessedImage(placementAssetPath),
   ]);
 
-  return await createOverlayBufferFromProcessed(
+  const overlayBuffer = await createOverlayBufferFromProcessed(
     overlayProcessed,
     placementProcessed,
   );
+
+  return trimColor && isPespunteDetailOverlayAsset(resolvedOverlayAssetPath)
+    ? await recolorPngInkBuffer(overlayBuffer, trimColor)
+    : overlayBuffer;
 }
 
 async function createNeckModelDetailOverlayBuffer(neckAssetPath: string) {
@@ -3204,10 +3228,13 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   }
 
   if (baseAssetPath) {
+    const pespunteTrimColor = getTrimSectionColor(scene, isPespunteTrimSection);
+
     const garmentDetailOverlayBuffer =
       await createGarmentModelDetailOverlayBuffer(
         scene.garmentAssetPath,
         baseAssetPath,
+        pespunteTrimColor,
       );
 
     if (garmentDetailOverlayBuffer) {
@@ -3231,6 +3258,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         await createGarmentDetailAssetOverlayBuffer(
           garmentDetailAssetPath,
           baseAssetPath,
+          pespunteTrimColor,
         );
 
       if (garmentDetailAssetOverlayBuffer) {
