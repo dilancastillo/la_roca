@@ -485,7 +485,6 @@ const straightBackNeckModelFileNames = [
   "blouse-model-12-cherokee.svg",
   "blouse-model-13-p-paipilla.svg",
   "blouse-model-15-presillas.svg",
-  "blouse-model-30.svg",
   "blouse-model-34-cuello-alto-cremallera.svg",
   "blouse-model-37-cirugia.svg",
   "blouse-model-50-20-20.svg",
@@ -3984,6 +3983,50 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(leftCurveEndPinkPixels).toBeGreaterThan(20);
     expect(rightCurveEndPinkPixels).toBeGreaterThan(20);
+  }, 20000);
+
+  it("renderiza CRUZADO con cogotera ovalada", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withBackNeck = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 414,
+            role: "backNeck",
+            key: "cogotera",
+            label: "Cogotera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftLowerCurvePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 292, y: 150, width: 42, height: 26 },
+    );
+    const rightLowerCurvePinkPixels = countPastelPinkPixelsInRegion(
+      withBackNeck.data,
+      withBackNeck.info.width,
+      { x: 565, y: 150, width: 42, height: 26 },
+    );
+
+    expect(withoutTrim.info.width).toBe(900);
+    expect(withoutTrim.info.height).toBe(1200);
+    expect(
+      countDifferentPixels(withoutTrim.data, withBackNeck.data),
+    ).toBeGreaterThan(100);
+    expect(leftLowerCurvePinkPixels).toBeGreaterThan(20);
+    expect(rightLowerCurvePinkPixels).toBeGreaterThan(20);
   }, 20000);
 
   it("renderiza ESTRELLA con vivo de cuello, aletas y cogotera ovalada", async () => {

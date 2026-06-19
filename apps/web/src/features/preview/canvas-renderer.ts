@@ -322,6 +322,7 @@ const LOGO_MARKER_OUTLINE = "#f8fafc";
 const LOGO_MARKER_RADIUS = 28;
 const LOGO_MARKER_OUTLINE_RADIUS = 36;
 const BACK_NECK_STRAIGHT_VERTICAL_OFFSET = 8;
+const BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET = 12;
 const BACK_NECK_OVAL_VERTICAL_OFFSET = 20;
 const BACK_NECK_OVERLAY_VERTICAL_OFFSET = 4;
 const LOGO_MARKER_POSITIONS = {
@@ -696,6 +697,7 @@ const backNeckTrimOverlayByFileName: Record<string, string> = {
 const backNeckTrimElementIndexesByFileName: Record<string, number[]> = {};
 
 const backNeckTrimPathDataByFileName: Record<string, string> = {
+  "blouse-model-30.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-21-deportivo.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-22-estrella.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-23-polo.svg": "M305 140 C365 121 535 121 595 140",
@@ -710,6 +712,15 @@ const backNeckTrimPathDataByFileName: Record<string, string> = {
   "blouse-model-42.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-43.svg": "M305 140 C365 121 535 121 595 140",
   "blouse-model-09.svg": "M316 130 C390 150 478 163 568 127",
+};
+
+const backNeckTrimVerticalOffsetByFileName: Record<string, number> = {
+  "blouse-model-01.svg": BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET,
+  "blouse-model-04.svg": BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET,
+  "blouse-model-11-fisiopracticas.svg":
+    BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET,
+  "blouse-model-13-p-paipilla.svg": BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET,
+  "blouse-model-15-presillas.svg": BACK_NECK_LOWERED_STRAIGHT_VERTICAL_OFFSET,
 };
 
 const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
@@ -2642,6 +2653,12 @@ function getBackNeckTrimVerticalOffset(
   sourceFileName: string,
   pathData?: string,
 ) {
+  const override = backNeckTrimVerticalOffsetByFileName[sourceFileName];
+
+  if (override !== undefined) {
+    return override;
+  }
+
   if (backNeckTrimOverlayByFileName[sourceFileName]) {
     return BACK_NECK_OVERLAY_VERTICAL_OFFSET;
   }
