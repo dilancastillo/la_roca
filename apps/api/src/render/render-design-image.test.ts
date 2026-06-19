@@ -3726,7 +3726,12 @@ describe("renderDesignImage", () => {
   it("usa las mangas Original alineadas a PUNTADAS en modelos solicitados", async () => {
     const alignedNeckAssetPaths = [
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-05.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-43.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-44-cucuta.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-50-20-20.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-37-cirugia.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-12-cherokee.svg",

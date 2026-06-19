@@ -467,6 +467,15 @@ const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
   "blouse-model-44-cucuta.svg",
   "blouse-model-50-20-20.svg",
 ]);
+const SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES = new Set([
+  "blouse-model-02-jdc.svg",
+  "blouse-model-05.svg",
+  "blouse-model-10.svg",
+  "blouse-model-15-presillas.svg",
+  "blouse-model-42.svg",
+  "blouse-model-43.svg",
+  "blouse-model-44-cucuta.svg",
+]);
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   "blouse-model-04.svg": [
     ORIGINAL_SLEEVE_TRIM_SHAPES[0],
@@ -2954,10 +2963,7 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
 function getOriginalSleeveTrimShapes(placementAssetPath: string) {
   const placementFileName = getAssetFileName(placementAssetPath);
 
-  if (
-    placementFileName === "blouse-model-10.svg" ||
-    placementFileName === "blouse-model-15-presillas.svg"
-  ) {
+  if (SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES.has(placementFileName)) {
     return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
