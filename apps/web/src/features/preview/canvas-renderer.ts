@@ -464,10 +464,15 @@ const SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES = new Set([
   "blouse-model-02-jdc.svg",
   "blouse-model-05.svg",
   "blouse-model-10.svg",
+  "blouse-model-12-cherokee.svg",
   "blouse-model-15-presillas.svg",
+  "blouse-model-21-deportivo.svg",
+  "blouse-model-40-mariposa.svg",
+  "blouse-model-41-matrioska.svg",
   "blouse-model-42.svg",
   "blouse-model-43.svg",
   "blouse-model-44-cucuta.svg",
+  "blouse-model-50-20-20.svg",
 ]);
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   "blouse-model-04.svg": [
