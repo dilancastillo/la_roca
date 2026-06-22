@@ -4231,6 +4231,11 @@ describe("renderDesignImage", () => {
       withCollar.info.width,
       { x: 300, y: 110, width: 310, height: 260 },
     );
+    const collarTopArcPinkPixels = countPastelPinkPixelsInRegion(
+      withCollar.data,
+      withCollar.info.width,
+      { x: 330, y: 90, width: 240, height: 80 },
+    );
     const flapPinkPixels = countPastelPinkPixelsInRegion(
       withFlaps.data,
       withFlaps.info.width,
@@ -4259,6 +4264,7 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withCollar.data),
     ).toBeGreaterThan(100);
     expect(collarPinkPixels).toBeGreaterThan(500);
+    expect(collarTopArcPinkPixels).toBeLessThan(20);
     expect(
       countDifferentPixels(withoutTrim.data, withFlaps.data),
     ).toBeGreaterThan(100);
