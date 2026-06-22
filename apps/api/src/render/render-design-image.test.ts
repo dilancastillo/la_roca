@@ -312,6 +312,30 @@ function countPastelPinkPixelsInRegion(
   return count;
 }
 
+function countFuchsiaPixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (alpha > 200 && red > 190 && green < 80 && blue > 80 && blue < 170) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 function getPastelPinkPixelBounds(
   buffer: Buffer,
   width: number,
@@ -4171,6 +4195,109 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(leftLowerCurvePinkPixels).toBeGreaterThan(20);
     expect(rightLowerCurvePinkPixels).toBeGreaterThan(20);
+  }, 20000);
+
+  it("renderiza CRUZADO sin vivos gruesos por defecto y activa sus líneas de cuello", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-30.svg";
+    const collarRegion = { x: 290, y: 125, width: 330, height: 285 };
+    const leftThickRegion = { x: 300, y: 125, width: 160, height: 285 };
+    const rightThickRegion = { x: 430, y: 125, width: 180, height: 285 };
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+      }),
+    );
+    const withLeftThick = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6111,
+            key: "cuello-interior-grueso-izquierdo",
+            label: "Cuello Interior grueso izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightThick = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6112,
+            key: "cuello-interior-grueso-derecho",
+            label: "Cuello Interior grueso derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLineTrims = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6113,
+            key: "cuello-v-lineal-externo-izquierdo",
+            label: "Cuello V lineal externo izquierdo",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 6114,
+            key: "cuello-v-lineal-externo-derecho",
+            label: "Cuello V lineal externo derecho",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 6115,
+            key: "cuello-v-lineal-interno-izquierdo",
+            label: "Cuello V lineal interno izquierdo",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 6116,
+            key: "cuello-v-lineal-interno-derecho",
+            label: "Cuello V lineal interno derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    expect(
+      countFuchsiaPixelsInRegion(
+        withoutTrim.data,
+        withoutTrim.info.width,
+        collarRegion,
+      ),
+    ).toBeLessThan(5);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLeftThick.data,
+        withLeftThick.info.width,
+        leftThickRegion,
+      ),
+    ).toBeGreaterThan(150);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withRightThick.data,
+        withRightThick.info.width,
+        rightThickRegion,
+      ),
+    ).toBeGreaterThan(150);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLineTrims.data,
+        withLineTrims.info.width,
+        collarRegion,
+      ),
+    ).toBeGreaterThan(250);
   }, 20000);
 
   it("renderiza ESTRELLA con vivo de cuello, aletas y cogotera ovalada", async () => {
