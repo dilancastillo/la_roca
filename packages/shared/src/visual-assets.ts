@@ -358,6 +358,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2956: BLUSA_EL_HATO_ASSET, // EL HATO.
     2958: BLUSA_FISIOPRACTICAS_ASSET, // FISIOPRACTICAS.
     2960: BLUSA_P_PAIPILLA_ASSET, // P-PAIPILLA.
+    7013: BLUSA_MARIPOSA_DIVIDIDO_ASSET, // V-DIVIDIDO / MARIPOSA DIVIDIDO.
   },
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
@@ -381,6 +382,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     matrioska: BLUSA_MATRIOSKA_ASSET,
     mariposa: BLUSA_MARIPOSA_ASSET,
     "mariposa dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
+    "v dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
+    "v-dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
     "20 20": BLUSA_2020_ASSET,
     "20-20": BLUSA_2020_ASSET,
     "2020": BLUSA_2020_ASSET,

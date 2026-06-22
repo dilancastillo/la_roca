@@ -307,8 +307,10 @@ const fullChestPocketTrimOverlayFileNames = new Set([
 
 const CHEST_POCKET_VERTICAL_OFFSET = 28;
 
+const BLUSA_PESPUNTE_MODEL_FILE_NAME = "blouse-model-45-pespunte.svg";
+
 const garmentDetailOverlayByFileName: Record<string, string> = {
-  "blouse-model-45-pespunte.svg":
+  [BLUSA_PESPUNTE_MODEL_FILE_NAME]:
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
 };
 
@@ -2717,7 +2719,11 @@ async function drawGarmentModelDetails(
     return;
   }
 
-  const overlayCanvas = await createRasterCanvas(overlaySrc, placementSrc);
+  const detailPlacementSrc =
+    getFileNameFromSource(garmentSrc) === BLUSA_PESPUNTE_MODEL_FILE_NAME
+      ? garmentSrc
+      : placementSrc;
+  const overlayCanvas = await createRasterCanvas(overlaySrc, detailPlacementSrc);
   context.drawImage(
     trimColor ? recolorCanvasInk(overlayCanvas, trimColor) : overlayCanvas,
     0,

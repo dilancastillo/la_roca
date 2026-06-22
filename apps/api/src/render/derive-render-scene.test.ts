@@ -697,6 +697,40 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("mantiene el cuello V-DIVIDIDO cuando la blusa base es Pespunte", () => {
+    const sessionWithVDividido: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 63
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 999974,
+                  name: "V - DIVIDIDO",
+                  attributeId: attribute.id,
+                  attributeName: attribute.name,
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const scene = deriveAutomationRenderScene(sessionWithVDividido, {
+      ...sessionWithVDividido.selectedValueIds,
+      "811": [2867],
+      "63": [999974],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+    );
+  });
+
   it("agrega mangas Original como overlay independiente del modelo de cuello", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

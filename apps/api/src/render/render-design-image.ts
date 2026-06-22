@@ -314,8 +314,10 @@ const fullChestPocketTrimOverlayFileNames = new Set([
 
 const CHEST_POCKET_VERTICAL_OFFSET = 28;
 
+const BLUSA_PESPUNTE_MODEL_FILE_NAME = "blouse-model-45-pespunte.svg";
+
 const garmentDetailOverlayByFileName: Record<string, string> = {
-  "blouse-model-45-pespunte.svg":
+  [BLUSA_PESPUNTE_MODEL_FILE_NAME]:
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
 };
 
@@ -2199,9 +2201,14 @@ async function createGarmentModelDetailOverlayBuffer(
     return undefined;
   }
 
+  const detailPlacementAssetPath =
+    getAssetFileName(garmentAssetPath) === BLUSA_PESPUNTE_MODEL_FILE_NAME
+      ? garmentAssetPath
+      : placementAssetPath;
+
   const [overlayProcessed, placementProcessed] = await Promise.all([
     loadProcessedImage(overlayPath),
-    loadProcessedImage(placementAssetPath),
+    loadProcessedImage(detailPlacementAssetPath),
   ]);
 
   const overlayBuffer = await createOverlayBufferFromProcessed(

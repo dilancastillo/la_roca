@@ -684,6 +684,42 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withPespunteTrim.data)).toBeGreaterThan(300);
   }, 20000);
 
+  it("mantiene visible el cuello V-DIVIDIDO sobre la base Pespunte", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg";
+    const pespunteAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
+    const withVDividido = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath: pespunteAssetPath,
+        neckAssetPath,
+      }),
+    );
+    const withoutNeck = await readRawPng(
+      await renderDesignImage({
+        productName: baseScene.productName,
+        baseColorHex: baseScene.baseColorHex,
+        garmentAssetPath: pespunteAssetPath,
+        lowerPocketLayout: baseScene.lowerPocketLayout,
+        trimSections: [],
+      }),
+    );
+    const neckRegion = { x: 300, y: 90, width: 300, height: 270 };
+    const neckInk = countDarkPixelsInRegion(
+      withVDividido.data,
+      withVDividido.info.width,
+      neckRegion,
+    );
+    const baseInk = countDarkPixelsInRegion(
+      withoutNeck.data,
+      withoutNeck.info.width,
+      neckRegion,
+    );
+
+    expect(neckInk).toBeGreaterThan(baseInk + 300);
+  }, 20000);
+
   it("pinta por separado los tres vivos de la cremallera punta", async () => {
     const pointZipperPocketMarkup = (
       await readFile(

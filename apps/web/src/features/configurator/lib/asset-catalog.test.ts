@@ -462,6 +462,18 @@ describe("getProductAssetCatalog", () => {
     expect(
       getImageSourceForValue(
         "blusa-antifluido-t180",
+        145,
+        999974,
+        "Modelo de cuello",
+        "V - DIVIDIDO",
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
         63,
         999999,
         "Nombre editable en Odoo",
