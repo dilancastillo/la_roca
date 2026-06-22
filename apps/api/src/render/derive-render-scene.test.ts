@@ -704,15 +704,9 @@ describe("deriveAutomationRenderScene", () => {
         attribute.id === 63
           ? {
               ...attribute,
-              values: [
-                ...attribute.values,
-                {
-                  id: 999974,
-                  name: "V - DIVIDIDO",
-                  attributeId: attribute.id,
-                  attributeName: attribute.name,
-                },
-              ],
+              values: attribute.values.map((value) =>
+                value.id === 7013 ? { ...value, name: "V - DIVIDIDO" } : value,
+              ),
             }
           : attribute,
       ),
@@ -720,14 +714,14 @@ describe("deriveAutomationRenderScene", () => {
     const scene = deriveAutomationRenderScene(sessionWithVDividido, {
       ...sessionWithVDividido.selectedValueIds,
       "811": [2867],
-      "63": [999974],
+      "63": [7013],
     });
 
     expect(scene.garmentAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
     );
     expect(scene.neckAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
   });
 

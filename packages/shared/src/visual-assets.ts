@@ -358,7 +358,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2956: BLUSA_EL_HATO_ASSET, // EL HATO.
     2958: BLUSA_FISIOPRACTICAS_ASSET, // FISIOPRACTICAS.
     2960: BLUSA_P_PAIPILLA_ASSET, // P-PAIPILLA.
-    7013: BLUSA_MARIPOSA_DIVIDIDO_ASSET, // V-DIVIDIDO / MARIPOSA DIVIDIDO.
+    7013: BLUSA_MARIPOSA_DIVIDIDO_ASSET, // MARIPOSA DIVIDIDO.
   },
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
@@ -382,8 +382,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     matrioska: BLUSA_MATRIOSKA_ASSET,
     mariposa: BLUSA_MARIPOSA_ASSET,
     "mariposa dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
-    "v dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
-    "v-dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
+    "v dividido": blouseModelAsset(1),
+    "v-dividido": blouseModelAsset(1),
     "20 20": BLUSA_2020_ASSET,
     "20-20": BLUSA_2020_ASSET,
     "2020": BLUSA_2020_ASSET,
@@ -644,22 +644,39 @@ export function getVisualAssetPathForValue(
   attributeName?: string,
   valueName?: string,
 ) {
+  const catalog = resolveVisualAssetCatalog(graphicManifestKey);
+
+  const isNeckModel =
+    (catalog &&
+      matchesVisualAssetAttributeId(catalog, "neckModel", attributeId)) ||
+    isNeckModelAttribute(attributeName);
+
+  if (
+    catalog &&
+    isNeckModel &&
+    normalizeLookupKey(valueName ?? "") === "v dividido"
+  ) {
+    const pathByVDivididoName = findByNormalizedName(
+      catalog.neckModelsByValueName,
+      valueName,
+    );
+
+    if (pathByVDivididoName) {
+      return pathByVDivididoName;
+    }
+  }
+
   const pathById = getVisualAssetPath(graphicManifestKey, attributeId, valueId);
 
   if (pathById) {
     return pathById;
   }
 
-  const catalog = resolveVisualAssetCatalog(graphicManifestKey);
-
   if (!catalog) {
     return undefined;
   }
 
-  if (
-    matchesVisualAssetAttributeId(catalog, "neckModel", attributeId) ||
-    isNeckModelAttribute(attributeName)
-  ) {
+  if (isNeckModel) {
     return findByNormalizedName(catalog.neckModelsByValueName, valueName);
   }
 

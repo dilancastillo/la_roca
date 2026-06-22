@@ -686,7 +686,7 @@ describe("renderDesignImage", () => {
 
   it("mantiene visible el cuello V-DIVIDIDO sobre la base Pespunte", async () => {
     const neckAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
     const pespunteAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
     const withVDividido = await readRawPng(
