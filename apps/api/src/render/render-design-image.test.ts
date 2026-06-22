@@ -4612,10 +4612,22 @@ describe("renderDesignImage", () => {
       withoutTrim.info.width,
       { x: 440, y: 375, width: 22, height: 28 },
     );
+    const defaultUpperDividedDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 285, y: 115, width: 330, height: 170 },
+    );
+    const defaultLowerDividedDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 335, y: 235, width: 230, height: 180 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(fixedInnerVDarkPixels).toBeGreaterThan(10);
+    expect(defaultUpperDividedDarkPixels).toBeGreaterThan(400);
+    expect(defaultLowerDividedDarkPixels).toBeGreaterThan(400);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
       countDifferentPixels(withoutTrim.data, withUpperDivided.data),

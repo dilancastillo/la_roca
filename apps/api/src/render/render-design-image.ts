@@ -324,8 +324,11 @@ const garmentDetailOverlayByFileName: Record<string, string> = {
 const neckModelDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-39-el-hato.svg":
     "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
+};
+
+const earlyNeckModelDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-04.svg":
-    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-inner-v.svg",
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-default.svg",
 };
 
 const LOGO_MARKER_FILL = "#1677ff";
@@ -2253,9 +2256,12 @@ async function createGarmentDetailAssetOverlayBuffer(
     : overlayBuffer;
 }
 
-async function createNeckModelDetailOverlayBuffer(neckAssetPath: string) {
+async function createNeckModelDetailOverlayBuffer(
+  neckAssetPath: string,
+  overlaysByFileName = neckModelDetailOverlayByFileName,
+) {
   const overlayPath =
-    neckModelDetailOverlayByFileName[getAssetFileName(neckAssetPath)];
+    overlaysByFileName[getAssetFileName(neckAssetPath)];
 
   if (!overlayPath) {
     return undefined;
@@ -3377,6 +3383,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     if (bootAssetOverlayBuffer) {
       layers.push(
         `<image href="${toDataUri(bootAssetOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
+
+    const earlyNeckModelDetailOverlayBuffer =
+      await createNeckModelDetailOverlayBuffer(
+        baseAssetPath,
+        earlyNeckModelDetailOverlayByFileName,
+      );
+
+    if (earlyNeckModelDetailOverlayBuffer) {
+      layers.push(
+        `<image href="${toDataUri(earlyNeckModelDetailOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
 

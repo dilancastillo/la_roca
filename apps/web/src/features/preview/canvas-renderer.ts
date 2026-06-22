@@ -317,8 +317,11 @@ const garmentDetailOverlayByFileName: Record<string, string> = {
 const neckModelDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-39-el-hato.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-buttons.svg",
+};
+
+const earlyNeckModelDetailOverlayByFileName: Record<string, string> = {
   "blouse-model-04.svg":
-    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-inner-v.svg",
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-default.svg",
 };
 
 const LOGO_MARKER_FILL = "#1677ff";
@@ -2758,9 +2761,10 @@ async function drawGarmentDetailOverlay(
 async function drawNeckModelDetails(
   context: CanvasRenderingContext2D,
   neckSrc: string,
+  overlaysByFileName = neckModelDetailOverlayByFileName,
 ) {
   const overlaySrc =
-    neckModelDetailOverlayByFileName[getFileNameFromSource(neckSrc)];
+    overlaysByFileName[getFileNameFromSource(neckSrc)];
 
   if (!overlaySrc) {
     return;
@@ -3527,6 +3531,11 @@ async function composeSingleDesign(
       context,
       scene.bootImageSrc,
       baseAssetSrc,
+    );
+    await drawNeckModelDetails(
+      context,
+      baseAssetSrc,
+      earlyNeckModelDetailOverlayByFileName,
     );
 
     const collarTrimColor = getCollarTrimColorForAsset(scene, baseAssetSrc);
