@@ -1263,6 +1263,21 @@ function isLowerPocketTrimSection(
   return section.role === "lowerPockets" || key.includes("bolsillos inferiores");
 }
 
+function isLowerPocketRingsTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = normalize(section.label || section.key);
+
+  return (
+    key === "aros" ||
+    key === "aro" ||
+    key.includes("aros bolsillo") ||
+    key.includes("aros-bolsillo") ||
+    key.includes("bolsillo aros") ||
+    key.includes("bolsillo-aros")
+  );
+}
+
 function isLowerPocketLowerTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -3602,6 +3617,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const lowerPocketFileName = scene.lowerPocketAssetPath
       ? getAssetFileName(scene.lowerPocketAssetPath)
       : "";
+    const usesLowerPocketRingsTrim =
+      lowerPocketFileName === "blouse-model-15.svg";
     const usesAuxiliaryOnlyLowerPocketTrim =
       lowerPocketFileName ===
         "blouse-model-34-cuello-alto-cremallera-lower-pocket.svg" ||
@@ -3612,7 +3629,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     );
     const lowerPocketUpperTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? auxiliaryPocketTrimColor
-      : getTrimSectionColor(scene, isLowerPocketUpperTrimSection);
+      : usesLowerPocketRingsTrim
+        ? getTrimSectionColor(scene, isLowerPocketRingsTrimSection)
+        : getTrimSectionColor(scene, isLowerPocketUpperTrimSection);
     const lowerPocketLowerTrimColor = usesAuxiliaryOnlyLowerPocketTrim
       ? undefined
       : getTrimSectionColor(scene, isLowerPocketLowerTrimSection);

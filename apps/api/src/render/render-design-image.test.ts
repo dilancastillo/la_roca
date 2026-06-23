@@ -5710,6 +5710,76 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("pinta los aros del bolsillo inferior AROS con su vivo especifico", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withRingsTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5155,
+            key: "aros",
+            label: "Aros",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withGenericUpperTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5150,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-parte-superior",
+            label: "Bolsillos inferiores parte superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftRingPinkPixels = countPastelPinkPixelsInRegion(
+      withRingsTrim.data,
+      withRingsTrim.info.width,
+      { x: 260, y: 690, width: 180, height: 160 },
+    );
+    const rightRingPinkPixels = countPastelPinkPixelsInRegion(
+      withRingsTrim.data,
+      withRingsTrim.info.width,
+      { x: 485, y: 690, width: 190, height: 160 },
+    );
+
+    expect(
+      getPastelPinkPixelBounds(
+        withoutTrim.data,
+        withoutTrim.info.width,
+        withoutTrim.info.height,
+      ),
+    ).toBeUndefined();
+    expect(
+      getPastelPinkPixelBounds(
+        withGenericUpperTrim.data,
+        withGenericUpperTrim.info.width,
+        withGenericUpperTrim.info.height,
+      ),
+    ).toBeUndefined();
+    expect(leftRingPinkPixels).toBeGreaterThan(40);
+    expect(rightRingPinkPixels).toBeGreaterThan(40);
+    expect(
+      countDifferentPixels(withoutTrim.data, withRingsTrim.data),
+    ).toBeGreaterThan(100);
+  }, 20000);
+
   it("renderiza RIBETE con vivos separados para franja superior e inferior", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-19-ribete-lower-pocket.svg";
