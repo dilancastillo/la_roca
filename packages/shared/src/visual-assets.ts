@@ -423,6 +423,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2581: BLUSA_RIBETE_LOWER_POCKET_ASSET,
     2582: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     2583: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
+    2584: blouseModelAsset(16), // ALETAS.
     // IDs actuales en pstest-traininglaroca.
     380: blouseModelAsset(14), // RECTANGULAR.
     381: blouseModelAsset(15), // AROS.
@@ -431,6 +432,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     384: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET, // COSTURA MARIA en Blusa.
     385: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET, // COSTURA TRIANGULO.
     386: BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET, // BOLSILLO INTERNO RECTANGULAR.
+    387: blouseModelAsset(16), // ALETAS.
     388: BLUSA_ORIENTAL_LOWER_POCKET_ASSET, // RIBETE VERTICAL en Blusa.
     389: BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET, // RIBETE HORIZONTAL.
     390: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET, // ANDES HOMBRE en Blusa.
@@ -451,6 +453,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     "costura maria": BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
     "costura triangulo": BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
     "bolsillo interno rectangular": BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET,
+    aletas: blouseModelAsset(16),
     "ribete vertical": BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
     "ribete horizontal": BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
     "los andes": BLUSA_LOS_ANDES_LOWER_POCKET_ASSET,

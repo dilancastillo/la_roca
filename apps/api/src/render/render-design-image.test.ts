@@ -5809,6 +5809,24 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
   }, 20000);
 
+  it("renderiza ALETAS como bolsillo inferior sin color fijo ni vivo", async () => {
+    const withoutLowerPocket = await readRawPng(
+      await renderDesignImage(baseScene),
+    );
+    const withAletas = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg",
+      }),
+    );
+
+    expect(
+      countDifferentPixels(withoutLowerPocket.data, withAletas.data),
+    ).toBeGreaterThan(100);
+    expect(countOrangePixels(withAletas.data)).toBe(0);
+  }, 20000);
+
   it("renderiza RIBETE con vivos separados para franja superior e inferior", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-19-ribete-lower-pocket.svg";
