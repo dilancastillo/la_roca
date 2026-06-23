@@ -913,6 +913,26 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withUpperAndZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pocketScene,
+        trimSections: [
+          {
+            valueId: 7040,
+            role: "chestPocket",
+            key: "bolsillo-pecho-superior",
+            label: "Bolsillo pecho superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7042,
+            key: "cremallera",
+            label: "Cremallera",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const pocketInk = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
@@ -947,8 +967,32 @@ describe("renderDesignImage", () => {
     expect(upperTrimBounds?.count).toBeGreaterThan(100);
     expect(zipperTrimBounds?.count).toBeGreaterThan(180);
     expect(lowerTrimBounds?.count).toBeGreaterThan(100);
+    expect(upperTrimBounds).toBeDefined();
     expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
       lowerTrimBounds?.minY ?? 0,
+    );
+    const upperLineRegion = {
+      x: upperTrimBounds?.minX ?? 0,
+      y: upperTrimBounds?.minY ?? 0,
+      width: (upperTrimBounds?.maxX ?? 0) - (upperTrimBounds?.minX ?? 0) + 1,
+      height: Math.min(
+        8,
+        (upperTrimBounds?.maxY ?? 0) - (upperTrimBounds?.minY ?? 0) + 1,
+      ),
+    };
+    const upperLinePixelsWithZipper = countPastelPinkPixelsInRegion(
+      withUpperAndZipperTrim.data,
+      withUpperAndZipperTrim.info.width,
+      upperLineRegion,
+    );
+    const zipperOnlyPixelsInUpperLine = countPastelPinkPixelsInRegion(
+      withZipperTrim.data,
+      withZipperTrim.info.width,
+      upperLineRegion,
+    );
+
+    expect(upperLinePixelsWithZipper).toBeGreaterThan(
+      zipperOnlyPixelsInUpperLine + 80,
     );
     expect(
       (zipperTrimBounds?.maxY ?? 0) - (zipperTrimBounds?.minY ?? 0),

@@ -312,6 +312,27 @@ const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-zipper-external.svg",
 ]);
 
+const defaultChestPocketSectionTrimOrder = [
+  "upper",
+  "zipper",
+  "lower",
+] as const;
+const upperRaisedChestPocketSectionTrimOrder = [
+  "zipper",
+  "lower",
+  "upper",
+] as const;
+type ChestPocketSectionTrimKey =
+  (typeof defaultChestPocketSectionTrimOrder)[number];
+
+function getChestPocketSectionTrimOrder(
+  fileName: string,
+): readonly ChestPocketSectionTrimKey[] {
+  return fileName === "chest-pocket-zipper-external.svg"
+    ? upperRaisedChestPocketSectionTrimOrder
+    : defaultChestPocketSectionTrimOrder;
+}
+
 const CHEST_POCKET_VERTICAL_OFFSET = 28;
 
 const BLUSA_PESPUNTE_MODEL_FILE_NAME = "blouse-model-45-pespunte.svg";
@@ -4138,11 +4159,20 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         ];
 
       if (chestPocketSectionTrimOverlays) {
-        for (const [section, trimColor] of [
-          ["upper", chestPocketUpperTrimColor],
-          ["zipper", chestPocketZipperTrimColor],
-          ["lower", chestPocketLowerTrimColor],
-        ] as const) {
+        const chestPocketFileName = getAssetFileName(
+          scene.chestPocketAssetPath,
+        );
+        const trimColorBySection = {
+          upper: chestPocketUpperTrimColor,
+          zipper: chestPocketZipperTrimColor,
+          lower: chestPocketLowerTrimColor,
+        } satisfies Record<ChestPocketSectionTrimKey, string | undefined>;
+
+        for (const section of getChestPocketSectionTrimOrder(
+          chestPocketFileName,
+        )) {
+          const trimColor = trimColorBySection[section];
+
           if (!trimColor) {
             continue;
           }
