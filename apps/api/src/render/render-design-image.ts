@@ -203,7 +203,7 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
 
 const lowerPocketSectionTrimOverlayByFileName: Record<
   string,
-  { top?: string; bottom?: string; complete?: string }
+  { top?: string; bottom?: string; complete?: string; auxiliary?: string }
 > = {
   "blouse-model-14.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-upper.svg",
@@ -216,6 +216,8 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-upper.svg",
     bottom:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-lower.svg",
+    auxiliary:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-18-costura-lower-pocket-auxiliary.svg",
   },
   "blouse-model-19-ribete-lower-pocket.svg": {
     top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-19-ribete-lower-pocket-upper.svg",
@@ -1913,7 +1915,7 @@ async function createLowerPocketTrimOverlayBuffer(assetPath: string) {
 
 async function createLowerPocketSectionTrimOverlayBuffer(
   assetPath: string,
-  section: "top" | "bottom" | "complete",
+  section: "top" | "bottom" | "complete" | "auxiliary",
 ) {
   const overlayPath =
     lowerPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
@@ -4053,6 +4055,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           ["top", lowerPocketUpperTrimColor],
           ["bottom", lowerPocketLowerTrimColor],
           ["complete", lowerPocketCompleteTrimColor],
+          ["auxiliary", auxiliaryPocketTrimColor],
         ] as const) {
           if (!trimColor) {
             continue;
