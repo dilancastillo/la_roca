@@ -762,6 +762,11 @@ const thickInteriorCollarTrimOverlayByFileName: Record<
   },
 };
 
+const lowerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-30.svg":
+    "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-30-cruzado-collar-lower.svg",
+};
+
 const completeInteriorCollarTrimOverlayByFileName: Record<
   string,
   { left: string; right: string }
@@ -775,6 +780,11 @@ const completeInteriorCollarTrimOverlayByFileName: Record<
     left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-complete-left.svg",
     right:
       "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-01-collar-v-complete-right.svg",
+  },
+  "blouse-model-30.svg": {
+    left: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-30-cruzado-collar-v-complete-left.svg",
+    right:
+      "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-30-cruzado-collar-v-complete-right.svg",
   },
 };
 
@@ -1209,6 +1219,12 @@ function isRightCompleteInteriorCollarSection(
     key.includes("cuello v completo interior derecho") ||
     key.includes("cuello-v-completo-interior-derecho")
   );
+}
+
+function isLowerCollarSection(section: PreviewScene["trimSections"][number]) {
+  const key = getTrimSectionText(section);
+
+  return key.includes("cuello inferior") || key.includes("cuello-inferior");
 }
 
 function isLowerPocketTrimSection(
@@ -3375,6 +3391,26 @@ async function drawThickInteriorCollarTrimFromAsset(
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
 }
 
+async function drawLowerCollarTrimFromAsset(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  trimColor: string | undefined,
+) {
+  if (!trimColor) {
+    return;
+  }
+
+  const overlaySrc =
+    lowerCollarTrimOverlayByFileName[getFileNameFromSource(sourceSrc)];
+
+  if (!overlaySrc) {
+    return;
+  }
+
+  const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
+  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+}
+
 async function drawDefaultExternalCollarLinesFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -3659,6 +3695,10 @@ async function composeSingleDesign(
       scene,
       isRightCompleteInteriorCollarSection,
     );
+    const lowerCollarTrimColor = getTrimSectionColor(
+      scene,
+      isLowerCollarSection,
+    );
     const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
@@ -3776,6 +3816,11 @@ async function composeSingleDesign(
       baseAssetSrc,
       "right",
       rightCompleteInteriorCollarTrimColor,
+    );
+    await drawLowerCollarTrimFromAsset(
+      context,
+      baseAssetSrc,
+      lowerCollarTrimColor,
     );
     await drawThickInteriorCollarTrimFromAsset(
       context,

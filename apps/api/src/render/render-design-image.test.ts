@@ -4203,6 +4203,7 @@ describe("renderDesignImage", () => {
     const collarRegion = { x: 290, y: 125, width: 330, height: 285 };
     const leftThickRegion = { x: 300, y: 125, width: 160, height: 285 };
     const rightThickRegion = { x: 430, y: 125, width: 180, height: 285 };
+    const lowerCollarRegion = { x: 420, y: 360, width: 75, height: 70 };
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -4269,6 +4270,48 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withLeftComplete = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6117,
+            key: "cuello-v-completo-interior-izquierdo",
+            label: "Cuello V Completo interior izquierdo",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withRightComplete = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6118,
+            key: "cuello-v-completo-interior-derecho",
+            label: "Cuello V Completo interior derecho",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 6119,
+            key: "cuello-inferior",
+            label: "Cuello inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
 
     expect(
       countFuchsiaPixelsInRegion(
@@ -4291,6 +4334,27 @@ describe("renderDesignImage", () => {
         rightThickRegion,
       ),
     ).toBeGreaterThan(150);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLeftComplete.data,
+        withLeftComplete.info.width,
+        leftThickRegion,
+      ),
+    ).toBeGreaterThan(1200);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withRightComplete.data,
+        withRightComplete.info.width,
+        rightThickRegion,
+      ),
+    ).toBeGreaterThan(1200);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLowerCollar.data,
+        withLowerCollar.info.width,
+        lowerCollarRegion,
+      ),
+    ).toBeGreaterThan(80);
     expect(
       countPastelPinkPixelsInRegion(
         withLineTrims.data,
