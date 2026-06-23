@@ -236,7 +236,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
       "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-lower-pocket-presillas-trim.svg",
   },
   "blouse-model-46-costura-triangulo-lower-pocket.svg": {
-    top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-trim.svg",
+    top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-upper.svg",
     bottom:
       "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-trim.svg",
   },

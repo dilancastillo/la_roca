@@ -827,7 +827,6 @@ describe("renderDesignImage", () => {
       withLowerTrim.info.width,
       withLowerTrim.info.height,
     );
-
     expect(pointZipperPocketMarkup).toContain("L190,430");
     expect(pointZipperPocketMarkup).toContain("point-zipper-hatch");
     expect(pointZipperPocketMarkup).not.toContain("<circle");
@@ -6001,12 +6000,12 @@ describe("renderDesignImage", () => {
     const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
       withUpperTrim.data,
       withUpperTrim.info.width,
-      { x: 245, y: 740, width: 200, height: 95 },
+      { x: 245, y: 725, width: 200, height: 30 },
     );
     const upperRightPinkPixels = countPastelPinkPixelsInRegion(
       withUpperTrim.data,
       withUpperTrim.info.width,
-      { x: 500, y: 740, width: 210, height: 95 },
+      { x: 500, y: 725, width: 210, height: 30 },
     );
     const lowerLeftPinkPixels = countPastelPinkPixelsInRegion(
       withUpperTrim.data,
@@ -6018,6 +6017,16 @@ describe("renderDesignImage", () => {
       withUpperTrim.info.width,
       { x: 515, y: 860, width: 95, height: 180 },
     );
+    const upperTrimBounds = getPastelPinkPixelBounds(
+      withUpperTrim.data,
+      withUpperTrim.info.width,
+      withUpperTrim.info.height,
+    );
+    const lowerTrimBounds = getPastelPinkPixelBounds(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      withLowerTrim.info.height,
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -6026,11 +6035,18 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
-    ).toBe(0);
+    ).toBeGreaterThan(100);
     expect(upperLeftPinkPixels).toBeGreaterThan(120);
     expect(upperRightPinkPixels).toBeGreaterThan(120);
     expect(lowerLeftPinkPixels).toBeLessThan(20);
     expect(lowerRightPinkPixels).toBeLessThan(20);
+    expect(upperTrimBounds).toBeDefined();
+    expect(lowerTrimBounds).toBeDefined();
+    expect(
+      (upperTrimBounds?.maxY ?? 0) - (upperTrimBounds?.minY ?? 0),
+    ).toBeLessThan(
+      ((lowerTrimBounds?.maxY ?? 0) - (lowerTrimBounds?.minY ?? 0)) / 2,
+    );
   }, 20000);
 
   it("renderiza RIBETE HORIZONTAL con el mismo vivo lineal en parte superior o baja", async () => {
