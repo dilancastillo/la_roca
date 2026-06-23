@@ -4203,7 +4203,7 @@ describe("renderDesignImage", () => {
     const collarRegion = { x: 290, y: 125, width: 330, height: 285 };
     const leftThickRegion = { x: 300, y: 125, width: 160, height: 285 };
     const rightThickRegion = { x: 430, y: 125, width: 180, height: 285 };
-    const lowerCollarRegion = { x: 420, y: 360, width: 75, height: 70 };
+    const lowerCollarRegion = { x: 420, y: 330, width: 75, height: 70 };
     const withoutTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
