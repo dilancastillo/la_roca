@@ -3334,6 +3334,16 @@ function getOriginalSleeveTrimShapes(placementAssetPath: string) {
   );
 }
 
+function getOriginalSleeveFillShapes(placementAssetPath: string) {
+  if (
+    getAssetFileName(placementAssetPath) === "blouse-model-15-presillas.svg"
+  ) {
+    return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
+  return getOriginalSleeveTrimShapes(placementAssetPath);
+}
+
 function resolveGarmentDetailOverlayAssetPath(
   overlayAssetPath: string,
   placementAssetPath: string,
@@ -3366,12 +3376,13 @@ async function getOriginalSleevesTrimSvg(
     await loadProcessedImage(placementAssetPath),
   );
   const trimShapes = getOriginalSleeveTrimShapes(placementAssetPath);
+  const fillShapes = getOriginalSleeveFillShapes(placementAssetPath);
   const layers: string[] = [];
 
   const fillTrimColor = trimColors.fill;
   if (fillTrimColor) {
     layers.push(
-      ...trimShapes.map(
+      ...fillShapes.map(
         (shape) => `
           <polygon
             points="${getTransformedPolygonPoints(shape.points, transform)}"
