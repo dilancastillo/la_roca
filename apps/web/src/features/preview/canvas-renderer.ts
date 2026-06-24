@@ -425,6 +425,40 @@ const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = [
+  {
+    points: [
+      [262.51, 662.26],
+      [116.28, 531.63],
+      [120.16, 516.64],
+      [267.55, 647.97],
+    ],
+    upper: [
+      [120.16, 516.64],
+      [267.55, 647.97],
+    ],
+    lower: [
+      [116.28, 531.63],
+      [262.51, 662.26],
+    ],
+  },
+  {
+    points: [
+      [970.21, 515.32],
+      [834.2, 642.19],
+      [824.95, 630.7],
+      [966.1, 501.88],
+    ],
+    upper: [
+      [966.1, 501.88],
+      [824.95, 630.7],
+    ],
+    lower: [
+      [970.21, 515.32],
+      [834.2, 642.19],
+    ],
+  },
+] as const;
 const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
@@ -460,7 +494,6 @@ const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
 ] as const;
 const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
-  "blouse-model-01.svg",
   "blouse-model-02-jdc.svg",
   "blouse-model-04.svg",
   "blouse-model-05.svg",
@@ -503,6 +536,9 @@ const SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES = new Set([
   "blouse-model-50-20-20.svg",
 ]);
 const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
+  "blouse-model-01.svg": [
+    ...CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  ],
   "blouse-model-04.svg": [
     ORIGINAL_SLEEVE_TRIM_SHAPES[0],
     {
@@ -666,6 +702,8 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   ],
 } as const;
 const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> = {
+  "blouse-model-01.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-01-cuello-v-original-sleeves.svg",
   "blouse-model-04.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-04-mariposa-dividido-original-sleeves.svg",
   "blouse-model-06-puntas.svg":

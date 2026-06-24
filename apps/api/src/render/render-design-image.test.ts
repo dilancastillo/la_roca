@@ -3838,9 +3838,43 @@ describe("renderDesignImage", () => {
     expect(oldRightInnerStrayPinkPixels).toBeLessThan(80);
   }, 20000);
 
+  it("pega las mangas Original al borde real de CUELLO V", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+    const withLowerSleeveTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftInnerEdgePinkPixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 200, y: 545, width: 35, height: 35 },
+    );
+    const rightInnerEdgePinkPixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 675, y: 515, width: 40, height: 40 },
+    );
+
+    expect(leftInnerEdgePinkPixels).toBeGreaterThan(100);
+    expect(rightInnerEdgePinkPixels).toBeGreaterThan(100);
+  }, 20000);
+
   it("usa las mangas Original alineadas a PUNTADAS en modelos solicitados", async () => {
     const alignedNeckAssetPaths = [
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-05.svg",
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
