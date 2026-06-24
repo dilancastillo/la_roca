@@ -1593,7 +1593,9 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
-  it("activa vivo de bolsillo lateral de pantalon solo con Doble cremallera", () => {
+  it.each(["Doble cremallera", "Externo"])(
+    "activa vivo de bolsillo lateral de pantalon con %s",
+    (sidePocketName) => {
     const sessionWithSidePocket: ConfiguratorSession = {
       ...pantalonSession,
       attributes: [
@@ -1607,7 +1609,7 @@ describe("deriveConfiguratorUi", () => {
           values: [
             {
               id: 9002,
-              name: "Doble cremallera",
+              name: sidePocketName,
               attributeId: 9001,
               attributeName: "Bolsillo lateral",
             },
@@ -1664,7 +1666,8 @@ describe("deriveConfiguratorUi", () => {
       label: "Bolsillo lateral de pantalón",
       colorHex: "#a000b0",
     });
-  });
+    },
+  );
 
   it("activa el bolsillo lateral Asorsalud para el vivo de pantalon", () => {
     const sessionWithSidePocket: ConfiguratorSession = {

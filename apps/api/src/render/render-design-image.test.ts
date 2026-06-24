@@ -1620,7 +1620,7 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withButtonWaist.data)).toBe(0);
   }, 20000);
 
-  it("pinta el vivo del bolsillo lateral de pantalon solo con Doble cremallera", async () => {
+  it("pinta el borde del bolsillo lateral para Doble cremallera y Externo", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
