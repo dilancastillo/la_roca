@@ -2878,7 +2878,9 @@ function getOriginalSleeveTrimShapes(placementSrc: string) {
 
 function getOriginalSleeveFillShapes(placementSrc: string) {
   if (
-    getFileNameFromSource(placementSrc) === "blouse-model-15-presillas.svg"
+    ["blouse-model-05.svg", "blouse-model-15-presillas.svg"].includes(
+      getFileNameFromSource(placementSrc),
+    )
   ) {
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
