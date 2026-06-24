@@ -6290,7 +6290,7 @@ describe("renderDesignImage", () => {
     expect(lowerRenderUpperBandPinkPixels).toBeLessThan(50);
   }, 20000);
 
-  it("renderiza COSTURA MARIA con vivo superior sin responder a parte baja", async () => {
+  it("renderiza COSTURA MARIA con vivos superior y auxiliar sin responder a parte baja", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-20-costura-maria-lower-pocket.svg";
     const withoutTrim = await readRawPng(
@@ -6329,6 +6329,21 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withAuxiliaryTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5154,
+            role: "auxiliaryPocket",
+            key: "bolsillo-auxiliar",
+            label: "Bolsillo auxiliar",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
       withUpperTrim.data,
       withUpperTrim.info.width,
@@ -6339,15 +6354,30 @@ describe("renderDesignImage", () => {
       withUpperTrim.info.width,
       { x: 485, y: 770, width: 190, height: 90 },
     );
+    const auxiliaryLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withAuxiliaryTrim.data,
+      withAuxiliaryTrim.info.width,
+      { x: 250, y: 770, width: 200, height: 90 },
+    );
+    const auxiliaryRightPinkPixels = countPastelPinkPixelsInRegion(
+      withAuxiliaryTrim.data,
+      withAuxiliaryTrim.info.width,
+      { x: 485, y: 770, width: 190, height: 90 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(
       countDifferentPixels(withoutTrim.data, withUpperTrim.data),
     ).toBeGreaterThan(50);
+    expect(
+      countDifferentPixels(withoutTrim.data, withAuxiliaryTrim.data),
+    ).toBeGreaterThan(50);
     expect(countDifferentPixels(withoutTrim.data, withLowerTrim.data)).toBe(0);
     expect(upperLeftPinkPixels).toBeGreaterThan(50);
     expect(upperRightPinkPixels).toBeLessThan(20);
+    expect(auxiliaryLeftPinkPixels).toBeGreaterThan(50);
+    expect(auxiliaryRightPinkPixels).toBeLessThan(20);
   }, 20000);
 
   it("renderiza COSTURA TRIANGULO con vivo solo en las secciones superiores", async () => {
