@@ -1842,6 +1842,172 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
+  it("pinta Rodilla lineal superior e inferior de forma independiente en ambos lados", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+      trimSections: [],
+    };
+    const withUpper = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9101,
+            key: "rodilla-lineal-superior",
+            label: "Rodilla lineal superior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLower = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9102,
+            key: "rodilla-lineal-inferior",
+            label: "Rodilla lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withBoth = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9101,
+            key: "rodilla-lineal-superior",
+            label: "Rodilla lineal superior",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9102,
+            key: "rodilla-lineal-inferior",
+            label: "Rodilla lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const upperRegions = [
+      { x: 205, y: 522, width: 145, height: 10 },
+      { x: 548, y: 522, width: 145, height: 10 },
+    ];
+    const lowerRegions = [
+      { x: 205, y: 534, width: 145, height: 10 },
+      { x: 548, y: 534, width: 145, height: 10 },
+    ];
+
+    for (const region of upperRegions) {
+      expect(
+        countPurplePixelsInRegion(
+          withUpper.data,
+          withUpper.info.width,
+          region,
+        ),
+      ).toBeGreaterThan(80);
+      expect(
+        countPurplePixelsInRegion(
+          withLower.data,
+          withLower.info.width,
+          region,
+        ),
+      ).toBeLessThan(20);
+    }
+
+    for (const region of lowerRegions) {
+      expect(
+        countPurplePixelsInRegion(
+          withLower.data,
+          withLower.info.width,
+          region,
+        ),
+      ).toBeGreaterThan(80);
+      expect(
+        countPurplePixelsInRegion(
+          withUpper.data,
+          withUpper.info.width,
+          region,
+        ),
+      ).toBeLessThan(20);
+    }
+
+    expect(countPurplePixels(withBoth.data)).toBeGreaterThan(
+      countPurplePixels(withUpper.data) + 150,
+    );
+    expect(countPurplePixels(withBoth.data)).toBeGreaterThan(
+      countPurplePixels(withLower.data) + 150,
+    );
+  }, 20000);
+
+  it("aplica los lineales universales a parches internos y ribete", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "internal",
+      pantsKneePatchLeftModel: "ribete",
+      pantsKneePatchLeftType: "plain",
+      trimSections: [
+        {
+          valueId: 9101,
+          key: "rodilla-lineal-superior",
+          label: "Rodilla lineal superior",
+          colorHex: "#a000b0",
+        },
+        {
+          valueId: 9102,
+          key: "rodilla-lineal-inferior",
+          label: "Rodilla lineal inferior",
+          colorHex: "#a000b0",
+        },
+      ],
+    };
+    const withInternalAndPlainRibete = await readRawPng(
+      await renderDesignImage(pantsScene),
+    );
+    const withZipperRibete = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchLeftType: "zipper",
+      }),
+    );
+    const internalRegion = { x: 555, y: 535, width: 135, height: 30 };
+    const plainRibeteRegion = { x: 245, y: 605, width: 130, height: 30 };
+    const zipperRibeteRegion = { x: 235, y: 605, width: 150, height: 30 };
+
+    expect(
+      countPurplePixelsInRegion(
+        withInternalAndPlainRibete.data,
+        withInternalAndPlainRibete.info.width,
+        internalRegion,
+      ),
+    ).toBeGreaterThan(160);
+    expect(
+      countPurplePixelsInRegion(
+        withInternalAndPlainRibete.data,
+        withInternalAndPlainRibete.info.width,
+        plainRibeteRegion,
+      ),
+    ).toBeGreaterThan(130);
+    expect(
+      countPurplePixelsInRegion(
+        withZipperRibete.data,
+        withZipperRibete.info.width,
+        zipperRibeteRegion,
+      ),
+    ).toBeGreaterThan(150);
+  }, 20000);
+
   it("pinta la cremallera vertical del parche de rodilla con Parche rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

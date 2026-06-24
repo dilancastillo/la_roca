@@ -134,6 +134,64 @@ const PANTS_KNEE_PATCH_RIBETE_ZIPPER_FILL_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/trim-overlays/pants-knee-patch-ribete-zipper-fill-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP = {
+  full: {
+    upper: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-right.svg",
+    },
+    lower: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-lower-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-lower-right.svg",
+    },
+  },
+  internal: {
+    upper: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-right.svg",
+    },
+    lower: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-lower-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-lower-right.svg",
+    },
+  },
+  ribetePlain: {
+    upper: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-right.svg",
+    },
+    lower: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-lower-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-lower-right.svg",
+    },
+  },
+  ribeteZipper: {
+    upper: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-right.svg",
+    },
+    lower: {
+      left:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-lower-left.svg",
+      right:
+        "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-lower-right.svg",
+    },
+  },
+} as const;
 
 type OverlayRegion = {
   x: number;
@@ -1400,6 +1458,34 @@ function isPantsKneePatchTrimSection(
   );
 }
 
+function isPantsKneePatchUpperLinearTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla lineal superior") ||
+    key.includes("rodilla-lineal-superior") ||
+    (key.includes("rodilla") &&
+      key.includes("lineal") &&
+      key.includes("superior"))
+  );
+}
+
+function isPantsKneePatchLowerLinearTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla lineal inferior") ||
+    key.includes("rodilla-lineal-inferior") ||
+    (key.includes("rodilla") &&
+      key.includes("lineal") &&
+      key.includes("inferior"))
+  );
+}
+
 function isChestPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -2246,6 +2332,8 @@ async function createPantsKneePatchOverlayBuffers(
   scene: AutomationRenderScene,
   placementAssetPath: string,
   trimColor: string | undefined,
+  upperLinearTrimColor: string | undefined,
+  lowerLinearTrimColor: string | undefined,
 ) {
   const rightBuffers = await createPantsKneePatchSideOverlayBuffers(
     placementAssetPath,
@@ -2262,7 +2350,56 @@ async function createPantsKneePatchOverlayBuffers(
     trimColor,
   );
 
-  return [...rightBuffers, ...leftBuffers];
+  const buffers = [...rightBuffers, ...leftBuffers];
+
+  for (const side of ["right", "left"] as const) {
+    const model =
+      side === "right"
+        ? scene.pantsKneePatchRightModel
+        : scene.pantsKneePatchLeftModel;
+    const type =
+      side === "right"
+        ? scene.pantsKneePatchRightType
+        : scene.pantsKneePatchLeftType;
+
+    if (!model || (!upperLinearTrimColor && !lowerLinearTrimColor)) {
+      continue;
+    }
+
+    const isRibeteZipper =
+      model === "ribete" &&
+      (type === "zipper" ||
+        type === "horizontalZipper" ||
+        type === "verticalZipper");
+    const group =
+      model === "internal"
+        ? "internal"
+        : model === "ribete"
+          ? isRibeteZipper
+            ? "ribeteZipper"
+            : "ribetePlain"
+          : "full";
+
+    for (const [position, color] of [
+      ["upper", upperLinearTrimColor],
+      ["lower", lowerLinearTrimColor],
+    ] as const) {
+      if (!color) {
+        continue;
+      }
+
+      const lineOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][side],
+        placementAssetPath,
+      );
+
+      if (lineOverlayBuffer) {
+        buffers.push(await recolorPngInkBuffer(lineOverlayBuffer, color));
+      }
+    }
+  }
+
+  return buffers;
 }
 
 async function createChestPocketOverlayBuffer(
@@ -3713,6 +3850,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isPantsKneePatchTrimSection,
     );
+    const pantsKneePatchUpperLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchUpperLinearTrimSection,
+    );
+    const pantsKneePatchLowerLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLowerLinearTrimSection,
+    );
     const sleeveTabTrimColor = getTrimSectionColor(
       scene,
       isSleeveTabTrimSection,
@@ -3741,6 +3886,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         scene,
         baseAssetPath,
         pantsKneePatchTrimColor,
+        pantsKneePatchUpperLinearTrimColor,
+        pantsKneePatchLowerLinearTrimColor,
       );
 
     if (pantsSidePocketTrimOverlayBuffer) {
