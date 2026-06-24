@@ -2857,6 +2857,10 @@ function isPespunteDetailOverlay(overlaySrc: string) {
 function getOriginalSleeveTrimShapes(placementSrc: string) {
   const placementFileName = getFileNameFromSource(placementSrc);
 
+  if (placementFileName === "blouse-model-15-presillas.svg") {
+    return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
   if (SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES.has(placementFileName)) {
     return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }

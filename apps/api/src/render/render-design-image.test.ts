@@ -4181,6 +4181,53 @@ describe("renderDesignImage", () => {
     expect(oldRightProtrusionPixels).toBeLessThan(20);
   }, 20000);
 
+  it("pega los lineales inferiores de PRESILLAS al borde de PUNTADAS", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";
+    const withLowerSleeveTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftAlignedPixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 190, y: 530, width: 40, height: 30 },
+    );
+    const rightAlignedPixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 690, y: 510, width: 40, height: 30 },
+    );
+    const oldLeftOutsidePixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 205, y: 562, width: 18, height: 8 },
+    );
+    const oldRightOutsidePixels = countPastelPinkPixelsInRegion(
+      withLowerSleeveTrim.data,
+      withLowerSleeveTrim.info.width,
+      { x: 710, y: 538, width: 18, height: 8 },
+    );
+
+    expect(leftAlignedPixels).toBeGreaterThan(80);
+    expect(rightAlignedPixels).toBeGreaterThan(80);
+    expect(oldLeftOutsidePixels).toBeLessThan(20);
+    expect(oldRightOutsidePixels).toBeLessThan(20);
+  }, 20000);
+
   it("ajusta ambas mangas Original al contorno de CUELLO ALTO", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-08.svg";
