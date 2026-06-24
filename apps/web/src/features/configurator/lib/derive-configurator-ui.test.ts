@@ -1666,6 +1666,79 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("activa el bolsillo lateral Asorsalud para el vivo de pantalon", () => {
+    const sessionWithSidePocket: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 9001,
+          name: "Bolsillo lateral",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9005,
+              name: "Asorsalud",
+              attributeId: 9001,
+              attributeName: "Bolsillo lateral",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Seccion de vivo",
+          displayType: "option",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9003,
+              name: "Bolsillo lateral de pantalon",
+              attributeId: 157,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+        {
+          id: 802,
+          name: "Color de vivos",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9004,
+              name: "Violeta",
+              attributeId: 802,
+              attributeName: "Color de vivos",
+              colorHex: "#a000b0",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "9001": [9005],
+        "157": [9003],
+        "802": [9004],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithSidePocket,
+      sessionWithSidePocket.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsSidePocketType).toBe("asorsalud");
+    expect(ui.previewScene.trimSections).toContainEqual({
+      valueId: 9003,
+      key: "bolsillo-lateral-de-pantalon",
+      label: "Bolsillo lateral de pantalon",
+      colorHex: "#a000b0",
+    });
+  });
+
   it("activa bolsillos de parche de rodilla cuadrados con cremallera horizontal", () => {
     const sessionWithKneePatches: ConfiguratorSession = {
       ...pantalonSession,

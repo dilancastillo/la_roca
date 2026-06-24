@@ -14,6 +14,8 @@ const TARGET_RECT = {
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
   "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+const PANTS_SIDE_POCKET_ASORSALUD_TRIM_ASSET =
+  "assets/catalog/pantalon/trim-overlays/pants-side-pocket-asorsalud.svg";
 const PANTS_KNEE_PATCH_SQUARE_ASSET_BY_SIDE = {
   left: "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-left.svg",
   right:
@@ -1980,12 +1982,16 @@ async function createPantsSidePocketTrimOverlayBuffer(
   trimColor: string | undefined,
   sidePocketType: AutomationRenderScene["pantsSidePocketType"],
 ) {
-  if (!trimColor || sidePocketType !== "doubleZipper") {
+  if (!trimColor || !sidePocketType) {
     return undefined;
   }
 
+  const overlayAssetPath =
+    sidePocketType === "asorsalud"
+      ? PANTS_SIDE_POCKET_ASORSALUD_TRIM_ASSET
+      : PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET;
   const [trimProcessed, placementProcessed] = await Promise.all([
-    loadProcessedImage(PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET),
+    loadProcessedImage(overlayAssetPath),
     loadProcessedImage(placementAssetPath),
   ]);
   const overlayBuffer = await createOverlayBufferFromProcessed(

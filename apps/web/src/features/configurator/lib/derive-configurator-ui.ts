@@ -44,7 +44,7 @@ export type PreviewScene = {
   garmentDetailImageSrcs?: string[] | undefined;
   bootImageSrc?: string | undefined;
   waistbandImageSrc?: string | undefined;
-  pantsSidePocketType?: "doubleZipper" | undefined;
+  pantsSidePocketType?: "doubleZipper" | "asorsalud" | undefined;
   pantsKneePatchRightModel?:
     | "square"
     | "camouflage"
@@ -472,6 +472,10 @@ function isDoubleZipperSidePocket(valueName: string | undefined) {
   const normalized = normalize(valueName);
 
   return normalized.includes("doble") && normalized.includes("cremallera");
+}
+
+function isAsorsaludSidePocket(valueName: string | undefined) {
+  return valueName ? normalize(valueName) === "asorsalud" : false;
 }
 
 function isKneePatchModelAttributeName(
@@ -1177,10 +1181,14 @@ function deriveSingleConfiguratorUi(
         : "plain"
     : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
-    isDoubleZipperSidePocket(option.name),
+    isAsorsaludSidePocket(option.name),
   )
-    ? "doubleZipper"
-    : undefined;
+    ? "asorsalud"
+    : selectedPantsSidePocketOptions.some((option) =>
+          isDoubleZipperSidePocket(option.name),
+        )
+      ? "doubleZipper"
+      : undefined;
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
   const garmentImageSrc = selectedGarment

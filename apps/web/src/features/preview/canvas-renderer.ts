@@ -23,6 +23,8 @@ export const previewCanvasSize = {
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC =
   "/assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
+const PANTS_SIDE_POCKET_ASORSALUD_TRIM_SRC =
+  "/assets/catalog/pantalon/trim-overlays/pants-side-pocket-asorsalud.svg";
 const PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE = {
   left: "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-left.svg",
   right:
@@ -3083,12 +3085,16 @@ async function drawPantsSidePocketTrimFromAsset(
   trimColor: string | undefined,
   sidePocketType: PreviewScene["pantsSidePocketType"],
 ) {
-  if (!trimColor || sidePocketType !== "doubleZipper") {
+  if (!trimColor || !sidePocketType) {
     return;
   }
 
+  const overlaySrc =
+    sidePocketType === "asorsalud"
+      ? PANTS_SIDE_POCKET_ASORSALUD_TRIM_SRC
+      : PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC;
   const overlayCanvas = await createRasterCanvas(
-    PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_SRC,
+    overlaySrc,
     sourceSrc,
   );
   context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);

@@ -1652,6 +1652,39 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(250);
   }, 20000);
 
+  it("rellena el bolsillo lateral Asorsalud solo con su seccion de vivo", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+      pantsSidePocketType: "asorsalud",
+    };
+    const withoutTrimSection = await readRawPng(
+      await renderDesignImage(pantsScene),
+    );
+    const withTrimSection = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9003,
+            key: "bolsillo-lateral-de-pantalon",
+            label: "Bolsillo lateral de pantalon",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+
+    expect(countPurplePixels(withoutTrimSection.data)).toBeLessThan(20);
+    expect(countPurplePixels(withTrimSection.data)).toBeGreaterThan(250);
+    expect(
+      countDifferentPixels(withoutTrimSection.data, withTrimSection.data),
+    ).toBeGreaterThan(250);
+  }, 20000);
+
   it("superpone bolsillos de parche de rodilla cuadrados y pinta la cremallera con Parche rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
