@@ -238,7 +238,7 @@ const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-39-el-hato-lower-pocket.svg": [3, 4, 5, 6, 7, 8, 9, 10],
   "blouse-model-46-costura-triangulo-lower-pocket.svg": [1, 2, 3, 4],
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": [1, 2],
-  "blouse-model-48-los-andes-lower-pocket.svg": [0, 1, 2, 3, 4],
+  "blouse-model-48-los-andes-lower-pocket-v2.svg": [0, 1, 2, 3, 4],
   "blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg": [0, 1, 2],
 };
 
@@ -316,7 +316,7 @@ const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
 };
 
 const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
-  "blouse-model-48-los-andes-lower-pocket.svg": [
+  "blouse-model-48-los-andes-lower-pocket-v2.svg": [
     { x: 225, y: 675, width: 245, height: 385 },
     { x: 470, y: 675, width: 245, height: 385 },
   ],

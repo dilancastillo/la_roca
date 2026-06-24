@@ -6535,7 +6535,7 @@ describe("renderDesignImage", () => {
 
   it("renderiza LOS ANDES como bolsillo inferior sin vivos", async () => {
     const lowerPocketAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket-v2.svg";
     const withoutPocket = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -6575,6 +6575,29 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutPocket.data, withLosAndesPocket.data),
     ).toBeGreaterThan(500);
+    const leftPocketInk = countDarkPixelsInRegion(
+      withLosAndesPocket.data,
+      withLosAndesPocket.info.width,
+      { x: 245, y: 700, width: 200, height: 340 },
+    );
+    const leftBaseInk = countDarkPixelsInRegion(
+      withoutPocket.data,
+      withoutPocket.info.width,
+      { x: 245, y: 700, width: 200, height: 340 },
+    );
+    const rightPocketInk = countDarkPixelsInRegion(
+      withLosAndesPocket.data,
+      withLosAndesPocket.info.width,
+      { x: 475, y: 700, width: 205, height: 340 },
+    );
+    const rightBaseInk = countDarkPixelsInRegion(
+      withoutPocket.data,
+      withoutPocket.info.width,
+      { x: 475, y: 700, width: 205, height: 340 },
+    );
+
+    expect(leftPocketInk).toBeGreaterThan(leftBaseInk + 500);
+    expect(rightPocketInk).toBeGreaterThan(rightBaseInk + 500);
     expect(
       countDifferentPixels(withLosAndesPocket.data, withIgnoredTrim.data),
     ).toBe(0);

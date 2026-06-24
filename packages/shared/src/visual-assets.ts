@@ -127,7 +127,7 @@ const BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET =
 const BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-47-ribete-horizontal-lower-pocket.svg`;
 const BLUSA_LOS_ANDES_LOWER_POCKET_ASSET =
-  `${BLUSA_ASSET_BASE}/blouse-model-48-los-andes-lower-pocket.svg`;
+  `${BLUSA_ASSET_BASE}/blouse-model-48-los-andes-lower-pocket-v2.svg`;
 const BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg`;
 const BLUSA_FISIOPRACTICAS_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-11-fisiopracticas.svg`;

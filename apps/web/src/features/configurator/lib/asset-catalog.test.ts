@@ -842,7 +842,7 @@ describe("getProductAssetCatalog", () => {
         "LOS ANDES",
       ),
     ).toBe(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket-v2.svg",
     );
 
     expect(
