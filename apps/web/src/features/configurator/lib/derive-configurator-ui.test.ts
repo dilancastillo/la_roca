@@ -1073,6 +1073,57 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {
+    const sessionWithCurrentLowerPocketIds: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 70
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 387,
+                  name: "LOS ANDES",
+                  attributeId: 70,
+                  attributeName: "Modelo bolsillo inferior",
+                },
+                {
+                  id: 3205,
+                  name: "ALETAS",
+                  attributeId: 70,
+                  attributeName: "Modelo bolsillo inferior",
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const withLosAndes = deriveConfiguratorUi(
+      sessionWithCurrentLowerPocketIds,
+      {
+        ...sessionWithCurrentLowerPocketIds.selectedValueIds,
+        "69": [2561],
+        "70": [387],
+      },
+    );
+    const withAletas = deriveConfiguratorUi(
+      sessionWithCurrentLowerPocketIds,
+      {
+        ...sessionWithCurrentLowerPocketIds.selectedValueIds,
+        "69": [2561],
+        "70": [3205],
+      },
+    );
+
+    expect(withLosAndes.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket-v2.svg",
+    );
+    expect(withAletas.previewScene.lowerPocketImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg",
+    );
+  });
+
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

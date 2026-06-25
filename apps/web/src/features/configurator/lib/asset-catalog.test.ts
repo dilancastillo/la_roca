@@ -199,6 +199,15 @@ describe("getProductAssetCatalog", () => {
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg",
     );
     expect(catalog?.lowerPocketModelsByValueId?.[387]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket-v2.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[1209]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-48-los-andes-lower-pocket-v2.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[3205]).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg",
+    );
+    expect(catalog?.lowerPocketModelsByValueId?.[3204]).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg",
     );
     expect(catalog?.lowerPocketModelsByValueId?.[2581]).toBe(
@@ -837,7 +846,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         154,
-        999996,
+        387,
         "Modelo bolsillo inferior",
         "LOS ANDES",
       ),
@@ -849,7 +858,7 @@ describe("getProductAssetCatalog", () => {
       getImageSourceForValue(
         "blusa-antifluido-t180",
         154,
-        999995,
+        3205,
         "Modelo bolsillo inferior",
         "ALETAS",
       ),
