@@ -2518,12 +2518,48 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withRightButtonTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "button",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "button",
+        trimSections: [
+          {
+            valueId: 9081,
+            key: "boton-rodilla-derecha",
+            label: "Boton rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftButtonTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "button",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "button",
+        trimSections: [
+          {
+            valueId: 9082,
+            key: "boton-rodilla-izquierda",
+            label: "Boton rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
     const patchRegions = [
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
     const leftFlapRegion = { x: 210, y: 535, width: 130, height: 30 };
     const rightFlapRegion = { x: 560, y: 535, width: 140, height: 30 };
+    const leftButtonRegion = { x: 238, y: 530, width: 28, height: 28 };
+    const rightButtonRegion = { x: 610, y: 530, width: 28, height: 28 };
     const flapRegions = [leftFlapRegion, rightFlapRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
@@ -2565,6 +2601,26 @@ describe("renderDesignImage", () => {
       withLeftTrimmedButton.info.width,
       rightFlapRegion,
     );
+    const rightButtonPurplePixels = countPurplePixelsInRegion(
+      withRightButtonTrim.data,
+      withRightButtonTrim.info.width,
+      rightButtonRegion,
+    );
+    const rightButtonLeftPurplePixels = countPurplePixelsInRegion(
+      withRightButtonTrim.data,
+      withRightButtonTrim.info.width,
+      leftButtonRegion,
+    );
+    const leftButtonPurplePixels = countPurplePixelsInRegion(
+      withLeftButtonTrim.data,
+      withLeftButtonTrim.info.width,
+      leftButtonRegion,
+    );
+    const leftButtonRightPurplePixels = countPurplePixelsInRegion(
+      withLeftButtonTrim.data,
+      withLeftButtonTrim.info.width,
+      rightButtonRegion,
+    );
 
     expect(
       countDifferentPixels(withoutPatch.data, withCamouflagePatch.data),
@@ -2574,6 +2630,10 @@ describe("renderDesignImage", () => {
     expect(purpleFlapPixels).toBeGreaterThan(1200);
     expect(leftOnlyPurpleFlapPixels).toBeGreaterThan(500);
     expect(rightPurpleFlapPixelsWithLeftTrim).toBeLessThan(20);
+    expect(rightButtonPurplePixels).toBeGreaterThan(20);
+    expect(rightButtonLeftPurplePixels).toBeLessThan(10);
+    expect(leftButtonPurplePixels).toBeGreaterThan(20);
+    expect(leftButtonRightPurplePixels).toBeLessThan(10);
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
   }, 20000);
 
