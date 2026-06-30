@@ -36,6 +36,7 @@ export type AutomationRenderScene = {
     | "triangularFlap";
   pantsKneePatchRightType?:
     | "snap"
+    | "overlaid"
     | "button"
     | "buckle"
     | "penSeam"
@@ -52,6 +53,7 @@ export type AutomationRenderScene = {
     | "triangularFlap";
   pantsKneePatchLeftType?:
     | "snap"
+    | "overlaid"
     | "button"
     | "buckle"
     | "penSeam"
@@ -476,6 +478,10 @@ function isSnapKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("broche") : false;
 }
 
+function isOverlaidKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("sobrepuesto") : false;
+}
+
 function isBuckleKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("hebilla") : false;
 }
@@ -706,6 +712,7 @@ function deriveSingleAutomationRenderScene(
       (option) =>
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
+        isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -719,6 +726,7 @@ function deriveSingleAutomationRenderScene(
       (option) =>
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
+        isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -729,6 +737,8 @@ function deriveSingleAutomationRenderScene(
   const rightKneePatchTypeValue = rightKneePatchType
     ? isSnapKneePatch(rightKneePatchType.name)
       ? "snap"
+      : isOverlaidKneePatch(rightKneePatchType.name)
+        ? "overlaid"
       : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(rightKneePatchType.name)
@@ -746,6 +756,8 @@ function deriveSingleAutomationRenderScene(
   const leftKneePatchTypeValue = leftKneePatchType
     ? isSnapKneePatch(leftKneePatchType.name)
       ? "snap"
+      : isOverlaidKneePatch(leftKneePatchType.name)
+        ? "overlaid"
       : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(leftKneePatchType.name)

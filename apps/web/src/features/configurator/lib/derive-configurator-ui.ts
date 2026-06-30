@@ -55,6 +55,7 @@ export type PreviewScene = {
     | undefined;
   pantsKneePatchRightType?:
     | "snap"
+    | "overlaid"
     | "button"
     | "buckle"
     | "penSeam"
@@ -73,6 +74,7 @@ export type PreviewScene = {
     | undefined;
   pantsKneePatchLeftType?:
     | "snap"
+    | "overlaid"
     | "button"
     | "buckle"
     | "penSeam"
@@ -590,6 +592,10 @@ function isButtonKneePatch(valueName: string | undefined) {
 
 function isSnapKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("broche") : false;
+}
+
+function isOverlaidKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("sobrepuesto") : false;
 }
 
 function isBuckleKneePatch(valueName: string | undefined) {
@@ -1146,6 +1152,7 @@ function deriveSingleConfiguratorUi(
       (option) =>
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
+        isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -1159,6 +1166,7 @@ function deriveSingleConfiguratorUi(
       (option) =>
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
+        isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -1169,6 +1177,8 @@ function deriveSingleConfiguratorUi(
   const rightKneePatchTypeValue = rightKneePatchType
     ? isSnapKneePatch(rightKneePatchType.name)
       ? "snap"
+      : isOverlaidKneePatch(rightKneePatchType.name)
+        ? "overlaid"
       : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(rightKneePatchType.name)
@@ -1186,6 +1196,8 @@ function deriveSingleConfiguratorUi(
   const leftKneePatchTypeValue = leftKneePatchType
     ? isSnapKneePatch(leftKneePatchType.name)
       ? "snap"
+      : isOverlaidKneePatch(leftKneePatchType.name)
+        ? "overlaid"
       : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(leftKneePatchType.name)

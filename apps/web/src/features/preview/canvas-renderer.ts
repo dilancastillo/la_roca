@@ -3570,6 +3570,15 @@ async function drawPantsKneePatchSideFromAsset(
   );
   context.drawImage(patchCanvas, 0, 0);
 
+  if (type === "overlaid") {
+    const lowerLineCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP.full.lower[side],
+      sourceSrc,
+    );
+    context.drawImage(lowerLineCanvas, 0, 0);
+    return;
+  }
+
   if (type === "plain" && trimColor) {
     const trimCanvas = await createRasterCanvas(
       PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE[side],

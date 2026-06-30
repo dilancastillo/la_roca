@@ -2002,6 +2002,91 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.pantsKneePatchLeftType).toBe("plain");
   });
 
+  it("activa bolsillos de parche de rodilla cuadrados sobrepuestos", () => {
+    const sessionWithOverlaidKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 12010,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12011,
+              name: "Cuadrado",
+              attributeId: 12010,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 12012,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12013,
+              name: "Sobrepuesto derecho",
+              attributeId: 12012,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 12014,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12015,
+              name: "Cuadrado",
+              attributeId: 12014,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 12016,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12017,
+              name: "Sobrepuesto izquierdo",
+              attributeId: 12016,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "12010": [12011],
+        "12012": [12013],
+        "12014": [12015],
+        "12016": [12017],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithOverlaidKneePatches,
+      sessionWithOverlaidKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("square");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("overlaid");
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("square");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBe("overlaid");
+  });
+
   it("activa bolsillos de parche de rodilla cuadrados con cremallera vertical", () => {
     const sessionWithVerticalKneePatches: ConfiguratorSession = {
       ...pantalonSession,

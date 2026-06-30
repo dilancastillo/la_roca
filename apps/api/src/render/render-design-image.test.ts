@@ -1946,6 +1946,83 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
+  it("dibuja el lineal inferior base en bolsillos cuadrados sobrepuestos", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+      trimSections: [],
+    };
+    const withoutOverlaid = await readRawPng(await renderDesignImage(pantsScene));
+    const withOverlaid = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightType: "overlaid",
+        pantsKneePatchLeftType: "overlaid",
+      }),
+    );
+    const withRightLowerTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightType: "overlaid",
+        pantsKneePatchLeftType: "overlaid",
+        trimSections: [
+          {
+            valueId: 12018,
+            key: "rodilla-derecha-lineal-inferior",
+            label: "Rodilla derecha lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const baseLeftLowerInk = countDarkPixelsInRegion(
+      withoutOverlaid.data,
+      withoutOverlaid.info.width,
+      leftLowerRegion,
+    );
+    const baseRightLowerInk = countDarkPixelsInRegion(
+      withoutOverlaid.data,
+      withoutOverlaid.info.width,
+      rightLowerRegion,
+    );
+
+    expect(
+      countDarkPixelsInRegion(
+        withOverlaid.data,
+        withOverlaid.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeGreaterThan(baseLeftLowerInk + 80);
+    expect(
+      countDarkPixelsInRegion(
+        withOverlaid.data,
+        withOverlaid.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeGreaterThan(baseRightLowerInk + 80);
+    expect(countPurplePixels(withOverlaid.data)).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withRightLowerTrim.data,
+        withRightLowerTrim.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withRightLowerTrim.data,
+        withRightLowerTrim.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeLessThan(20);
+  }, 20000);
+
   it("pinta Rodilla lineal superior e inferior de forma independiente en ambos lados", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

@@ -2504,6 +2504,19 @@ async function createPantsKneePatchSideOverlayBuffers(
     buffers.push(patchOverlayBuffer);
   }
 
+  if (type === "overlaid") {
+    const lowerLineOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP.full.lower[side],
+      placementAssetPath,
+    );
+
+    if (lowerLineOverlayBuffer) {
+      buffers.push(lowerLineOverlayBuffer);
+    }
+
+    return buffers;
+  }
+
   if (type === "plain" && trimColor) {
     const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
       PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE[side],
