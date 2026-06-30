@@ -1948,6 +1948,118 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("pinta los lineales de rodilla derecha e izquierda solo en su lado", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+      trimSections: [],
+    };
+    const withRightLinears = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9120,
+            key: "rodilla-derecha-lineal-superior",
+            label: "Rodilla derecha lineal superior",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9121,
+            key: "rodilla-derecha-lineal-inferior",
+            label: "Rodilla derecha lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftLinears = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9122,
+            key: "rodilla-izquierda-lineal-superior",
+            label: "Rodilla izquierda lineal superior",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9123,
+            key: "rodilla-izquierda-lineal-inferior",
+            label: "Rodilla izquierda lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftUpperRegion = { x: 205, y: 522, width: 145, height: 10 };
+    const rightUpperRegion = { x: 548, y: 522, width: 145, height: 10 };
+    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+
+    expect(
+      countPurplePixelsInRegion(
+        withRightLinears.data,
+        withRightLinears.info.width,
+        rightUpperRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withRightLinears.data,
+        withRightLinears.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withRightLinears.data,
+        withRightLinears.info.width,
+        leftUpperRegion,
+      ),
+    ).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withRightLinears.data,
+        withRightLinears.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeLessThan(20);
+
+    expect(
+      countPurplePixelsInRegion(
+        withLeftLinears.data,
+        withLeftLinears.info.width,
+        leftUpperRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftLinears.data,
+        withLeftLinears.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftLinears.data,
+        withLeftLinears.info.width,
+        rightUpperRegion,
+      ),
+    ).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftLinears.data,
+        withLeftLinears.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeLessThan(20);
+  }, 20000);
+
   it("pinta Aro rodilla derecha e izquierda en el lineal superior del lado seleccionado", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

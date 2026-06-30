@@ -1479,17 +1479,22 @@ function isPantsKneePatchTrimSection(
   );
 }
 
+function hasPantsKneePatchSideTerm(key: string) {
+  return key.includes("derecha") || key.includes("izquierda");
+}
+
 function isPantsKneePatchUpperLinearTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
   const key = getTrimSectionText(section);
 
   return (
-    key.includes("rodilla lineal superior") ||
-    key.includes("rodilla-lineal-superior") ||
-    (key.includes("rodilla") &&
-      key.includes("lineal") &&
-      key.includes("superior"))
+    !hasPantsKneePatchSideTerm(key) &&
+    (key.includes("rodilla lineal superior") ||
+      key.includes("rodilla-lineal-superior") ||
+      (key.includes("rodilla") &&
+        key.includes("lineal") &&
+        key.includes("superior")))
   );
 }
 
@@ -1499,11 +1504,64 @@ function isPantsKneePatchLowerLinearTrimSection(
   const key = getTrimSectionText(section);
 
   return (
-    key.includes("rodilla lineal inferior") ||
-    key.includes("rodilla-lineal-inferior") ||
-    (key.includes("rodilla") &&
-      key.includes("lineal") &&
-      key.includes("inferior"))
+    !hasPantsKneePatchSideTerm(key) &&
+    (key.includes("rodilla lineal inferior") ||
+      key.includes("rodilla-lineal-inferior") ||
+      (key.includes("rodilla") &&
+        key.includes("lineal") &&
+        key.includes("inferior")))
+  );
+}
+
+function isPantsKneePatchRightUpperLinearTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla") &&
+    key.includes("derecha") &&
+    key.includes("lineal") &&
+    key.includes("superior")
+  );
+}
+
+function isPantsKneePatchLeftUpperLinearTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla") &&
+    key.includes("izquierda") &&
+    key.includes("lineal") &&
+    key.includes("superior")
+  );
+}
+
+function isPantsKneePatchRightLowerLinearTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla") &&
+    key.includes("derecha") &&
+    key.includes("lineal") &&
+    key.includes("inferior")
+  );
+}
+
+function isPantsKneePatchLeftLowerLinearTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("rodilla") &&
+    key.includes("izquierda") &&
+    key.includes("lineal") &&
+    key.includes("inferior")
   );
 }
 
@@ -3483,6 +3541,10 @@ async function drawPantsKneePatchOverlaysFromAsset(
   trimColor: string | undefined,
   upperLinearTrimColor: string | undefined,
   lowerLinearTrimColor: string | undefined,
+  rightUpperLinearTrimColor: string | undefined,
+  leftUpperLinearTrimColor: string | undefined,
+  rightLowerLinearTrimColor: string | undefined,
+  leftLowerLinearTrimColor: string | undefined,
   rightUpperRingTrimColor: string | undefined,
   leftUpperRingTrimColor: string | undefined,
   rightVerticalZipperTrimColor: string | undefined,
@@ -3516,12 +3578,18 @@ async function drawPantsKneePatchOverlaysFromAsset(
       side === "right"
         ? scene.pantsKneePatchRightType
         : scene.pantsKneePatchLeftType;
+    const sideUpperLinearTrimColor =
+      side === "right" ? rightUpperLinearTrimColor : leftUpperLinearTrimColor;
+    const sideLowerLinearTrimColor =
+      side === "right" ? rightLowerLinearTrimColor : leftLowerLinearTrimColor;
+    const upperColor = sideUpperLinearTrimColor ?? upperLinearTrimColor;
+    const lowerColor = sideLowerLinearTrimColor ?? lowerLinearTrimColor;
     const upperRingTrimColor =
       side === "right" ? rightUpperRingTrimColor : leftUpperRingTrimColor;
 
     if (
       !model ||
-      (!upperLinearTrimColor && !lowerLinearTrimColor && !upperRingTrimColor)
+      (!upperColor && !lowerColor && !upperRingTrimColor)
     ) {
       continue;
     }
@@ -3541,8 +3609,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
           : "full";
 
     for (const [position, color] of [
-      ["upper", upperLinearTrimColor],
-      ["lower", lowerLinearTrimColor],
+      ["upper", upperColor],
+      ["lower", lowerColor],
     ] as const) {
       if (!color) {
         continue;
@@ -4107,6 +4175,22 @@ async function composeSingleDesign(
       scene,
       isPantsKneePatchLowerLinearTrimSection,
     );
+    const pantsKneePatchRightUpperLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightUpperLinearTrimSection,
+    );
+    const pantsKneePatchLeftUpperLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftUpperLinearTrimSection,
+    );
+    const pantsKneePatchRightLowerLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightLowerLinearTrimSection,
+    );
+    const pantsKneePatchLeftLowerLinearTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftLowerLinearTrimSection,
+    );
     const pantsKneePatchRightUpperRingTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchRightRingTrimSection,
@@ -4153,6 +4237,10 @@ async function composeSingleDesign(
       pantsKneePatchTrimColor,
       pantsKneePatchUpperLinearTrimColor,
       pantsKneePatchLowerLinearTrimColor,
+      pantsKneePatchRightUpperLinearTrimColor,
+      pantsKneePatchLeftUpperLinearTrimColor,
+      pantsKneePatchRightLowerLinearTrimColor,
+      pantsKneePatchLeftLowerLinearTrimColor,
       pantsKneePatchRightUpperRingTrimColor,
       pantsKneePatchLeftUpperRingTrimColor,
       pantsKneePatchRightVerticalZipperTrimColor,
