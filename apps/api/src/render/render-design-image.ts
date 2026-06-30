@@ -1480,14 +1480,39 @@ function isPantsKneePatchTrimSection(
   const key = getTrimSectionText(section);
 
   return (
-    key.includes("parche rodilla") ||
-    key.includes("parche-rodilla") ||
-    (key.includes("parche") && key.includes("rodilla"))
+    !hasPantsKneePatchSideTerm(key) &&
+    (key.includes("parche rodilla") ||
+      key.includes("parche-rodilla") ||
+      (key.includes("parche") && key.includes("rodilla")))
   );
 }
 
 function hasPantsKneePatchSideTerm(key: string) {
   return key.includes("derecha") || key.includes("izquierda");
+}
+
+function isPantsKneePatchRightTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("parche") &&
+    key.includes("rodilla") &&
+    key.includes("derecha")
+  );
+}
+
+function isPantsKneePatchLeftTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("parche") &&
+    key.includes("rodilla") &&
+    key.includes("izquierda")
+  );
 }
 
 function isPantsKneePatchUpperLinearTrimSection(
@@ -2484,6 +2509,8 @@ async function createPantsKneePatchOverlayBuffers(
   scene: AutomationRenderScene,
   placementAssetPath: string,
   trimColor: string | undefined,
+  rightTrimColor: string | undefined,
+  leftTrimColor: string | undefined,
   upperLinearTrimColor: string | undefined,
   lowerLinearTrimColor: string | undefined,
   rightUpperLinearTrimColor: string | undefined,
@@ -2500,7 +2527,7 @@ async function createPantsKneePatchOverlayBuffers(
     "right",
     scene.pantsKneePatchRightModel,
     scene.pantsKneePatchRightType,
-    trimColor,
+    rightTrimColor ?? trimColor,
     rightVerticalZipperTrimColor,
   );
   const leftBuffers = await createPantsKneePatchSideOverlayBuffers(
@@ -2508,7 +2535,7 @@ async function createPantsKneePatchOverlayBuffers(
     "left",
     scene.pantsKneePatchLeftModel,
     scene.pantsKneePatchLeftType,
-    trimColor,
+    leftTrimColor ?? trimColor,
     leftVerticalZipperTrimColor,
   );
 
@@ -4053,6 +4080,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isPantsKneePatchTrimSection,
     );
+    const pantsKneePatchRightTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightTrimSection,
+    );
+    const pantsKneePatchLeftTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftTrimSection,
+    );
     const pantsKneePatchUpperLinearTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchUpperLinearTrimSection,
@@ -4121,6 +4156,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         scene,
         baseAssetPath,
         pantsKneePatchTrimColor,
+        pantsKneePatchRightTrimColor,
+        pantsKneePatchLeftTrimColor,
         pantsKneePatchUpperLinearTrimColor,
         pantsKneePatchLowerLinearTrimColor,
         pantsKneePatchRightUpperLinearTrimColor,

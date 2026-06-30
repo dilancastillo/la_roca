@@ -2501,14 +2501,30 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withLeftTrimmedButton = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "button",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "button",
+        trimSections: [
+          {
+            valueId: 9080,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
     const patchRegions = [
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
-    const flapRegions = [
-      { x: 210, y: 535, width: 130, height: 30 },
-      { x: 560, y: 535, width: 140, height: 30 },
-    ];
+    const leftFlapRegion = { x: 210, y: 535, width: 130, height: 30 };
+    const rightFlapRegion = { x: 560, y: 535, width: 140, height: 30 };
+    const flapRegions = [leftFlapRegion, rightFlapRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
         total +
@@ -2539,6 +2555,16 @@ describe("renderDesignImage", () => {
         ),
       0,
     );
+    const leftOnlyPurpleFlapPixels = countPurplePixelsInRegion(
+      withLeftTrimmedButton.data,
+      withLeftTrimmedButton.info.width,
+      leftFlapRegion,
+    );
+    const rightPurpleFlapPixelsWithLeftTrim = countPurplePixelsInRegion(
+      withLeftTrimmedButton.data,
+      withLeftTrimmedButton.info.width,
+      rightFlapRegion,
+    );
 
     expect(
       countDifferentPixels(withoutPatch.data, withCamouflagePatch.data),
@@ -2546,6 +2572,8 @@ describe("renderDesignImage", () => {
     expect(camouflagePatchInk).toBeGreaterThan(basePatchInk + 180);
     expect(countPurplePixels(withButtonWithoutTrim.data)).toBeLessThan(20);
     expect(purpleFlapPixels).toBeGreaterThan(1200);
+    expect(leftOnlyPurpleFlapPixels).toBeGreaterThan(500);
+    expect(rightPurpleFlapPixelsWithLeftTrim).toBeLessThan(20);
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
   }, 20000);
 
