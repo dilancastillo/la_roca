@@ -1514,6 +1514,30 @@ function isPantsKneePatchLeftTrimSection(
   );
 }
 
+function isPantsKneePatchRightRibeteTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("ribete") &&
+    key.includes("rodilla") &&
+    key.includes("derecha")
+  );
+}
+
+function isPantsKneePatchLeftRibeteTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("ribete") &&
+    key.includes("rodilla") &&
+    key.includes("izquierda")
+  );
+}
+
 function isPantsKneePatchUpperLinearTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
@@ -3414,6 +3438,7 @@ async function drawPantsKneePatchSideFromAsset(
   trimColor: string | undefined,
   verticalZipperTrimColor: string | undefined,
   buttonTrimColor: string | undefined,
+  ribeteTrimColor: string | undefined,
 ) {
   if (!model) {
     return;
@@ -3530,12 +3555,18 @@ async function drawPantsKneePatchSideFromAsset(
       return;
     }
 
-    if (trimColor) {
+    const plainRibeteTrimColor = type === "plain" ? ribeteTrimColor : undefined;
+
+    if (plainRibeteTrimColor) {
       const plainFillCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_RIBETE_PLAIN_FILL_SRC_BY_SIDE[side],
         sourceSrc,
       );
-      context.drawImage(recolorCanvasInk(plainFillCanvas, trimColor), 0, 0);
+      context.drawImage(
+        recolorCanvasInk(plainFillCanvas, plainRibeteTrimColor),
+        0,
+        0,
+      );
     }
 
     const plainCanvas = await createRasterCanvas(
@@ -3624,6 +3655,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
   trimColor: string | undefined,
   rightTrimColor: string | undefined,
   leftTrimColor: string | undefined,
+  rightRibeteTrimColor: string | undefined,
+  leftRibeteTrimColor: string | undefined,
   upperLinearTrimColor: string | undefined,
   lowerLinearTrimColor: string | undefined,
   rightUpperLinearTrimColor: string | undefined,
@@ -3646,6 +3679,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     rightTrimColor ?? trimColor,
     rightVerticalZipperTrimColor,
     rightButtonTrimColor,
+    rightRibeteTrimColor,
   );
   await drawPantsKneePatchSideFromAsset(
     context,
@@ -3656,6 +3690,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     leftTrimColor ?? trimColor,
     leftVerticalZipperTrimColor,
     leftButtonTrimColor,
+    leftRibeteTrimColor,
   );
 
   for (const side of ["right", "left"] as const) {
@@ -4264,6 +4299,14 @@ async function composeSingleDesign(
       scene,
       isPantsKneePatchLeftTrimSection,
     );
+    const pantsKneePatchRightRibeteTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightRibeteTrimSection,
+    );
+    const pantsKneePatchLeftRibeteTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftRibeteTrimSection,
+    );
     const pantsKneePatchUpperLinearTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchUpperLinearTrimSection,
@@ -4342,6 +4385,8 @@ async function composeSingleDesign(
       pantsKneePatchTrimColor,
       pantsKneePatchRightTrimColor,
       pantsKneePatchLeftTrimColor,
+      pantsKneePatchRightRibeteTrimColor,
+      pantsKneePatchLeftRibeteTrimColor,
       pantsKneePatchUpperLinearTrimColor,
       pantsKneePatchLowerLinearTrimColor,
       pantsKneePatchRightUpperLinearTrimColor,

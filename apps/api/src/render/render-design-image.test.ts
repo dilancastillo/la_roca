@@ -3000,7 +3000,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedTriangularFlapPatch.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla ribete y pinta lizo o cremallera con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla ribete y no pinta lizo con Parche rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3077,9 +3077,80 @@ describe("renderDesignImage", () => {
     );
     expect(ribeteInk).toBeGreaterThan(baseRibeteInk + 90);
     expect(countPurplePixels(withRibetePatch.data)).toBeLessThan(30);
-    expect(purplePlainPixels).toBeGreaterThan(450);
+    expect(purplePlainPixels).toBeLessThan(30);
     expect(purpleZipperPixels).toBeGreaterThan(180);
     expect(countBrightCyanPixels(withTrimmedRibetePatch.data)).toBe(0);
+  }, 20000);
+
+  it("pinta ribete lizo de rodilla por lado con secciones de ribete", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "ribete",
+      pantsKneePatchRightType: "plain",
+      pantsKneePatchLeftModel: "ribete",
+      pantsKneePatchLeftType: "plain",
+      trimSections: [],
+    };
+    const withRightRibeteTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9089,
+            key: "ribete-rodilla-derecha",
+            label: "Ribete rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftRibeteTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9090,
+            key: "ribete-rodilla-izquierda",
+            label: "Ribete rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftRibeteRegion = { x: 255, y: 610, width: 120, height: 35 };
+    const rightRibeteRegion = { x: 535, y: 610, width: 110, height: 35 };
+
+    expect(
+      countPurplePixelsInRegion(
+        withRightRibeteTrim.data,
+        withRightRibeteTrim.info.width,
+        rightRibeteRegion,
+      ),
+    ).toBeGreaterThan(450);
+    expect(
+      countPurplePixelsInRegion(
+        withRightRibeteTrim.data,
+        withRightRibeteTrim.info.width,
+        leftRibeteRegion,
+      ),
+    ).toBeLessThan(30);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftRibeteTrim.data,
+        withLeftRibeteTrim.info.width,
+        leftRibeteRegion,
+      ),
+    ).toBeGreaterThan(450);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftRibeteTrim.data,
+        withLeftRibeteTrim.info.width,
+        rightRibeteRegion,
+      ),
+    ).toBeLessThan(30);
   }, 20000);
 
   it("superpone bolsillos de parche de rodilla internos sin color ni vivo", async () => {
