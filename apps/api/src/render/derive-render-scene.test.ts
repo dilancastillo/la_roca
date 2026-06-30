@@ -1081,7 +1081,7 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
-  it.each(["Doble cremallera", "Externo"])(
+  it.each(["Doble cremallera", "Externo", "Original"])(
     "activa vivo de bolsillo lateral de pantalon con %s",
     (sidePocketName) => {
     const sessionWithSidePocket: ConfiguratorSession = {

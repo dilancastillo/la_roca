@@ -478,6 +478,10 @@ function isExternalSidePocket(valueName: string | undefined) {
   return valueName ? normalize(valueName) === "externo" : false;
 }
 
+function isOriginalSidePocket(valueName: string | undefined) {
+  return valueName ? normalize(valueName) === "original" : false;
+}
+
 function isAsorsaludSidePocket(valueName: string | undefined) {
   return valueName ? normalize(valueName) === "asorsalud" : false;
 }
@@ -1190,7 +1194,8 @@ function deriveSingleConfiguratorUi(
     ? "asorsalud"
     : selectedPantsSidePocketOptions.some((option) =>
           isDoubleZipperSidePocket(option.name) ||
-          isExternalSidePocket(option.name),
+          isExternalSidePocket(option.name) ||
+          isOriginalSidePocket(option.name),
         )
       ? "doubleZipper"
       : undefined;
