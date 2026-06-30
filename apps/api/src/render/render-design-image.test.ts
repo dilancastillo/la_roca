@@ -2101,7 +2101,7 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(150);
   }, 20000);
 
-  it("pinta la cremallera vertical del parche de rodilla con Parche rodilla", async () => {
+  it("pinta la cremallera vertical del parche de rodilla por lado con Cremallera rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -2114,7 +2114,7 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutTrim = await readRawPng(await renderDesignImage(pantsScene));
-    const withTrim = await readRawPng(
+    const withPatchTrim = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
         trimSections: [
@@ -2127,9 +2127,56 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withRightZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9103,
+            key: "cremallera-rodilla-derecha",
+            label: "Cremallera rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9104,
+            key: "cremallera-rodilla-izquierda",
+            label: "Cremallera rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withBothZipperTrims = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9103,
+            key: "cremallera-rodilla-derecha",
+            label: "Cremallera rodilla derecha",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9104,
+            key: "cremallera-rodilla-izquierda",
+            label: "Cremallera rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftVerticalZipperRegion = { x: 220, y: 535, width: 40, height: 95 };
+    const rightVerticalZipperRegion = { x: 640, y: 535, width: 40, height: 95 };
     const verticalZipperRegions = [
-      { x: 220, y: 535, width: 40, height: 95 },
-      { x: 640, y: 535, width: 40, height: 95 },
+      leftVerticalZipperRegion,
+      rightVerticalZipperRegion,
     ];
     const darkVerticalPixels = verticalZipperRegions.reduce(
       (total, region) =>
@@ -2141,21 +2188,59 @@ describe("renderDesignImage", () => {
         ),
       0,
     );
-    const purpleVerticalPixels = verticalZipperRegions.reduce(
+    const patchPurpleVerticalPixels = verticalZipperRegions.reduce(
       (total, region) =>
         total +
         countPurplePixelsInRegion(
-          withTrim.data,
-          withTrim.info.width,
+          withPatchTrim.data,
+          withPatchTrim.info.width,
           region,
         ),
       0,
     );
+    const rightPurplePixels = countPurplePixelsInRegion(
+      withRightZipperTrim.data,
+      withRightZipperTrim.info.width,
+      rightVerticalZipperRegion,
+    );
+    const rightTrimLeftPurplePixels = countPurplePixelsInRegion(
+      withRightZipperTrim.data,
+      withRightZipperTrim.info.width,
+      leftVerticalZipperRegion,
+    );
+    const leftPurplePixels = countPurplePixelsInRegion(
+      withLeftZipperTrim.data,
+      withLeftZipperTrim.info.width,
+      leftVerticalZipperRegion,
+    );
+    const leftTrimRightPurplePixels = countPurplePixelsInRegion(
+      withLeftZipperTrim.data,
+      withLeftZipperTrim.info.width,
+      rightVerticalZipperRegion,
+    );
 
     expect(darkVerticalPixels).toBeGreaterThan(120);
     expect(countPurplePixels(withoutTrim.data)).toBeLessThan(20);
-    expect(purpleVerticalPixels).toBeGreaterThan(800);
-    expect(countBrightCyanPixels(withTrim.data)).toBe(0);
+    expect(patchPurpleVerticalPixels).toBeLessThan(20);
+    expect(rightPurplePixels).toBeGreaterThan(350);
+    expect(rightTrimLeftPurplePixels).toBeLessThan(20);
+    expect(leftPurplePixels).toBeGreaterThan(350);
+    expect(leftTrimRightPurplePixels).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withBothZipperTrims.data,
+        withBothZipperTrims.info.width,
+        rightVerticalZipperRegion,
+      ),
+    ).toBeGreaterThan(350);
+    expect(
+      countPurplePixelsInRegion(
+        withBothZipperTrims.data,
+        withBothZipperTrims.info.width,
+        leftVerticalZipperRegion,
+      ),
+    ).toBeGreaterThan(350);
+    expect(countBrightCyanPixels(withRightZipperTrim.data)).toBe(0);
   }, 20000);
 
   it("superpone bolsillos de parche de rodilla camuflados y pinta la pieza superior con Parche rodilla", async () => {

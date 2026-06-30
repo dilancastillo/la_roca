@@ -1533,6 +1533,34 @@ function isPantsKneePatchLeftRingTrimSection(
   );
 }
 
+function isPantsKneePatchRightVerticalZipperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cremallera rodilla derecha") ||
+    key.includes("cremallera-rodilla-derecha") ||
+    (key.includes("cremallera") &&
+      key.includes("rodilla") &&
+      key.includes("derecha"))
+  );
+}
+
+function isPantsKneePatchLeftVerticalZipperTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("cremallera rodilla izquierda") ||
+    key.includes("cremallera-rodilla-izquierda") ||
+    (key.includes("cremallera") &&
+      key.includes("rodilla") &&
+      key.includes("izquierda"))
+  );
+}
+
 function isChestPocketTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
@@ -3271,6 +3299,7 @@ async function drawPantsKneePatchSideFromAsset(
     | undefined,
   type: PreviewScene["pantsKneePatchLeftType"],
   trimColor: string | undefined,
+  verticalZipperTrimColor: string | undefined,
 ) {
   if (!model) {
     return;
@@ -3348,18 +3377,24 @@ async function drawPantsKneePatchSideFromAsset(
       type === "verticalZipper";
 
     if (isZipper) {
+      const zipperTrimColor =
+        type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
       const zipperCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_RIBETE_ZIPPER_SRC_BY_SIDE[side],
         sourceSrc,
       );
       context.drawImage(zipperCanvas, 0, 0);
 
-      if (trimColor) {
+      if (zipperTrimColor) {
         const zipperFillCanvas = await createRasterCanvas(
           PANTS_KNEE_PATCH_RIBETE_ZIPPER_FILL_SRC_BY_SIDE[side],
           sourceSrc,
         );
-        context.drawImage(recolorCanvasInk(zipperFillCanvas, trimColor), 0, 0);
+        context.drawImage(
+          recolorCanvasInk(zipperFillCanvas, zipperTrimColor),
+          0,
+          0,
+        );
       }
 
       return;
@@ -3418,12 +3453,14 @@ async function drawPantsKneePatchSideFromAsset(
     return;
   }
 
+  const zipperTrimColor =
+    type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
   const zipperSrc =
     type === "verticalZipper"
-      ? trimColor
+      ? zipperTrimColor
         ? PANTS_KNEE_PATCH_VERTICAL_ZIPPER_FILL_SRC_BY_SIDE[side]
         : PANTS_KNEE_PATCH_VERTICAL_ZIPPER_SRC_BY_SIDE[side]
-      : trimColor
+      : zipperTrimColor
         ? PANTS_KNEE_PATCH_ZIPPER_FILL_SRC_BY_SIDE[side]
         : PANTS_KNEE_PATCH_ZIPPER_SRC_BY_SIDE[side];
   const zipperCanvas = await createRasterCanvas(
@@ -3431,7 +3468,9 @@ async function drawPantsKneePatchSideFromAsset(
     sourceSrc,
   );
   context.drawImage(
-    trimColor ? recolorCanvasInk(zipperCanvas, trimColor) : zipperCanvas,
+    zipperTrimColor
+      ? recolorCanvasInk(zipperCanvas, zipperTrimColor)
+      : zipperCanvas,
     0,
     0,
   );
@@ -3446,6 +3485,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
   lowerLinearTrimColor: string | undefined,
   rightUpperRingTrimColor: string | undefined,
   leftUpperRingTrimColor: string | undefined,
+  rightVerticalZipperTrimColor: string | undefined,
+  leftVerticalZipperTrimColor: string | undefined,
 ) {
   await drawPantsKneePatchSideFromAsset(
     context,
@@ -3454,6 +3495,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     scene.pantsKneePatchRightModel,
     scene.pantsKneePatchRightType,
     trimColor,
+    rightVerticalZipperTrimColor,
   );
   await drawPantsKneePatchSideFromAsset(
     context,
@@ -3462,6 +3504,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     scene.pantsKneePatchLeftModel,
     scene.pantsKneePatchLeftType,
     trimColor,
+    leftVerticalZipperTrimColor,
   );
 
   for (const side of ["right", "left"] as const) {
@@ -4072,6 +4115,14 @@ async function composeSingleDesign(
       scene,
       isPantsKneePatchLeftRingTrimSection,
     );
+    const pantsKneePatchRightVerticalZipperTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightVerticalZipperTrimSection,
+    );
+    const pantsKneePatchLeftVerticalZipperTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftVerticalZipperTrimSection,
+    );
     const sleeveTabTrimColor = getTrimSectionColor(
       scene,
       isSleeveTabTrimSection,
@@ -4104,6 +4155,8 @@ async function composeSingleDesign(
       pantsKneePatchLowerLinearTrimColor,
       pantsKneePatchRightUpperRingTrimColor,
       pantsKneePatchLeftUpperRingTrimColor,
+      pantsKneePatchRightVerticalZipperTrimColor,
+      pantsKneePatchLeftVerticalZipperTrimColor,
     );
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
