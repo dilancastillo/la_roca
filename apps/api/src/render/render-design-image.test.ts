@@ -1948,6 +1948,99 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("pinta Aro rodilla derecha e izquierda en el lineal superior del lado seleccionado", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+      trimSections: [],
+    };
+    const withRightRing = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9110,
+            key: "aro-rodilla-derecha",
+            label: "Aro rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftRing = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9111,
+            key: "aro-rodilla-izquierda",
+            label: "Aro rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withoutRightPatch = await readRawPng(
+      await renderDesignImage({
+        productName: "Pantalon",
+        baseColorHex: "#D1D5DB",
+        garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+        lowerPocketLayout: "none",
+        pantsKneePatchLeftModel: "square",
+        trimSections: [
+          {
+            valueId: 9110,
+            key: "aro-rodilla-derecha",
+            label: "Aro rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftRingRegion = { x: 255, y: 520, width: 60, height: 35 };
+    const rightRingRegion = { x: 598, y: 520, width: 60, height: 35 };
+
+    expect(
+      countPurplePixelsInRegion(
+        withRightRing.data,
+        withRightRing.info.width,
+        rightRingRegion,
+      ),
+    ).toBeGreaterThan(60);
+    expect(
+      countPurplePixelsInRegion(
+        withRightRing.data,
+        withRightRing.info.width,
+        leftRingRegion,
+      ),
+    ).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftRing.data,
+        withLeftRing.info.width,
+        leftRingRegion,
+      ),
+    ).toBeGreaterThan(60);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftRing.data,
+        withLeftRing.info.width,
+        rightRingRegion,
+      ),
+    ).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withoutRightPatch.data,
+        withoutRightPatch.info.width,
+        rightRingRegion,
+      ),
+    ).toBeLessThan(20);
+  }, 20000);
+
   it("aplica los lineales universales a parches internos y ribete", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

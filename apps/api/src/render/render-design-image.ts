@@ -192,6 +192,32 @@ const PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP = {
     },
   },
 } as const;
+const PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP = {
+  full: {
+    left:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-ring-left.svg",
+    right:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-ring-right.svg",
+  },
+  internal: {
+    left:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-ring-left.svg",
+    right:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-ring-right.svg",
+  },
+  ribetePlain: {
+    left:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-ring-left.svg",
+    right:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-ring-right.svg",
+  },
+  ribeteZipper: {
+    left:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-ring-left.svg",
+    right:
+      "assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-ring-right.svg",
+  },
+} as const;
 
 type OverlayRegion = {
   x: number;
@@ -1488,6 +1514,32 @@ function isPantsKneePatchLowerLinearTrimSection(
   );
 }
 
+function isPantsKneePatchRightRingTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("aro rodilla derecha") ||
+    key.includes("aro-rodilla-derecha") ||
+    (key.includes("aro") && key.includes("rodilla") && key.includes("derecha"))
+  );
+}
+
+function isPantsKneePatchLeftRingTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("aro rodilla izquierda") ||
+    key.includes("aro-rodilla-izquierda") ||
+    (key.includes("aro") &&
+      key.includes("rodilla") &&
+      key.includes("izquierda"))
+  );
+}
+
 function isChestPocketTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -2336,6 +2388,8 @@ async function createPantsKneePatchOverlayBuffers(
   trimColor: string | undefined,
   upperLinearTrimColor: string | undefined,
   lowerLinearTrimColor: string | undefined,
+  rightUpperRingTrimColor: string | undefined,
+  leftUpperRingTrimColor: string | undefined,
 ) {
   const rightBuffers = await createPantsKneePatchSideOverlayBuffers(
     placementAssetPath,
@@ -2363,8 +2417,13 @@ async function createPantsKneePatchOverlayBuffers(
       side === "right"
         ? scene.pantsKneePatchRightType
         : scene.pantsKneePatchLeftType;
+    const upperRingTrimColor =
+      side === "right" ? rightUpperRingTrimColor : leftUpperRingTrimColor;
 
-    if (!model || (!upperLinearTrimColor && !lowerLinearTrimColor)) {
+    if (
+      !model ||
+      (!upperLinearTrimColor && !lowerLinearTrimColor && !upperRingTrimColor)
+    ) {
       continue;
     }
 
@@ -2397,6 +2456,19 @@ async function createPantsKneePatchOverlayBuffers(
 
       if (lineOverlayBuffer) {
         buffers.push(await recolorPngInkBuffer(lineOverlayBuffer, color));
+      }
+    }
+
+    if (upperRingTrimColor) {
+      const ringOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][side],
+        placementAssetPath,
+      );
+
+      if (ringOverlayBuffer) {
+        buffers.push(
+          await recolorPngInkBuffer(ringOverlayBuffer, upperRingTrimColor),
+        );
       }
     }
   }
@@ -3877,6 +3949,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isPantsKneePatchLowerLinearTrimSection,
     );
+    const pantsKneePatchRightUpperRingTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightRingTrimSection,
+    );
+    const pantsKneePatchLeftUpperRingTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftRingTrimSection,
+    );
     const sleeveTabTrimColor = getTrimSectionColor(
       scene,
       isSleeveTabTrimSection,
@@ -3907,6 +3987,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         pantsKneePatchTrimColor,
         pantsKneePatchUpperLinearTrimColor,
         pantsKneePatchLowerLinearTrimColor,
+        pantsKneePatchRightUpperRingTrimColor,
+        pantsKneePatchLeftUpperRingTrimColor,
       );
 
     if (pantsSidePocketTrimOverlayBuffer) {

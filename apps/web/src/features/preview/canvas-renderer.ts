@@ -200,6 +200,32 @@ const PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP = {
     },
   },
 } as const;
+const PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP = {
+  full: {
+    left:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-ring-left.svg",
+    right:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-full-upper-ring-right.svg",
+  },
+  internal: {
+    left:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-ring-left.svg",
+    right:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-internal-upper-ring-right.svg",
+  },
+  ribetePlain: {
+    left:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-ring-left.svg",
+    right:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-plain-upper-ring-right.svg",
+  },
+  ribeteZipper: {
+    left:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-ring-left.svg",
+    right:
+      "/assets/catalog/pantalon/trim-overlays/pants-knee-patch-linear-ribete-zipper-upper-ring-right.svg",
+  },
+} as const;
 
 export const overlayRegionPresets: Record<
   "lowerPocketPair" | "lowerPocketSingleRight" | "auxiliaryPocketPair",
@@ -1478,6 +1504,32 @@ function isPantsKneePatchLowerLinearTrimSection(
     (key.includes("rodilla") &&
       key.includes("lineal") &&
       key.includes("inferior"))
+  );
+}
+
+function isPantsKneePatchRightRingTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("aro rodilla derecha") ||
+    key.includes("aro-rodilla-derecha") ||
+    (key.includes("aro") && key.includes("rodilla") && key.includes("derecha"))
+  );
+}
+
+function isPantsKneePatchLeftRingTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("aro rodilla izquierda") ||
+    key.includes("aro-rodilla-izquierda") ||
+    (key.includes("aro") &&
+      key.includes("rodilla") &&
+      key.includes("izquierda"))
   );
 }
 
@@ -3392,6 +3444,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
   trimColor: string | undefined,
   upperLinearTrimColor: string | undefined,
   lowerLinearTrimColor: string | undefined,
+  rightUpperRingTrimColor: string | undefined,
+  leftUpperRingTrimColor: string | undefined,
 ) {
   await drawPantsKneePatchSideFromAsset(
     context,
@@ -3419,8 +3473,13 @@ async function drawPantsKneePatchOverlaysFromAsset(
       side === "right"
         ? scene.pantsKneePatchRightType
         : scene.pantsKneePatchLeftType;
+    const upperRingTrimColor =
+      side === "right" ? rightUpperRingTrimColor : leftUpperRingTrimColor;
 
-    if (!model || (!upperLinearTrimColor && !lowerLinearTrimColor)) {
+    if (
+      !model ||
+      (!upperLinearTrimColor && !lowerLinearTrimColor && !upperRingTrimColor)
+    ) {
       continue;
     }
 
@@ -3451,6 +3510,14 @@ async function drawPantsKneePatchOverlaysFromAsset(
         sourceSrc,
       );
       context.drawImage(recolorCanvasInk(lineCanvas, color), 0, 0);
+    }
+
+    if (upperRingTrimColor) {
+      const ringCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(ringCanvas, upperRingTrimColor), 0, 0);
     }
   }
 }
@@ -3997,6 +4064,14 @@ async function composeSingleDesign(
       scene,
       isPantsKneePatchLowerLinearTrimSection,
     );
+    const pantsKneePatchRightUpperRingTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchRightRingTrimSection,
+    );
+    const pantsKneePatchLeftUpperRingTrimColor = getTrimSectionColor(
+      scene,
+      isPantsKneePatchLeftRingTrimSection,
+    );
     const sleeveTabTrimColor = getTrimSectionColor(
       scene,
       isSleeveTabTrimSection,
@@ -4027,6 +4102,8 @@ async function composeSingleDesign(
       pantsKneePatchTrimColor,
       pantsKneePatchUpperLinearTrimColor,
       pantsKneePatchLowerLinearTrimColor,
+      pantsKneePatchRightUpperRingTrimColor,
+      pantsKneePatchLeftUpperRingTrimColor,
     );
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
     await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
