@@ -35,6 +35,7 @@ export type AutomationRenderScene = {
     | "ribete"
     | "triangularFlap";
   pantsKneePatchRightType?:
+    | "snap"
     | "button"
     | "buckle"
     | "penSeam"
@@ -50,6 +51,7 @@ export type AutomationRenderScene = {
     | "ribete"
     | "triangularFlap";
   pantsKneePatchLeftType?:
+    | "snap"
     | "button"
     | "buckle"
     | "penSeam"
@@ -467,7 +469,11 @@ function isButtonKneePatch(valueName: string | undefined) {
 
   const normalized = normalize(valueName);
 
-  return normalized.includes("broche") || normalized.includes("boton");
+  return normalized.includes("boton");
+}
+
+function isSnapKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("broche") : false;
 }
 
 function isBuckleKneePatch(valueName: string | undefined) {
@@ -699,6 +705,7 @@ function deriveSingleAutomationRenderScene(
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isSnapKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -711,6 +718,7 @@ function deriveSingleAutomationRenderScene(
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isSnapKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -719,7 +727,9 @@ function deriveSingleAutomationRenderScene(
         isPlainKneePatch(option.name),
     );
   const rightKneePatchTypeValue = rightKneePatchType
-    ? isButtonKneePatch(rightKneePatchType.name)
+    ? isSnapKneePatch(rightKneePatchType.name)
+      ? "snap"
+      : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(rightKneePatchType.name)
         ? "buckle"
@@ -734,7 +744,9 @@ function deriveSingleAutomationRenderScene(
         : "plain"
     : undefined;
   const leftKneePatchTypeValue = leftKneePatchType
-    ? isButtonKneePatch(leftKneePatchType.name)
+    ? isSnapKneePatch(leftKneePatchType.name)
+      ? "snap"
+      : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(leftKneePatchType.name)
         ? "buckle"

@@ -2484,6 +2484,15 @@ describe("renderDesignImage", () => {
         pantsKneePatchLeftType: "button",
       }),
     );
+    const withSnapWithoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "snap",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "snap",
+      }),
+    );
     const withTrimmedButton = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
@@ -2626,6 +2635,9 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutPatch.data, withCamouflagePatch.data),
     ).toBeGreaterThan(260);
     expect(camouflagePatchInk).toBeGreaterThan(basePatchInk + 180);
+    expect(
+      countDifferentPixels(withButtonWithoutTrim.data, withSnapWithoutTrim.data),
+    ).toBeGreaterThan(20);
     expect(countPurplePixels(withButtonWithoutTrim.data)).toBeLessThan(20);
     expect(purpleFlapPixels).toBeGreaterThan(1200);
     expect(leftOnlyPurpleFlapPixels).toBeGreaterThan(500);

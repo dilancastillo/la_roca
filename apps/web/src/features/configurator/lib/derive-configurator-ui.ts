@@ -54,6 +54,7 @@ export type PreviewScene = {
     | "triangularFlap"
     | undefined;
   pantsKneePatchRightType?:
+    | "snap"
     | "button"
     | "buckle"
     | "penSeam"
@@ -71,6 +72,7 @@ export type PreviewScene = {
     | "triangularFlap"
     | undefined;
   pantsKneePatchLeftType?:
+    | "snap"
     | "button"
     | "buckle"
     | "penSeam"
@@ -583,7 +585,11 @@ function isButtonKneePatch(valueName: string | undefined) {
 
   const normalized = normalize(valueName);
 
-  return normalized.includes("broche") || normalized.includes("boton");
+  return normalized.includes("boton");
+}
+
+function isSnapKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("broche") : false;
 }
 
 function isBuckleKneePatch(valueName: string | undefined) {
@@ -1139,6 +1145,7 @@ function deriveSingleConfiguratorUi(
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isSnapKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -1151,6 +1158,7 @@ function deriveSingleConfiguratorUi(
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
         isButtonKneePatch(option.name) ||
+        isSnapKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
         isPenSeamKneePatch(option.name) ||
         isGenericZipperKneePatch(option.name) ||
@@ -1159,7 +1167,9 @@ function deriveSingleConfiguratorUi(
         isPlainKneePatch(option.name),
     );
   const rightKneePatchTypeValue = rightKneePatchType
-    ? isButtonKneePatch(rightKneePatchType.name)
+    ? isSnapKneePatch(rightKneePatchType.name)
+      ? "snap"
+      : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(rightKneePatchType.name)
         ? "buckle"
@@ -1174,7 +1184,9 @@ function deriveSingleConfiguratorUi(
         : "plain"
     : undefined;
   const leftKneePatchTypeValue = leftKneePatchType
-    ? isButtonKneePatch(leftKneePatchType.name)
+    ? isSnapKneePatch(leftKneePatchType.name)
+      ? "snap"
+      : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(leftKneePatchType.name)
         ? "buckle"

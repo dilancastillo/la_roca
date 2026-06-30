@@ -98,6 +98,12 @@ const PANTS_KNEE_PATCH_CAMOUFLAGE_BUTTON_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-button-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-snap-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-snap-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_ASSET_BY_SIDE = {
   left:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-buckle-left.svg",
@@ -2312,7 +2318,7 @@ async function createPantsKneePatchSideOverlayBuffers(
       return buffers;
     }
 
-    if (type === "button" && trimColor) {
+    if ((type === "button" || type === "snap") && trimColor) {
       const fillOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_ASSET_BY_SIDE[side],
         placementAssetPath,
@@ -2344,6 +2350,17 @@ async function createPantsKneePatchSideOverlayBuffers(
             ? await recolorPngInkBuffer(buttonOverlayBuffer, buttonTrimColor)
             : buttonOverlayBuffer,
         );
+      }
+    }
+
+    if (type === "snap") {
+      const snapOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (snapOverlayBuffer) {
+        buffers.push(snapOverlayBuffer);
       }
     }
 

@@ -2200,7 +2200,7 @@ describe("deriveConfiguratorUi", () => {
     );
 
     expect(ui.previewScene.pantsKneePatchRightModel).toBe("camouflage");
-    expect(ui.previewScene.pantsKneePatchRightType).toBe("button");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("snap");
     expect(ui.previewScene.pantsKneePatchLeftModel).toBe("camouflage");
     expect(ui.previewScene.pantsKneePatchLeftType).toBe("button");
     expect(ui.previewScene.trimSections).toContainEqual({

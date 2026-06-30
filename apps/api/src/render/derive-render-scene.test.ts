@@ -1637,7 +1637,7 @@ describe("deriveAutomationRenderScene", () => {
     );
 
     expect(scene.pantsKneePatchRightModel).toBe("camouflage");
-    expect(scene.pantsKneePatchRightType).toBe("button");
+    expect(scene.pantsKneePatchRightType).toBe("snap");
     expect(scene.pantsKneePatchLeftModel).toBe("camouflage");
     expect(scene.pantsKneePatchLeftType).toBe("button");
     expect(scene.trimSections).toContainEqual({
