@@ -3436,7 +3436,9 @@ async function drawPantsKneePatchSideFromAsset(
 
     if (isZipper) {
       const zipperTrimColor =
-        type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
+        type === "verticalZipper" || type === "horizontalZipper"
+          ? verticalZipperTrimColor
+          : trimColor;
       const zipperCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_RIBETE_ZIPPER_SRC_BY_SIDE[side],
         sourceSrc,
@@ -3512,7 +3514,9 @@ async function drawPantsKneePatchSideFromAsset(
   }
 
   const zipperTrimColor =
-    type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
+    type === "verticalZipper" || type === "horizontalZipper"
+      ? verticalZipperTrimColor
+      : trimColor;
   const zipperSrc =
     type === "verticalZipper"
       ? zipperTrimColor

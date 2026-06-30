@@ -1685,7 +1685,7 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(250);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla cuadrados y pinta la cremallera con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla cuadrados y pinta la cremallera horizontal por lado con Cremallera rodilla", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -1710,7 +1710,7 @@ describe("renderDesignImage", () => {
         pantsKneePatchLeftType: "horizontalZipper",
       }),
     );
-    const withTrimmedZipper = await readRawPng(
+    const withPatchTrim = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
         pantsKneePatchRightModel: "square",
@@ -1727,14 +1727,70 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withRightZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchRightType: "horizontalZipper",
+        pantsKneePatchLeftModel: "square",
+        pantsKneePatchLeftType: "horizontalZipper",
+        trimSections: [
+          {
+            valueId: 9103,
+            key: "cremallera-rodilla-derecha",
+            label: "Cremallera rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftZipperTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchRightType: "horizontalZipper",
+        pantsKneePatchLeftModel: "square",
+        pantsKneePatchLeftType: "horizontalZipper",
+        trimSections: [
+          {
+            valueId: 9104,
+            key: "cremallera-rodilla-izquierda",
+            label: "Cremallera rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withBothZipperTrims = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "square",
+        pantsKneePatchRightType: "horizontalZipper",
+        pantsKneePatchLeftModel: "square",
+        pantsKneePatchLeftType: "horizontalZipper",
+        trimSections: [
+          {
+            valueId: 9103,
+            key: "cremallera-rodilla-derecha",
+            label: "Cremallera rodilla derecha",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9104,
+            key: "cremallera-rodilla-izquierda",
+            label: "Cremallera rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
     const patchRegions = [
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
-    const zipperRegions = [
-      { x: 215, y: 535, width: 105, height: 35 },
-      { x: 585, y: 535, width: 105, height: 35 },
-    ];
+    const leftZipperRegion = { x: 215, y: 535, width: 105, height: 35 };
+    const rightZipperRegion = { x: 585, y: 535, width: 105, height: 35 };
+    const zipperRegions = [leftZipperRegion, rightZipperRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
         total +
@@ -1775,6 +1831,36 @@ describe("renderDesignImage", () => {
         ),
       0,
     );
+    const patchPurpleZipperPixels = zipperRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withPatchTrim.data,
+          withPatchTrim.info.width,
+          region,
+        ),
+      0,
+    );
+    const rightPurplePixels = countPurplePixelsInRegion(
+      withRightZipperTrim.data,
+      withRightZipperTrim.info.width,
+      rightZipperRegion,
+    );
+    const rightTrimLeftPurplePixels = countPurplePixelsInRegion(
+      withRightZipperTrim.data,
+      withRightZipperTrim.info.width,
+      leftZipperRegion,
+    );
+    const leftPurplePixels = countPurplePixelsInRegion(
+      withLeftZipperTrim.data,
+      withLeftZipperTrim.info.width,
+      leftZipperRegion,
+    );
+    const leftTrimRightPurplePixels = countPurplePixelsInRegion(
+      withLeftZipperTrim.data,
+      withLeftZipperTrim.info.width,
+      rightZipperRegion,
+    );
 
     expect(
       countDifferentPixels(withoutPatch.data, withSquarePatch.data),
@@ -1782,8 +1868,26 @@ describe("renderDesignImage", () => {
     expect(squarePatchInk).toBeGreaterThan(basePatchInk + 120);
     expect(zipperInk).toBeGreaterThan(squareZipperInk + 80);
     expect(countPurplePixels(withHorizontalZipper.data)).toBeLessThan(20);
-    expect(countPurplePixels(withTrimmedZipper.data)).toBeGreaterThan(120);
-    expect(countBrightCyanPixels(withTrimmedZipper.data)).toBe(0);
+    expect(patchPurpleZipperPixels).toBeLessThan(20);
+    expect(rightPurplePixels).toBeGreaterThan(120);
+    expect(rightTrimLeftPurplePixels).toBeLessThan(20);
+    expect(leftPurplePixels).toBeGreaterThan(120);
+    expect(leftTrimRightPurplePixels).toBeLessThan(20);
+    expect(
+      countPurplePixelsInRegion(
+        withBothZipperTrims.data,
+        withBothZipperTrims.info.width,
+        rightZipperRegion,
+      ),
+    ).toBeGreaterThan(120);
+    expect(
+      countPurplePixelsInRegion(
+        withBothZipperTrims.data,
+        withBothZipperTrims.info.width,
+        leftZipperRegion,
+      ),
+    ).toBeGreaterThan(120);
+    expect(countBrightCyanPixels(withRightZipperTrim.data)).toBe(0);
   }, 20000);
 
   it("pinta solo los lineales superior e inferior del parche de rodilla liso", async () => {

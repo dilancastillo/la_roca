@@ -2345,7 +2345,9 @@ async function createPantsKneePatchSideOverlayBuffers(
 
     if (isZipper) {
       const zipperTrimColor =
-        type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
+        type === "verticalZipper" || type === "horizontalZipper"
+          ? verticalZipperTrimColor
+          : trimColor;
       const zipperOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_RIBETE_ZIPPER_ASSET_BY_SIDE[side],
         placementAssetPath,
@@ -2449,7 +2451,9 @@ async function createPantsKneePatchSideOverlayBuffers(
   }
 
   const zipperTrimColor =
-    type === "verticalZipper" ? verticalZipperTrimColor : trimColor;
+    type === "verticalZipper" || type === "horizontalZipper"
+      ? verticalZipperTrimColor
+      : trimColor;
   const zipperOverlayAsset =
     type === "verticalZipper"
       ? zipperTrimColor
