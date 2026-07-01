@@ -626,6 +626,9 @@ function isPespunteGarment(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("pespunte") : false;
 }
 
+const BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
+  "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+
 type TextStyleAttributeDependency = {
   toggleTerms: string[];
   styleTerms: string[];
@@ -1243,7 +1246,9 @@ function deriveSingleConfiguratorUi(
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);
   const garmentModelDetailImageSrc = selectedGarment
-    ? getGarmentDetailImageSourceForValue(
+    ? shouldUseDefaultGarmentUntilNeck
+      ? BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC
+      : getGarmentDetailImageSourceForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
         selectedGarment.id,

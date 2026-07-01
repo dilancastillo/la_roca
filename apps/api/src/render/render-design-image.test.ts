@@ -643,6 +643,16 @@ describe("renderDesignImage", () => {
         neckAssetPath,
       }),
     );
+    const withPespunteDetail = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+        garmentDetailAssetPath:
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+        neckAssetPath,
+      }),
+    );
     const withPespunteTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -693,6 +703,27 @@ describe("renderDesignImage", () => {
         width: 180,
         height: 650,
       });
+    const pespunteDetailSideInk =
+      countDarkPixelsInRegion(
+        withPespunteDetail.data,
+        withPespunteDetail.info.width,
+        {
+          x: 230,
+          y: 300,
+          width: 180,
+          height: 650,
+        },
+      ) +
+      countDarkPixelsInRegion(
+        withPespunteDetail.data,
+        withPespunteDetail.info.width,
+        {
+          x: 490,
+          y: 300,
+          width: 180,
+          height: 650,
+        },
+      );
     const chestPocketInk = countDarkPixelsInRegion(
       pespunteWithoutNeck.data,
       pespunteWithoutNeck.info.width,
@@ -702,7 +733,11 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withLizo.data, withPespunte.data),
     ).toBeGreaterThan(300);
+    expect(
+      countDifferentPixels(withLizo.data, withPespunteDetail.data),
+    ).toBeGreaterThan(300);
     expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 300);
+    expect(pespunteDetailSideInk).toBeGreaterThan(lizoSideInk + 300);
     expect(chestPocketInk).toBeLessThan(800);
     expect(countNeonGreenPixels(withPespunte.data)).toBe(0);
     expect(countNeonGreenPixels(withPespunteTrim.data)).toBeGreaterThan(300);

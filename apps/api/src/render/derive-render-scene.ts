@@ -510,6 +510,9 @@ function isPespunteGarment(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("pespunte") : false;
 }
 
+const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+
 function deriveSingleAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -802,7 +805,9 @@ function deriveSingleAutomationRenderScene(
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
   const garmentModelDetailAssetPath = selectedGarment
-    ? getServerGarmentDetailAssetPathForValue(
+    ? shouldUseDefaultGarmentUntilNeck
+      ? BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH
+      : getServerGarmentDetailAssetPathForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
         selectedGarment.id,

@@ -707,6 +707,9 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.garmentAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
+    expect(scene.garmentDetailAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+    );
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
@@ -738,6 +741,9 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.garmentAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(scene.garmentDetailAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
     );
     expect(scene.neckAssetPath).toBeUndefined();
   });

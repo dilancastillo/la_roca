@@ -720,6 +720,9 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.garmentImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
+    expect(ui.previewScene.garmentDetailImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+    );
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });
 
@@ -751,6 +754,9 @@ describe("deriveConfiguratorUi", () => {
 
     expect(ui.previewScene.garmentImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(ui.previewScene.garmentDetailImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
     );
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });

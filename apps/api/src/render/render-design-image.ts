@@ -2817,7 +2817,12 @@ async function createGarmentModelDetailOverlayBuffer(
 }
 
 function isPespunteDetailOverlayAsset(assetPath: string) {
-  return getAssetFileName(assetPath) === "pants-pespunte-stitching.svg";
+  const fileName = getAssetFileName(assetPath);
+
+  return (
+    fileName === "pants-pespunte-stitching.svg" ||
+    fileName === "blouse-model-45-pespunte-stitching.svg"
+  );
 }
 
 async function createGarmentDetailAssetOverlayBuffer(

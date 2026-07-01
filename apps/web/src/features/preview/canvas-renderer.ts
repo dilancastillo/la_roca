@@ -3070,7 +3070,12 @@ function hasOriginalSleevesDetailOverlay(overlaySrcs: readonly string[]) {
 }
 
 function isPespunteDetailOverlay(overlaySrc: string) {
-  return getFileNameFromSource(overlaySrc) === "pants-pespunte-stitching.svg";
+  const fileName = getFileNameFromSource(overlaySrc);
+
+  return (
+    fileName === "pants-pespunte-stitching.svg" ||
+    fileName === "blouse-model-45-pespunte-stitching.svg"
+  );
 }
 
 function getOriginalSleeveTrimShapes(placementSrc: string) {
