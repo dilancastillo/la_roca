@@ -4811,9 +4811,9 @@ describe("renderDesignImage", () => {
     }
   }, 40000);
 
-  it("mantiene el relleno de mangas de 20-19 pegado al borde de PUNTADAS", async () => {
+  it("mantiene el relleno de mangas de 20-19 pegado al borde del modelo", async () => {
     const neckAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-05.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg";
     const withSleeveFill = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -4826,6 +4826,29 @@ describe("renderDesignImage", () => {
             valueId: 7403,
             key: "manga-rellena",
             label: "Manga rellena",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withSleeveLines = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
             colorHex: "#f4c7cc",
           },
         ],
@@ -4851,11 +4874,35 @@ describe("renderDesignImage", () => {
       withSleeveFill.info.width,
       { x: 710, y: 545, width: 85, height: 8 },
     );
+    const leftSleeveLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 90, y: 440, width: 140, height: 135 },
+    );
+    const rightSleeveLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 690, y: 440, width: 130, height: 120 },
+    );
+    const oldLeftHighLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 95, y: 430, width: 35, height: 14 },
+    );
+    const oldRightOuterLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 814, y: 445, width: 15, height: 20 },
+    );
 
     expect(leftSleeveFillPixels).toBeGreaterThan(1500);
     expect(rightSleeveFillPixels).toBeGreaterThan(1200);
     expect(oldLeftProtrusionPixels).toBeLessThan(20);
     expect(oldRightProtrusionPixels).toBeLessThan(20);
+    expect(leftSleeveLinePixels).toBeGreaterThan(700);
+    expect(rightSleeveLinePixels).toBeGreaterThan(700);
+    expect(oldLeftHighLinePixels).toBeLessThan(25);
+    expect(oldRightOuterLinePixels).toBeLessThan(25);
   }, 20000);
 
   it("mantiene el relleno de mangas de PRESILLAS dentro del contorno de PUNTADAS", async () => {
