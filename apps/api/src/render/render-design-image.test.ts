@@ -4891,12 +4891,12 @@ describe("renderDesignImage", () => {
     const oldLeftProtrusionPixels = countPastelPinkPixelsInRegion(
       withSleeveFill.data,
       withSleeveFill.info.width,
-      { x: 145, y: 505, width: 25, height: 8 },
+      { x: 224, y: 560, width: 28, height: 16 },
     );
     const oldRightProtrusionPixels = countPastelPinkPixelsInRegion(
       withSleeveFill.data,
       withSleeveFill.info.width,
-      { x: 760, y: 489, width: 8, height: 3 },
+      { x: 662, y: 535, width: 28, height: 16 },
     );
 
     expect(leftSleeveFillPixels).toBeGreaterThan(1500);
@@ -4928,22 +4928,22 @@ describe("renderDesignImage", () => {
     const leftAlignedPixels = countPastelPinkPixelsInRegion(
       withLowerSleeveTrim.data,
       withLowerSleeveTrim.info.width,
-      { x: 190, y: 530, width: 40, height: 30 },
+      { x: 145, y: 500, width: 40, height: 30 },
     );
     const rightAlignedPixels = countPastelPinkPixelsInRegion(
       withLowerSleeveTrim.data,
       withLowerSleeveTrim.info.width,
-      { x: 690, y: 510, width: 40, height: 30 },
+      { x: 700, y: 530, width: 40, height: 30 },
     );
     const oldLeftOutsidePixels = countPastelPinkPixelsInRegion(
       withLowerSleeveTrim.data,
       withLowerSleeveTrim.info.width,
-      { x: 205, y: 562, width: 18, height: 8 },
+      { x: 224, y: 560, width: 28, height: 16 },
     );
     const oldRightOutsidePixels = countPastelPinkPixelsInRegion(
       withLowerSleeveTrim.data,
       withLowerSleeveTrim.info.width,
-      { x: 710, y: 538, width: 18, height: 8 },
+      { x: 662, y: 535, width: 28, height: 16 },
     );
 
     expect(leftAlignedPixels).toBeGreaterThan(80);
