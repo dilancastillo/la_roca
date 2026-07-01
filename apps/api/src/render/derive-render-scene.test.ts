@@ -710,6 +710,38 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
+  it("mantiene la blusa por defecto si Pespunte tiene un cuello sin asset", () => {
+    const sessionWithEmptyNeck: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 63
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 999001,
+                  name: "Ninguno",
+                  attributeId: 63,
+                  attributeName: "Modelo de cuello",
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const scene = deriveAutomationRenderScene(sessionWithEmptyNeck, {
+      ...sessionWithEmptyNeck.selectedValueIds,
+      "811": [2867],
+      "63": [999001],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(scene.neckAssetPath).toBeUndefined();
+  });
+
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {
     const sessionWithCurrentLowerPocketIds: ConfiguratorSession = {
       ...session,

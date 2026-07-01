@@ -1229,10 +1229,13 @@ function deriveSingleConfiguratorUi(
       : undefined;
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
+  const neckImageSrc = selectedNeck
+    ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
+    : undefined;
   const shouldUseDefaultGarmentUntilNeck =
     session.graphicManifestKey.includes("blusa") &&
     isPespunteGarment(selectedGarment?.name) &&
-    !selectedNeck;
+    !neckImageSrc;
   const garmentImageSrc = shouldUseDefaultGarmentUntilNeck
     ? getDefaultImageSource(session.graphicManifestKey)
     : selectedGarment
@@ -1279,9 +1282,6 @@ function deriveSingleConfiguratorUi(
         waistbandModelAttribute!.name,
         selectedWaistbandModel.name,
       )
-    : undefined;
-  const neckImageSrc = selectedNeck
-    ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
   const lowerPocketImageSrc =
     lowerPocketLayout !== "none" && selectedLowerPocketModel

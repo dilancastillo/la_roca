@@ -788,10 +788,13 @@ function deriveSingleAutomationRenderScene(
       ? "doubleZipper"
       : undefined;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
+  const neckAssetPath = selectedNeck
+    ? getAssetPath(session, neckAttribute!, selectedNeck)
+    : undefined;
   const shouldUseDefaultGarmentUntilNeck =
     session.graphicManifestKey.includes("blusa") &&
     isPespunteGarment(selectedGarment?.name) &&
-    !selectedNeck;
+    !neckAssetPath;
   const garmentAssetPath = shouldUseDefaultGarmentUntilNeck
     ? getServerDefaultAssetPath(session.graphicManifestKey)
     : selectedGarment
@@ -838,9 +841,6 @@ function deriveSingleAutomationRenderScene(
         waistbandModelAttribute!.name,
         selectedWaistbandModel.name,
       )
-    : undefined;
-  const neckAssetPath = selectedNeck
-    ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
   const lowerPocketAssetPath = selectedLowerPocketModel
     ? getAssetPath(session, lowerPocketModelAttribute!, selectedLowerPocketModel)
