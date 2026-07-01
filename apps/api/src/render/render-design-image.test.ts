@@ -7762,6 +7762,20 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    const withLowerCollar = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5148,
+            key: "cuello-inferior",
+            label: "Cuello inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
     const bodyBaseColorPixels = countBaseColorPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
@@ -7780,6 +7794,13 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withoutTrim.data, withCollarSection.data),
     ).toBe(0);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLowerCollar.data,
+        withLowerCollar.info.width,
+        { x: 395, y: 185, width: 115, height: 145 },
+      ),
+    ).toBeGreaterThan(600);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);

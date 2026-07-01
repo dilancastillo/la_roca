@@ -925,6 +925,8 @@ const thickInteriorCollarTrimOverlayByFileName: Record<
 };
 
 const lowerCollarTrimOverlayByFileName: Record<string, string> = {
+  "blouse-model-06-puntas.svg":
+    "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-06-puntas-collar-lower.svg",
   "blouse-model-30.svg":
     "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-30-cruzado-collar-lower.svg",
 };
