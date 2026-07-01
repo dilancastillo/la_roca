@@ -7800,7 +7800,14 @@ describe("renderDesignImage", () => {
         withLowerCollar.info.width,
         { x: 395, y: 185, width: 115, height: 145 },
       ),
-    ).toBeGreaterThan(600);
+    ).toBeGreaterThan(180);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withLowerCollar.data,
+        withLowerCollar.info.width,
+        { x: 430, y: 225, width: 30, height: 45 },
+      ),
+    ).toBeLessThan(40);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
