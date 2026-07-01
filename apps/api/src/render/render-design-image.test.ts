@@ -4905,6 +4905,88 @@ describe("renderDesignImage", () => {
     expect(oldRightOuterLinePixels).toBeLessThan(25);
   }, 20000);
 
+  it("mantiene los vivos de mangas de JEAN pegados al borde del modelo", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-42.svg";
+    const withSleeveFill = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7403,
+            key: "manga-rellena",
+            label: "Manga rellena",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withSleeveLines = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        garmentDetailAssetPaths: [
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+        ],
+        trimSections: [
+          {
+            valueId: 7401,
+            key: "manga-lineal-superior",
+            label: "Manga lineal superior",
+            colorHex: "#f4c7cc",
+          },
+          {
+            valueId: 7402,
+            key: "manga-lineal-inferior",
+            label: "Manga lineal inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftSleeveFillPixels = countPastelPinkPixelsInRegion(
+      withSleeveFill.data,
+      withSleeveFill.info.width,
+      { x: 85, y: 435, width: 145, height: 135 },
+    );
+    const rightSleeveFillPixels = countPastelPinkPixelsInRegion(
+      withSleeveFill.data,
+      withSleeveFill.info.width,
+      { x: 680, y: 435, width: 140, height: 125 },
+    );
+    const oldRightOuterFillPixels = countPastelPinkPixelsInRegion(
+      withSleeveFill.data,
+      withSleeveFill.info.width,
+      { x: 814, y: 440, width: 18, height: 28 },
+    );
+    const leftSleeveLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 85, y: 435, width: 150, height: 140 },
+    );
+    const rightSleeveLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 680, y: 435, width: 145, height: 125 },
+    );
+    const oldRightOuterLinePixels = countPastelPinkPixelsInRegion(
+      withSleeveLines.data,
+      withSleeveLines.info.width,
+      { x: 814, y: 440, width: 18, height: 28 },
+    );
+
+    expect(leftSleeveFillPixels).toBeGreaterThan(1500);
+    expect(rightSleeveFillPixels).toBeGreaterThan(1200);
+    expect(oldRightOuterFillPixels).toBeLessThan(25);
+    expect(leftSleeveLinePixels).toBeGreaterThan(700);
+    expect(rightSleeveLinePixels).toBeGreaterThan(700);
+    expect(oldRightOuterLinePixels).toBeLessThan(25);
+  }, 20000);
+
   it("mantiene el relleno de mangas de PRESILLAS dentro del contorno de PUNTADAS", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";

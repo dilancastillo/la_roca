@@ -655,6 +655,40 @@ const TWENTY_NINETEEN_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES = [
+  {
+    points: [
+      [115.38, 533.32],
+      [261.61, 663.95],
+      [274.94, 649.01],
+      [128.71, 518.38],
+    ],
+    upper: [
+      [128.71, 518.38],
+      [274.94, 649.01],
+    ],
+    lower: [
+      [115.38, 533.32],
+      [261.61, 663.95],
+    ],
+  },
+  {
+    points: [
+      [969.75, 533.69],
+      [833.3, 643.88],
+      [820.8, 628.28],
+      [957.25, 518.09],
+    ],
+    upper: [
+      [957.25, 518.09],
+      [820.8, 628.28],
+    ],
+    lower: [
+      [969.75, 533.69],
+      [833.3, 643.88],
+    ],
+  },
+] as const;
 const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
   "blouse-model-02-jdc.svg",
   "blouse-model-04.svg",
@@ -3159,6 +3193,10 @@ function getOriginalSleeveTrimShapes(placementSrc: string) {
     return TWENTY_NINETEEN_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
+  if (placementFileName === "blouse-model-42.svg") {
+    return JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
   if (SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES.has(placementFileName)) {
     return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
@@ -3181,6 +3219,10 @@ function getOriginalSleeveFillShapes(placementSrc: string) {
 
   if (getFileNameFromSource(placementSrc) === "blouse-model-10.svg") {
     return TWENTY_NINETEEN_ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
+  if (getFileNameFromSource(placementSrc) === "blouse-model-42.svg") {
+    return JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
   if (getFileNameFromSource(placementSrc) === "blouse-model-05.svg") {
