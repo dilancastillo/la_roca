@@ -622,6 +622,10 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
+function isPespunteGarment(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("pespunte") : false;
+}
+
 type TextStyleAttributeDependency = {
   toggleTerms: string[];
   styleTerms: string[];
@@ -1225,7 +1229,13 @@ function deriveSingleConfiguratorUi(
       : undefined;
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
-  const garmentImageSrc = selectedGarment
+  const shouldUseDefaultGarmentUntilNeck =
+    session.graphicManifestKey.includes("blusa") &&
+    isPespunteGarment(selectedGarment?.name) &&
+    !selectedNeck;
+  const garmentImageSrc = shouldUseDefaultGarmentUntilNeck
+    ? getDefaultImageSource(session.graphicManifestKey)
+    : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);

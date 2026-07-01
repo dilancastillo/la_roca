@@ -506,6 +506,10 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
+function isPespunteGarment(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("pespunte") : false;
+}
+
 function deriveSingleAutomationRenderScene(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -784,7 +788,13 @@ function deriveSingleAutomationRenderScene(
       ? "doubleZipper"
       : undefined;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
-  const garmentAssetPath = selectedGarment
+  const shouldUseDefaultGarmentUntilNeck =
+    session.graphicManifestKey.includes("blusa") &&
+    isPespunteGarment(selectedGarment?.name) &&
+    !selectedNeck;
+  const garmentAssetPath = shouldUseDefaultGarmentUntilNeck
+    ? getServerDefaultAssetPath(session.graphicManifestKey)
+    : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);

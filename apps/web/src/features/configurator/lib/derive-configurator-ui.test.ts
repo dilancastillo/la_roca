@@ -710,6 +710,19 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("mantiene la blusa por defecto si Pespunte no tiene cuello seleccionado", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "811": [2867],
+      "63": [],
+    });
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(ui.previewScene.neckImageSrc).toBeUndefined();
+  });
+
   it("mantiene el cuello V-DIVIDIDO cuando la blusa base es Pespunte", () => {
     const sessionWithVDividido: ConfiguratorSession = {
       ...session,

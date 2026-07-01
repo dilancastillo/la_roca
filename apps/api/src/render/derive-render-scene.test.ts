@@ -697,6 +697,19 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("mantiene la blusa por defecto si Pespunte no tiene cuello seleccionado", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "811": [2867],
+      "63": [],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(scene.neckAssetPath).toBeUndefined();
+  });
+
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {
     const sessionWithCurrentLowerPocketIds: ConfiguratorSession = {
       ...session,
