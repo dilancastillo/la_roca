@@ -3956,6 +3956,7 @@ function getRectSvg(rect: SourceRect, fillColor: string, lineWidth: number) {
 async function getRectangularLowerPocketAuxiliaryAddonSvg(
   lowerPocketAssetPath: string,
   side: AutomationRenderScene["lowerPocketAuxiliaryAddonSide"],
+  baseColor: string,
   trimColor: string | undefined,
 ) {
   if (
@@ -3981,8 +3982,8 @@ async function getRectangularLowerPocketAuxiliaryAddonSvg(
     );
 
     return [
-      getRectSvg(baseRect, "#fff", lineWidth),
-      getRectSvg(trimRect, trimColor ?? "#fff", lineWidth),
+      getRectSvg(baseRect, baseColor, lineWidth),
+      getRectSvg(trimRect, trimColor ?? baseColor, lineWidth),
     ];
   });
 
@@ -5147,6 +5148,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         await getRectangularLowerPocketAuxiliaryAddonSvg(
           scene.lowerPocketAssetPath,
           scene.lowerPocketAuxiliaryAddonSide,
+          scene.baseColorHex,
           auxiliaryPocketTrimColor,
         ),
       );

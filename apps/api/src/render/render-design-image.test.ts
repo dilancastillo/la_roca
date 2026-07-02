@@ -498,6 +498,30 @@ function countDarkPixelsInRegion(
   return count;
 }
 
+function countWhitePixelsInRegion(
+  buffer: Buffer,
+  width: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = buffer[offset] ?? 0;
+      const green = buffer[offset + 1] ?? 0;
+      const blue = buffer[offset + 2] ?? 0;
+      const alpha = buffer[offset + 3] ?? 0;
+
+      if (alpha > 200 && red > 245 && green > 245 && blue > 245) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 const straightBackNeckModelFileNames = [
   "blouse-model-01.svg",
   "blouse-model-02-jdc.svg",
@@ -7063,6 +7087,16 @@ describe("renderDesignImage", () => {
       withRightAddon.info.width,
       leftTabRegion,
     );
+    const leftAddonWhitePixels = countWhitePixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      leftTabRegion,
+    );
+    const rightAddonWhitePixels = countWhitePixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      rightTabRegion,
+    );
     const leftTrimPinkPixels = countPastelPinkPixelsInRegion(
       withBothAddonTrim.data,
       withBothAddonTrim.info.width,
@@ -7078,6 +7112,8 @@ describe("renderDesignImage", () => {
     expect(leftAddonRightDarkPixels).toBeLessThan(baseRightDarkPixels + 20);
     expect(rightAddonDarkPixels).toBeGreaterThan(baseRightDarkPixels + 100);
     expect(rightAddonLeftDarkPixels).toBeLessThan(baseLeftDarkPixels + 20);
+    expect(leftAddonWhitePixels).toBeLessThan(30);
+    expect(rightAddonWhitePixels).toBeLessThan(30);
     expect(leftTrimPinkPixels).toBeGreaterThan(150);
     expect(rightTrimPinkPixels).toBeGreaterThan(150);
   }, 20000);

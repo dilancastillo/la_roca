@@ -3017,6 +3017,7 @@ async function drawRectangularLowerPocketAuxiliaryAddon(
   context: CanvasRenderingContext2D,
   lowerPocketSrc: string,
   side: PreviewScene["lowerPocketAuxiliaryAddonSide"],
+  baseColor: string,
   trimColor: string | undefined,
 ) {
   if (
@@ -3044,8 +3045,8 @@ async function drawRectangularLowerPocketAuxiliaryAddon(
       transform,
     );
 
-    strokeAndFillRect(context, baseRect, "#fff", lineWidth);
-    strokeAndFillRect(context, trimRect, trimColor ?? "#fff", lineWidth);
+    strokeAndFillRect(context, baseRect, baseColor, lineWidth);
+    strokeAndFillRect(context, trimRect, trimColor ?? baseColor, lineWidth);
   }
 
   context.restore();
@@ -4933,6 +4934,7 @@ async function composeSingleDesign(
         context,
         scene.lowerPocketImageSrc,
         scene.lowerPocketAuxiliaryAddonSide,
+        scene.baseColorHex,
         auxiliaryPocketTrimColor,
       );
     }
