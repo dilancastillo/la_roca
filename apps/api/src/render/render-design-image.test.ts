@@ -7522,6 +7522,59 @@ describe("renderDesignImage", () => {
     expect(countOrangePixels(withAletas.data)).toBe(0);
   }, 20000);
 
+  it("rellena ALETAS como bolsillo inferior con Bolsillo inferior aletas", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-16.svg";
+    const withoutTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withAletasTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 2877,
+            key: "aletas",
+            label: "Bolsillo inferior aletas",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftAletaFillPinkPixels = countPastelPinkPixelsInRegion(
+      withAletasTrim.data,
+      withAletasTrim.info.width,
+      { x: 280, y: 715, width: 160, height: 110 },
+    );
+    const rightAletaFillPinkPixels = countPastelPinkPixelsInRegion(
+      withAletasTrim.data,
+      withAletasTrim.info.width,
+      { x: 460, y: 715, width: 170, height: 110 },
+    );
+    const leftAletaWithoutTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 280, y: 715, width: 160, height: 110 },
+    );
+    const rightAletaWithoutTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      { x: 460, y: 715, width: 170, height: 110 },
+    );
+
+    expect(leftAletaFillPinkPixels).toBeGreaterThan(500);
+    expect(rightAletaFillPinkPixels).toBeGreaterThan(500);
+    expect(leftAletaWithoutTrimPinkPixels).toBe(0);
+    expect(rightAletaWithoutTrimPinkPixels).toBe(0);
+    expect(
+      countDifferentPixels(withoutTrim.data, withAletasTrim.data),
+    ).toBeGreaterThan(500);
+  }, 20000);
+
   it("renderiza RIBETE con vivos separados para franja superior e inferior", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-19-ribete-lower-pocket.svg";

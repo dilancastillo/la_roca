@@ -288,8 +288,17 @@ const lowerPocketTrimOverlayByFileName: Record<string, string> = {
 
 const lowerPocketSectionTrimOverlayByFileName: Record<
   string,
-  { top?: string; bottom?: string; complete?: string; auxiliary?: string }
+  {
+    top?: string;
+    bottom?: string;
+    complete?: string;
+    auxiliary?: string;
+    flap?: string;
+  }
 > = {
+  "blouse-model-16.svg": {
+    flap: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-16-aletas-lower-pocket-fill.svg",
+  },
   "blouse-model-14.svg": {
     top: "/assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-14-rectangular-lower-pocket-upper.svg",
     bottom:
@@ -347,6 +356,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
   "blouse-model-14.svg": 3,
+  "blouse-model-16.svg": 0,
   "blouse-model-46-costura-triangulo-lower-pocket.svg": 3,
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
 };
@@ -2999,6 +3009,7 @@ type LowerPocketBandTrimColors = {
   bottom?: string | undefined;
   complete?: string | undefined;
   auxiliary?: string | undefined;
+  flap?: string | undefined;
 };
 
 type ChestPocketTrimColors = {
@@ -3292,6 +3303,7 @@ async function drawLowerPocketOverlay(
       ["bottom", trimColors?.bottom],
       ["complete", trimColors?.complete],
       ["auxiliary", trimColors?.auxiliary],
+      ["flap", trimColors?.flap],
     ] as const) {
       const trimSrc = sectionTrimOverlays[section];
       const outlineRadius =
@@ -5122,6 +5134,7 @@ async function composeSingleDesign(
           bottom: lowerPocketLowerTrimColor,
           complete: lowerPocketCompleteTrimColor,
           auxiliary: auxiliaryPocketTrimColor,
+          flap: flapTrimColor,
         },
       );
       await drawRectangularLowerPocketAuxiliaryAddon(
