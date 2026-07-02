@@ -823,7 +823,7 @@ describe("deriveAutomationRenderScene", () => {
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
     );
     expect(scene.neckAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-36-v-dividido.svg",
     );
   });
 

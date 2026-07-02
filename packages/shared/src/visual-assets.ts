@@ -113,6 +113,8 @@ const BLUSA_CUELLO_ALTO_CREMALLERA_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-34-cuello-alto-cremallera.svg`;
 const BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg`;
+const BLUSA_V_DIVIDIDO_ASSET =
+  `${BLUSA_ASSET_BASE}/blouse-model-36-v-dividido.svg`;
 const BLUSA_EL_HATO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato.svg`;
 const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
@@ -382,8 +384,8 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     matrioska: BLUSA_MATRIOSKA_ASSET,
     mariposa: BLUSA_MARIPOSA_ASSET,
     "mariposa dividido": BLUSA_MARIPOSA_DIVIDIDO_ASSET,
-    "v dividido": BLUSA_EL_HATO_ASSET,
-    "v-dividido": BLUSA_EL_HATO_ASSET,
+    "v dividido": BLUSA_V_DIVIDIDO_ASSET,
+    "v-dividido": BLUSA_V_DIVIDIDO_ASSET,
     "20 20": BLUSA_2020_ASSET,
     "20-20": BLUSA_2020_ASSET,
     "2020": BLUSA_2020_ASSET,

@@ -769,7 +769,7 @@ describe("renderDesignImage", () => {
 
   it("mantiene visible el cuello V-DIVIDIDO sobre la base Pespunte", async () => {
     const neckAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-36-v-dividido.svg";
     const pespunteAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
     const withVDividido = await readRawPng(
@@ -805,7 +805,7 @@ describe("renderDesignImage", () => {
 
   it("pinta los bordes divididos del cuello V-DIVIDIDO por separado", async () => {
     const neckAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-36-v-dividido.svg";
     const withUpperBorder = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -834,8 +834,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const rightBorderRegion = { x: 455, y: 150, width: 75, height: 310 };
-    const leftBorderRegion = { x: 365, y: 150, width: 75, height: 310 };
+    const rightBorderRegion = { x: 485, y: 150, width: 125, height: 285 };
+    const leftBorderRegion = { x: 315, y: 150, width: 130, height: 285 };
     const upperRightPinkPixels = countPastelPinkPixelsInRegion(
       withUpperBorder.data,
       withUpperBorder.info.width,
