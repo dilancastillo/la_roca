@@ -4811,6 +4811,79 @@ describe("renderDesignImage", () => {
     }
   }, 40000);
 
+  it("mantiene los vivos de mangas pegados al borde en los modelos solicitados", async () => {
+    const requestedNeckAssetPaths = [
+      ["CUCUTA", "blouse-model-44-cucuta.svg"],
+      ["ENFERMERA UB", "blouse-model-43.svg"],
+      ["PICOS", "blouse-model-12-cherokee.svg"],
+      ["MATRIOSKA", "blouse-model-41-matrioska.svg"],
+      ["MARIPOSA", "blouse-model-40-mariposa.svg"],
+      ["20-20", "blouse-model-50-20-20.svg"],
+      ["DEPORTIVO", "blouse-model-21-deportivo.svg"],
+      ["POLO", "blouse-model-23-polo.svg"],
+      ["CRUZADO", "blouse-model-30.svg"],
+      ["BOTONES", "blouse-model-24-botones.svg"],
+      ["20-21", "blouse-model-25-20-21.svg"],
+      ["CUELLO REDONDO", "blouse-model-26-cuello-redondo.svg"],
+      ["CREMALLERA", "blouse-model-27-cremallera.svg"],
+      ["MODELO 29", "blouse-model-28-modelo-29.svg"],
+      ["PEDAGOGIA", "blouse-model-29-pedagogia.svg"],
+      ["ORIENTAL", "blouse-model-33-oriental.svg"],
+      [
+        "CUELLO ALTO CON CREMALLERA",
+        "blouse-model-34-cuello-alto-cremallera.svg",
+      ],
+      ["CIRUJIA", "blouse-model-37-cirugia.svg"],
+      ["FISIOPRACTICAS", "blouse-model-11-fisiopracticas.svg"],
+      ["P-PAIPILLA", "blouse-model-13-p-paipilla.svg"],
+    ] as const;
+
+    for (const [label, fileName] of requestedNeckAssetPaths) {
+      const withSleeveTrim = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          neckAssetPath: `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+          garmentDetailAssetPaths: [
+            "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg",
+          ],
+          trimSections: [
+            {
+              valueId: 7401,
+              key: "manga-lineal-superior",
+              label: "Manga lineal superior",
+              colorHex: "#f4c7cc",
+            },
+            {
+              valueId: 7402,
+              key: "manga-lineal-inferior",
+              label: "Manga lineal inferior",
+              colorHex: "#f4c7cc",
+            },
+            {
+              valueId: 7403,
+              key: "manga-rellena",
+              label: "Manga rellena",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        }),
+      );
+      const leftSleevePixels = countPastelPinkPixelsInRegion(
+        withSleeveTrim.data,
+        withSleeveTrim.info.width,
+        { x: 80, y: 430, width: 175, height: 160 },
+      );
+      const rightSleevePixels = countPastelPinkPixelsInRegion(
+        withSleeveTrim.data,
+        withSleeveTrim.info.width,
+        { x: 675, y: 430, width: 165, height: 155 },
+      );
+
+      expect(leftSleevePixels, label).toBeGreaterThan(1500);
+      expect(rightSleevePixels, label).toBeGreaterThan(1200);
+    }
+  }, 80000);
+
   it("mantiene el relleno de mangas de 20-19 pegado al borde del modelo", async () => {
     const neckAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-10.svg";

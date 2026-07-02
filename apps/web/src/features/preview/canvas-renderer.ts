@@ -466,6 +466,46 @@ const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
   "blouse-model-32-original-sleeves.svg";
 const PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-07-puntadas-original-sleeves.svg";
+type OriginalSleevePoint = readonly [number, number];
+
+type OriginalSleeveTrimShape = {
+  points: readonly OriginalSleevePoint[];
+  upper: readonly [OriginalSleevePoint, OriginalSleevePoint];
+  lower: readonly [OriginalSleevePoint, OriginalSleevePoint];
+};
+
+function offsetOriginalSleevePoint(
+  point: OriginalSleevePoint,
+  offset: OriginalSleevePoint,
+): OriginalSleevePoint {
+  return [point[0] + offset[0], point[1] + offset[1]];
+}
+
+function makeOriginalSleeveTrimShapes(
+  leftLower: readonly [OriginalSleevePoint, OriginalSleevePoint],
+  rightLower: readonly [OriginalSleevePoint, OriginalSleevePoint],
+): readonly OriginalSleeveTrimShape[] {
+  const leftUpper = leftLower.map((point) =>
+    offsetOriginalSleevePoint(point, [13.33, -14.94]),
+  ) as [OriginalSleevePoint, OriginalSleevePoint];
+  const rightUpper = rightLower.map((point) =>
+    offsetOriginalSleevePoint(point, [-12.5, -15.6]),
+  ) as [OriginalSleevePoint, OriginalSleevePoint];
+
+  return [
+    {
+      points: [leftLower[0], leftLower[1], leftUpper[1], leftUpper[0]],
+      upper: leftUpper,
+      lower: leftLower,
+    },
+    {
+      points: [rightLower[0], rightLower[1], rightUpper[1], rightUpper[0]],
+      upper: rightUpper,
+      lower: rightLower,
+    },
+  ];
+}
+
 const ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
@@ -689,6 +729,115 @@ const JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+const CUCUTA_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
+  [
+    [109.82, 535.05],
+    [263.59, 672.42],
+  ],
+  [
+    [965.25, 531.05],
+    [833.9, 636.48],
+  ],
+);
+const ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [109.82, 535.05],
+      [263.59, 672.42],
+    ],
+    [
+      [969.75, 533.69],
+      [833.3, 643.88],
+    ],
+  );
+const PICOS_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
+  [
+    [109.49, 538.77],
+    [263.26, 675.3],
+  ],
+  [
+    [969.43, 537.42],
+    [832.98, 646.93],
+  ],
+);
+const DEPORTIVO_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [111.86, 533.21],
+      [265.63, 670.58],
+    ],
+    [
+      [971.78, 531.85],
+      [835.33, 642.04],
+    ],
+  );
+const STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [111.85, 533.22],
+      [265.62, 670.59],
+    ],
+    [
+      [971.78, 531.85],
+      [835.33, 642.04],
+    ],
+  );
+const FISIOPRACTICAS_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [110.48, 531.23],
+      [264.25, 668.6],
+    ],
+    [
+      [970.42, 529.88],
+      [833.97, 640.07],
+    ],
+  );
+const P_PAIPILLA_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [109.5, 538.96],
+      [263.27, 676.33],
+    ],
+    [
+      [969.43, 537.59],
+      [832.98, 647.78],
+    ],
+  );
+const REQUESTED_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
+  string,
+  readonly OriginalSleeveTrimShape[]
+> = {
+  "blouse-model-44-cucuta.svg": CUCUTA_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-43.svg": ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-12-cherokee.svg": PICOS_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-41-matrioska.svg":
+    ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-40-mariposa.svg": ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-50-20-20.svg": CUCUTA_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-21-deportivo.svg": DEPORTIVO_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-23-polo.svg": DEPORTIVO_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-30.svg": STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-24-botones.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-25-20-21.svg": STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-26-cuello-redondo.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-27-cremallera.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-28-modelo-29.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-29-pedagogia.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-33-oriental.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-34-cuello-alto-cremallera.svg":
+    STANDARD_REQUESTED_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-37-cirugia.svg": ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-11-fisiopracticas.svg":
+    FISIOPRACTICAS_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-13-p-paipilla.svg": P_PAIPILLA_ORIGINAL_SLEEVE_TRIM_SHAPES,
+};
 const PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES = new Set([
   "blouse-model-02-jdc.svg",
   "blouse-model-04.svg",
@@ -3071,8 +3220,6 @@ function drawCenteredTrianglePath(
   context.closePath();
 }
 
-type OriginalSleevePoint = readonly [number, number];
-
 type AssetToCanvasTransform = {
   drawX: number;
   drawY: number;
@@ -3197,6 +3344,14 @@ function getOriginalSleeveTrimShapes(placementSrc: string) {
     return JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
+  const requestedTrimShapes =
+    REQUESTED_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      placementFileName
+    ];
+  if (requestedTrimShapes) {
+    return requestedTrimShapes;
+  }
+
   if (SPACED_ORIGINAL_SLEEVE_TRIM_BASE_FILE_NAMES.has(placementFileName)) {
     return PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
@@ -3213,19 +3368,29 @@ function getOriginalSleeveTrimShapes(placementSrc: string) {
 }
 
 function getOriginalSleeveFillShapes(placementSrc: string) {
-  if (getFileNameFromSource(placementSrc) === "blouse-model-15-presillas.svg") {
+  const placementFileName = getFileNameFromSource(placementSrc);
+
+  if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  if (getFileNameFromSource(placementSrc) === "blouse-model-10.svg") {
+  if (placementFileName === "blouse-model-10.svg") {
     return TWENTY_NINETEEN_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  if (getFileNameFromSource(placementSrc) === "blouse-model-42.svg") {
+  if (placementFileName === "blouse-model-42.svg") {
     return JEAN_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  if (getFileNameFromSource(placementSrc) === "blouse-model-05.svg") {
+  const requestedTrimShapes =
+    REQUESTED_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      placementFileName
+    ];
+  if (requestedTrimShapes) {
+    return requestedTrimShapes;
+  }
+
+  if (placementFileName === "blouse-model-05.svg") {
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
