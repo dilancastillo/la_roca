@@ -483,7 +483,7 @@ describe("getProductAssetCatalog", () => {
         "V - DIVIDIDO",
       ),
     ).toBe(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
     );
 
     expect(
@@ -495,7 +495,7 @@ describe("getProductAssetCatalog", () => {
         "V - DIVIDIDO",
       ),
     ).toBe(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
     );
 
     expect(

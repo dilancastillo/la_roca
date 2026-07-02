@@ -785,7 +785,7 @@ describe("deriveConfiguratorUi", () => {
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
     );
     expect(ui.previewScene.neckImageSrc).toBe(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
     );
   });
 

@@ -769,7 +769,7 @@ describe("renderDesignImage", () => {
 
   it("mantiene visible el cuello V-DIVIDIDO sobre la base Pespunte", async () => {
     const neckAssetPath =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
     const pespunteAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
     const withVDividido = await readRawPng(
@@ -801,6 +801,66 @@ describe("renderDesignImage", () => {
     );
 
     expect(neckInk).toBeGreaterThan(baseInk + 300);
+  }, 20000);
+
+  it("pinta los bordes divididos del cuello V-DIVIDIDO por separado", async () => {
+    const neckAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+    const withUpperBorder = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5141,
+            key: "cuello-borde-dividido-superior",
+            label: "Cuello Borde Dividido superior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const withLowerBorder = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        neckAssetPath,
+        trimSections: [
+          {
+            valueId: 5142,
+            key: "cuello-borde-dividido-inferior",
+            label: "Cuello Borde Dividido inferior",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const rightBorderRegion = { x: 455, y: 150, width: 75, height: 310 };
+    const leftBorderRegion = { x: 365, y: 150, width: 75, height: 310 };
+    const upperRightPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperBorder.data,
+      withUpperBorder.info.width,
+      rightBorderRegion,
+    );
+    const upperLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withUpperBorder.data,
+      withUpperBorder.info.width,
+      leftBorderRegion,
+    );
+    const lowerLeftPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerBorder.data,
+      withLowerBorder.info.width,
+      leftBorderRegion,
+    );
+    const lowerRightPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerBorder.data,
+      withLowerBorder.info.width,
+      rightBorderRegion,
+    );
+
+    expect(upperRightPinkPixels).toBeGreaterThan(500);
+    expect(upperLeftPinkPixels).toBeLessThan(100);
+    expect(lowerLeftPinkPixels).toBeGreaterThan(500);
+    expect(lowerRightPinkPixels).toBeLessThan(100);
   }, 20000);
 
   it("pinta por separado los tres vivos de la cremallera punta", async () => {

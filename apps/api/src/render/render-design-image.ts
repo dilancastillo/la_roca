@@ -1399,6 +1399,12 @@ const dividedCollarTrimOverlayByFileName: Record<
     lower:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-28-modelo-29-divided-lower.svg",
   },
+  "blouse-model-39-el-hato.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-divided-upper.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-39-el-hato-divided-lower.svg",
+  },
 };
 
 const completeCollarOnlyFileNames = new Set([
