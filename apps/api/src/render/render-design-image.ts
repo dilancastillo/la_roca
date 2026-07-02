@@ -346,6 +346,10 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
     bottom:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-47-ribete-horizontal-lower-pocket-trim.svg",
   },
+  "blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg": {
+    complete:
+      "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-49-bolsillo-interno-rectangular-lower-pocket-complete-fill.svg",
+  },
 };
 
 const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {

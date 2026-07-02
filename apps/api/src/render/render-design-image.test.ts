@@ -7924,6 +7924,40 @@ describe("renderDesignImage", () => {
     ).toBe(0);
   }, 20000);
 
+  it("rellena BOLSILLO INTERNO RECTANGULAR con Bolsillos inferiores completa", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg";
+    const withCompleteTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        trimSections: [
+          {
+            valueId: 5154,
+            role: "lowerPockets",
+            key: "bolsillos-inferiores-completa",
+            label: "Bolsillos inferiores completa",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+
+    const leftPocketFillPinkPixels = countPastelPinkPixelsInRegion(
+      withCompleteTrim.data,
+      withCompleteTrim.info.width,
+      { x: 220, y: 650, width: 230, height: 260 },
+    );
+    const rightPocketFillPinkPixels = countPastelPinkPixelsInRegion(
+      withCompleteTrim.data,
+      withCompleteTrim.info.width,
+      { x: 450, y: 650, width: 240, height: 260 },
+    );
+
+    expect(leftPocketFillPinkPixels).toBeGreaterThan(1000);
+    expect(rightPocketFillPinkPixels).toBeGreaterThan(1000);
+  }, 20000);
+
   it("renderiza BOLSILLO INTERNO RECTANGULAR sin color amarillo ni vivos", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-49-bolsillo-interno-rectangular-lower-pocket.svg";
