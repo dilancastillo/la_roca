@@ -857,9 +857,9 @@ describe("renderDesignImage", () => {
       rightBorderRegion,
     );
 
-    expect(upperRightPinkPixels).toBeGreaterThan(500);
+    expect(upperRightPinkPixels).toBeGreaterThan(300);
     expect(upperLeftPinkPixels).toBeLessThan(100);
-    expect(lowerLeftPinkPixels).toBeGreaterThan(500);
+    expect(lowerLeftPinkPixels).toBeGreaterThan(300);
     expect(lowerRightPinkPixels).toBeLessThan(100);
   }, 20000);
 

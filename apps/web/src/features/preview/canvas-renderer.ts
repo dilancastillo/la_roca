@@ -889,10 +889,22 @@ const P_PAIPILLA_ORIGINAL_SLEEVE_TRIM_SHAPES =
       [832.98, 647.78],
     ],
   );
+const V_DIVIDIDO_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [115.38, 533.32],
+      [261.61, 663.95],
+    ],
+    [
+      [965.25, 531.05],
+      [833.9, 636.48],
+    ],
+  );
 const REQUESTED_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
   string,
   readonly OriginalSleeveTrimShape[]
 > = {
+  "blouse-model-36-v-dividido.svg": V_DIVIDIDO_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-44-cucuta.svg": CUCUTA_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-43.svg": ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-12-cherokee.svg": PICOS_ORIGINAL_SLEEVE_TRIM_SHAPES,
