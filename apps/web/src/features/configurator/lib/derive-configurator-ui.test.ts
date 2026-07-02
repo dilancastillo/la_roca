@@ -1124,7 +1124,7 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
-  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo lizo", () => {
+  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo", () => {
     const sessionWithSideTypes: ConfiguratorSession = {
       ...session,
       attributes: session.attributes.map((attribute) =>
@@ -1142,6 +1142,24 @@ describe("deriveConfiguratorUi", () => {
                 {
                   id: 5356,
                   name: "Lizo derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5357,
+                  name: "Sobrepuesto doble",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5358,
+                  name: "Sobrepuesto izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5359,
+                  name: "Sobrepuesto derecho",
                   attributeId: 69,
                   attributeName: "Tipo de bolsillos inferiores",
                 },
@@ -1165,10 +1183,46 @@ describe("deriveConfiguratorUi", () => {
       "69": [5356],
       "70": [2578],
     });
+    const withOverlaidDouble = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5357],
+      "70": [2578],
+    });
+    const withOverlaidLeft = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5358],
+      "70": [2578],
+    });
+    const withOverlaidRight = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5359],
+      "70": [2578],
+    });
 
+    expect(withDouble.previewScene.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withDouble.previewScene.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withLeft.previewScene.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withLeft.previewScene.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withRight.previewScene.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe("right");
+    expect(withOverlaidDouble.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "overlaid",
+    );
+    expect(withOverlaidDouble.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "both",
+    );
+    expect(withOverlaidLeft.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "overlaid",
+    );
+    expect(withOverlaidLeft.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "left",
+    );
+    expect(withOverlaidRight.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "overlaid",
+    );
+    expect(withOverlaidRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "right",
+    );
   });
 
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {

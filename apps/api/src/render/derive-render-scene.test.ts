@@ -2733,7 +2733,7 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
-  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo lizo", () => {
+  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo", () => {
     const sessionWithSideTypes: ConfiguratorSession = {
       ...session,
       attributes: session.attributes.map((attribute) =>
@@ -2760,6 +2760,24 @@ describe("deriveAutomationRenderScene", () => {
                   attributeId: 69,
                   attributeName: "Tipo de bolsillos inferiores",
                 },
+                {
+                  id: 5357,
+                  name: "Sobrepuesto doble",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5358,
+                  name: "Sobrepuesto izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5359,
+                  name: "Sobrepuesto derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
               ],
             }
           : attribute,
@@ -2780,10 +2798,34 @@ describe("deriveAutomationRenderScene", () => {
       "69": [5356],
       "70": [2578],
     });
+    const withOverlaidDouble = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5357],
+      "70": [2578],
+    });
+    const withOverlaidLeft = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5358],
+      "70": [2578],
+    });
+    const withOverlaidRight = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5359],
+      "70": [2578],
+    });
 
+    expect(withDouble.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withLeft.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withRight.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withRight.lowerPocketAuxiliaryAddonSide).toBe("right");
+    expect(withOverlaidDouble.lowerPocketAuxiliaryAddonKind).toBe("overlaid");
+    expect(withOverlaidDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withOverlaidLeft.lowerPocketAuxiliaryAddonKind).toBe("overlaid");
+    expect(withOverlaidLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withOverlaidRight.lowerPocketAuxiliaryAddonKind).toBe("overlaid");
+    expect(withOverlaidRight.lowerPocketAuxiliaryAddonSide).toBe("right");
   });
 
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {

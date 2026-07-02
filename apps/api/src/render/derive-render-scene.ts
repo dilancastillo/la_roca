@@ -1,9 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
-  getLowerPocketAuxiliaryAddonSide,
+  getLowerPocketAuxiliaryAddon,
   getLowerPocketLayout,
   getLowerPocketTypeAttribute,
+  type LowerPocketAuxiliaryAddonKind,
   type LowerPocketAuxiliaryAddonSide,
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
@@ -67,6 +68,7 @@ export type AutomationRenderScene = {
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
+  lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind;
   lowerPocketAuxiliaryAddonSide?: LowerPocketAuxiliaryAddonSide;
   auxiliaryPocketAssetPath?: string;
   chestPocketType?: string;
@@ -879,10 +881,10 @@ function deriveSingleAutomationRenderScene(
   const lowerPocketAssetPath = selectedLowerPocketModel
     ? getAssetPath(session, lowerPocketModelAttribute!, selectedLowerPocketModel)
     : undefined;
-  const lowerPocketAuxiliaryAddonSide =
+  const lowerPocketAuxiliaryAddon =
     lowerPocketLayout !== "none" &&
     isRectangularLowerPocketAsset(lowerPocketAssetPath)
-      ? getLowerPocketAuxiliaryAddonSide(
+      ? getLowerPocketAuxiliaryAddon(
           selectedAuxiliaryPocketType?.name ?? selectedLowerPocketType?.name,
         )
       : undefined;
@@ -923,8 +925,11 @@ function deriveSingleAutomationRenderScene(
       ? { lowerPocketAssetPath }
       : {}),
     lowerPocketLayout,
-    ...(lowerPocketAuxiliaryAddonSide
-      ? { lowerPocketAuxiliaryAddonSide }
+    ...(lowerPocketAuxiliaryAddon
+      ? {
+          lowerPocketAuxiliaryAddonKind: lowerPocketAuxiliaryAddon.kind,
+          lowerPocketAuxiliaryAddonSide: lowerPocketAuxiliaryAddon.side,
+        }
       : {}),
     ...(auxiliaryPocketAssetPath ? { auxiliaryPocketAssetPath } : {}),
     ...(selectedChestPocketType?.name

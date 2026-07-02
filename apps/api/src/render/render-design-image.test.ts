@@ -7118,6 +7118,113 @@ describe("renderDesignImage", () => {
     expect(rightTrimPinkPixels).toBeGreaterThan(150);
   }, 20000);
 
+  it("agrega el elemento auxiliar sobrepuesto dentro del bolsillo RECTANGULAR por lado y pinta su franja", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg";
+    const leftInnerRegion = { x: 300, y: 790, width: 110, height: 120 };
+    const rightInnerRegion = { x: 518, y: 790, width: 110, height: 120 };
+    const leftTrimRegion = { x: 300, y: 790, width: 110, height: 18 };
+    const rightTrimRegion = { x: 518, y: 790, width: 110, height: 18 };
+    const withoutAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withLeftAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonKind: "overlaid",
+        lowerPocketAuxiliaryAddonSide: "left",
+      }),
+    );
+    const withRightAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonKind: "overlaid",
+        lowerPocketAuxiliaryAddonSide: "right",
+      }),
+    );
+    const withBothAddonTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonKind: "overlaid",
+        lowerPocketAuxiliaryAddonSide: "both",
+        trimSections: [
+          {
+            valueId: 421,
+            role: "auxiliaryPocket",
+            key: "bolsillo-auxiliar",
+            label: "Bolsillo auxiliar",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const baseLeftDarkPixels = countDarkPixelsInRegion(
+      withoutAddon.data,
+      withoutAddon.info.width,
+      leftInnerRegion,
+    );
+    const baseRightDarkPixels = countDarkPixelsInRegion(
+      withoutAddon.data,
+      withoutAddon.info.width,
+      rightInnerRegion,
+    );
+    const leftAddonDarkPixels = countDarkPixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      leftInnerRegion,
+    );
+    const leftAddonRightDarkPixels = countDarkPixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      rightInnerRegion,
+    );
+    const rightAddonDarkPixels = countDarkPixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      rightInnerRegion,
+    );
+    const rightAddonLeftDarkPixels = countDarkPixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      leftInnerRegion,
+    );
+    const leftAddonWhitePixels = countWhitePixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      leftInnerRegion,
+    );
+    const rightAddonWhitePixels = countWhitePixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      rightInnerRegion,
+    );
+    const leftTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withBothAddonTrim.data,
+      withBothAddonTrim.info.width,
+      leftTrimRegion,
+    );
+    const rightTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withBothAddonTrim.data,
+      withBothAddonTrim.info.width,
+      rightTrimRegion,
+    );
+
+    expect(leftAddonDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 100);
+    expect(leftAddonRightDarkPixels).toBeLessThan(baseRightDarkPixels + 20);
+    expect(rightAddonDarkPixels).toBeGreaterThan(baseRightDarkPixels + 100);
+    expect(rightAddonLeftDarkPixels).toBeLessThan(baseLeftDarkPixels + 20);
+    expect(leftAddonWhitePixels).toBeLessThan(30);
+    expect(rightAddonWhitePixels).toBeLessThan(30);
+    expect(leftTrimPinkPixels).toBeGreaterThan(400);
+    expect(rightTrimPinkPixels).toBeGreaterThan(400);
+  }, 20000);
+
   it("pinta los aros del bolsillo inferior AROS con su vivo especifico", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15.svg";

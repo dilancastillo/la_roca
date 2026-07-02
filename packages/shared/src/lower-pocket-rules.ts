@@ -6,6 +6,11 @@ import {
 
 export type LowerPocketLayout = "none" | "single" | "double";
 export type LowerPocketAuxiliaryAddonSide = "left" | "right" | "both";
+export type LowerPocketAuxiliaryAddonKind = "lizo" | "overlaid";
+export type LowerPocketAuxiliaryAddon = {
+  kind: LowerPocketAuxiliaryAddonKind;
+  side: LowerPocketAuxiliaryAddonSide;
+};
 
 type Attribute = ConfiguratorSession["attributes"][number];
 type AttributeValue = Attribute["values"][number];
@@ -88,28 +93,39 @@ function isNoneLowerPocketType(
   return normalize(value.name).includes("sin bolsillo");
 }
 
-export function getLowerPocketAuxiliaryAddonSide(
+export function getLowerPocketAuxiliaryAddon(
   valueName: string | undefined,
-): LowerPocketAuxiliaryAddonSide | undefined {
+): LowerPocketAuxiliaryAddon | undefined {
   const name = normalize(valueName ?? "");
+  const kind = name.includes("lizo")
+    ? "lizo"
+    : name.includes("sobrepuesto")
+      ? "overlaid"
+      : undefined;
 
-  if (!name.includes("lizo")) {
+  if (!kind) {
     return undefined;
   }
 
   if (name.includes("doble")) {
-    return "both";
+    return { kind, side: "both" };
   }
 
   if (name.includes("izquierd")) {
-    return "left";
+    return { kind, side: "left" };
   }
 
   if (name.includes("derech")) {
-    return "right";
+    return { kind, side: "right" };
   }
 
   return undefined;
+}
+
+export function getLowerPocketAuxiliaryAddonSide(
+  valueName: string | undefined,
+): LowerPocketAuxiliaryAddonSide | undefined {
+  return getLowerPocketAuxiliaryAddon(valueName)?.side;
 }
 
 function findNoneLowerPocketModelValue(

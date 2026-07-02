@@ -470,23 +470,47 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 742, y: 408 },
 ] as const;
 const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
-const AUXILIARY_ADDON_SOURCE_SQUARE = {
-  x: 1.5,
-  y: 30.39,
-  width: 178.94,
-  height: 194.42,
-} as const;
-const AUXILIARY_ADDON_SOURCE_BASE = {
-  x: 17.27,
-  y: 2.04,
-  width: 147.4,
-  height: 27.85,
-} as const;
-const AUXILIARY_ADDON_SOURCE_TRIM = {
-  x: 17.27,
-  y: 1.5,
-  width: 147.4,
-  height: 12.15,
+const AUXILIARY_ADDON_GEOMETRY_BY_KIND = {
+  lizo: {
+    square: {
+      x: 1.5,
+      y: 30.39,
+      width: 178.94,
+      height: 194.42,
+    },
+    base: {
+      x: 17.27,
+      y: 2.04,
+      width: 147.4,
+      height: 27.85,
+    },
+    trim: {
+      x: 17.27,
+      y: 1.5,
+      width: 147.4,
+      height: 12.15,
+    },
+  },
+  overlaid: {
+    square: {
+      x: 1.5,
+      y: 1.5,
+      width: 178.94,
+      height: 194.42,
+    },
+    base: {
+      x: 17.73,
+      y: 39.83,
+      width: 143.23,
+      height: 156.09,
+    },
+    trim: {
+      x: 18.14,
+      y: 39.88,
+      width: 142.76,
+      height: 12.15,
+    },
+  },
 } as const;
 const RECTANGULAR_LOWER_POCKET_BOXES = {
   left: { x: 353.29, y: 900.63, width: 145.5, height: 165.43 },
@@ -3915,17 +3939,14 @@ function getLowerPocketAuxiliaryAddonSides(
 function scaleAuxiliaryAddonRect(
   sourceRect: SourceRect,
   pocketBox: SourceRect,
+  sourceSquare: SourceRect,
 ) {
-  const scaleX = pocketBox.width / AUXILIARY_ADDON_SOURCE_SQUARE.width;
-  const scaleY = pocketBox.height / AUXILIARY_ADDON_SOURCE_SQUARE.height;
+  const scaleX = pocketBox.width / sourceSquare.width;
+  const scaleY = pocketBox.height / sourceSquare.height;
 
   return {
-    x:
-      pocketBox.x +
-      (sourceRect.x - AUXILIARY_ADDON_SOURCE_SQUARE.x) * scaleX,
-    y:
-      pocketBox.y +
-      (sourceRect.y - AUXILIARY_ADDON_SOURCE_SQUARE.y) * scaleY,
+    x: pocketBox.x + (sourceRect.x - sourceSquare.x) * scaleX,
+    y: pocketBox.y + (sourceRect.y - sourceSquare.y) * scaleY,
     width: sourceRect.width * scaleX,
     height: sourceRect.height * scaleY,
   };
@@ -3956,6 +3977,7 @@ function getRectSvg(rect: SourceRect, fillColor: string, lineWidth: number) {
 async function getRectangularLowerPocketAuxiliaryAddonSvg(
   lowerPocketAssetPath: string,
   side: AutomationRenderScene["lowerPocketAuxiliaryAddonSide"],
+  kind: AutomationRenderScene["lowerPocketAuxiliaryAddonKind"],
   baseColor: string,
   trimColor: string | undefined,
 ) {
@@ -3970,14 +3992,16 @@ async function getRectangularLowerPocketAuxiliaryAddonSvg(
     await loadProcessedImage(lowerPocketAssetPath),
   );
   const lineWidth = Math.max(1.5, 3 * (transform.scaleX + transform.scaleY) / 2);
+  const addonKind = kind ?? "lizo";
+  const geometry = AUXILIARY_ADDON_GEOMETRY_BY_KIND[addonKind];
   const rects = getLowerPocketAuxiliaryAddonSides(side).flatMap((addonSide) => {
     const pocketBox = RECTANGULAR_LOWER_POCKET_BOXES[addonSide];
     const baseRect = transformSourceRect(
-      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_BASE, pocketBox),
+      scaleAuxiliaryAddonRect(geometry.base, pocketBox, geometry.square),
       transform,
     );
     const trimRect = transformSourceRect(
-      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_TRIM, pocketBox),
+      scaleAuxiliaryAddonRect(geometry.trim, pocketBox, geometry.square),
       transform,
     );
 
@@ -5148,6 +5172,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         await getRectangularLowerPocketAuxiliaryAddonSvg(
           scene.lowerPocketAssetPath,
           scene.lowerPocketAuxiliaryAddonSide,
+          scene.lowerPocketAuxiliaryAddonKind,
           scene.baseColorHex,
           auxiliaryPocketTrimColor,
         ),

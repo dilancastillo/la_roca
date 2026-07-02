@@ -1,9 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
-  getLowerPocketAuxiliaryAddonSide,
+  getLowerPocketAuxiliaryAddon,
   getLowerPocketLayout,
   getLowerPocketTypeAttribute,
+  type LowerPocketAuxiliaryAddonKind,
   type LowerPocketAuxiliaryAddonSide,
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
@@ -89,6 +90,7 @@ export type PreviewScene = {
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
+  lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind | undefined;
   lowerPocketAuxiliaryAddonSide?: LowerPocketAuxiliaryAddonSide | undefined;
   auxiliaryPocketImageSrc?: string | undefined;
   chestPocketType?: string | undefined;
@@ -1325,10 +1327,10 @@ function deriveSingleConfiguratorUi(
           selectedLowerPocketModel,
         )
       : undefined;
-  const lowerPocketAuxiliaryAddonSide =
+  const lowerPocketAuxiliaryAddon =
     lowerPocketLayout !== "none" &&
     isRectangularLowerPocketImage(lowerPocketImageSrc)
-      ? getLowerPocketAuxiliaryAddonSide(
+      ? getLowerPocketAuxiliaryAddon(
           selectedAuxiliaryPocketType?.name ?? selectedLowerPocketType?.name,
         )
       : undefined;
@@ -1375,8 +1377,11 @@ function deriveSingleConfiguratorUi(
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,
-      ...(lowerPocketAuxiliaryAddonSide
-        ? { lowerPocketAuxiliaryAddonSide }
+      ...(lowerPocketAuxiliaryAddon
+        ? {
+            lowerPocketAuxiliaryAddonKind: lowerPocketAuxiliaryAddon.kind,
+            lowerPocketAuxiliaryAddonSide: lowerPocketAuxiliaryAddon.side,
+          }
         : {}),
       auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
         ? getImageSource(
