@@ -1163,6 +1163,24 @@ describe("deriveConfiguratorUi", () => {
                   attributeId: 69,
                   attributeName: "Tipo de bolsillos inferiores",
                 },
+                {
+                  id: 5360,
+                  name: "Velcro doble",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5361,
+                  name: "Velcro izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5362,
+                  name: "Velcro derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
               ],
             }
           : attribute,
@@ -1198,6 +1216,21 @@ describe("deriveConfiguratorUi", () => {
       "69": [5359],
       "70": [2578],
     });
+    const withVelcroDouble = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5360],
+      "70": [2578],
+    });
+    const withVelcroLeft = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5361],
+      "70": [2578],
+    });
+    const withVelcroRight = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5362],
+      "70": [2578],
+    });
 
     expect(withDouble.previewScene.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withDouble.previewScene.lowerPocketAuxiliaryAddonSide).toBe("both");
@@ -1221,6 +1254,24 @@ describe("deriveConfiguratorUi", () => {
       "overlaid",
     );
     expect(withOverlaidRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "right",
+    );
+    expect(withVelcroDouble.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "velcro",
+    );
+    expect(withVelcroDouble.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "both",
+    );
+    expect(withVelcroLeft.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "velcro",
+    );
+    expect(withVelcroLeft.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
+      "left",
+    );
+    expect(withVelcroRight.previewScene.lowerPocketAuxiliaryAddonKind).toBe(
+      "velcro",
+    );
+    expect(withVelcroRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
       "right",
     );
   });

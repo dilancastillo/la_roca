@@ -463,6 +463,8 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 742, y: 408 },
 ] as const;
 const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
+const AUXILIARY_ADDON_VELCRO_MARK_PATH =
+  "M86.91,10.07l2.42,2.78c.63.72,1.16,1.39,1.72,2.12h.11c.56-.78,1.12-1.45,1.69-2.14l2.39-2.76h3.34l-5.79,6.27,5.97,6.69h-3.51l-2.49-2.92c-.67-.75-1.23-1.47-1.83-2.25h-.07c-.56.78-1.16,1.47-1.79,2.25l-2.46,2.92h-3.41l6.04-6.61-5.76-6.35h3.44Z";
 const AUXILIARY_ADDON_GEOMETRY_BY_KIND = {
   lizo: {
     square: {
@@ -503,6 +505,21 @@ const AUXILIARY_ADDON_GEOMETRY_BY_KIND = {
       width: 142.76,
       height: 12.15,
     },
+  },
+  velcro: {
+    square: {
+      x: 1.5,
+      y: 31.26,
+      width: 178.94,
+      height: 194.42,
+    },
+    base: {
+      x: 68.51,
+      y: 1.5,
+      width: 44.92,
+      height: 29.44,
+    },
+    markPath: AUXILIARY_ADDON_VELCRO_MARK_PATH,
   },
 } as const;
 const RECTANGULAR_LOWER_POCKET_BOXES = {
@@ -3019,6 +3036,50 @@ function transformSourceRect(rect: SourceRect, transform: AssetToCanvasTransform
   };
 }
 
+function getAuxiliaryAddonPathTransform(
+  sourceSquare: SourceRect,
+  pocketBox: SourceRect,
+  transform: AssetToCanvasTransform,
+) {
+  const pocketScaleX = pocketBox.width / sourceSquare.width;
+  const pocketScaleY = pocketBox.height / sourceSquare.height;
+
+  return {
+    translateX:
+      transform.drawX +
+      (pocketBox.x - transform.sourceX - sourceSquare.x * pocketScaleX) *
+        transform.scaleX,
+    translateY:
+      transform.drawY +
+      (pocketBox.y - transform.sourceY - sourceSquare.y * pocketScaleY) *
+        transform.scaleY,
+    scaleX: pocketScaleX * transform.scaleX,
+    scaleY: pocketScaleY * transform.scaleY,
+  };
+}
+
+function fillAuxiliaryAddonPath(
+  context: CanvasRenderingContext2D,
+  pathData: string,
+  sourceSquare: SourceRect,
+  pocketBox: SourceRect,
+  transform: AssetToCanvasTransform,
+  fillColor: string,
+) {
+  const pathTransform = getAuxiliaryAddonPathTransform(
+    sourceSquare,
+    pocketBox,
+    transform,
+  );
+
+  context.save();
+  context.translate(pathTransform.translateX, pathTransform.translateY);
+  context.scale(pathTransform.scaleX, pathTransform.scaleY);
+  context.fillStyle = fillColor;
+  context.fill(new Path2D(pathData));
+  context.restore();
+}
+
 function strokeAndFillRect(
   context: CanvasRenderingContext2D,
   rect: SourceRect,
@@ -3064,13 +3125,28 @@ async function drawRectangularLowerPocketAuxiliaryAddon(
       scaleAuxiliaryAddonRect(geometry.base, pocketBox, geometry.square),
       transform,
     );
-    const trimRect = transformSourceRect(
-      scaleAuxiliaryAddonRect(geometry.trim, pocketBox, geometry.square),
-      transform,
-    );
 
     strokeAndFillRect(context, baseRect, baseColor, lineWidth);
-    strokeAndFillRect(context, trimRect, trimColor ?? baseColor, lineWidth);
+
+    if ("trim" in geometry) {
+      const trimRect = transformSourceRect(
+        scaleAuxiliaryAddonRect(geometry.trim, pocketBox, geometry.square),
+        transform,
+      );
+
+      strokeAndFillRect(context, trimRect, trimColor ?? baseColor, lineWidth);
+    }
+
+    if ("markPath" in geometry) {
+      fillAuxiliaryAddonPath(
+        context,
+        geometry.markPath,
+        geometry.square,
+        pocketBox,
+        transform,
+        trimColor ?? "#000",
+      );
+    }
   }
 
   context.restore();

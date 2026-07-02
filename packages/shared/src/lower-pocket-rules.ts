@@ -6,7 +6,7 @@ import {
 
 export type LowerPocketLayout = "none" | "single" | "double";
 export type LowerPocketAuxiliaryAddonSide = "left" | "right" | "both";
-export type LowerPocketAuxiliaryAddonKind = "lizo" | "overlaid";
+export type LowerPocketAuxiliaryAddonKind = "lizo" | "overlaid" | "velcro";
 export type LowerPocketAuxiliaryAddon = {
   kind: LowerPocketAuxiliaryAddonKind;
   side: LowerPocketAuxiliaryAddonSide;
@@ -101,6 +101,8 @@ export function getLowerPocketAuxiliaryAddon(
     ? "lizo"
     : name.includes("sobrepuesto")
       ? "overlaid"
+      : name.includes("velcro")
+        ? "velcro"
       : undefined;
 
   if (!kind) {

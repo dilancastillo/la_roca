@@ -2778,6 +2778,24 @@ describe("deriveAutomationRenderScene", () => {
                   attributeId: 69,
                   attributeName: "Tipo de bolsillos inferiores",
                 },
+                {
+                  id: 5360,
+                  name: "Velcro doble",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5361,
+                  name: "Velcro izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5362,
+                  name: "Velcro derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
               ],
             }
           : attribute,
@@ -2813,6 +2831,21 @@ describe("deriveAutomationRenderScene", () => {
       "69": [5359],
       "70": [2578],
     });
+    const withVelcroDouble = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5360],
+      "70": [2578],
+    });
+    const withVelcroLeft = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5361],
+      "70": [2578],
+    });
+    const withVelcroRight = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5362],
+      "70": [2578],
+    });
 
     expect(withDouble.lowerPocketAuxiliaryAddonKind).toBe("lizo");
     expect(withDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
@@ -2826,6 +2859,12 @@ describe("deriveAutomationRenderScene", () => {
     expect(withOverlaidLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
     expect(withOverlaidRight.lowerPocketAuxiliaryAddonKind).toBe("overlaid");
     expect(withOverlaidRight.lowerPocketAuxiliaryAddonSide).toBe("right");
+    expect(withVelcroDouble.lowerPocketAuxiliaryAddonKind).toBe("velcro");
+    expect(withVelcroDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withVelcroLeft.lowerPocketAuxiliaryAddonKind).toBe("velcro");
+    expect(withVelcroLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withVelcroRight.lowerPocketAuxiliaryAddonKind).toBe("velcro");
+    expect(withVelcroRight.lowerPocketAuxiliaryAddonSide).toBe("right");
   });
 
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
