@@ -463,12 +463,33 @@ const LOGO_MARKER_POSITIONS = {
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
 } as const;
-const SLEEVE_TAB_MARKER_RADIUS = 24;
-const SLEEVE_TAB_MARKER_OUTLINE_RADIUS = 30;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
 ] as const;
+const SLEEVE_TAB_SOURCE_BOUNDS = {
+  x: 263.7064,
+  y: 827.9972,
+  width: 29.4465,
+  height: 57.8208,
+} as const;
+const SLEEVE_TAB_POLYGON_POINTS = [
+  [263.7064, 835.5366],
+  [264.3546, 869.3353],
+  [279.5408, 885.818],
+  [293.1529, 869.7983],
+  [293.1529, 827.9972],
+  [263.7064, 833.8698],
+  [263.7064, 835.5366],
+] as const;
+const SLEEVE_TAB_BUTTON = {
+  x: 278.4296,
+  y: 860.7699,
+  radius: 4.8615,
+} as const;
+const SLEEVE_TAB_MARKER_HEIGHT = 52;
+const SLEEVE_TAB_MARKER_STROKE_WIDTH = 4;
+const SLEEVE_TAB_MARKER_STROKE_COLOR = "#000";
 const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
 const AUXILIARY_ADDON_VELCRO_MARK_PATH =
   "M86.91,10.07l2.42,2.78c.63.72,1.16,1.39,1.72,2.12h.11c.56-.78,1.12-1.45,1.69-2.14l2.39-2.76h3.34l-5.79,6.27,5.97,6.69h-3.51l-2.49-2.92c-.67-.75-1.23-1.47-1.83-2.25h-.07c-.56.78-1.16,1.47-1.79,2.25l-2.46,2.92h-3.41l6.04-6.61-5.76-6.35h3.44Z";
@@ -3846,27 +3867,65 @@ function getLogoMarkerSvg(placement: string) {
 
 function getSleeveTabMarkersSvg(trimColor: string) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position) => `
-      ${getSleeveTabMarkerTriangleSvg(position, SLEEVE_TAB_MARKER_OUTLINE_RADIUS, LOGO_MARKER_OUTLINE)}
-      ${getSleeveTabMarkerTriangleSvg(position, SLEEVE_TAB_MARKER_RADIUS, trimColor)}
-    `,
+    (position) => getSleeveTabMarkerSvg(position, trimColor),
   ).join("");
 }
 
-function getSleeveTabMarkerTriangleSvg(
+function getSleeveTabMarkerTransform(
   position: { x: number; y: number },
-  radius: number,
+): {
+  scale: number;
+  x: number;
+  y: number;
+} {
+  const scale = SLEEVE_TAB_MARKER_HEIGHT / SLEEVE_TAB_SOURCE_BOUNDS.height;
+  const width = SLEEVE_TAB_SOURCE_BOUNDS.width * scale;
+
+  return {
+    scale,
+    x: position.x - width / 2 - SLEEVE_TAB_SOURCE_BOUNDS.x * scale,
+    y:
+      position.y -
+      SLEEVE_TAB_MARKER_HEIGHT / 2 -
+      SLEEVE_TAB_SOURCE_BOUNDS.y * scale,
+  };
+}
+
+function transformSleeveTabPoint(
+  point: readonly [number, number],
+  transform: { scale: number; x: number; y: number },
+) {
+  return {
+    x: transform.x + point[0] * transform.scale,
+    y: transform.y + point[1] * transform.scale,
+  };
+}
+
+function getSleeveTabMarkerSvg(
+  position: { x: number; y: number },
   fill: string,
 ) {
-  const halfBase = radius * 0.866;
-  const bottomY = position.y + radius * 0.5;
-  const points = [
-    `${position.x},${position.y - radius}`,
-    `${position.x + halfBase},${bottomY}`,
-    `${position.x - halfBase},${bottomY}`,
-  ].join(" ");
+  const transform = getSleeveTabMarkerTransform(position);
+  const points = SLEEVE_TAB_POLYGON_POINTS.map((point) => {
+    const transformedPoint = transformSleeveTabPoint(point, transform);
 
-  return `<polygon points="${points}" fill="${fill}" />`;
+    return `${formatSvgNumber(transformedPoint.x)},${formatSvgNumber(
+      transformedPoint.y,
+    )}`;
+  }).join(" ");
+  const buttonCenter = transformSleeveTabPoint(
+    [SLEEVE_TAB_BUTTON.x, SLEEVE_TAB_BUTTON.y],
+    transform,
+  );
+
+  return `
+    <polygon points="${points}" fill="${fill}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
+    <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
+      buttonCenter.y,
+    )}" r="${formatSvgNumber(
+      SLEEVE_TAB_BUTTON.radius * transform.scale,
+    )}" fill="${SLEEVE_TAB_MARKER_STROKE_COLOR}" />
+  `;
 }
 
 type AssetToCanvasTransform = {

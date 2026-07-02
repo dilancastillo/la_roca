@@ -7320,6 +7320,60 @@ describe("renderDesignImage", () => {
     expect(rightMarkPinkPixels).toBeGreaterThan(20);
   }, 20000);
 
+  it("dibuja la presilla de manga con el elemento extraido y color de vivo", async () => {
+    const withoutTrim = await readRawPng(await renderDesignImage(baseScene));
+    const withSleeveTabs = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        trimSections: [
+          {
+            valueId: 5149,
+            key: "presillas",
+            label: "Presillas",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const leftSleeveTabRegion = { x: 145, y: 378, width: 55, height: 65 };
+    const rightSleeveTabRegion = { x: 717, y: 378, width: 55, height: 65 };
+    const baseLeftDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      leftSleeveTabRegion,
+    );
+    const baseRightDarkPixels = countDarkPixelsInRegion(
+      withoutTrim.data,
+      withoutTrim.info.width,
+      rightSleeveTabRegion,
+    );
+    const leftSleeveTabPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTabs.data,
+      withSleeveTabs.info.width,
+      leftSleeveTabRegion,
+    );
+    const rightSleeveTabPinkPixels = countPastelPinkPixelsInRegion(
+      withSleeveTabs.data,
+      withSleeveTabs.info.width,
+      rightSleeveTabRegion,
+    );
+    const leftSleeveTabDarkPixels = countDarkPixelsInRegion(
+      withSleeveTabs.data,
+      withSleeveTabs.info.width,
+      leftSleeveTabRegion,
+    );
+    const rightSleeveTabDarkPixels = countDarkPixelsInRegion(
+      withSleeveTabs.data,
+      withSleeveTabs.info.width,
+      rightSleeveTabRegion,
+    );
+
+    expect(leftSleeveTabPinkPixels).toBeGreaterThan(300);
+    expect(rightSleeveTabPinkPixels).toBeGreaterThan(300);
+    expect(leftSleeveTabDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 40);
+    expect(rightSleeveTabDarkPixels).toBeGreaterThan(baseRightDarkPixels + 40);
+  }, 20000);
+
   it("pinta los aros del bolsillo inferior AROS con su vivo especifico", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15.svg";
