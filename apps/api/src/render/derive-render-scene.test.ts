@@ -2733,6 +2733,59 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo lizo", () => {
+    const sessionWithSideTypes: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 69
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 5354,
+                  name: "Lizo doble",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5355,
+                  name: "Lizo izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5356,
+                  name: "Lizo derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const withDouble = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5354],
+      "70": [2578],
+    });
+    const withLeft = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5355],
+      "70": [2578],
+    });
+    const withRight = deriveAutomationRenderScene(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5356],
+      "70": [2578],
+    });
+
+    expect(withDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withRight.lowerPocketAuxiliaryAddonSide).toBe("right");
+  });
+
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

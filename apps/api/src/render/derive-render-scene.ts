@@ -1,7 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
+  getLowerPocketAuxiliaryAddonSide,
   getLowerPocketLayout,
+  getLowerPocketTypeAttribute,
+  type LowerPocketAuxiliaryAddonSide,
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
 import {
@@ -64,6 +67,7 @@ export type AutomationRenderScene = {
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
+  lowerPocketAuxiliaryAddonSide?: LowerPocketAuxiliaryAddonSide;
   auxiliaryPocketAssetPath?: string;
   chestPocketType?: string;
   chestPocketAssetPath?: string;
@@ -120,6 +124,18 @@ function isSleeveModelAttributeName(normalizedName: string) {
     normalizedName.includes("modelo de manga") ||
     normalizedName.includes("modelo manga")
   );
+}
+
+function isAuxiliaryPocketTypeAttributeName(normalizedName: string) {
+  return (
+    normalizedName.includes("tipo") &&
+    normalizedName.includes("bolsillo") &&
+    normalizedName.includes("auxiliar")
+  );
+}
+
+function isRectangularLowerPocketAsset(assetPath: string | undefined) {
+  return assetPath?.endsWith("blouse-model-14.svg") ?? false;
 }
 
 function compactUnique(values: Array<string | undefined>) {
@@ -579,6 +595,11 @@ function deriveSingleAutomationRenderScene(
       name.includes("modelo bolsillo inferior") ||
       (name.includes("bolsillo inferior") && !name.includes("tipo")),
     );
+  const lowerPocketTypeAttribute = getLowerPocketTypeAttribute(session);
+  const auxiliaryPocketTypeAttribute = findAttributeByName(
+    session,
+    isAuxiliaryPocketTypeAttributeName,
+  );
   const auxiliaryPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -641,6 +662,14 @@ function deriveSingleAutomationRenderScene(
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
+    selectedValueIds,
+  );
+  const selectedLowerPocketType = findSelectedValue(
+    lowerPocketTypeAttribute,
+    selectedValueIds,
+  );
+  const selectedAuxiliaryPocketType = findSelectedValue(
+    auxiliaryPocketTypeAttribute,
     selectedValueIds,
   );
   const selectedAuxiliaryPocketModel = findSelectedValue(
@@ -850,6 +879,13 @@ function deriveSingleAutomationRenderScene(
   const lowerPocketAssetPath = selectedLowerPocketModel
     ? getAssetPath(session, lowerPocketModelAttribute!, selectedLowerPocketModel)
     : undefined;
+  const lowerPocketAuxiliaryAddonSide =
+    lowerPocketLayout !== "none" &&
+    isRectangularLowerPocketAsset(lowerPocketAssetPath)
+      ? getLowerPocketAuxiliaryAddonSide(
+          selectedAuxiliaryPocketType?.name ?? selectedLowerPocketType?.name,
+        )
+      : undefined;
   const auxiliaryPocketAssetPath = selectedAuxiliaryPocketModel
     ? getAssetPath(session, auxiliaryPocketModelAttribute!, selectedAuxiliaryPocketModel)
     : undefined;
@@ -887,6 +923,9 @@ function deriveSingleAutomationRenderScene(
       ? { lowerPocketAssetPath }
       : {}),
     lowerPocketLayout,
+    ...(lowerPocketAuxiliaryAddonSide
+      ? { lowerPocketAuxiliaryAddonSide }
+      : {}),
     ...(auxiliaryPocketAssetPath ? { auxiliaryPocketAssetPath } : {}),
     ...(selectedChestPocketType?.name
       ? { chestPocketType: selectedChestPocketType.name }

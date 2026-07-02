@@ -5,6 +5,7 @@ import {
 } from "./visual-assets.js";
 
 export type LowerPocketLayout = "none" | "single" | "double";
+export type LowerPocketAuxiliaryAddonSide = "left" | "right" | "both";
 
 type Attribute = ConfiguratorSession["attributes"][number];
 type AttributeValue = Attribute["values"][number];
@@ -85,6 +86,30 @@ function isNoneLowerPocketType(
   }
 
   return normalize(value.name).includes("sin bolsillo");
+}
+
+export function getLowerPocketAuxiliaryAddonSide(
+  valueName: string | undefined,
+): LowerPocketAuxiliaryAddonSide | undefined {
+  const name = normalize(valueName ?? "");
+
+  if (!name.includes("lizo")) {
+    return undefined;
+  }
+
+  if (name.includes("doble")) {
+    return "both";
+  }
+
+  if (name.includes("izquierd")) {
+    return "left";
+  }
+
+  if (name.includes("derech")) {
+    return "right";
+  }
+
+  return undefined;
 }
 
 function findNoneLowerPocketModelValue(

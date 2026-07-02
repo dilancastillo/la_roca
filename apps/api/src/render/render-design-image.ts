@@ -469,6 +469,29 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
 ] as const;
+const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
+const AUXILIARY_ADDON_SOURCE_SQUARE = {
+  x: 1.5,
+  y: 30.39,
+  width: 178.94,
+  height: 194.42,
+} as const;
+const AUXILIARY_ADDON_SOURCE_BASE = {
+  x: 17.27,
+  y: 2.04,
+  width: 147.4,
+  height: 27.85,
+} as const;
+const AUXILIARY_ADDON_SOURCE_TRIM = {
+  x: 17.27,
+  y: 1.5,
+  width: 147.4,
+  height: 12.15,
+} as const;
+const RECTANGULAR_LOWER_POCKET_BOXES = {
+  left: { x: 353.29, y: 900.63, width: 145.5, height: 165.43 },
+  right: { x: 613.33, y: 900.63, width: 145.5, height: 165.43 },
+} as const;
 const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
   "blouse-model-32-original-sleeves.svg";
 const PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY =
@@ -3876,6 +3899,96 @@ function getOriginalSleeveLineSvg(
   `;
 }
 
+type SourceRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function getLowerPocketAuxiliaryAddonSides(
+  side: NonNullable<AutomationRenderScene["lowerPocketAuxiliaryAddonSide"]>,
+) {
+  return side === "both" ? (["left", "right"] as const) : ([side] as const);
+}
+
+function scaleAuxiliaryAddonRect(
+  sourceRect: SourceRect,
+  pocketBox: SourceRect,
+) {
+  const scaleX = pocketBox.width / AUXILIARY_ADDON_SOURCE_SQUARE.width;
+  const scaleY = pocketBox.height / AUXILIARY_ADDON_SOURCE_SQUARE.height;
+
+  return {
+    x:
+      pocketBox.x +
+      (sourceRect.x - AUXILIARY_ADDON_SOURCE_SQUARE.x) * scaleX,
+    y:
+      pocketBox.y +
+      (sourceRect.y - AUXILIARY_ADDON_SOURCE_SQUARE.y) * scaleY,
+    width: sourceRect.width * scaleX,
+    height: sourceRect.height * scaleY,
+  };
+}
+
+function transformSourceRect(rect: SourceRect, transform: AssetToCanvasTransform) {
+  const x = transform.drawX + (rect.x - transform.sourceX) * transform.scaleX;
+  const y = transform.drawY + (rect.y - transform.sourceY) * transform.scaleY;
+
+  return {
+    x,
+    y,
+    width: rect.width * transform.scaleX,
+    height: rect.height * transform.scaleY,
+  };
+}
+
+function getRectSvg(rect: SourceRect, fillColor: string, lineWidth: number) {
+  return `<rect x="${formatSvgNumber(rect.x)}" y="${formatSvgNumber(
+    rect.y,
+  )}" width="${formatSvgNumber(rect.width)}" height="${formatSvgNumber(
+    rect.height,
+  )}" fill="${fillColor}" stroke="#000" stroke-width="${formatSvgNumber(
+    lineWidth,
+  )}" stroke-miterlimit="10" />`;
+}
+
+async function getRectangularLowerPocketAuxiliaryAddonSvg(
+  lowerPocketAssetPath: string,
+  side: AutomationRenderScene["lowerPocketAuxiliaryAddonSide"],
+  trimColor: string | undefined,
+) {
+  if (
+    !side ||
+    getAssetFileName(lowerPocketAssetPath) !== RECTANGULAR_LOWER_POCKET_FILE_NAME
+  ) {
+    return "";
+  }
+
+  const transform = getAssetToCanvasTransformFromProcessed(
+    await loadProcessedImage(lowerPocketAssetPath),
+  );
+  const lineWidth = Math.max(1.5, 3 * (transform.scaleX + transform.scaleY) / 2);
+  const rects = getLowerPocketAuxiliaryAddonSides(side).flatMap((addonSide) => {
+    const pocketBox = RECTANGULAR_LOWER_POCKET_BOXES[addonSide];
+    const baseRect = transformSourceRect(
+      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_BASE, pocketBox),
+      transform,
+    );
+    const trimRect = transformSourceRect(
+      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_TRIM, pocketBox),
+      transform,
+    );
+
+    return [
+      getRectSvg(baseRect, "#fff", lineWidth),
+      getRectSvg(trimRect, trimColor ?? "#fff", lineWidth),
+    ];
+  });
+
+  return `<g id="rectangular-lower-pocket-auxiliary-addon">${rects.join("")}</g>`;
+}
+
 function isOriginalSleevesDetailAsset(assetPath: string) {
   return getAssetFileName(assetPath) === ORIGINAL_SLEEVES_DETAIL_FILE_NAME;
 }
@@ -5029,6 +5142,14 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           }
         }
       }
+
+      layers.push(
+        await getRectangularLowerPocketAuxiliaryAddonSvg(
+          scene.lowerPocketAssetPath,
+          scene.lowerPocketAuxiliaryAddonSide,
+          auxiliaryPocketTrimColor,
+        ),
+      );
     }
 
     if (scene.auxiliaryPocketAssetPath) {

@@ -1,7 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
+  getLowerPocketAuxiliaryAddonSide,
   getLowerPocketLayout,
+  getLowerPocketTypeAttribute,
+  type LowerPocketAuxiliaryAddonSide,
   type LowerPocketLayout,
 } from "@repo/shared/lower-pocket-rules";
 import {
@@ -86,6 +89,7 @@ export type PreviewScene = {
   neckImageSrc?: string | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
+  lowerPocketAuxiliaryAddonSide?: LowerPocketAuxiliaryAddonSide | undefined;
   auxiliaryPocketImageSrc?: string | undefined;
   chestPocketType?: string | undefined;
   chestPocketImageSrc?: string | undefined;
@@ -286,6 +290,18 @@ function isSleeveModelAttributeName(normalizedName: string) {
     normalizedName.includes("modelo de manga") ||
     normalizedName.includes("modelo manga")
   );
+}
+
+function isAuxiliaryPocketTypeAttributeName(normalizedName: string) {
+  return (
+    normalizedName.includes("tipo") &&
+    normalizedName.includes("bolsillo") &&
+    normalizedName.includes("auxiliar")
+  );
+}
+
+function isRectangularLowerPocketImage(src: string | undefined) {
+  return src?.endsWith("blouse-model-14.svg") ?? false;
 }
 
 function compactUnique(values: Array<string | undefined>) {
@@ -1019,6 +1035,11 @@ function deriveSingleConfiguratorUi(
       name.includes("modelo bolsillo inferior") ||
       (name.includes("bolsillo inferior") && !name.includes("tipo")),
     );
+  const lowerPocketTypeAttribute = getLowerPocketTypeAttribute(session);
+  const auxiliaryPocketTypeAttribute = findAttributeByName(
+    session,
+    isAuxiliaryPocketTypeAttributeName,
+  );
   const auxiliaryPocketModelAttribute =
     session.attributes.find(
       (attribute) =>
@@ -1081,6 +1102,14 @@ function deriveSingleConfiguratorUi(
   const selectedNeck = findSelectedValue(neckAttribute, selectedValueIds);
   const selectedLowerPocketModel = findSelectedValue(
     lowerPocketModelAttribute,
+    selectedValueIds,
+  );
+  const selectedLowerPocketType = findSelectedValue(
+    lowerPocketTypeAttribute,
+    selectedValueIds,
+  );
+  const selectedAuxiliaryPocketType = findSelectedValue(
+    auxiliaryPocketTypeAttribute,
     selectedValueIds,
   );
   const selectedAuxiliaryPocketModel = findSelectedValue(
@@ -1296,6 +1325,13 @@ function deriveSingleConfiguratorUi(
           selectedLowerPocketModel,
         )
       : undefined;
+  const lowerPocketAuxiliaryAddonSide =
+    lowerPocketLayout !== "none" &&
+    isRectangularLowerPocketImage(lowerPocketImageSrc)
+      ? getLowerPocketAuxiliaryAddonSide(
+          selectedAuxiliaryPocketType?.name ?? selectedLowerPocketType?.name,
+        )
+      : undefined;
 
   const summary = visibleAttributes.flatMap((attribute) => {
     const selected = getSelectedOptions(attribute, selectedValueIds);
@@ -1339,6 +1375,9 @@ function deriveSingleConfiguratorUi(
       neckImageSrc,
       lowerPocketImageSrc,
       lowerPocketLayout,
+      ...(lowerPocketAuxiliaryAddonSide
+        ? { lowerPocketAuxiliaryAddonSide }
+        : {}),
       auxiliaryPocketImageSrc: selectedAuxiliaryPocketModel
         ? getImageSource(
             session.graphicManifestKey,

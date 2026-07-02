@@ -462,6 +462,29 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
   { x: 742, y: 408 },
 ] as const;
+const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
+const AUXILIARY_ADDON_SOURCE_SQUARE = {
+  x: 1.5,
+  y: 30.39,
+  width: 178.94,
+  height: 194.42,
+} as const;
+const AUXILIARY_ADDON_SOURCE_BASE = {
+  x: 17.27,
+  y: 2.04,
+  width: 147.4,
+  height: 27.85,
+} as const;
+const AUXILIARY_ADDON_SOURCE_TRIM = {
+  x: 17.27,
+  y: 1.5,
+  width: 147.4,
+  height: 12.15,
+} as const;
+const RECTANGULAR_LOWER_POCKET_BOXES = {
+  left: { x: 353.29, y: 900.63, width: 145.5, height: 165.43 },
+  right: { x: 613.33, y: 900.63, width: 145.5, height: 165.43 },
+} as const;
 const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
   "blouse-model-32-original-sleeves.svg";
 const PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY =
@@ -2931,6 +2954,103 @@ function strokePocketTrimLine(
   context.restore();
 }
 
+type SourceRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function getLowerPocketAuxiliaryAddonSides(
+  side: NonNullable<PreviewScene["lowerPocketAuxiliaryAddonSide"]>,
+) {
+  return side === "both" ? (["left", "right"] as const) : ([side] as const);
+}
+
+function scaleAuxiliaryAddonRect(
+  sourceRect: SourceRect,
+  pocketBox: SourceRect,
+) {
+  const scaleX = pocketBox.width / AUXILIARY_ADDON_SOURCE_SQUARE.width;
+  const scaleY = pocketBox.height / AUXILIARY_ADDON_SOURCE_SQUARE.height;
+
+  return {
+    x:
+      pocketBox.x +
+      (sourceRect.x - AUXILIARY_ADDON_SOURCE_SQUARE.x) * scaleX,
+    y:
+      pocketBox.y +
+      (sourceRect.y - AUXILIARY_ADDON_SOURCE_SQUARE.y) * scaleY,
+    width: sourceRect.width * scaleX,
+    height: sourceRect.height * scaleY,
+  };
+}
+
+function transformSourceRect(rect: SourceRect, transform: AssetToCanvasTransform) {
+  const x = transform.drawX + (rect.x - transform.sourceX) * transform.scaleX;
+  const y = transform.drawY + (rect.y - transform.sourceY) * transform.scaleY;
+
+  return {
+    x,
+    y,
+    width: rect.width * transform.scaleX,
+    height: rect.height * transform.scaleY,
+  };
+}
+
+function strokeAndFillRect(
+  context: CanvasRenderingContext2D,
+  rect: SourceRect,
+  fillColor: string,
+  lineWidth: number,
+) {
+  context.beginPath();
+  context.rect(rect.x, rect.y, rect.width, rect.height);
+  context.fillStyle = fillColor;
+  context.fill();
+  context.strokeStyle = "#000";
+  context.lineWidth = lineWidth;
+  context.stroke();
+}
+
+async function drawRectangularLowerPocketAuxiliaryAddon(
+  context: CanvasRenderingContext2D,
+  lowerPocketSrc: string,
+  side: PreviewScene["lowerPocketAuxiliaryAddonSide"],
+  trimColor: string | undefined,
+) {
+  if (
+    !side ||
+    getFileNameFromSource(lowerPocketSrc) !== RECTANGULAR_LOWER_POCKET_FILE_NAME
+  ) {
+    return;
+  }
+
+  const transform = await getAssetToCanvasTransform(lowerPocketSrc);
+  const lineWidth = Math.max(1.5, 3 * (transform.scaleX + transform.scaleY) / 2);
+
+  context.save();
+  context.lineJoin = "miter";
+  context.lineCap = "butt";
+
+  for (const addonSide of getLowerPocketAuxiliaryAddonSides(side)) {
+    const pocketBox = RECTANGULAR_LOWER_POCKET_BOXES[addonSide];
+    const baseRect = transformSourceRect(
+      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_BASE, pocketBox),
+      transform,
+    );
+    const trimRect = transformSourceRect(
+      scaleAuxiliaryAddonRect(AUXILIARY_ADDON_SOURCE_TRIM, pocketBox),
+      transform,
+    );
+
+    strokeAndFillRect(context, baseRect, "#fff", lineWidth);
+    strokeAndFillRect(context, trimRect, trimColor ?? "#fff", lineWidth);
+  }
+
+  context.restore();
+}
+
 function drawLowerPocketTrimBandLines(
   context: CanvasRenderingContext2D,
   trimCanvas: HTMLCanvasElement,
@@ -4808,6 +4928,12 @@ async function composeSingleDesign(
           complete: lowerPocketCompleteTrimColor,
           auxiliary: auxiliaryPocketTrimColor,
         },
+      );
+      await drawRectangularLowerPocketAuxiliaryAddon(
+        context,
+        scene.lowerPocketImageSrc,
+        scene.lowerPocketAuxiliaryAddonSide,
+        auxiliaryPocketTrimColor,
       );
     }
 

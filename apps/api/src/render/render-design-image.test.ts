@@ -6992,6 +6992,96 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
+  it("agrega el elemento auxiliar sobre el bolsillo RECTANGULAR por lado y pinta su franja", async () => {
+    const lowerPocketAssetPath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-14.svg";
+    const leftTabRegion = { x: 295, y: 735, width: 120, height: 40 };
+    const rightTabRegion = { x: 515, y: 735, width: 120, height: 40 };
+    const withoutAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+      }),
+    );
+    const withLeftAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonSide: "left",
+      }),
+    );
+    const withRightAddon = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonSide: "right",
+      }),
+    );
+    const withBothAddonTrim = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        lowerPocketAssetPath,
+        lowerPocketAuxiliaryAddonSide: "both",
+        trimSections: [
+          {
+            valueId: 420,
+            role: "auxiliaryPocket",
+            key: "bolsillo-auxiliar",
+            label: "Bolsillo auxiliar",
+            colorHex: "#f4c7cc",
+          },
+        ],
+      }),
+    );
+    const baseLeftDarkPixels = countDarkPixelsInRegion(
+      withoutAddon.data,
+      withoutAddon.info.width,
+      leftTabRegion,
+    );
+    const baseRightDarkPixels = countDarkPixelsInRegion(
+      withoutAddon.data,
+      withoutAddon.info.width,
+      rightTabRegion,
+    );
+    const leftAddonDarkPixels = countDarkPixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      leftTabRegion,
+    );
+    const leftAddonRightDarkPixels = countDarkPixelsInRegion(
+      withLeftAddon.data,
+      withLeftAddon.info.width,
+      rightTabRegion,
+    );
+    const rightAddonDarkPixels = countDarkPixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      rightTabRegion,
+    );
+    const rightAddonLeftDarkPixels = countDarkPixelsInRegion(
+      withRightAddon.data,
+      withRightAddon.info.width,
+      leftTabRegion,
+    );
+    const leftTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withBothAddonTrim.data,
+      withBothAddonTrim.info.width,
+      leftTabRegion,
+    );
+    const rightTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withBothAddonTrim.data,
+      withBothAddonTrim.info.width,
+      rightTabRegion,
+    );
+
+    expect(leftAddonDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 100);
+    expect(leftAddonRightDarkPixels).toBeLessThan(baseRightDarkPixels + 20);
+    expect(rightAddonDarkPixels).toBeGreaterThan(baseRightDarkPixels + 100);
+    expect(rightAddonLeftDarkPixels).toBeLessThan(baseLeftDarkPixels + 20);
+    expect(leftTrimPinkPixels).toBeGreaterThan(150);
+    expect(rightTrimPinkPixels).toBeGreaterThan(150);
+  }, 20000);
+
   it("pinta los aros del bolsillo inferior AROS con su vivo especifico", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15.svg";

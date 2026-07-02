@@ -1124,6 +1124,53 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("marca el elemento auxiliar del bolsillo RECTANGULAR segun el tipo lizo", () => {
+    const sessionWithSideTypes: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 69
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 5355,
+                  name: "Lizo izquierdo",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+                {
+                  id: 5356,
+                  name: "Lizo derecho",
+                  attributeId: 69,
+                  attributeName: "Tipo de bolsillos inferiores",
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const withDouble = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5354],
+      "70": [2578],
+    });
+    const withLeft = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5355],
+      "70": [2578],
+    });
+    const withRight = deriveConfiguratorUi(sessionWithSideTypes, {
+      ...sessionWithSideTypes.selectedValueIds,
+      "69": [5356],
+      "70": [2578],
+    });
+
+    expect(withDouble.previewScene.lowerPocketAuxiliaryAddonSide).toBe("both");
+    expect(withLeft.previewScene.lowerPocketAuxiliaryAddonSide).toBe("left");
+    expect(withRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe("right");
+  });
+
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {
     const sessionWithCurrentLowerPocketIds: ConfiguratorSession = {
       ...session,
