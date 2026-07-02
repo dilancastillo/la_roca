@@ -342,7 +342,7 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-46-costura-triangulo-lower-pocket-trim.svg",
   },
   "blouse-model-47-ribete-horizontal-lower-pocket.svg": {
-    top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-47-ribete-horizontal-lower-pocket-trim.svg",
+    top: "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-47-ribete-horizontal-lower-pocket-fill.svg",
     bottom:
       "assets/catalog/blusa-antifluido-t180/trim-overlays/blouse-model-47-ribete-horizontal-lower-pocket-trim.svg",
   },

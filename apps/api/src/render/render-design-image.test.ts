@@ -7792,7 +7792,7 @@ describe("renderDesignImage", () => {
     );
   }, 20000);
 
-  it("renderiza RIBETE HORIZONTAL con el mismo vivo lineal en parte superior o baja", async () => {
+  it("rellena RIBETE HORIZONTAL con Bolsillos inferiores parte superior", async () => {
     const lowerPocketAssetPath =
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg";
     const withoutTrim = await readRawPng(
@@ -7841,6 +7841,16 @@ describe("renderDesignImage", () => {
       withUpperTrim.info.width,
       { x: 480, y: 760, width: 210, height: 80 },
     );
+    const lowerLeftPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 250, y: 760, width: 200, height: 80 },
+    );
+    const lowerRightPocketTrimPinkPixels = countPastelPinkPixelsInRegion(
+      withLowerTrim.data,
+      withLowerTrim.info.width,
+      { x: 480, y: 760, width: 210, height: 80 },
+    );
 
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
@@ -7849,9 +7859,13 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(
       countDifferentPixels(withUpperTrim.data, withLowerTrim.data),
-    ).toBe(0);
-    expect(leftPocketTrimPinkPixels).toBeGreaterThan(100);
-    expect(rightPocketTrimPinkPixels).toBeGreaterThan(100);
+    ).toBeGreaterThan(100);
+    expect(leftPocketTrimPinkPixels).toBeGreaterThan(
+      lowerLeftPocketTrimPinkPixels + 200,
+    );
+    expect(rightPocketTrimPinkPixels).toBeGreaterThan(
+      lowerRightPocketTrimPinkPixels + 200,
+    );
   }, 20000);
 
   it("renderiza LOS ANDES como bolsillo inferior sin vivos", async () => {
