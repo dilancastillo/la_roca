@@ -976,6 +976,78 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa Tipo bota Abertura frontal como overlay independiente del pantalon", () => {
+    const sessionWithFrontOpeningBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999994,
+              name: "Abertura frontal",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999994],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithFrontOpeningBoot,
+      sessionWithFrontOpeningBoot.selectedValueIds,
+    );
+
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-frontal.svg",
+    );
+  });
+
+  it("usa Tipo bota Abertura lateral como overlay independiente del pantalon", () => {
+    const sessionWithSideOpeningBoot: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 84,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 999993,
+              name: "Abertura lateral",
+              attributeId: 84,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "84": [999993],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      sessionWithSideOpeningBoot,
+      sessionWithSideOpeningBoot.selectedValueIds,
+    );
+
+    expect(scene.bootAssetPath).toBe(
+      "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-lateral.svg",
+    );
+  });
+
   it("usa Tipo bota Campana como bota limpia independiente del pantalon", () => {
     const sessionWithBellBoot: ConfiguratorSession = {
       ...pantalonSession,

@@ -64,6 +64,10 @@ const PANTALON_RESORTE_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-resorte.svg`;
 const PANTALON_CON_ABERTURA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-con-abertura.svg`;
+const PANTALON_ABERTURA_FRONTAL_BOOT_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-abertura-frontal.svg`;
+const PANTALON_ABERTURA_LATERAL_BOOT_ASSET =
+  `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-abertura-lateral.svg`;
 const PANTALON_CAMPANA_BOOT_ASSET =
   `${PANTALON_DETAIL_OVERLAY_BASE}/pants-boot-campana.svg`;
 const PANTALON_CREMALLERA_BOOT_ASSET =
@@ -520,6 +524,8 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
     pespunte: PANTALON_PESPUNTE_STITCHING_ASSET,
   },
   bootModelsByValueName: {
+    "abertura frontal": PANTALON_ABERTURA_FRONTAL_BOOT_ASSET,
+    "abertura lateral": PANTALON_ABERTURA_LATERAL_BOOT_ASSET,
     campana: PANTALON_CAMPANA_BOOT_ASSET,
     "con abertura": PANTALON_CON_ABERTURA_BOOT_ASSET,
     cremallera: PANTALON_CREMALLERA_BOOT_ASSET,

@@ -955,6 +955,30 @@ describe("getProductAssetCatalog", () => {
       getBootImageSourceForValue(
         "pantalon",
         84,
+        999994,
+        "Tipo bota",
+        "Abertura frontal",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-abertura-frontal.svg",
+    );
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
+        999993,
+        "Tipo bota",
+        "Abertura lateral",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-abertura-lateral.svg",
+    );
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        84,
         999996,
         "Tipo bota",
         "Campana",
