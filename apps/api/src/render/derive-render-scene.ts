@@ -42,6 +42,7 @@ export type AutomationRenderScene = {
     | "snap"
     | "overlaid"
     | "button"
+    | "doubleButton"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -59,6 +60,7 @@ export type AutomationRenderScene = {
     | "snap"
     | "overlaid"
     | "button"
+    | "doubleButton"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -492,6 +494,16 @@ function isButtonKneePatch(valueName: string | undefined) {
   return normalized.includes("boton");
 }
 
+function isDoubleButtonKneePatch(valueName: string | undefined) {
+  if (!valueName) {
+    return false;
+  }
+
+  const normalized = normalize(valueName);
+
+  return normalized.includes("doble") && normalized.includes("boton");
+}
+
 function isSnapKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("broche") : false;
 }
@@ -748,6 +760,7 @@ function deriveSingleAutomationRenderScene(
     rightKneePatchModelValue &&
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
+        isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
@@ -762,6 +775,7 @@ function deriveSingleAutomationRenderScene(
     leftKneePatchModelValue &&
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       (option) =>
+        isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
@@ -777,6 +791,8 @@ function deriveSingleAutomationRenderScene(
       ? "snap"
       : isOverlaidKneePatch(rightKneePatchType.name)
         ? "overlaid"
+      : isDoubleButtonKneePatch(rightKneePatchType.name)
+        ? "doubleButton"
       : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(rightKneePatchType.name)
@@ -796,6 +812,8 @@ function deriveSingleAutomationRenderScene(
       ? "snap"
       : isOverlaidKneePatch(leftKneePatchType.name)
         ? "overlaid"
+      : isDoubleButtonKneePatch(leftKneePatchType.name)
+        ? "doubleButton"
       : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
       : isBuckleKneePatch(leftKneePatchType.name)

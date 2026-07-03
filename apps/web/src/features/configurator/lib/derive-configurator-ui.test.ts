@@ -2695,6 +2695,91 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("activa doble boton en bolsillos de parche de rodilla camuflados", () => {
+    const sessionWithDoubleButtonKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 19040,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19041,
+              name: "Camuflado",
+              attributeId: 19040,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 19042,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19043,
+              name: "Doble botón",
+              attributeId: 19042,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 19044,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19045,
+              name: "Camuflado",
+              attributeId: 19044,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 19046,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19047,
+              name: "Doble botón",
+              attributeId: 19046,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "19040": [19041],
+        "19042": [19043],
+        "19044": [19045],
+        "19046": [19047],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithDoubleButtonKneePatches,
+      sessionWithDoubleButtonKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("doubleButton");
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBe("doubleButton");
+  });
+
   it("activa bolsillos camuflados de rodilla con hebilla", () => {
     const sessionWithCamouflageBuckleKneePatches: ConfiguratorSession = {
       ...pantalonSession,

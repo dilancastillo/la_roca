@@ -2953,6 +2953,46 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
   }, 20000);
 
+  it("superpone doble boton camuflado de rodilla y pinta los puntos por lado", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "camouflage",
+      pantsKneePatchRightType: "doubleButton",
+      pantsKneePatchLeftModel: "camouflage",
+      pantsKneePatchLeftType: "doubleButton",
+      trimSections: [
+        {
+          valueId: 9081,
+          key: "boton-rodilla-derecha",
+          label: "Boton rodilla derecha",
+          colorHex: "#a000b0",
+        },
+        {
+          valueId: 9082,
+          key: "boton-rodilla-izquierda",
+          label: "Boton rodilla izquierda",
+          colorHex: "#a000b0",
+        },
+      ],
+    };
+    const rendered = await readRawPng(await renderDesignImage(pantsScene));
+    const buttonRegions = [
+      { x: 230, y: 520, width: 30, height: 28 },
+      { x: 308, y: 520, width: 30, height: 28 },
+      { x: 565, y: 520, width: 30, height: 28 },
+      { x: 642, y: 520, width: 30, height: 28 },
+    ];
+
+    for (const region of buttonRegions) {
+      expect(
+        countPurplePixelsInRegion(rendered.data, rendered.info.width, region),
+      ).toBeGreaterThan(15);
+    }
+  }, 20000);
+
   it("superpone bolsillos camuflados con hebilla sin color ni vivo", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
