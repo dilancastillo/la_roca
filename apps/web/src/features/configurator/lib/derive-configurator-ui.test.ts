@@ -4005,6 +4005,10 @@ describe("deriveConfiguratorUi", () => {
   it("oculta los atributos de color y fuente de texto cuando el texto esta en No", () => {
     const textDependencies: Array<readonly [string, string]> = [
       [
+        "¿Texto en pecho derecho?",
+        "Color y fuente de Texto en pecho derecho",
+      ],
+      [
         "Texto en pecho encima del bolsillo?",
         "Color y fuente de texto en pecho encima del bolsillo",
       ],
@@ -4348,5 +4352,101 @@ describe("deriveConfiguratorUi", () => {
 
       expect(result[String(baseId + 3)]).toEqual([expectedValueId]);
     }
+  });
+
+  it("muestra Color y fuente de Texto en pecho derecho solo con texto en Si y selecciona Color y fuente", () => {
+    const toggleAttributeId = 14000;
+    const styleAttributeId = 14003;
+    const colorAndFontValueId = 14004;
+    const sessionWithRightChestText = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: toggleAttributeId,
+          name: "¿Texto en pecho derecho?",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: 14001,
+              name: "No",
+              attributeId: toggleAttributeId,
+              attributeName: "¿Texto en pecho derecho?",
+            },
+            {
+              id: 14002,
+              name: "Si",
+              attributeId: toggleAttributeId,
+              attributeName: "¿Texto en pecho derecho?",
+            },
+          ],
+        },
+        {
+          id: styleAttributeId,
+          name: "Color y fuente de Texto en pecho derecho",
+          displayType: "radio" as const,
+          selectionMode: "single" as const,
+          variantMode: "no_variant" as const,
+          values: [
+            {
+              id: colorAndFontValueId,
+              name: "Color y fuente",
+              attributeId: styleAttributeId,
+              attributeName: "Color y fuente de Texto en pecho derecho",
+            },
+            {
+              id: 14005,
+              name: "Otra configuracion",
+              attributeId: styleAttributeId,
+              attributeName: "Color y fuente de Texto en pecho derecho",
+            },
+          ],
+        },
+      ],
+    };
+    const withoutAnswerUi = deriveConfiguratorUi(sessionWithRightChestText, {
+      ...session.selectedValueIds,
+    });
+    const withNoUi = deriveConfiguratorUi(sessionWithRightChestText, {
+      ...session.selectedValueIds,
+      [String(toggleAttributeId)]: [14001],
+      [String(styleAttributeId)]: [colorAndFontValueId],
+    });
+    const withYesSelection = applyDefaultTextStyleSelections(
+      sessionWithRightChestText,
+      {
+        ...session.selectedValueIds,
+        [String(toggleAttributeId)]: [14002],
+      },
+    );
+    const withYesUi = deriveConfiguratorUi(
+      sessionWithRightChestText,
+      withYesSelection,
+    );
+
+    expect(withoutAnswerUi.groups.map((group) => group.label)).not.toContain(
+      "Color y fuente de Texto en pecho derecho",
+    );
+    expect(withNoUi.groups.map((group) => group.label)).not.toContain(
+      "Color y fuente de Texto en pecho derecho",
+    );
+    expect(withYesUi.groups.map((group) => group.label)).toContain(
+      "Color y fuente de Texto en pecho derecho",
+    );
+    expect(withYesSelection[String(styleAttributeId)]).toEqual([
+      colorAndFontValueId,
+    ]);
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithRightChestText,
+        {
+          ...session.selectedValueIds,
+          [String(toggleAttributeId)]: [14001],
+          [String(styleAttributeId)]: [colorAndFontValueId],
+        },
+      )[String(styleAttributeId)],
+    ).toEqual([]);
   });
 });

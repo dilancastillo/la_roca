@@ -650,9 +650,15 @@ const BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
 type TextStyleAttributeDependency = {
   toggleTerms: string[];
   styleTerms: string[];
+  hideUnlessEnabled?: boolean;
 };
 
 const textStyleAttributeDependencies: TextStyleAttributeDependency[] = [
+  {
+    toggleTerms: ["texto", "pecho", "derecho"],
+    styleTerms: ["color", "fuente", "texto", "pecho", "derecho"],
+    hideUnlessEnabled: true,
+  },
   {
     toggleTerms: ["texto", "pecho", "encima", "bolsillo"],
     styleTerms: ["color", "fuente", "texto", "pecho", "encima", "bolsillo"],
@@ -791,12 +797,18 @@ export function getHiddenTextStyleAttributeIds(
       continue;
     }
 
-    const isTextDisabled = getSelectedOptions(
+    const selectedOptions = getSelectedOptions(
       toggleAttribute,
       selectedValueIds,
-    ).some((value) => isNoTextToggleValue(value.name));
+    );
+    const isTextEnabled = selectedOptions.some((value) =>
+      isYesTextToggleValue(value.name),
+    );
+    const isTextDisabled = selectedOptions.some((value) =>
+      isNoTextToggleValue(value.name),
+    );
 
-    if (!isTextDisabled) {
+    if (dependency.hideUnlessEnabled ? isTextEnabled : !isTextDisabled) {
       continue;
     }
 
