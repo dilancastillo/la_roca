@@ -1594,7 +1594,7 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withBoot.data)).toBe(0);
   }, 20000);
 
-  it("superpone las botas Abertura frontal y lateral sin traer color fijo", async () => {
+  it("superpone Abertura frontal en ambas botas y Abertura lateral solo en la bota derecha", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -1603,50 +1603,77 @@ describe("renderDesignImage", () => {
       trimSections: [],
     };
     const withoutBoot = await readRawPng(await renderDesignImage(pantsScene));
+    const withFrontBoot = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        bootAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-frontal.svg",
+      }),
+    );
+    const withSideBoot = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        bootAssetPath:
+          "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-lateral.svg",
+      }),
+    );
 
-    for (const bootAssetPath of [
-      "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-frontal.svg",
-      "assets/catalog/pantalon/detail-overlays/pants-boot-abertura-lateral.svg",
-    ]) {
-      const withBoot = await readRawPng(
-        await renderDesignImage({
-          ...pantsScene,
-          bootAssetPath,
-        }),
-      );
-      const baseOpeningInk =
-        countDarkPixelsInRegion(withoutBoot.data, withoutBoot.info.width, {
-          x: 250,
-          y: 870,
-          width: 120,
-          height: 200,
-        }) +
-        countDarkPixelsInRegion(withoutBoot.data, withoutBoot.info.width, {
-          x: 535,
-          y: 870,
-          width: 120,
-          height: 200,
-        });
-      const openBootInk =
-        countDarkPixelsInRegion(withBoot.data, withBoot.info.width, {
-          x: 250,
-          y: 870,
-          width: 120,
-          height: 200,
-        }) +
-        countDarkPixelsInRegion(withBoot.data, withBoot.info.width, {
-          x: 535,
-          y: 870,
-          width: 120,
-          height: 200,
-        });
+    const leftOpeningRegion = { x: 250, y: 870, width: 120, height: 200 };
+    const rightOpeningRegion = { x: 535, y: 870, width: 120, height: 200 };
+    const rightLateralRegion = { x: 590, y: 840, width: 95, height: 280 };
 
-      expect(
-        countDifferentPixels(withoutBoot.data, withBoot.data),
-      ).toBeGreaterThan(50);
-      expect(openBootInk).toBeGreaterThan(baseOpeningInk + 50);
-      expect(countNeonGreenPixels(withBoot.data)).toBe(0);
-    }
+    const baseLeftOpeningInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      leftOpeningRegion,
+    );
+    const baseRightOpeningInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      rightOpeningRegion,
+    );
+    const baseRightLateralInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      rightLateralRegion,
+    );
+
+    expect(
+      countDarkPixelsInRegion(
+        withFrontBoot.data,
+        withFrontBoot.info.width,
+        leftOpeningRegion,
+      ),
+    ).toBeGreaterThan(baseLeftOpeningInk + 50);
+    expect(
+      countDarkPixelsInRegion(
+        withFrontBoot.data,
+        withFrontBoot.info.width,
+        rightOpeningRegion,
+      ),
+    ).toBeGreaterThan(baseRightOpeningInk + 50);
+    expect(
+      countDarkPixelsInRegion(
+        withSideBoot.data,
+        withSideBoot.info.width,
+        leftOpeningRegion,
+      ),
+    ).toBeLessThan(baseLeftOpeningInk + 25);
+    expect(
+      countDarkPixelsInRegion(
+        withSideBoot.data,
+        withSideBoot.info.width,
+        rightLateralRegion,
+      ),
+    ).toBeGreaterThan(baseRightLateralInk + 50);
+    expect(
+      countDifferentPixels(withoutBoot.data, withFrontBoot.data),
+    ).toBeGreaterThan(100);
+    expect(
+      countDifferentPixels(withoutBoot.data, withSideBoot.data),
+    ).toBeGreaterThan(50);
+    expect(countNeonGreenPixels(withFrontBoot.data)).toBe(0);
+    expect(countNeonGreenPixels(withSideBoot.data)).toBe(0);
   }, 20000);
 
   it("mantiene la bota Campana limpia sin agregar trazos", async () => {
