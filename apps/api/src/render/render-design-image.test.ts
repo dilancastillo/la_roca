@@ -1594,7 +1594,7 @@ describe("renderDesignImage", () => {
     expect(countNeonGreenPixels(withBoot.data)).toBe(0);
   }, 20000);
 
-  it("superpone Abertura frontal en ambas botas y Abertura lateral solo en la bota derecha", async () => {
+  it("superpone Abertura frontal con dos trazos por bota y Abertura lateral solo en la bota derecha", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -1620,6 +1620,8 @@ describe("renderDesignImage", () => {
 
     const leftOpeningRegion = { x: 250, y: 870, width: 120, height: 200 };
     const rightOpeningRegion = { x: 535, y: 870, width: 120, height: 200 };
+    const leftOuterOpeningRegion = { x: 250, y: 940, width: 60, height: 175 };
+    const rightOuterOpeningRegion = { x: 575, y: 935, width: 65, height: 180 };
     const rightLateralRegion = { x: 590, y: 840, width: 95, height: 280 };
 
     const baseLeftOpeningInk = countDarkPixelsInRegion(
@@ -1631,6 +1633,16 @@ describe("renderDesignImage", () => {
       withoutBoot.data,
       withoutBoot.info.width,
       rightOpeningRegion,
+    );
+    const baseLeftOuterOpeningInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      leftOuterOpeningRegion,
+    );
+    const baseRightOuterOpeningInk = countDarkPixelsInRegion(
+      withoutBoot.data,
+      withoutBoot.info.width,
+      rightOuterOpeningRegion,
     );
     const baseRightLateralInk = countDarkPixelsInRegion(
       withoutBoot.data,
@@ -1652,6 +1664,20 @@ describe("renderDesignImage", () => {
         rightOpeningRegion,
       ),
     ).toBeGreaterThan(baseRightOpeningInk + 50);
+    expect(
+      countDarkPixelsInRegion(
+        withFrontBoot.data,
+        withFrontBoot.info.width,
+        leftOuterOpeningRegion,
+      ),
+    ).toBeGreaterThan(baseLeftOuterOpeningInk + 20);
+    expect(
+      countDarkPixelsInRegion(
+        withFrontBoot.data,
+        withFrontBoot.info.width,
+        rightOuterOpeningRegion,
+      ),
+    ).toBeGreaterThan(baseRightOuterOpeningInk + 20);
     expect(
       countDarkPixelsInRegion(
         withSideBoot.data,
