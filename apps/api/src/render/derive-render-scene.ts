@@ -43,6 +43,7 @@ export type AutomationRenderScene = {
     | "overlaid"
     | "button"
     | "doubleButton"
+    | "velcro"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -61,6 +62,7 @@ export type AutomationRenderScene = {
     | "overlaid"
     | "button"
     | "doubleButton"
+    | "velcro"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -504,6 +506,10 @@ function isDoubleButtonKneePatch(valueName: string | undefined) {
   return normalized.includes("doble") && normalized.includes("boton");
 }
 
+function isVelcroKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("velcro") : false;
+}
+
 function isSnapKneePatch(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("broche") : false;
 }
@@ -762,6 +768,7 @@ function deriveSingleAutomationRenderScene(
       (option) =>
         isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
+        isVelcroKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
@@ -777,6 +784,7 @@ function deriveSingleAutomationRenderScene(
       (option) =>
         isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
+        isVelcroKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
@@ -795,6 +803,8 @@ function deriveSingleAutomationRenderScene(
         ? "doubleButton"
       : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
+      : isVelcroKneePatch(rightKneePatchType.name)
+        ? "velcro"
       : isBuckleKneePatch(rightKneePatchType.name)
         ? "buckle"
       : isPenSeamKneePatch(rightKneePatchType.name)
@@ -816,6 +826,8 @@ function deriveSingleAutomationRenderScene(
         ? "doubleButton"
       : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
+      : isVelcroKneePatch(leftKneePatchType.name)
+        ? "velcro"
       : isBuckleKneePatch(leftKneePatchType.name)
         ? "buckle"
       : isPenSeamKneePatch(leftKneePatchType.name)

@@ -4078,7 +4078,7 @@ async function drawPantsKneePatchSideFromAsset(
     }
 
     if (
-      (type === "button" || type === "doubleButton" || type === "snap") &&
+      (type === "button" || type === "doubleButton" || type === "velcro") &&
       trimColor
     ) {
       const fillCanvas = await createRasterCanvas(
@@ -4110,7 +4110,7 @@ async function drawPantsKneePatchSideFromAsset(
       );
     }
 
-    if (type === "snap") {
+    if (type === "velcro") {
       const snapCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_SRC_BY_SIDE[side],
         sourceSrc,

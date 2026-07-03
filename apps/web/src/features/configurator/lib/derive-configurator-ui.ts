@@ -62,6 +62,7 @@ export type PreviewScene = {
     | "overlaid"
     | "button"
     | "doubleButton"
+    | "velcro"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -82,6 +83,7 @@ export type PreviewScene = {
     | "overlaid"
     | "button"
     | "doubleButton"
+    | "velcro"
     | "buckle"
     | "penSeam"
     | "plain"
@@ -618,6 +620,10 @@ function isDoubleButtonKneePatch(valueName: string | undefined) {
   const normalized = normalize(valueName);
 
   return normalized.includes("doble") && normalized.includes("boton");
+}
+
+function isVelcroKneePatch(valueName: string | undefined) {
+  return valueName ? normalize(valueName).includes("velcro") : false;
 }
 
 function isSnapKneePatch(valueName: string | undefined) {
@@ -1324,6 +1330,7 @@ function deriveSingleConfiguratorUi(
       (option) =>
         isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
+        isVelcroKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
@@ -1339,6 +1346,7 @@ function deriveSingleConfiguratorUi(
       (option) =>
         isDoubleButtonKneePatch(option.name) ||
         isButtonKneePatch(option.name) ||
+        isVelcroKneePatch(option.name) ||
         isSnapKneePatch(option.name) ||
         isOverlaidKneePatch(option.name) ||
         isBuckleKneePatch(option.name) ||
@@ -1357,6 +1365,8 @@ function deriveSingleConfiguratorUi(
         ? "doubleButton"
       : isButtonKneePatch(rightKneePatchType.name)
       ? "button"
+      : isVelcroKneePatch(rightKneePatchType.name)
+        ? "velcro"
       : isBuckleKneePatch(rightKneePatchType.name)
         ? "buckle"
       : isPenSeamKneePatch(rightKneePatchType.name)
@@ -1378,6 +1388,8 @@ function deriveSingleConfiguratorUi(
         ? "doubleButton"
       : isButtonKneePatch(leftKneePatchType.name)
       ? "button"
+      : isVelcroKneePatch(leftKneePatchType.name)
+        ? "velcro"
       : isBuckleKneePatch(leftKneePatchType.name)
         ? "buckle"
       : isPenSeamKneePatch(leftKneePatchType.name)

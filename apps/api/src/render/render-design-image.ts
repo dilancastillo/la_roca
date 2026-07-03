@@ -2720,7 +2720,7 @@ async function createPantsKneePatchSideOverlayBuffers(
     }
 
     if (
-      (type === "button" || type === "doubleButton" || type === "snap") &&
+      (type === "button" || type === "doubleButton" || type === "velcro") &&
       trimColor
     ) {
       const fillOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
@@ -2759,7 +2759,7 @@ async function createPantsKneePatchSideOverlayBuffers(
       }
     }
 
-    if (type === "snap") {
+    if (type === "velcro") {
       const snapOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE[side],
         placementAssetPath,

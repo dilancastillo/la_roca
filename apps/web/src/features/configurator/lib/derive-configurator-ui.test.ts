@@ -2695,6 +2695,91 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("activa velcro en bolsillos de parche de rodilla camuflados", () => {
+    const sessionWithVelcroKneePatches: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 19140,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19141,
+              name: "Camuflado",
+              attributeId: 19140,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 19142,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19143,
+              name: "Velcro",
+              attributeId: 19142,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 19144,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19145,
+              name: "Camuflado",
+              attributeId: 19144,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 19146,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 19147,
+              name: "Velcro",
+              attributeId: 19146,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...pantalonSession.selectedValueIds,
+        "19140": [19141],
+        "19142": [19143],
+        "19144": [19145],
+        "19146": [19147],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      sessionWithVelcroKneePatches,
+      sessionWithVelcroKneePatches.selectedValueIds,
+    );
+
+    expect(ui.previewScene.pantsKneePatchRightModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchRightType).toBe("velcro");
+    expect(ui.previewScene.pantsKneePatchLeftModel).toBe("camouflage");
+    expect(ui.previewScene.pantsKneePatchLeftType).toBe("velcro");
+  });
+
   it("activa doble boton en bolsillos de parche de rodilla camuflados", () => {
     const sessionWithDoubleButtonKneePatches: ConfiguratorSession = {
       ...pantalonSession,
