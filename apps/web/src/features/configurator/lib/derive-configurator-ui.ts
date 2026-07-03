@@ -713,6 +713,116 @@ function findTextStyleAttributes(
   );
 }
 
+function isBootTypeAttributeName(normalizedName: string) {
+  return (
+    normalizedName === "tipo bota" ||
+    normalizedName === "tipo de bota" ||
+    normalizedName === "modelo bota" ||
+    normalizedName === "modelo de bota"
+  );
+}
+
+function isBootMeasurementAttributeName(normalizedName: string) {
+  return (
+    normalizedName.includes("bota") &&
+    (normalizedName.includes("largo") || normalizedName.includes("ancho"))
+  );
+}
+
+function isOriginalBootValueName(valueName: string) {
+  return normalize(valueName) === "original";
+}
+
+function getDefaultBootMeasurementValue(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  return (
+    attribute.values.find((value) => value.allowsCustomValue) ??
+    attribute.values[0]
+  );
+}
+
+export function applyBootMeasurementSelections(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const bootTypeAttribute = findAttributeByName(session, isBootTypeAttributeName);
+
+  if (!bootTypeAttribute) {
+    return selectedValueIds;
+  }
+
+  const selectedBootType = findSelectedValue(
+    bootTypeAttribute,
+    selectedValueIds,
+  );
+
+  if (!selectedBootType) {
+    return selectedValueIds;
+  }
+
+  const measurementAttributes = session.attributes.filter(
+    (attribute) =>
+      attribute.id !== bootTypeAttribute.id &&
+      isBootMeasurementAttributeName(normalize(attribute.name)),
+  );
+
+  if (measurementAttributes.length === 0) {
+    return selectedValueIds;
+  }
+
+  let nextSelectedValueIds = selectedValueIds;
+  let hasChanges = false;
+
+  const ensureWritableSelections = () => {
+    if (hasChanges) {
+      return;
+    }
+
+    nextSelectedValueIds = Object.fromEntries(
+      Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
+        attributeId,
+        [...valueIds],
+      ]),
+    );
+    hasChanges = true;
+  };
+
+  if (isOriginalBootValueName(selectedBootType.name)) {
+    for (const attribute of measurementAttributes) {
+      const key = String(attribute.id);
+
+      if ((nextSelectedValueIds[key] ?? []).length === 0) {
+        continue;
+      }
+
+      ensureWritableSelections();
+      nextSelectedValueIds[key] = [];
+    }
+
+    return nextSelectedValueIds;
+  }
+
+  for (const attribute of measurementAttributes) {
+    const key = String(attribute.id);
+
+    if ((nextSelectedValueIds[key] ?? []).length > 0) {
+      continue;
+    }
+
+    const defaultValue = getDefaultBootMeasurementValue(attribute);
+
+    if (!defaultValue) {
+      continue;
+    }
+
+    ensureWritableSelections();
+    nextSelectedValueIds[key] = [defaultValue.id];
+  }
+
+  return nextSelectedValueIds;
+}
+
 export function applyDefaultTextStyleSelections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,

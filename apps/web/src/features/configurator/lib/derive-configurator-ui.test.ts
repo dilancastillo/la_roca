@@ -2,6 +2,7 @@ import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import { describe, expect, it } from "vitest";
 import {
+  applyBootMeasurementSelections,
   applyDefaultTextStyleSelections,
   deriveConfiguratorUi,
   sanitizeSelectedValueIdsForHiddenTextAttributes,
@@ -672,6 +673,135 @@ const pantalonSession: ConfiguratorSession = {
 };
 
 describe("deriveConfiguratorUi", () => {
+  it("selecciona Largo bota y Ancho bota automaticamente cuando Tipo bota no es Original", () => {
+    const sessionWithBootMeasurements: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes.map((attribute) =>
+          attribute.id === 84
+            ? {
+                ...attribute,
+                values: [
+                  ...attribute.values,
+                  {
+                    id: 4267,
+                    name: "Abertura frontal",
+                    attributeId: 84,
+                    attributeName: "Tipo bota",
+                  },
+                ],
+              }
+            : attribute,
+        ),
+        {
+          id: 85,
+          name: "Largo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8501,
+              name: "Largo bota",
+              attributeId: 85,
+              attributeName: "Largo bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+        {
+          id: 86,
+          name: "Ancho bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8601,
+              name: "Ancho bota",
+              attributeId: 86,
+              attributeName: "Ancho bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        "84": [4267],
+        "90": [6921],
+      },
+    };
+
+    expect(
+      applyBootMeasurementSelections(
+        sessionWithBootMeasurements,
+        sessionWithBootMeasurements.selectedValueIds,
+      ),
+    ).toMatchObject({
+      "84": [4267],
+      "85": [8501],
+      "86": [8601],
+    });
+  });
+
+  it("limpia Largo bota y Ancho bota automaticamente cuando Tipo bota es Original", () => {
+    const sessionWithBootMeasurements: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 85,
+          name: "Largo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8501,
+              name: "Largo bota",
+              attributeId: 85,
+              attributeName: "Largo bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+        {
+          id: 86,
+          name: "Ancho bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8601,
+              name: "Ancho bota",
+              attributeId: 86,
+              attributeName: "Ancho bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        "84": [4266],
+        "85": [8501],
+        "86": [8601],
+        "90": [6921],
+      },
+    };
+
+    expect(
+      applyBootMeasurementSelections(
+        sessionWithBootMeasurements,
+        sessionWithBootMeasurements.selectedValueIds,
+      ),
+    ).toMatchObject({
+      "84": [4266],
+      "85": [],
+      "86": [],
+    });
+  });
+
   it("resuelve assets por IDs aunque Odoo cambie nombres de atributos o valores", () => {
     const ui = deriveConfiguratorUi(session, session.selectedValueIds);
 

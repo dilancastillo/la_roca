@@ -11,6 +11,7 @@ import { AttributeSection } from "../features/configurator/components/attribute-
 import { LogoUploadSection } from "../features/configurator/components/logo-upload-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
 import {
+  applyBootMeasurementSelections,
   applyDefaultTextStyleSelections,
   computeDisabledValueIds,
   deriveConfiguratorUi,
@@ -64,10 +65,14 @@ function synchronizeTextAttributeSelections(
     session,
     visibleSelections,
   );
+  const selectionsWithBootMeasurements = applyBootMeasurementSelections(
+    session,
+    selectionsWithDefaults,
+  );
 
   return sanitizeSelectedValueIdsForExclusions(
     session,
-    selectionsWithDefaults,
+    selectionsWithBootMeasurements,
     preferredValueId,
   );
 }
