@@ -2871,7 +2871,7 @@ describe("renderDesignImage", () => {
     ];
     const leftFlapRegion = { x: 210, y: 535, width: 130, height: 30 };
     const rightFlapRegion = { x: 560, y: 535, width: 140, height: 30 };
-    const leftButtonRegion = { x: 238, y: 530, width: 28, height: 28 };
+    const leftButtonRegion = { x: 263, y: 530, width: 40, height: 28 };
     const rightButtonRegion = { x: 610, y: 530, width: 28, height: 28 };
     const flapRegions = [leftFlapRegion, rightFlapRegion];
     const basePatchInk = patchRegions.reduce(
