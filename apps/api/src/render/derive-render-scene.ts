@@ -174,6 +174,19 @@ function getPartColorHex(
   return selectedPartColor?.colorHex;
 }
 
+function removePantsKneePatchFromUniformBlouseScene(
+  scene: AutomationRenderScene,
+) {
+  const blouseScene: AutomationRenderScene = { ...scene };
+
+  delete blouseScene.pantsKneePatchRightModel;
+  delete blouseScene.pantsKneePatchRightType;
+  delete blouseScene.pantsKneePatchLeftModel;
+  delete blouseScene.pantsKneePatchLeftType;
+
+  return blouseScene;
+}
+
 function matchesCatalogAttribute(
   catalog: ReturnType<typeof getServerProductAssetCatalog>,
   key: Parameters<typeof matchesVisualAssetAttributeId>[1],
@@ -1010,7 +1023,7 @@ export function deriveAutomationRenderScene(
     trimSections: [],
     uniformParts: {
       blouse: {
-        ...blouseScene,
+        ...removePantsKneePatchFromUniformBlouseScene(blouseScene),
         baseColorHex:
           getPartColorHex(session, selectedValueIds, "blouse") ??
           blouseScene.baseColorHex,

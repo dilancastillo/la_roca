@@ -194,6 +194,17 @@ function getPartColorHex(
   return selectedPartColor?.colorHex;
 }
 
+function removePantsKneePatchFromUniformBlouseScene(scene: PreviewScene) {
+  const blouseScene: PreviewScene = { ...scene };
+
+  delete blouseScene.pantsKneePatchRightModel;
+  delete blouseScene.pantsKneePatchRightType;
+  delete blouseScene.pantsKneePatchLeftModel;
+  delete blouseScene.pantsKneePatchLeftType;
+
+  return blouseScene;
+}
+
 function getSelectedOptions(
   attribute: ConfiguratorSession["attributes"][number] | undefined,
   selectedValueIds: Record<string, number[]>,
@@ -1604,7 +1615,7 @@ export function deriveConfiguratorUi(
       trimSections: [],
       uniformParts: {
         blouse: {
-          ...blouseUi.previewScene,
+          ...removePantsKneePatchFromUniformBlouseScene(blouseUi.previewScene),
           baseColorHex:
             getPartColorHex(session, selectedValueIds, "blouse") ??
             blouseUi.previewScene.baseColorHex,

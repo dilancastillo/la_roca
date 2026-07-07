@@ -748,6 +748,100 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
+  it("no hereda bolsillos de rodilla del pantalon en la blusa del uniforme", () => {
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        ...session.attributes,
+        {
+          id: 22010,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 22011,
+              name: "Cuadrado",
+              attributeId: 22010,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 22012,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 22013,
+              name: "Lizo",
+              attributeId: 22012,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: 22014,
+          name: "Modelo bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 22015,
+              name: "Cuadrado",
+              attributeId: 22014,
+              attributeName: "Modelo bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+        {
+          id: 22016,
+          name: "Tipo de bolsillo de parche rodilla izquierda",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 22017,
+              name: "Lizo",
+              attributeId: 22016,
+              attributeName: "Tipo de bolsillo de parche rodilla izquierda",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "22010": [22011],
+        "22012": [22013],
+        "22014": [22015],
+        "22016": [22017],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      uniformSession,
+      uniformSession.selectedValueIds,
+    );
+    const uniformParts = scene.uniformParts;
+
+    expect(uniformParts).toBeDefined();
+    expect(uniformParts?.pants.pantsKneePatchRightModel).toBe("square");
+    expect(uniformParts?.pants.pantsKneePatchRightType).toBe("plain");
+    expect(uniformParts?.pants.pantsKneePatchLeftModel).toBe("square");
+    expect(uniformParts?.pants.pantsKneePatchLeftType).toBe("plain");
+    expect(uniformParts?.blouse.pantsKneePatchRightModel).toBeUndefined();
+    expect(uniformParts?.blouse.pantsKneePatchRightType).toBeUndefined();
+    expect(uniformParts?.blouse.pantsKneePatchLeftModel).toBeUndefined();
+    expect(uniformParts?.blouse.pantsKneePatchLeftType).toBeUndefined();
+  });
+
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {
     const sessionWithCurrentLowerPocketIds: ConfiguratorSession = {
       ...session,
