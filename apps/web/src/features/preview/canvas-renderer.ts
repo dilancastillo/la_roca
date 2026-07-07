@@ -5245,10 +5245,10 @@ async function composeUniformDesign(
 
   context.drawImage(
     blouseCanvas,
-    133,
-    80,
-    634,
-    990,
+    72,
+    10,
+    756,
+    1180,
     0,
     188,
     525,
