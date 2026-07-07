@@ -174,10 +174,71 @@ function getPartColorHex(
   return selectedPartColor?.colorHex;
 }
 
+type AutomationTrimSection = AutomationRenderScene["trimSections"][number];
+
+function getUniformTrimSectionText(section: AutomationTrimSection) {
+  return normalize(`${section.key} ${section.label}`);
+}
+
+function isPantsUniformTrimSection(section: AutomationTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    normalized.includes("pantalon") ||
+    normalized.includes("bota") ||
+    normalized.includes("pretina") ||
+    normalized.includes("cinturilla") ||
+    normalized.includes("rodilla") ||
+    normalized.includes("trasero") ||
+    normalized.includes("forrado") ||
+    normalized.includes("forro") ||
+    normalized.includes("bolsillo lateral")
+  );
+}
+
+function isBlouseUniformTrimSection(section: AutomationTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    section.role === "backNeck" ||
+    section.role === "upperNeck" ||
+    section.role === "lowerNeck" ||
+    section.role === "chestPocket" ||
+    section.role === "lowerPockets" ||
+    section.role === "auxiliaryPocket" ||
+    normalized.includes("cogotera") ||
+    normalized.includes("cuello") ||
+    normalized.includes("manga") ||
+    normalized.includes("presilla") ||
+    normalized.includes("pespunte") ||
+    normalized.includes("bolsillo pecho") ||
+    normalized.includes("bolsillo de pecho") ||
+    normalized.includes("bolsillos inferiores") ||
+    normalized.includes("bolsillo inferior") ||
+    normalized.includes("bolsillo auxiliar") ||
+    normalized.includes("cremallera") ||
+    normalized.includes("aletas")
+  );
+}
+
+function getUniformBlouseTrimSections(sections: AutomationTrimSection[]) {
+  return sections.filter(
+    (section) =>
+      isBlouseUniformTrimSection(section) && !isPantsUniformTrimSection(section),
+  );
+}
+
+function getUniformPantsTrimSections(sections: AutomationTrimSection[]) {
+  return sections.filter(isPantsUniformTrimSection);
+}
+
 function removePantsKneePatchFromUniformBlouseScene(
   scene: AutomationRenderScene,
 ) {
-  const blouseScene: AutomationRenderScene = { ...scene };
+  const blouseScene: AutomationRenderScene = {
+    ...scene,
+    trimSections: getUniformBlouseTrimSections(scene.trimSections),
+  };
 
   delete blouseScene.pantsKneePatchRightModel;
   delete blouseScene.pantsKneePatchRightType;
@@ -185,6 +246,15 @@ function removePantsKneePatchFromUniformBlouseScene(
   delete blouseScene.pantsKneePatchLeftType;
 
   return blouseScene;
+}
+
+function keepOnlyPantsTrimSectionsForUniformScene(
+  scene: AutomationRenderScene,
+) {
+  return {
+    ...scene,
+    trimSections: getUniformPantsTrimSections(scene.trimSections),
+  };
 }
 
 function matchesCatalogAttribute(
@@ -1029,7 +1099,7 @@ export function deriveAutomationRenderScene(
           blouseScene.baseColorHex,
       },
       pants: {
-        ...pantsScene,
+        ...keepOnlyPantsTrimSectionsForUniformScene(pantsScene),
         baseColorHex:
           getPartColorHex(session, selectedValueIds, "pants") ??
           pantsScene.baseColorHex,

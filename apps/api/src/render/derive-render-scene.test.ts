@@ -755,7 +755,28 @@ describe("deriveAutomationRenderScene", () => {
       productName: "Uniforme",
       graphicManifestKey: "uniforme",
       attributes: [
-        ...session.attributes,
+        ...session.attributes.map((attribute) =>
+          attribute.id === 92
+            ? {
+                ...attribute,
+                values: [
+                  ...attribute.values,
+                  {
+                    id: 22018,
+                    name: "Bolsillo lateral de pantalon",
+                    attributeId: 92,
+                    attributeName: "Seccion de vivo",
+                  },
+                  {
+                    id: 22019,
+                    name: "Parche rodilla derecha",
+                    attributeId: 92,
+                    attributeName: "Seccion de vivo",
+                  },
+                ],
+              }
+            : attribute,
+        ),
         {
           id: 22010,
           name: "Modelo bolsillo de parche rodilla derecha",
@@ -819,6 +840,7 @@ describe("deriveAutomationRenderScene", () => {
       ],
       selectedValueIds: {
         ...session.selectedValueIds,
+        "92": [5146, 5147, 22018, 22019],
         "22010": [22011],
         "22012": [22013],
         "22014": [22015],
@@ -832,6 +854,24 @@ describe("deriveAutomationRenderScene", () => {
     const uniformParts = scene.uniformParts;
 
     expect(uniformParts).toBeDefined();
+    const blouseTrimKeys =
+      uniformParts?.blouse.trimSections.map((section) => section.key) ?? [];
+    const pantsTrimKeys =
+      uniformParts?.pants.trimSections.map((section) => section.key) ?? [];
+
+    expect(blouseTrimKeys).toEqual(
+      expect.arrayContaining(["cogotera", "cuello"]),
+    );
+    expect(blouseTrimKeys).not.toContain("bolsillo-lateral-de-pantalon");
+    expect(blouseTrimKeys).not.toContain("parche-rodilla-derecha");
+    expect(pantsTrimKeys).toEqual(
+      expect.arrayContaining([
+        "bolsillo-lateral-de-pantalon",
+        "parche-rodilla-derecha",
+      ]),
+    );
+    expect(pantsTrimKeys).not.toContain("cogotera");
+    expect(pantsTrimKeys).not.toContain("cuello");
     expect(uniformParts?.pants.pantsKneePatchRightModel).toBe("square");
     expect(uniformParts?.pants.pantsKneePatchRightType).toBe("plain");
     expect(uniformParts?.pants.pantsKneePatchLeftModel).toBe("square");

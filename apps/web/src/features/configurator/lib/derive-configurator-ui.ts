@@ -194,8 +194,69 @@ function getPartColorHex(
   return selectedPartColor?.colorHex;
 }
 
+type PreviewTrimSection = PreviewScene["trimSections"][number];
+
+function getUniformTrimSectionText(section: PreviewTrimSection) {
+  return normalize(`${section.key} ${section.label}`);
+}
+
+function isPantsUniformTrimSection(section: PreviewTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    normalized.includes("pantalon") ||
+    normalized.includes("bota") ||
+    normalized.includes("pretina") ||
+    normalized.includes("cinturilla") ||
+    normalized.includes("rodilla") ||
+    normalized.includes("trasero") ||
+    normalized.includes("forrado") ||
+    normalized.includes("forro") ||
+    normalized.includes("bolsillo lateral")
+  );
+}
+
+function isBlouseUniformTrimSection(section: PreviewTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    section.role === "backNeck" ||
+    section.role === "upperNeck" ||
+    section.role === "lowerNeck" ||
+    section.role === "chestPocket" ||
+    section.role === "lowerPockets" ||
+    section.role === "auxiliaryPocket" ||
+    normalized.includes("cogotera") ||
+    normalized.includes("cuello") ||
+    normalized.includes("manga") ||
+    normalized.includes("presilla") ||
+    normalized.includes("pespunte") ||
+    normalized.includes("bolsillo pecho") ||
+    normalized.includes("bolsillo de pecho") ||
+    normalized.includes("bolsillos inferiores") ||
+    normalized.includes("bolsillo inferior") ||
+    normalized.includes("bolsillo auxiliar") ||
+    normalized.includes("cremallera") ||
+    normalized.includes("aletas")
+  );
+}
+
+function getUniformBlouseTrimSections(sections: PreviewTrimSection[]) {
+  return sections.filter(
+    (section) =>
+      isBlouseUniformTrimSection(section) && !isPantsUniformTrimSection(section),
+  );
+}
+
+function getUniformPantsTrimSections(sections: PreviewTrimSection[]) {
+  return sections.filter(isPantsUniformTrimSection);
+}
+
 function removePantsKneePatchFromUniformBlouseScene(scene: PreviewScene) {
-  const blouseScene: PreviewScene = { ...scene };
+  const blouseScene: PreviewScene = {
+    ...scene,
+    trimSections: getUniformBlouseTrimSections(scene.trimSections),
+  };
 
   delete blouseScene.pantsKneePatchRightModel;
   delete blouseScene.pantsKneePatchRightType;
@@ -203,6 +264,13 @@ function removePantsKneePatchFromUniformBlouseScene(scene: PreviewScene) {
   delete blouseScene.pantsKneePatchLeftType;
 
   return blouseScene;
+}
+
+function keepOnlyPantsTrimSectionsForUniformScene(scene: PreviewScene) {
+  return {
+    ...scene,
+    trimSections: getUniformPantsTrimSections(scene.trimSections),
+  };
 }
 
 function getSelectedOptions(
@@ -1621,7 +1689,7 @@ export function deriveConfiguratorUi(
             blouseUi.previewScene.baseColorHex,
         },
         pants: {
-          ...pantsUi.previewScene,
+          ...keepOnlyPantsTrimSectionsForUniformScene(pantsUi.previewScene),
           baseColorHex:
             getPartColorHex(session, selectedValueIds, "pants") ??
             pantsUi.previewScene.baseColorHex,
