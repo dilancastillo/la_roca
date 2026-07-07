@@ -631,6 +631,58 @@ function isPespunteGarment(valueName: string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
+  "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
+
+function isYesOption(valueName: string | undefined) {
+  return valueName ? normalize(valueName) === "si" : false;
+}
+
+function hasUniformPespunteSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const pespunteAttribute = findAttributeByName(
+    session,
+    (name) => name.includes("lleva") && name.includes("pespunte"),
+  );
+
+  return getSelectedOptions(pespunteAttribute, selectedValueIds).some((option) =>
+    isYesOption(option.name),
+  );
+}
+
+function withGarmentDetailAssetPath(
+  scene: AutomationRenderScene,
+  detailAssetPath: string,
+) {
+  const garmentDetailAssetPaths = compactUnique([
+    ...(scene.garmentDetailAssetPaths ??
+      (scene.garmentDetailAssetPath ? [scene.garmentDetailAssetPath] : [])),
+    detailAssetPath,
+  ]);
+  const garmentDetailAssetPath = garmentDetailAssetPaths[0] ?? detailAssetPath;
+
+  return {
+    ...scene,
+    garmentDetailAssetPath,
+    garmentDetailAssetPaths,
+  };
+}
+
+function withUniformBlousePespunte(scene: AutomationRenderScene) {
+  return withGarmentDetailAssetPath(
+    scene,
+    BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH,
+  );
+}
+
+function withUniformPantsPespunte(scene: AutomationRenderScene) {
+  return withGarmentDetailAssetPath(
+    scene,
+    PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH,
+  );
+}
 
 function deriveSingleAutomationRenderScene(
   session: ConfiguratorSession,
@@ -1085,6 +1137,13 @@ export function deriveAutomationRenderScene(
     },
     selectedValueIds,
   );
+  const shouldApplyUniformPespunte = hasUniformPespunteSelection(
+    session,
+    selectedValueIds,
+  );
+  const uniformBlouseScene =
+    removePantsKneePatchFromUniformBlouseScene(blouseScene);
+  const uniformPantsScene = keepOnlyPantsTrimSectionsForUniformScene(pantsScene);
 
   return {
     productName: session.productName,
@@ -1093,13 +1152,17 @@ export function deriveAutomationRenderScene(
     trimSections: [],
     uniformParts: {
       blouse: {
-        ...removePantsKneePatchFromUniformBlouseScene(blouseScene),
+        ...(shouldApplyUniformPespunte
+          ? withUniformBlousePespunte(uniformBlouseScene)
+          : uniformBlouseScene),
         baseColorHex:
           getPartColorHex(session, selectedValueIds, "blouse") ??
           blouseScene.baseColorHex,
       },
       pants: {
-        ...keepOnlyPantsTrimSectionsForUniformScene(pantsScene),
+        ...(shouldApplyUniformPespunte
+          ? withUniformPantsPespunte(uniformPantsScene)
+          : uniformPantsScene),
         baseColorHex:
           getPartColorHex(session, selectedValueIds, "pants") ??
           pantsScene.baseColorHex,

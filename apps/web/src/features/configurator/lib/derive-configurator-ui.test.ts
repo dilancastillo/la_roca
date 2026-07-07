@@ -1054,6 +1054,55 @@ describe("deriveConfiguratorUi", () => {
     expect(uniformParts?.blouse.pantsKneePatchLeftType).toBeUndefined();
   });
 
+  it("aplica pespunte a blusa y pantalon cuando Uniforme lleva pespunte", () => {
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        ...session.attributes,
+        {
+          id: 880,
+          name: "¿Lleva pespunte?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8801,
+              name: "No",
+              attributeId: 880,
+              attributeName: "¿Lleva pespunte?",
+            },
+            {
+              id: 8802,
+              name: "Si",
+              attributeId: 880,
+              attributeName: "¿Lleva pespunte?",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "880": [8802],
+      },
+    };
+    const ui = deriveConfiguratorUi(
+      uniformSession,
+      uniformSession.selectedValueIds,
+    );
+    const uniformParts = ui.previewScene.uniformParts;
+
+    expect(uniformParts?.blouse.garmentDetailImageSrcs).toContain(
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+    );
+    expect(uniformParts?.pants.garmentDetailImageSrcs).toContain(
+      "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg",
+    );
+  });
+
   it("muestra Modelo de Blusa y Pinzas solamente cuando Genero es Mujer", () => {
     const genderAttribute = {
       id: 813,

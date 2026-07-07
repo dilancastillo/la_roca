@@ -743,6 +743,58 @@ function isPespunteGarment(valueName: string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
+  "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
+
+function isYesOption(valueName: string | undefined) {
+  return valueName ? normalize(valueName) === "si" : false;
+}
+
+function hasUniformPespunteSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const pespunteAttribute = findAttributeByName(
+    session,
+    (name) => name.includes("lleva") && name.includes("pespunte"),
+  );
+
+  return getSelectedOptions(pespunteAttribute, selectedValueIds).some((option) =>
+    isYesOption(option.name),
+  );
+}
+
+function withGarmentDetailImageSrc(
+  scene: PreviewScene,
+  detailImageSrc: string,
+) {
+  const garmentDetailImageSrcs = compactUnique([
+    ...(scene.garmentDetailImageSrcs ??
+      (scene.garmentDetailImageSrc ? [scene.garmentDetailImageSrc] : [])),
+    detailImageSrc,
+  ]);
+  const garmentDetailImageSrc = garmentDetailImageSrcs[0] ?? detailImageSrc;
+
+  return {
+    ...scene,
+    garmentDetailImageSrc,
+    garmentDetailImageSrcs,
+  };
+}
+
+function withUniformBlousePespunte(scene: PreviewScene) {
+  return withGarmentDetailImageSrc(
+    scene,
+    BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC,
+  );
+}
+
+function withUniformPantsPespunte(scene: PreviewScene) {
+  return withGarmentDetailImageSrc(
+    scene,
+    PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC,
+  );
+}
 
 type TextStyleAttributeDependency = {
   toggleTerms: string[];
@@ -1673,6 +1725,16 @@ export function deriveConfiguratorUi(
     },
     selectedValueIds,
   );
+  const shouldApplyUniformPespunte = hasUniformPespunteSelection(
+    session,
+    selectedValueIds,
+  );
+  const uniformBlouseScene = removePantsKneePatchFromUniformBlouseScene(
+    blouseUi.previewScene,
+  );
+  const uniformPantsScene = keepOnlyPantsTrimSectionsForUniformScene(
+    pantsUi.previewScene,
+  );
 
   return {
     ...baseUi,
@@ -1683,13 +1745,17 @@ export function deriveConfiguratorUi(
       trimSections: [],
       uniformParts: {
         blouse: {
-          ...removePantsKneePatchFromUniformBlouseScene(blouseUi.previewScene),
+          ...(shouldApplyUniformPespunte
+            ? withUniformBlousePespunte(uniformBlouseScene)
+            : uniformBlouseScene),
           baseColorHex:
             getPartColorHex(session, selectedValueIds, "blouse") ??
             blouseUi.previewScene.baseColorHex,
         },
         pants: {
-          ...keepOnlyPantsTrimSectionsForUniformScene(pantsUi.previewScene),
+          ...(shouldApplyUniformPespunte
+            ? withUniformPantsPespunte(uniformPantsScene)
+            : uniformPantsScene),
           baseColorHex:
             getPartColorHex(session, selectedValueIds, "pants") ??
             pantsUi.previewScene.baseColorHex,
