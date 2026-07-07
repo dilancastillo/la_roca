@@ -4546,7 +4546,7 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     renderDesignImage(scene.uniformParts.pants),
   ]);
   const blouseLayer = await sharp(blouseBuffer)
-    .extract({ left: 72, top: 80, width: 756, height: 990 })
+    .extract({ left: 133, top: 80, width: 634, height: 990 })
     .resize(525, 820, { fit: "fill" })
     .png()
     .toBuffer();

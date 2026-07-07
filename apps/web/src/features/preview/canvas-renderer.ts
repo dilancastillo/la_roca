@@ -5245,9 +5245,9 @@ async function composeUniformDesign(
 
   context.drawImage(
     blouseCanvas,
-    72,
+    133,
     80,
-    756,
+    634,
     990,
     0,
     188,
