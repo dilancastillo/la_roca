@@ -1,6 +1,7 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import type { OdooEnv } from "../lib/app-env.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { parseConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import { saveConfiguratorDesign } from "./save-configurator-design.js";
 
 const mocks = vi.hoisted(() => ({
@@ -139,6 +140,17 @@ describe("saveConfiguratorDesign", () => {
         }),
       ],
     );
+    const attachmentCreateCall = mocks.odooCreate.mock.calls.find(
+      ([, model]) => model === "ir.attachment",
+    );
+    const attachmentValues = attachmentCreateCall?.[2]?.[0] as
+      | { description?: string }
+      | undefined;
+
+    expect(parseConfiguratorStateDescription(attachmentValues?.description)).toEqual({
+      selectedValueIds: editableSession.selectedValueIds,
+      customValuesByValueId: {},
+    });
     expect(result).toMatchObject({
       productId: 778,
       variantResolution: "created_product_variant",
@@ -233,6 +245,58 @@ describe("saveConfiguratorDesign", () => {
       ],
     );
     expect(result.logoImageUpdated).toBe(true);
+  });
+
+  it("guarda metadata de seleccion tambien en imagenes adicionales de Uniforme", async () => {
+    const uniformSession: ConfiguratorSession = {
+      ...editableSession,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(uniformSession);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await saveConfiguratorDesign(env, {
+      saleOrderLineId: 290,
+      filename: "sale-line-290-design.png",
+      imageBase64: "png-base64",
+      additionalImages: [
+        {
+          filename: "sale-line-290-design-blusa.png",
+          imageBase64: "blusa-base64",
+        },
+        {
+          filename: "sale-line-290-design-pantalon.png",
+          imageBase64: "pantalon-base64",
+        },
+      ],
+      selectedValueIds: uniformSession.selectedValueIds,
+    });
+
+    const attachmentValues = mocks.odooCreate.mock.calls
+      .filter(([, model]) => model === "ir.attachment")
+      .map(([, , values]) => values[0] as { description?: string });
+
+    expect(attachmentValues).toHaveLength(3);
+    expect(
+      attachmentValues.map((values) =>
+        parseConfiguratorStateDescription(values.description),
+      ),
+    ).toEqual([
+      {
+        selectedValueIds: uniformSession.selectedValueIds,
+        customValuesByValueId: {},
+      },
+      {
+        selectedValueIds: uniformSession.selectedValueIds,
+        customValuesByValueId: {},
+      },
+      {
+        selectedValueIds: uniformSession.selectedValueIds,
+        customValuesByValueId: {},
+      },
+    ]);
   });
 
   it("rechaza guardar cuando hay logo seleccionado pero no llega imagen del logo", async () => {

@@ -1,6 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
+import {
+  parseConfiguratorStateDescription,
+  type PersistedConfiguratorState,
+} from "./configurator-state-metadata.js";
 
 type Many2one = [number, string] | false;
 
@@ -72,11 +76,14 @@ type DesignAttachmentRecord = {
   id: number;
   name: string;
   create_date?: string | false;
+  description?: string | false;
 };
 
 type GetConfiguratorSessionOptions = {
   loadCustomValues?: boolean;
 };
+
+const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
 
 export function resolveSelectedIdsForAttributeValues(
   values: Array<{ id: number }>,
@@ -367,30 +374,114 @@ function parseOdooDatetime(value: string | false | undefined) {
 }
 
 async function loadLatestDesignAttachment(env: OdooEnv, saleOrderLineId: number) {
+  const domain = [
+    ["res_model", "=", "sale.order.line"],
+    ["res_id", "=", saleOrderLineId],
+    ["name", "ilike", "design-v"],
+  ];
   const attachments = await odooSearchRead<DesignAttachmentRecord>(
     env,
     "ir.attachment",
-    [
-      ["res_model", "=", "sale.order.line"],
-      ["res_id", "=", saleOrderLineId],
-      ["name", "ilike", "design-v"],
-    ],
-    ["id", "name", "create_date"],
+    domain,
+    ["id", "name", "create_date", "description"],
     "create_date desc, id desc",
-    { limit: 1 },
-  ).catch(() => []);
+    { limit: 20 },
+  ).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (!message.includes("description")) {
+      return [];
+    }
+
+    return odooSearchRead<DesignAttachmentRecord>(
+      env,
+      "ir.attachment",
+      domain,
+      ["id", "name", "create_date"],
+      "create_date desc, id desc",
+      { limit: 20 },
+    ).catch(() => []);
+  });
 
   const [attachment] = attachments;
+  const configuratorState = attachments
+    .map((item) => parseConfiguratorStateDescription(item.description))
+    .find((state): state is PersistedConfiguratorState => Boolean(state));
 
   return attachment
     ? {
         version: parseDesignAttachmentVersion(attachment.name),
         generatedAt: parseOdooDatetime(attachment.create_date),
+        configuratorState,
       }
     : {
         version: 0,
         generatedAt: null,
+        configuratorState: undefined,
       };
+}
+
+function shouldUsePersistedConfiguratorState(
+  productTemplateId: number,
+  productName: string,
+  state: PersistedConfiguratorState | undefined,
+) {
+  return (
+    Boolean(state) &&
+    (productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
+      normalizeGraphicManifestKey(productName) === "uniforme")
+  );
+}
+
+function applyPersistedSelectedValueIds(
+  attributes: ConfiguratorSession["attributes"],
+  selectedValueIds: Record<string, number[]>,
+  persistedState: PersistedConfiguratorState | undefined,
+) {
+  if (!persistedState) {
+    return selectedValueIds;
+  }
+
+  return Object.fromEntries(
+    attributes.map((attribute) => {
+      const key = String(attribute.id);
+      const validValueIds = new Set(attribute.values.map((value) => value.id));
+      const persistedSelected = (persistedState.selectedValueIds[key] ?? [])
+        .filter((valueId) => validValueIds.has(valueId));
+
+      return [
+        key,
+        persistedSelected.length > 0
+          ? attribute.selectionMode === "single"
+            ? persistedSelected.slice(0, 1)
+            : persistedSelected
+          : selectedValueIds[key] ?? [],
+      ];
+    }),
+  );
+}
+
+function applyPersistedCustomValues(
+  attributes: ConfiguratorSession["attributes"],
+  customValuesByValueId: Record<string, string>,
+  persistedState: PersistedConfiguratorState | undefined,
+) {
+  if (!persistedState) {
+    return customValuesByValueId;
+  }
+
+  const validValueIds = new Set(
+    attributes.flatMap((attribute) => attribute.values.map((value) => value.id)),
+  );
+
+  return {
+    ...customValuesByValueId,
+    ...Object.fromEntries(
+      Object.entries(persistedState.customValuesByValueId).filter(([valueId]) =>
+        validValueIds.has(Number(valueId)),
+      ),
+    ),
+  };
 }
 
 export async function getConfiguratorSession(
@@ -660,6 +751,28 @@ export async function getConfiguratorSession(
       );
   }
 
+  const latestDesignAttachment = await loadLatestDesignAttachment(
+    env,
+    saleOrderLineId,
+  );
+  const persistedConfiguratorState = shouldUsePersistedConfiguratorState(
+    productTemplateId,
+    productName,
+    latestDesignAttachment.configuratorState,
+  )
+    ? latestDesignAttachment.configuratorState
+    : undefined;
+  const effectiveSelectedValueIds = applyPersistedSelectedValueIds(
+    sortedAttributes,
+    selectedValueIds,
+    persistedConfiguratorState,
+  );
+  const effectiveCustomValuesByValueId = applyPersistedCustomValues(
+    sortedAttributes,
+    customValuesByValueId,
+    persistedConfiguratorState,
+  );
+
   const exclusions = ptavs.flatMap((ptav) => {
     const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
 
@@ -674,10 +787,6 @@ export async function getConfiguratorSession(
   });
 
   const canEdit = order.state === "draft" || order.state === "sent";
-  const latestDesignAttachment = await loadLatestDesignAttachment(
-    env,
-    saleOrderLineId,
-  );
 
   return {
     saleOrderLineId,
@@ -688,8 +797,8 @@ export async function getConfiguratorSession(
     productName,
     graphicManifestKey: normalizeGraphicManifestKey(productName),
     attributes: sortedAttributes,
-    selectedValueIds,
-    customValuesByValueId,
+    selectedValueIds: effectiveSelectedValueIds,
+    customValuesByValueId: effectiveCustomValuesByValueId,
     exclusions,
     status: {
       orderState: order.state,

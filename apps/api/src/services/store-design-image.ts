@@ -9,6 +9,7 @@ type StoreDesignImageInput = {
   filename: string;
   imageBase64: string;
   currentVersion: number;
+  attachmentDescription?: string;
 };
 
 type DesignImageStoragePayload = {
@@ -49,6 +50,9 @@ export async function createDesignImageAttachment(
       res_model: "sale.order.line",
       res_id: input.saleOrderLineId,
       mimetype: "image/png",
+      ...(input.attachmentDescription
+        ? { description: input.attachmentDescription }
+        : {}),
     },
   ]);
 }

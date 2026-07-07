@@ -5,6 +5,7 @@ import type {
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
+import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
 import {
   LOGO_IMAGE_FIELD,
@@ -358,6 +359,10 @@ export async function saveConfiguratorDesign(
     filename: payload.filename,
     imageBase64: payload.imageBase64,
     currentVersion: session.status.version,
+    attachmentDescription: buildConfiguratorStateDescription({
+      selectedValueIds,
+      customValuesByValueId,
+    }),
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
   const logoImageLineValues = payload.logoAttachment
@@ -381,6 +386,7 @@ export async function saveConfiguratorDesign(
           filename: image.filename,
           imageBase64: image.imageBase64,
           currentVersion: session.status.version,
+          attachmentDescription: designImageInput.attachmentDescription,
         },
         {
           ...designImageStorage,
