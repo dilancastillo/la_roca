@@ -1044,10 +1044,12 @@ describe("deriveConfiguratorUi", () => {
     );
     expect(pantsTrimKeys).not.toContain("cogotera");
     expect(pantsTrimKeys).not.toContain("cuello");
+    expect(uniformParts?.pants.pantsSidePocketType).toBe("doubleZipper");
     expect(uniformParts?.pants.pantsKneePatchRightModel).toBe("square");
     expect(uniformParts?.pants.pantsKneePatchRightType).toBe("plain");
     expect(uniformParts?.pants.pantsKneePatchLeftModel).toBe("square");
     expect(uniformParts?.pants.pantsKneePatchLeftType).toBe("plain");
+    expect(uniformParts?.blouse.pantsSidePocketType).toBeUndefined();
     expect(uniformParts?.blouse.pantsKneePatchRightModel).toBeUndefined();
     expect(uniformParts?.blouse.pantsKneePatchRightType).toBeUndefined();
     expect(uniformParts?.blouse.pantsKneePatchLeftModel).toBeUndefined();

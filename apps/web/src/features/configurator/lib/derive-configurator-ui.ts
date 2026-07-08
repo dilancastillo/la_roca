@@ -273,6 +273,29 @@ function keepOnlyPantsTrimSectionsForUniformScene(scene: PreviewScene) {
   };
 }
 
+function isPantsSidePocketUniformTrimSection(section: PreviewTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    normalized.includes("bolsillo lateral de pantalon") ||
+    (normalized.includes("bolsillo lateral") && normalized.includes("pantalon"))
+  );
+}
+
+function ensureUniformPantsSidePocketForTrim(scene: PreviewScene): PreviewScene {
+  if (
+    scene.pantsSidePocketType ||
+    !scene.trimSections.some(isPantsSidePocketUniformTrimSection)
+  ) {
+    return scene;
+  }
+
+  return {
+    ...scene,
+    pantsSidePocketType: "doubleZipper",
+  };
+}
+
 function getSelectedOptions(
   attribute: ConfiguratorSession["attributes"][number] | undefined,
   selectedValueIds: Record<string, number[]>,
@@ -1732,8 +1755,8 @@ export function deriveConfiguratorUi(
   const uniformBlouseScene = removePantsKneePatchFromUniformBlouseScene(
     blouseUi.previewScene,
   );
-  const uniformPantsScene = keepOnlyPantsTrimSectionsForUniformScene(
-    pantsUi.previewScene,
+  const uniformPantsScene = ensureUniformPantsSidePocketForTrim(
+    keepOnlyPantsTrimSectionsForUniformScene(pantsUi.previewScene),
   );
 
   return {

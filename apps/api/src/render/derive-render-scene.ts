@@ -257,6 +257,31 @@ function keepOnlyPantsTrimSectionsForUniformScene(
   };
 }
 
+function isPantsSidePocketUniformTrimSection(section: AutomationTrimSection) {
+  const normalized = getUniformTrimSectionText(section);
+
+  return (
+    normalized.includes("bolsillo lateral de pantalon") ||
+    (normalized.includes("bolsillo lateral") && normalized.includes("pantalon"))
+  );
+}
+
+function ensureUniformPantsSidePocketForTrim(
+  scene: AutomationRenderScene,
+): AutomationRenderScene {
+  if (
+    scene.pantsSidePocketType ||
+    !scene.trimSections.some(isPantsSidePocketUniformTrimSection)
+  ) {
+    return scene;
+  }
+
+  return {
+    ...scene,
+    pantsSidePocketType: "doubleZipper",
+  };
+}
+
 function matchesCatalogAttribute(
   catalog: ReturnType<typeof getServerProductAssetCatalog>,
   key: Parameters<typeof matchesVisualAssetAttributeId>[1],
@@ -1143,7 +1168,9 @@ export function deriveAutomationRenderScene(
   );
   const uniformBlouseScene =
     removePantsKneePatchFromUniformBlouseScene(blouseScene);
-  const uniformPantsScene = keepOnlyPantsTrimSectionsForUniformScene(pantsScene);
+  const uniformPantsScene = ensureUniformPantsSidePocketForTrim(
+    keepOnlyPantsTrimSectionsForUniformScene(pantsScene),
+  );
 
   return {
     productName: session.productName,
