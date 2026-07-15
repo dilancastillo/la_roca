@@ -176,8 +176,27 @@ describe("getConfiguratorSession", () => {
           {
             id: 9101,
             name: "Rosa",
+            sequence: 30,
             attribute_id: [91, "Color de vivo"],
             product_attribute_value_id: [19101, "Rosa"],
+            product_tmpl_id: [7, "Uniforme"],
+            ptav_active: true,
+          },
+          {
+            id: 9102,
+            name: "Amarillo",
+            sequence: 20,
+            attribute_id: [91, "Color de vivo"],
+            product_attribute_value_id: [19102, "Amarillo"],
+            product_tmpl_id: [7, "Uniforme"],
+            ptav_active: true,
+          },
+          {
+            id: 9103,
+            name: "Azul",
+            sequence: 10,
+            attribute_id: [91, "Color de vivo"],
+            product_attribute_value_id: [19103, "Azul"],
             product_tmpl_id: [7, "Uniforme"],
             ptav_active: true,
           },
@@ -251,6 +270,11 @@ describe("getConfiguratorSession", () => {
     expect(session.customValuesByValueId).toEqual({
       "9301": "LA ROCA",
     });
+    expect(
+      session.attributes
+        .find((attribute) => attribute.id === 91)
+        ?.values.map((value) => value.id),
+    ).toEqual([9103, 9102, 9101]);
     expect(session.status.version).toBe(4);
   });
 });

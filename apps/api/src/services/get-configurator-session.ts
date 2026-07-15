@@ -34,6 +34,7 @@ type ProductProductRecord = {
 type ProductTemplateAttributeValueRecord = {
   id: number;
   name: string;
+  sequence?: number;
   attribute_id: Many2one;
   product_attribute_value_id: Many2one;
   product_tmpl_id: Many2one;
@@ -60,6 +61,7 @@ type ProductTemplateAttributeLineRecord = {
 type ProductAttributeValueRecord = {
   id: number;
   name: string;
+  sequence?: number;
   html_color?: string | false;
   display_type?: string | false;
   is_custom?: boolean;
@@ -259,6 +261,7 @@ const productTemplateAttributeValueBaseFields = [
 ];
 
 const productTemplateAttributeValueOptionalFields = [
+  "sequence",
   "display_type",
   "image",
   "excluded_value_ids",
@@ -324,7 +327,7 @@ async function loadProductAttributeValues(
 
   const baseFields = ["id", "name", "html_color", "is_custom"];
   const warnings: string[] = [];
-  let optionalFields = ["display_type", "image"];
+  let optionalFields = ["sequence", "display_type", "image"];
 
   while (true) {
     try {
@@ -669,8 +672,12 @@ export async function getConfiguratorSession(
     number,
     NonNullable<ConfiguratorSession["attributes"]>[number]
   >();
+  const optionOrderByPtavId = new Map<
+    number,
+    { sequence: number | undefined; index: number }
+  >();
 
-  for (const ptav of ptavs) {
+  for (const [index, ptav] of ptavs.entries()) {
     const attributeId = toMany2oneId(ptav.attribute_id, "attribute_id");
     const attribute = attributeMap.get(attributeId);
     const productAttributeValueId = toMany2oneId(
@@ -711,8 +718,53 @@ export async function getConfiguratorSession(
       ...(optionImageSrc ? { optionImageSrc } : {}),
       allowsCustomValue: Boolean(ptav.is_custom || attributeValue?.is_custom),
     });
+    optionOrderByPtavId.set(ptav.id, {
+      sequence:
+        typeof ptav.sequence === "number"
+          ? ptav.sequence
+          : typeof attributeValue?.sequence === "number"
+            ? attributeValue.sequence
+            : undefined,
+      index,
+    });
 
     groupedAttributes.set(attributeId, group);
+  }
+
+  const shouldUseOdooOptionSequence =
+    productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
+    normalizeGraphicManifestKey(productName) === "uniforme";
+
+  if (shouldUseOdooOptionSequence) {
+    for (const attribute of groupedAttributes.values()) {
+      attribute.values.sort((left, right) => {
+        const leftOrder = optionOrderByPtavId.get(left.id);
+        const rightOrder = optionOrderByPtavId.get(right.id);
+        const leftSequence = leftOrder?.sequence;
+        const rightSequence = rightOrder?.sequence;
+
+        if (leftSequence !== undefined && rightSequence !== undefined) {
+          return (
+            leftSequence - rightSequence ||
+            (leftOrder?.index ?? 0) - (rightOrder?.index ?? 0) ||
+            left.id - right.id
+          );
+        }
+
+        if (leftSequence !== undefined) {
+          return -1;
+        }
+
+        if (rightSequence !== undefined) {
+          return 1;
+        }
+
+        return (
+          (leftOrder?.index ?? 0) - (rightOrder?.index ?? 0) ||
+          left.id - right.id
+        );
+      });
+    }
   }
 
   const sortedAttributes = Array.from(groupedAttributes.values()).sort(
