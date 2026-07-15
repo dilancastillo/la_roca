@@ -865,6 +865,34 @@ function isYesTextToggleValue(valueName: string) {
   return normalized === "si" || normalized === "con texto";
 }
 
+function findTextToggleAttribute(
+  session: ConfiguratorSession,
+  dependency: TextStyleAttributeDependency,
+) {
+  return findAttributeByName(session, (name) =>
+    normalizedIncludesAll(name, dependency.toggleTerms) &&
+    !name.includes("color") &&
+    !name.includes("fuente"),
+  );
+}
+
+function getTextStyleDependencyForAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const normalizedName = normalize(attribute.name);
+
+  if (
+    !normalizedName.includes("color") ||
+    !normalizedName.includes("fuente")
+  ) {
+    return undefined;
+  }
+
+  return textStyleAttributeDependencies.find((dependency) =>
+    normalizedIncludesAll(normalizedName, dependency.styleTerms),
+  );
+}
+
 function findTextStyleAttributes(
   session: ConfiguratorSession,
   toggleAttributeId: number,
@@ -1012,11 +1040,7 @@ export function applyDefaultTextStyleSelections(
   let hasChanges = false;
 
   for (const dependency of textStyleAttributeDependencies) {
-    const toggleAttribute = findAttributeByName(session, (name) =>
-      normalizedIncludesAll(name, dependency.toggleTerms) &&
-      !name.includes("color") &&
-      !name.includes("fuente"),
-    );
+    const toggleAttribute = findTextToggleAttribute(session, dependency);
 
     if (!toggleAttribute) {
       continue;
@@ -1077,34 +1101,21 @@ export function getHiddenTextStyleAttributeIds(
 ) {
   const hiddenAttributeIds = new Set<number>();
 
-  for (const dependency of textStyleAttributeDependencies) {
-    const toggleAttribute = findAttributeByName(session, (name) =>
-      normalizedIncludesAll(name, dependency.toggleTerms) &&
-      !name.includes("color") &&
-      !name.includes("fuente"),
-    );
+  for (const attribute of session.attributes) {
+    const dependency = getTextStyleDependencyForAttribute(attribute);
 
-    if (!toggleAttribute) {
+    if (!dependency) {
       continue;
     }
 
-    const selectedOptions = getSelectedOptions(
-      toggleAttribute,
-      selectedValueIds,
-    );
-    const isTextEnabled = selectedOptions.some((value) =>
-      isYesTextToggleValue(value.name),
-    );
+    const toggleAttribute = findTextToggleAttribute(session, dependency);
+    const isTextEnabled =
+      toggleAttribute !== undefined &&
+      getSelectedOptions(toggleAttribute, selectedValueIds).some((value) =>
+        isYesTextToggleValue(value.name),
+      );
 
-    if (isTextEnabled) {
-      continue;
-    }
-
-    for (const attribute of findTextStyleAttributes(
-      session,
-      toggleAttribute.id,
-      dependency,
-    )) {
+    if (!isTextEnabled) {
       hiddenAttributeIds.add(attribute.id);
     }
   }

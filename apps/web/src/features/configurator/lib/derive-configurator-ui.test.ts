@@ -4606,6 +4606,12 @@ describe("deriveConfiguratorUi", () => {
                 attributeId: baseId,
                 attributeName: toggleName,
               },
+              {
+                id: baseId + 5,
+                name: "Sin seleccion",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
             ],
           },
           {
@@ -4663,6 +4669,16 @@ describe("deriveConfiguratorUi", () => {
     for (const [, styleName] of textDependencies) {
       expect(labelsWithoutAnswer).not.toContain(styleName);
     }
+
+    const uiWithSinSelection = deriveConfiguratorUi(sessionWithTextAttributes, {
+      ...session.selectedValueIds,
+      "12010": [12015],
+      "12013": [12014],
+    });
+
+    expect(uiWithSinSelection.groups.map((group) => group.label)).not.toContain(
+      "Color y fuente de texto en pecho encima del bolsillo",
+    );
 
     expect(
       sanitizeSelectedValueIdsForHiddenTextAttributes(
