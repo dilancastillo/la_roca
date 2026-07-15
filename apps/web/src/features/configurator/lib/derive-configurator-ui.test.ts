@@ -4554,7 +4554,7 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.logoMarker).toBeUndefined();
   });
 
-  it("oculta los atributos de color y fuente de texto cuando el texto esta en No", () => {
+  it("oculta los atributos de color y fuente de texto mientras el texto no este en Si", () => {
     const textDependencies: Array<readonly [string, string]> = [
       [
         "¿Texto en pecho derecho?",
@@ -4651,6 +4651,17 @@ describe("deriveConfiguratorUi", () => {
       expect(labels).toContain(toggleName);
       expect(labels).not.toContain(styleName);
       expect(summaryLabels).not.toContain(styleName);
+    }
+
+    const uiWithoutAnswer = deriveConfiguratorUi(sessionWithTextAttributes, {
+      ...session.selectedValueIds,
+    });
+    const labelsWithoutAnswer = uiWithoutAnswer.groups.map(
+      (group) => group.label,
+    );
+
+    for (const [, styleName] of textDependencies) {
+      expect(labelsWithoutAnswer).not.toContain(styleName);
     }
 
     expect(
@@ -5165,8 +5176,9 @@ describe("deriveConfiguratorUi", () => {
     });
     const labelsWithYes = uiWithYes.groups.map((group) => group.label);
 
-    for (const [toggleName] of textDependencies) {
+    for (const [toggleName, styleName] of textDependencies) {
       expect(labelsWithYes).toContain(toggleName);
+      expect(labelsWithYes).not.toContain(styleName);
     }
   });
 });

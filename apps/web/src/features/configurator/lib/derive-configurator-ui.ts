@@ -822,14 +822,12 @@ function withUniformPantsPespunte(scene: PreviewScene) {
 type TextStyleAttributeDependency = {
   toggleTerms: string[];
   styleTerms: string[];
-  hideUnlessEnabled?: boolean;
 };
 
 const textStyleAttributeDependencies: TextStyleAttributeDependency[] = [
   {
     toggleTerms: ["texto", "pecho", "derecho"],
     styleTerms: ["color", "fuente", "texto", "pecho", "derecho"],
-    hideUnlessEnabled: true,
   },
   {
     toggleTerms: ["texto", "pecho", "encima", "bolsillo"],
@@ -859,12 +857,6 @@ const textStyleAttributeDependencies: TextStyleAttributeDependency[] = [
 
 function normalizedIncludesAll(normalizedValue: string, terms: string[]) {
   return terms.every((term) => normalizedValue.includes(term));
-}
-
-function isNoTextToggleValue(valueName: string) {
-  const normalized = normalize(valueName);
-
-  return normalized === "no" || normalized === "sin texto";
 }
 
 function isYesTextToggleValue(valueName: string) {
@@ -1103,11 +1095,8 @@ export function getHiddenTextStyleAttributeIds(
     const isTextEnabled = selectedOptions.some((value) =>
       isYesTextToggleValue(value.name),
     );
-    const isTextDisabled = selectedOptions.some((value) =>
-      isNoTextToggleValue(value.name),
-    );
 
-    if (dependency.hideUnlessEnabled ? isTextEnabled : !isTextDisabled) {
+    if (isTextEnabled) {
       continue;
     }
 
