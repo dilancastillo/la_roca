@@ -108,7 +108,26 @@ type MissingCustomValue = {
   valueId: number;
 };
 
+function isOptionalBootOpeningCustomValue(
+  session: ConfiguratorSession,
+  group: UiAttributeGroup,
+  option: UiAttributeGroup["options"][number],
+) {
+  const productKey = normalizeText(session.graphicManifestKey);
+  const isPantsConfiguration =
+    productKey === "pantalon" || productKey === "uniforme";
+  const isBootType = normalizeText(group.label) === "tipo bota";
+  const optionName = normalizeText(option.name);
+
+  return (
+    isPantsConfiguration &&
+    isBootType &&
+    (optionName === "abertura frontal" || optionName === "abertura lateral")
+  );
+}
+
 function getMissingCustomValues(
+  session: ConfiguratorSession,
   groups: UiAttributeGroup[],
   selectedValueIds: Record<string, number[]>,
   customValuesByValueId: Record<string, string>,
@@ -120,6 +139,10 @@ function getMissingCustomValues(
 
     for (const option of group.options) {
       if (!option.allowsCustomValue || !selectedIds.has(option.id)) {
+        continue;
+      }
+
+      if (isOptionalBootOpeningCustomValue(session, group, option)) {
         continue;
       }
 
@@ -694,6 +717,7 @@ export function ConfiguratorPage() {
       state.selectedValueIds,
     );
     const missingCustomValues = getMissingCustomValues(
+      session,
       ui.groups,
       selectedValueIdsForSave,
       state.customValuesByValueId,
