@@ -5001,4 +5001,172 @@ describe("deriveConfiguratorUi", () => {
       )[String(styleAttributeId)],
     ).toEqual([]);
   });
+
+  it("oculta textos de bordados adicionales en Uniforme cuando Bordados adicionales esta en No", () => {
+    const additionalEmbroideryAttributeId = 15000;
+    const additionalEmbroideryNoValueId = 15001;
+    const additionalEmbroideryYesValueId = 15002;
+    const textDependencies: Array<readonly [string, string]> = [
+      [
+        "Texto en pecho encima del bolsillo?",
+        "Color y fuente de texto en pecho encima del bolsillo",
+      ],
+      [
+        "Texto en bolsillo superior de pecho?",
+        "Color y fuente de Texto en bolsillo superior de pecho",
+      ],
+      [
+        "Texto en bolsillo inferior de pecho?",
+        "Color y fuente de Texto en bolsillo inferior de pecho",
+      ],
+      [
+        "Texto en pecho derecho?",
+        "Color y fuente de Texto en pecho derecho",
+      ],
+      [
+        "Texto en manga derecha?",
+        "Color y fuente de Texto en manga derecha",
+      ],
+      [
+        "Texto en manga izquierda?",
+        "Color y fuente de Texto en manga izquierda",
+      ],
+      ["Texto en espalda?", "Color y fuente de Texto en espalda"],
+    ];
+    const textAttributes = textDependencies.flatMap(
+      ([toggleName, styleName], index) => {
+        const baseId = 15100 + index * 10;
+
+        return [
+          {
+            id: baseId,
+            name: toggleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 1,
+                name: "No",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+              {
+                id: baseId + 2,
+                name: "Si",
+                attributeId: baseId,
+                attributeName: toggleName,
+              },
+            ],
+          },
+          {
+            id: baseId + 3,
+            name: styleName,
+            displayType: "radio" as const,
+            selectionMode: "single" as const,
+            variantMode: "no_variant" as const,
+            values: [
+              {
+                id: baseId + 4,
+                name: "Color y fuente",
+                attributeId: baseId + 3,
+                attributeName: styleName,
+              },
+            ],
+          },
+        ];
+      },
+    );
+    const sessionWithAdditionalEmbroidery: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        ...session.attributes,
+        {
+          id: additionalEmbroideryAttributeId,
+          name: "Bordados adicionales?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: additionalEmbroideryNoValueId,
+              name: "No",
+              attributeId: additionalEmbroideryAttributeId,
+              attributeName: "Bordados adicionales?",
+            },
+            {
+              id: additionalEmbroideryYesValueId,
+              name: "Si",
+              attributeId: additionalEmbroideryAttributeId,
+              attributeName: "Bordados adicionales?",
+            },
+          ],
+        },
+        ...textAttributes,
+      ],
+    };
+    const selectedTextValues = Object.fromEntries(
+      textDependencies.flatMap((_, index) => {
+        const baseId = 15100 + index * 10;
+
+        return [
+          [String(baseId), [baseId + 2]],
+          [String(baseId + 3), [baseId + 4]],
+        ];
+      }),
+    );
+    const selectedWithNo = {
+      ...session.selectedValueIds,
+      [String(additionalEmbroideryAttributeId)]: [
+        additionalEmbroideryNoValueId,
+      ],
+      ...selectedTextValues,
+    };
+    const uiWithNo = deriveConfiguratorUi(
+      sessionWithAdditionalEmbroidery,
+      selectedWithNo,
+    );
+    const labelsWithNo = uiWithNo.groups.map((group) => group.label);
+    const summaryLabelsWithNo = uiWithNo.summary.map((item) => item.label);
+
+    for (const [toggleName, styleName] of textDependencies) {
+      expect(labelsWithNo).not.toContain(toggleName);
+      expect(labelsWithNo).not.toContain(styleName);
+      expect(summaryLabelsWithNo).not.toContain(toggleName);
+      expect(summaryLabelsWithNo).not.toContain(styleName);
+    }
+
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithAdditionalEmbroidery,
+        selectedWithNo,
+      ),
+    ).toMatchObject(
+      Object.fromEntries(
+        textDependencies.flatMap((_, index) => {
+          const baseId = 15100 + index * 10;
+
+          return [
+            [String(baseId), []],
+            [String(baseId + 3), []],
+          ];
+        }),
+      ),
+    );
+
+    const uiWithYes = deriveConfiguratorUi(sessionWithAdditionalEmbroidery, {
+      ...session.selectedValueIds,
+      [String(additionalEmbroideryAttributeId)]: [
+        additionalEmbroideryYesValueId,
+      ],
+    });
+    const labelsWithYes = uiWithYes.groups.map((group) => group.label);
+
+    for (const [toggleName] of textDependencies) {
+      expect(labelsWithYes).toContain(toggleName);
+    }
+  });
 });

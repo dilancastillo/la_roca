@@ -885,6 +885,23 @@ function findTextStyleAttributes(
   );
 }
 
+function isTextToggleAttributeForAdditionalEmbroidery(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const normalizedName = normalize(attribute.name);
+
+  if (
+    normalizedName.includes("color") ||
+    normalizedName.includes("fuente")
+  ) {
+    return false;
+  }
+
+  return textStyleAttributeDependencies.some((dependency) =>
+    normalizedIncludesAll(normalizedName, dependency.toggleTerms),
+  );
+}
+
 function isBootTypeAttributeName(normalizedName: string) {
   return (
     normalizedName === "tipo bota" ||
@@ -1143,6 +1160,61 @@ function getHiddenLowerPocketZipperOptionAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenAdditionalEmbroideryAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+
+  if (!isUniformeSession(session)) {
+    return hiddenAttributeIds;
+  }
+
+  const additionalEmbroideryAttribute = findAttributeByName(
+    session,
+    (name) => name.includes("bordados") && name.includes("adicionales"),
+  );
+
+  if (!additionalEmbroideryAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const hasAdditionalEmbroidery = getSelectedOptions(
+    additionalEmbroideryAttribute,
+    selectedValueIds,
+  ).some((value) => isYesTextToggleValue(value.name));
+
+  if (hasAdditionalEmbroidery) {
+    return hiddenAttributeIds;
+  }
+
+  for (const attribute of session.attributes) {
+    if (!isTextToggleAttributeForAdditionalEmbroidery(attribute)) {
+      continue;
+    }
+
+    hiddenAttributeIds.add(attribute.id);
+
+    const dependency = textStyleAttributeDependencies.find((item) =>
+      normalizedIncludesAll(normalize(attribute.name), item.toggleTerms),
+    );
+
+    if (!dependency) {
+      continue;
+    }
+
+    for (const styleAttribute of findTextStyleAttributes(
+      session,
+      attribute.id,
+      dependency,
+    )) {
+      hiddenAttributeIds.add(styleAttribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenConditionalAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1153,6 +1225,7 @@ function getHiddenConditionalAttributeIds(
       session,
       selectedValueIds,
     ),
+    ...getHiddenAdditionalEmbroideryAttributeIds(session, selectedValueIds),
   ]);
 }
 
