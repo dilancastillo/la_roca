@@ -5299,5 +5299,55 @@ describe("deriveConfiguratorUi", () => {
       expect(labelsWithYes).toContain(toggleName);
       expect(labelsWithYes).not.toContain(styleName);
     }
+
+    const blouseSession: ConfiguratorSession = {
+      ...sessionWithAdditionalEmbroidery,
+      productTemplateId: 6,
+      productName: "Blusa",
+      graphicManifestKey: "blusa-antifluido-t180",
+    };
+    const blouseUiWithNo = deriveConfiguratorUi(blouseSession, selectedWithNo);
+    const blouseLabelsWithNo = blouseUiWithNo.groups.map(
+      (group) => group.label,
+    );
+
+    for (const [toggleName, styleName] of textDependencies) {
+      expect(blouseLabelsWithNo).not.toContain(toggleName);
+      expect(blouseLabelsWithNo).not.toContain(styleName);
+    }
+
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        blouseSession,
+        selectedWithNo,
+      ),
+    ).toMatchObject(
+      Object.fromEntries(
+        textDependencies.flatMap((_, index) => {
+          const baseId = 15100 + index * 10;
+
+          return [
+            [String(baseId), []],
+            [String(baseId + 3), []],
+          ];
+        }),
+      ),
+    );
+
+    const blouseUiWithYes = deriveConfiguratorUi(blouseSession, {
+      ...session.selectedValueIds,
+      [String(additionalEmbroideryAttributeId)]: [
+        additionalEmbroideryYesValueId,
+      ],
+    });
+
+    for (const [toggleName, styleName] of textDependencies) {
+      expect(blouseUiWithYes.groups.map((group) => group.label)).toContain(
+        toggleName,
+      );
+      expect(blouseUiWithYes.groups.map((group) => group.label)).not.toContain(
+        styleName,
+      );
+    }
   });
 });

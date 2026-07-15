@@ -1175,10 +1175,6 @@ function getHiddenAdditionalEmbroideryAttributeIds(
 ) {
   const hiddenAttributeIds = new Set<number>();
 
-  if (!isUniformeSession(session)) {
-    return hiddenAttributeIds;
-  }
-
   const additionalEmbroideryAttribute = findAttributeByName(
     session,
     (name) => name.includes("bordados") && name.includes("adicionales"),
