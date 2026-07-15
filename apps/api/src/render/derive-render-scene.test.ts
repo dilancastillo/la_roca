@@ -930,6 +930,61 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
+  it("usa el relleno Asorsalud para Bolsillo de pretina en Uniforme", () => {
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        ...session.attributes.map((attribute) =>
+          attribute.id === 92
+            ? {
+                ...attribute,
+                values: [
+                  ...attribute.values,
+                  {
+                    id: 8810,
+                    name: "Bolsillo lateral de pantalon",
+                    attributeId: 92,
+                    attributeName: "Seccion de vivo",
+                  },
+                ],
+              }
+            : attribute,
+        ),
+        {
+          id: 8811,
+          name: "Bolsillo de pretina",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8812,
+              name: "Asorsalud",
+              attributeId: 8811,
+              attributeName: "Bolsillo de pretina",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "91": [5152],
+        "92": [8810],
+        "8811": [8812],
+      },
+    };
+
+    const scene = deriveAutomationRenderScene(
+      uniformSession,
+      uniformSession.selectedValueIds,
+    );
+
+    expect(scene.uniformParts?.pants.pantsSidePocketType).toBe("asorsalud");
+  });
+
   it("aplica pespunte a blusa y pantalon cuando Uniforme lleva pespunte", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,

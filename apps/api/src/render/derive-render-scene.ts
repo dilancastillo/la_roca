@@ -486,7 +486,8 @@ function isPantsSidePocketAttributeName(normalizedName: string) {
   return (
     normalizedName === "lateral" ||
     normalizedName === "internos" ||
-    (normalizedName.includes("bolsillo") && normalizedName.includes("lateral"))
+    (normalizedName.includes("bolsillo") &&
+      (normalizedName.includes("lateral") || normalizedName.includes("pretina")))
   );
 }
 
