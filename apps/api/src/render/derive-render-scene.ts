@@ -221,15 +221,23 @@ function isBlouseUniformTrimSection(section: AutomationTrimSection) {
   );
 }
 
+function isSharedUniformTrimSection(section: AutomationTrimSection) {
+  return getUniformTrimSectionText(section).includes("pespunte");
+}
+
 function getUniformBlouseTrimSections(sections: AutomationTrimSection[]) {
   return sections.filter(
     (section) =>
-      isBlouseUniformTrimSection(section) && !isPantsUniformTrimSection(section),
+      isBlouseUniformTrimSection(section) &&
+      (!isPantsUniformTrimSection(section) || isSharedUniformTrimSection(section)),
   );
 }
 
 function getUniformPantsTrimSections(sections: AutomationTrimSection[]) {
-  return sections.filter(isPantsUniformTrimSection);
+  return sections.filter(
+    (section) =>
+      isPantsUniformTrimSection(section) || isSharedUniformTrimSection(section),
+  );
 }
 
 function removePantsKneePatchFromUniformBlouseScene(

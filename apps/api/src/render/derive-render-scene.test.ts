@@ -884,6 +884,52 @@ describe("deriveAutomationRenderScene", () => {
     expect(uniformParts?.blouse.pantsKneePatchLeftType).toBeUndefined();
   });
 
+  it("aplica el vivo Pespunte de Uniforme a blusa y pantalon", () => {
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 92
+          ? {
+              ...attribute,
+              values: [
+                ...attribute.values,
+                {
+                  id: 8803,
+                  name: "Pespunte",
+                  attributeId: 92,
+                  attributeName: "Seccion de vivo",
+                },
+              ],
+            }
+          : attribute,
+      ),
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "91": [5152],
+        "92": [8803],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      uniformSession,
+      uniformSession.selectedValueIds,
+    );
+    const uniformParts = scene.uniformParts;
+
+    expect(uniformParts?.blouse.trimSections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "pespunte", colorHex: "#f4c7cc" }),
+      ]),
+    );
+    expect(uniformParts?.pants.trimSections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "pespunte", colorHex: "#f4c7cc" }),
+      ]),
+    );
+  });
+
   it("aplica pespunte a blusa y pantalon cuando Uniforme lleva pespunte", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,
