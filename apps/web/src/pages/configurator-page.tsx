@@ -142,6 +142,22 @@ function isOptionalPantsSizeCustomValue(
   );
 }
 
+function isOptionalBlouseSizeCustomValue(
+  session: ConfiguratorSession,
+  group: UiAttributeGroup,
+) {
+  const productKey = normalizeText(session.graphicManifestKey);
+  const isBlouseConfiguration =
+    productKey === "uniforme" || productKey.includes("blusa");
+  const groupLabel = normalizeText(group.label);
+
+  return (
+    isBlouseConfiguration &&
+    groupLabel.includes("talla") &&
+    groupLabel.includes("blusa")
+  );
+}
+
 function getMissingCustomValues(
   session: ConfiguratorSession,
   groups: UiAttributeGroup[],
@@ -160,7 +176,8 @@ function getMissingCustomValues(
 
       if (
         isOptionalBootOpeningCustomValue(session, group, option) ||
-        isOptionalPantsSizeCustomValue(session, group)
+        isOptionalPantsSizeCustomValue(session, group) ||
+        isOptionalBlouseSizeCustomValue(session, group)
       ) {
         continue;
       }
