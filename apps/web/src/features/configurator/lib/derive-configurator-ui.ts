@@ -1220,6 +1220,54 @@ function getHiddenAdditionalEmbroideryAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenAdditionalPantsPocketAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const isPantsConfiguration =
+    isUniformeSession(session) || normalize(session.graphicManifestKey) === "pantalon";
+
+  if (!isPantsConfiguration) {
+    return hiddenAttributeIds;
+  }
+
+  const additionalPocketsAttribute = findAttributeByName(
+    session,
+    (name) => name.includes("bolsillos adicionales") && name.includes("pantalon"),
+  );
+
+  if (!additionalPocketsAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const hasAdditionalPockets = getSelectedOptions(
+    additionalPocketsAttribute,
+    selectedValueIds,
+  ).some((value) => isYesTextToggleValue(value.name));
+
+  if (hasAdditionalPockets) {
+    return hiddenAttributeIds;
+  }
+
+  const dependentAttributeNames = new Set([
+    "modelo bolsillo trasero",
+    "tipo de bolsillo trasero",
+    "modelo bolsillo de parche rodilla derecha",
+    "tipo de bolsillo de parche rodilla derecha",
+    "modelo bolsillo de parche rodilla izquierda",
+    "tipo de bolsillo de parche rodilla izquierda",
+  ]);
+
+  for (const attribute of session.attributes) {
+    if (dependentAttributeNames.has(normalize(attribute.name))) {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenConditionalAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1231,6 +1279,10 @@ function getHiddenConditionalAttributeIds(
       selectedValueIds,
     ),
     ...getHiddenAdditionalEmbroideryAttributeIds(session, selectedValueIds),
+    ...getHiddenAdditionalPantsPocketAttributeIds(
+      session,
+      selectedValueIds,
+    ),
   ]);
 }
 

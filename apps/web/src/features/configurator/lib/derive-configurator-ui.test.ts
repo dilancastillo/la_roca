@@ -4934,6 +4934,111 @@ describe("deriveConfiguratorUi", () => {
     ).toEqual([]);
   });
 
+  it("solo muestra bolsillos adicionales de pantalon cuando estan en Si", () => {
+    const additionalPocketsAttributeId = 12300;
+    const additionalPocketsNoValueId = 12301;
+    const additionalPocketsYesValueId = 12302;
+    const dependentAttributes = [
+      { id: 12310, name: "Modelo bolsillo trasero" },
+      { id: 12320, name: "Tipo de bolsillo trasero" },
+      { id: 12330, name: "Modelo bolsillo de parche rodilla derecha" },
+      { id: 12340, name: "Tipo de bolsillo de parche rodilla derecha" },
+      { id: 12350, name: "Modelo bolsillo de parche rodilla izquierda" },
+      { id: 12360, name: "Tipo de bolsillo de parche rodilla izquierda" },
+    ].map(({ id, name }) => ({
+      id,
+      name,
+      displayType: "radio" as const,
+      selectionMode: "single" as const,
+      variantMode: "no_variant" as const,
+      values: [
+        {
+          id: id + 1,
+          name: "Configurado",
+          attributeId: id,
+          attributeName: name,
+        },
+      ],
+    }));
+    const sessionWithAdditionalPantsPockets: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: additionalPocketsAttributeId,
+          name: "¿Bolsillos adicionales en pantalón?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: additionalPocketsNoValueId,
+              name: "No",
+              attributeId: additionalPocketsAttributeId,
+              attributeName: "¿Bolsillos adicionales en pantalón?",
+            },
+            {
+              id: additionalPocketsYesValueId,
+              name: "Si",
+              attributeId: additionalPocketsAttributeId,
+              attributeName: "¿Bolsillos adicionales en pantalón?",
+            },
+          ],
+        },
+        ...dependentAttributes,
+      ],
+    };
+    const selectedDependentValues = Object.fromEntries(
+      dependentAttributes.map((attribute) => [
+        String(attribute.id),
+        [attribute.id + 1],
+      ]),
+    );
+    const selectedWithNo = {
+      ...pantalonSession.selectedValueIds,
+      [String(additionalPocketsAttributeId)]: [additionalPocketsNoValueId],
+      ...selectedDependentValues,
+    };
+    const expectedDependentLabels = dependentAttributes.map(
+      (attribute) => attribute.name,
+    );
+
+    for (const pantsSession of [
+      sessionWithAdditionalPantsPockets,
+      {
+        ...sessionWithAdditionalPantsPockets,
+        productTemplateId: 7,
+        productName: "Uniforme",
+        graphicManifestKey: "uniforme",
+      },
+    ]) {
+      const labelsWithNo = deriveConfiguratorUi(
+        pantsSession,
+        selectedWithNo,
+      ).groups.map((group) => group.label);
+      const labelsWithYes = deriveConfiguratorUi(pantsSession, {
+        ...pantalonSession.selectedValueIds,
+        [String(additionalPocketsAttributeId)]: [additionalPocketsYesValueId],
+      }).groups.map((group) => group.label);
+
+      for (const label of expectedDependentLabels) {
+        expect(labelsWithNo).not.toContain(label);
+        expect(labelsWithYes).toContain(label);
+      }
+
+      expect(
+        sanitizeSelectedValueIdsForHiddenTextAttributes(
+          pantsSession,
+          selectedWithNo,
+        ),
+      ).toMatchObject(
+        Object.fromEntries(
+          dependentAttributes.map((attribute) => [String(attribute.id), []]),
+        ),
+      );
+    }
+  });
+
   it("selecciona Color y fuente al activar cualquiera de los textos dependientes", () => {
     const textDependencies: Array<readonly [string, string]> = [
       [
