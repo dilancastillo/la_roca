@@ -126,6 +126,22 @@ function isOptionalBootOpeningCustomValue(
   );
 }
 
+function isOptionalPantsSizeCustomValue(
+  session: ConfiguratorSession,
+  group: UiAttributeGroup,
+) {
+  const productKey = normalizeText(session.graphicManifestKey);
+  const isPantsConfiguration =
+    productKey === "pantalon" || productKey === "uniforme";
+  const groupLabel = normalizeText(group.label);
+
+  return (
+    isPantsConfiguration &&
+    groupLabel.includes("talla") &&
+    groupLabel.includes("pantalon")
+  );
+}
+
 function getMissingCustomValues(
   session: ConfiguratorSession,
   groups: UiAttributeGroup[],
@@ -142,7 +158,10 @@ function getMissingCustomValues(
         continue;
       }
 
-      if (isOptionalBootOpeningCustomValue(session, group, option)) {
+      if (
+        isOptionalBootOpeningCustomValue(session, group, option) ||
+        isOptionalPantsSizeCustomValue(session, group)
+      ) {
         continue;
       }
 
