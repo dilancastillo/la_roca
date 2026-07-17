@@ -4220,4 +4220,164 @@ describe("deriveAutomationRenderScene", () => {
 
     expect(scene.logoMarker).toBeUndefined();
   });
+
+  it("resuelve rodillas y vivos por IDs de Odoo aunque sus etiquetas cambien", () => {
+    const renamedKneeSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        {
+          id: 169,
+          name: "Patch derecho renovado",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9100,
+              sourceValueId: 760,
+              name: "Opcion renombrada",
+              attributeId: 169,
+              attributeName: "Patch derecho renovado",
+            },
+          ],
+        },
+        {
+          id: 170,
+          name: "Acabado derecho renovado",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9101,
+              sourceValueId: 1942,
+              name: "Opcion renombrada",
+              attributeId: 170,
+              attributeName: "Acabado derecho renovado",
+            },
+          ],
+        },
+        {
+          id: 171,
+          name: "Patch izquierdo renovado",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9102,
+              sourceValueId: 1934,
+              name: "Opcion renombrada",
+              attributeId: 171,
+              attributeName: "Patch izquierdo renovado",
+            },
+          ],
+        },
+        {
+          id: 172,
+          name: "Acabado izquierdo renovado",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9103,
+              sourceValueId: 1946,
+              name: "Opcion renombrada",
+              attributeId: 172,
+              attributeName: "Acabado izquierdo renovado",
+            },
+          ],
+        },
+        {
+          id: 157,
+          name: "Vivos personalizados",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9104,
+              sourceValueId: 2093,
+              name: "Vivo renombrado uno",
+              attributeId: 157,
+              attributeName: "Vivos personalizados",
+            },
+            {
+              id: 9105,
+              sourceValueId: 2109,
+              name: "Vivo renombrado dos",
+              attributeId: 157,
+              attributeName: "Vivos personalizados",
+            },
+          ],
+        },
+        {
+          id: 814,
+          name: "Color de vivo personalizado",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9106,
+              name: "Color renombrado",
+              attributeId: 814,
+              attributeName: "Color de vivo personalizado",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        "169": [9100],
+        "170": [9101],
+        "171": [9102],
+        "172": [9103],
+        "157": [9104, 9105],
+        "814": [9106],
+      },
+    };
+
+    const scene = deriveAutomationRenderScene(
+      renamedKneeSession,
+      renamedKneeSession.selectedValueIds,
+    );
+
+    expect(scene.uniformParts?.pants).toMatchObject({
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchRightType: "horizontalZipper",
+      pantsKneePatchLeftModel: "camouflage",
+      pantsKneePatchLeftType: "button",
+      trimSections: [
+        { sourceValueId: 2093, colorHex: "#f4c7cc" },
+        { sourceValueId: 2109, colorHex: "#f4c7cc" },
+      ],
+    });
+    expect(scene.uniformParts?.blouse.trimSections).toEqual([]);
+
+    const pantsOnlyScene = deriveAutomationRenderScene(
+      {
+        ...renamedKneeSession,
+        productTemplateId: 6,
+        productName: "Pantalon",
+        graphicManifestKey: "pantalon",
+      },
+      renamedKneeSession.selectedValueIds,
+    );
+
+    expect(pantsOnlyScene).toMatchObject({
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchRightType: "horizontalZipper",
+      pantsKneePatchLeftModel: "camouflage",
+      pantsKneePatchLeftType: "button",
+      trimSections: [
+        { sourceValueId: 2093 },
+        { sourceValueId: 2109 },
+      ],
+    });
+  });
 });

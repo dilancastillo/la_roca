@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const configuratorValueSchema = z.object({
   id: z.number(),
+  sourceValueId: z.number().optional(),
   name: z.string().min(1),
   attributeId: z.number(),
   attributeName: z.string().min(1),

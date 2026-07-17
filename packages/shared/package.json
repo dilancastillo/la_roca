@@ -18,6 +18,10 @@
       "types": "./dist/lower-pocket-rules.d.ts",
       "default": "./dist/lower-pocket-rules.js"
     },
+    "./pants-knee-patch-rules": {
+      "types": "./dist/pants-knee-patch-rules.d.ts",
+      "default": "./dist/pants-knee-patch-rules.js"
+    },
     "./visual-assets": {
       "types": "./dist/visual-assets.d.ts",
       "default": "./dist/visual-assets.js"

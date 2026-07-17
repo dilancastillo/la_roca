@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import {
+  getPantsKneeTrimSectionBySourceValueId,
+  type PantsKneeTrimSection,
+} from "@repo/shared/pants-knee-patch-rules";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 
 const CANVAS_WIDTH = 900;
@@ -1859,6 +1863,10 @@ function isPantsSidePocketTrimSection(
 function isPantsKneePatchTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
+    return false;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1873,9 +1881,20 @@ function hasPantsKneePatchSideTerm(key: string) {
   return key.includes("derecha") || key.includes("izquierda");
 }
 
+function hasPantsKneeTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+  expected: PantsKneeTrimSection,
+) {
+  return getPantsKneeTrimSectionBySourceValueId(section.sourceValueId) === expected;
+}
+
 function isPantsKneePatchRightTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "patchRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1888,6 +1907,10 @@ function isPantsKneePatchRightTrimSection(
 function isPantsKneePatchLeftTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "patchLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1900,6 +1923,10 @@ function isPantsKneePatchLeftTrimSection(
 function isPantsKneePatchRightRibeteTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "ribeteRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1912,6 +1939,10 @@ function isPantsKneePatchRightRibeteTrimSection(
 function isPantsKneePatchLeftRibeteTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "ribeteLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1924,6 +1955,10 @@ function isPantsKneePatchLeftRibeteTrimSection(
 function isPantsKneePatchUpperLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
+    return false;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1939,6 +1974,10 @@ function isPantsKneePatchUpperLinearTrimSection(
 function isPantsKneePatchLowerLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
+    return false;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1954,6 +1993,10 @@ function isPantsKneePatchLowerLinearTrimSection(
 function isPantsKneePatchRightUpperLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "linearUpperRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1967,6 +2010,10 @@ function isPantsKneePatchRightUpperLinearTrimSection(
 function isPantsKneePatchLeftUpperLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "linearUpperLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1980,6 +2027,10 @@ function isPantsKneePatchLeftUpperLinearTrimSection(
 function isPantsKneePatchRightLowerLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "linearLowerRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -1993,6 +2044,10 @@ function isPantsKneePatchRightLowerLinearTrimSection(
 function isPantsKneePatchLeftLowerLinearTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "linearLowerLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2006,6 +2061,10 @@ function isPantsKneePatchLeftLowerLinearTrimSection(
 function isPantsKneePatchRightRingTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "ringRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2018,6 +2077,10 @@ function isPantsKneePatchRightRingTrimSection(
 function isPantsKneePatchLeftRingTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "ringLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2032,6 +2095,10 @@ function isPantsKneePatchLeftRingTrimSection(
 function isPantsKneePatchRightVerticalZipperTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "zipperRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2046,6 +2113,10 @@ function isPantsKneePatchRightVerticalZipperTrimSection(
 function isPantsKneePatchLeftVerticalZipperTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "zipperLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2060,6 +2131,10 @@ function isPantsKneePatchLeftVerticalZipperTrimSection(
 function isPantsKneePatchRightButtonTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "buttonRight")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (
@@ -2072,6 +2147,10 @@ function isPantsKneePatchRightButtonTrimSection(
 function isPantsKneePatchLeftButtonTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
+  if (hasPantsKneeTrimSection(section, "buttonLeft")) {
+    return true;
+  }
+
   const key = getTrimSectionText(section);
 
   return (

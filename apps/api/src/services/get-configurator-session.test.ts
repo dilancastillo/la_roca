@@ -275,6 +275,11 @@ describe("getConfiguratorSession", () => {
         .find((attribute) => attribute.id === 91)
         ?.values.map((value) => value.id),
     ).toEqual([9103, 9102, 9101]);
+    expect(
+      session.attributes
+        .find((attribute) => attribute.id === 91)
+        ?.values.map((value) => value.sourceValueId),
+    ).toEqual([19103, 19102, 19101]);
     expect(session.status.version).toBe(4);
   });
 });

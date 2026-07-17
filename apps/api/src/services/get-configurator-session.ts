@@ -709,6 +709,7 @@ export async function getConfiguratorSession(
 
     group.values.push({
       id: ptav.id,
+      sourceValueId: productAttributeValueId,
       name: ptav.name,
       attributeId,
       attributeName: group.name,
@@ -731,13 +732,8 @@ export async function getConfiguratorSession(
     groupedAttributes.set(attributeId, group);
   }
 
-  const shouldUseOdooOptionSequence =
-    productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
-    normalizeGraphicManifestKey(productName) === "uniforme";
-
-  if (shouldUseOdooOptionSequence) {
-    for (const attribute of groupedAttributes.values()) {
-      attribute.values.sort((left, right) => {
+  for (const attribute of groupedAttributes.values()) {
+    attribute.values.sort((left, right) => {
         const leftOrder = optionOrderByPtavId.get(left.id);
         const rightOrder = optionOrderByPtavId.get(right.id);
         const leftSequence = leftOrder?.sequence;
@@ -763,8 +759,7 @@ export async function getConfiguratorSession(
           (leftOrder?.index ?? 0) - (rightOrder?.index ?? 0) ||
           left.id - right.id
         );
-      });
-    }
+    });
   }
 
   const sortedAttributes = Array.from(groupedAttributes.values()).sort(

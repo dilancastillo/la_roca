@@ -1,4 +1,12 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import {
+  getPantsKneePatchModelBySourceValueId,
+  getPantsKneePatchTypeBySourceValueId,
+  getPantsKneeTrimSectionBySourceValueId,
+  PANTS_KNEE_PATCH_ATTRIBUTE_IDS,
+  type PantsKneePatchModel,
+  type PantsKneePatchType,
+} from "@repo/shared/pants-knee-patch-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
   getLowerPocketAuxiliaryAddon,
@@ -31,44 +39,10 @@ export type AutomationRenderScene = {
   bootAssetPath?: string;
   waistbandAssetPath?: string;
   pantsSidePocketType?: "doubleZipper" | "asorsalud";
-  pantsKneePatchRightModel?:
-    | "square"
-    | "camouflage"
-    | "point"
-    | "internal"
-    | "ribete"
-    | "triangularFlap";
-  pantsKneePatchRightType?:
-    | "snap"
-    | "overlaid"
-    | "button"
-    | "doubleButton"
-    | "velcro"
-    | "buckle"
-    | "penSeam"
-    | "plain"
-    | "zipper"
-    | "horizontalZipper"
-    | "verticalZipper";
-  pantsKneePatchLeftModel?:
-    | "square"
-    | "camouflage"
-    | "point"
-    | "internal"
-    | "ribete"
-    | "triangularFlap";
-  pantsKneePatchLeftType?:
-    | "snap"
-    | "overlaid"
-    | "button"
-    | "doubleButton"
-    | "velcro"
-    | "buckle"
-    | "penSeam"
-    | "plain"
-    | "zipper"
-    | "horizontalZipper"
-    | "verticalZipper";
+  pantsKneePatchRightModel?: PantsKneePatchModel;
+  pantsKneePatchRightType?: PantsKneePatchType;
+  pantsKneePatchLeftModel?: PantsKneePatchModel;
+  pantsKneePatchLeftType?: PantsKneePatchType;
   neckAssetPath?: string;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
@@ -82,6 +56,7 @@ export type AutomationRenderScene = {
   };
   trimSections: Array<{
     valueId: number;
+    sourceValueId?: number;
     role?:
       | "backNeck"
       | "upperNeck"
@@ -181,6 +156,10 @@ function getUniformTrimSectionText(section: AutomationTrimSection) {
 }
 
 function isPantsUniformTrimSection(section: AutomationTrimSection) {
+  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
+    return true;
+  }
+
   const normalized = getUniformTrimSectionText(section);
 
   return (
@@ -472,6 +451,9 @@ function getSelectedTrimSections(
 
           return {
             valueId: section.id,
+            ...(section.sourceValueId !== undefined
+              ? { sourceValueId: section.sourceValueId }
+              : {}),
             ...(role ? { role } : {}),
             key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
             label: section.name,
@@ -659,6 +641,55 @@ function isPlainKneePatch(valueName: string | undefined) {
   return normalized.includes("lizo") || normalized.includes("liso");
 }
 
+type KneePatchOption = ConfiguratorSession["attributes"][number]["values"][number];
+
+function resolveKneePatchModel(option: KneePatchOption): PantsKneePatchModel | undefined {
+  const model = getPantsKneePatchModelBySourceValueId(option.sourceValueId);
+
+  if (model) {
+    return model;
+  }
+
+  if (isCamouflageKneePatch(option.name)) {
+    return "camouflage";
+  }
+  if (isPointKneePatch(option.name)) {
+    return "point";
+  }
+  if (isInternalKneePatch(option.name)) {
+    return "internal";
+  }
+  if (isRibeteKneePatch(option.name)) {
+    return "ribete";
+  }
+  if (isTriangularFlapKneePatch(option.name)) {
+    return "triangularFlap";
+  }
+
+  return isSquareKneePatch(option.name) ? "square" : undefined;
+}
+
+function resolveKneePatchType(option: KneePatchOption): PantsKneePatchType | undefined {
+  const type = getPantsKneePatchTypeBySourceValueId(option.sourceValueId);
+
+  if (type) {
+    return type;
+  }
+
+  if (isSnapKneePatch(option.name)) return "snap";
+  if (isOverlaidKneePatch(option.name)) return "overlaid";
+  if (isDoubleButtonKneePatch(option.name)) return "doubleButton";
+  if (isButtonKneePatch(option.name)) return "button";
+  if (isVelcroKneePatch(option.name)) return "velcro";
+  if (isBuckleKneePatch(option.name)) return "buckle";
+  if (isPenSeamKneePatch(option.name)) return "penSeam";
+  if (isGenericZipperKneePatch(option.name)) return "zipper";
+  if (isHorizontalZipperKneePatch(option.name)) return "horizontalZipper";
+  if (isVerticalZipperKneePatch(option.name)) return "verticalZipper";
+
+  return isPlainKneePatch(option.name) ? "plain" : undefined;
+}
+
 function isPespunteGarment(valueName: string | undefined) {
   return valueName ? normalize(valueName).includes("pespunte") : false;
 }
@@ -821,18 +852,34 @@ function deriveSingleAutomationRenderScene(
     session,
     isPantsSidePocketAttributeName,
   );
-  const rightKneePatchModelAttribute = findAttributeByName(session, (name) =>
-    isKneePatchModelAttributeName(name, "derecha"),
-  );
-  const leftKneePatchModelAttribute = findAttributeByName(session, (name) =>
-    isKneePatchModelAttributeName(name, "izquierda"),
-  );
-  const rightKneePatchTypeAttribute = findAttributeByName(session, (name) =>
-    isKneePatchTypeAttributeName(name, "derecha"),
-  );
-  const leftKneePatchTypeAttribute = findAttributeByName(session, (name) =>
-    isKneePatchTypeAttributeName(name, "izquierda"),
-  );
+  const rightKneePatchModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      isKneePatchModelAttributeName(name, "derecha"),
+    );
+  const leftKneePatchModelAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftModel,
+    ) ??
+    findAttributeByName(session, (name) =>
+      isKneePatchModelAttributeName(name, "izquierda"),
+    );
+  const rightKneePatchTypeAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType,
+    ) ??
+    findAttributeByName(session, (name) =>
+      isKneePatchTypeAttributeName(name, "derecha"),
+    );
+  const leftKneePatchTypeAttribute =
+    session.attributes.find(
+      (attribute) => attribute.id === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType,
+    ) ??
+    findAttributeByName(session, (name) =>
+      isKneePatchTypeAttributeName(name, "izquierda"),
+    );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
@@ -884,130 +931,32 @@ function deriveSingleAutomationRenderScene(
   const rightKneePatchModel = getSelectedOptions(
     rightKneePatchModelAttribute,
     selectedValueIds,
-  ).find(
-    (option) =>
-      isSquareKneePatch(option.name) ||
-      isCamouflageKneePatch(option.name) ||
-      isPointKneePatch(option.name) ||
-      isInternalKneePatch(option.name) ||
-      isRibeteKneePatch(option.name) ||
-      isTriangularFlapKneePatch(option.name),
-  );
+  ).find(resolveKneePatchModel);
   const leftKneePatchModel = getSelectedOptions(
     leftKneePatchModelAttribute,
     selectedValueIds,
-  ).find(
-    (option) =>
-      isSquareKneePatch(option.name) ||
-      isCamouflageKneePatch(option.name) ||
-      isPointKneePatch(option.name) ||
-      isInternalKneePatch(option.name) ||
-      isRibeteKneePatch(option.name) ||
-      isTriangularFlapKneePatch(option.name),
-  );
+  ).find(resolveKneePatchModel);
   const rightKneePatchModelValue = rightKneePatchModel
-    ? isCamouflageKneePatch(rightKneePatchModel.name)
-      ? "camouflage"
-      : isPointKneePatch(rightKneePatchModel.name)
-        ? "point"
-        : isInternalKneePatch(rightKneePatchModel.name)
-          ? "internal"
-        : isRibeteKneePatch(rightKneePatchModel.name)
-          ? "ribete"
-        : isTriangularFlapKneePatch(rightKneePatchModel.name)
-          ? "triangularFlap"
-          : "square"
+    ? resolveKneePatchModel(rightKneePatchModel)
     : undefined;
   const leftKneePatchModelValue = leftKneePatchModel
-    ? isCamouflageKneePatch(leftKneePatchModel.name)
-      ? "camouflage"
-      : isPointKneePatch(leftKneePatchModel.name)
-        ? "point"
-        : isInternalKneePatch(leftKneePatchModel.name)
-          ? "internal"
-        : isRibeteKneePatch(leftKneePatchModel.name)
-          ? "ribete"
-        : isTriangularFlapKneePatch(leftKneePatchModel.name)
-          ? "triangularFlap"
-          : "square"
+    ? resolveKneePatchModel(leftKneePatchModel)
     : undefined;
   const rightKneePatchType =
     rightKneePatchModelValue &&
     getSelectedOptions(rightKneePatchTypeAttribute, selectedValueIds).find(
-      (option) =>
-        isDoubleButtonKneePatch(option.name) ||
-        isButtonKneePatch(option.name) ||
-        isVelcroKneePatch(option.name) ||
-        isSnapKneePatch(option.name) ||
-        isOverlaidKneePatch(option.name) ||
-        isBuckleKneePatch(option.name) ||
-        isPenSeamKneePatch(option.name) ||
-        isGenericZipperKneePatch(option.name) ||
-        isHorizontalZipperKneePatch(option.name) ||
-        isVerticalZipperKneePatch(option.name) ||
-        isPlainKneePatch(option.name),
+      resolveKneePatchType,
     );
   const leftKneePatchType =
     leftKneePatchModelValue &&
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
-      (option) =>
-        isDoubleButtonKneePatch(option.name) ||
-        isButtonKneePatch(option.name) ||
-        isVelcroKneePatch(option.name) ||
-        isSnapKneePatch(option.name) ||
-        isOverlaidKneePatch(option.name) ||
-        isBuckleKneePatch(option.name) ||
-        isPenSeamKneePatch(option.name) ||
-        isGenericZipperKneePatch(option.name) ||
-        isHorizontalZipperKneePatch(option.name) ||
-        isVerticalZipperKneePatch(option.name) ||
-        isPlainKneePatch(option.name),
+      resolveKneePatchType,
     );
   const rightKneePatchTypeValue = rightKneePatchType
-    ? isSnapKneePatch(rightKneePatchType.name)
-      ? "snap"
-      : isOverlaidKneePatch(rightKneePatchType.name)
-        ? "overlaid"
-      : isDoubleButtonKneePatch(rightKneePatchType.name)
-        ? "doubleButton"
-      : isButtonKneePatch(rightKneePatchType.name)
-      ? "button"
-      : isVelcroKneePatch(rightKneePatchType.name)
-        ? "velcro"
-      : isBuckleKneePatch(rightKneePatchType.name)
-        ? "buckle"
-      : isPenSeamKneePatch(rightKneePatchType.name)
-        ? "penSeam"
-      : isGenericZipperKneePatch(rightKneePatchType.name)
-        ? "zipper"
-      : isHorizontalZipperKneePatch(rightKneePatchType.name)
-      ? "horizontalZipper"
-      : isVerticalZipperKneePatch(rightKneePatchType.name)
-        ? "verticalZipper"
-        : "plain"
+    ? resolveKneePatchType(rightKneePatchType)
     : undefined;
   const leftKneePatchTypeValue = leftKneePatchType
-    ? isSnapKneePatch(leftKneePatchType.name)
-      ? "snap"
-      : isOverlaidKneePatch(leftKneePatchType.name)
-        ? "overlaid"
-      : isDoubleButtonKneePatch(leftKneePatchType.name)
-        ? "doubleButton"
-      : isButtonKneePatch(leftKneePatchType.name)
-      ? "button"
-      : isVelcroKneePatch(leftKneePatchType.name)
-        ? "velcro"
-      : isBuckleKneePatch(leftKneePatchType.name)
-        ? "buckle"
-      : isPenSeamKneePatch(leftKneePatchType.name)
-        ? "penSeam"
-      : isGenericZipperKneePatch(leftKneePatchType.name)
-        ? "zipper"
-      : isHorizontalZipperKneePatch(leftKneePatchType.name)
-      ? "horizontalZipper"
-      : isVerticalZipperKneePatch(leftKneePatchType.name)
-        ? "verticalZipper"
-        : "plain"
+    ? resolveKneePatchType(leftKneePatchType)
     : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
     isAsorsaludSidePocket(option.name),
