@@ -22,6 +22,10 @@
       "types": "./dist/pants-knee-patch-rules.d.ts",
       "default": "./dist/pants-knee-patch-rules.js"
     },
+    "./configurator-id-rules": {
+      "types": "./dist/configurator-id-rules.d.ts",
+      "default": "./dist/configurator-id-rules.js"
+    },
     "./visual-assets": {
       "types": "./dist/visual-assets.d.ts",
       "default": "./dist/visual-assets.js"

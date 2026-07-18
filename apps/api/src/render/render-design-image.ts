@@ -5,6 +5,7 @@ import {
   getPantsKneeTrimSectionBySourceValueId,
   type PantsKneeTrimSection,
 } from "@repo/shared/pants-knee-patch-rules";
+import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 
 const CANVAS_WIDTH = 900;
@@ -1495,8 +1496,22 @@ function isBlouseScene(scene: AutomationRenderScene, baseAssetPath?: string) {
   );
 }
 
-function getLogoMarkerPositions(placement: string) {
+function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {
   const positions: Array<{ x: number; y: number }> = [];
+  const sourcePlacements = Object.entries(CONFIGURATOR_VALUE_IDS.logoPlacement);
+
+  for (const [placementKey, ids] of sourcePlacements) {
+    if (!ids.some((id) => sourceValueIds.includes(id))) {
+      continue;
+    }
+
+    positions.push(LOGO_MARKER_POSITIONS[placementKey as keyof typeof LOGO_MARKER_POSITIONS]);
+  }
+
+  if (positions.length > 0) {
+    return positions;
+  }
+
   const selectedPlacements = placement
     .split(",")
     .map((value) => normalize(value))
@@ -1597,7 +1612,7 @@ function isWholeCollarSection(
   const key = getTrimSectionText(section);
 
   return (
-    normalize(section.label || section.key) === "cuello" ||
+    normalize(section.key || section.label) === "cuello" ||
     key.includes("cuello alto") ||
     key.includes("cuello-alto")
   );
@@ -1780,7 +1795,7 @@ function isLowerPocketTrimSection(
 function isLowerPocketRingsTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = normalize(section.key || section.label);
 
   return (
     key === "aros" ||
@@ -2199,7 +2214,7 @@ function isChestPocketLowerTrimSection(
 function isZipperTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  return normalize(section.label || section.key) === "cremallera";
+  return normalize(section.key || section.label) === "cremallera";
 }
 
 function isSleeveTabTrimSection(
@@ -2251,7 +2266,7 @@ function isFlapTrimSection(
 function isBackNeckTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = normalize(section.key || section.label);
 
   return (
     section.role === "backNeck" ||
@@ -3884,7 +3899,7 @@ function toDataUri(buffer: Buffer, mimeType = "image/png") {
 function getTrimSectionsSvg(scene: AutomationRenderScene) {
   return scene.trimSections
     .map((section) => {
-      const key = normalize(section.label || section.key);
+      const key = normalize(section.key || section.label);
       const parts: string[] = [];
 
       if (key.includes("frente") || key.includes("central")) {
@@ -3976,8 +3991,8 @@ function getImageSvg(imageDataUri: string, y = 0) {
   return `<image href="${imageDataUri}" x="0" y="${y}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`;
 }
 
-function getLogoMarkerSvg(placement: string) {
-  return getLogoMarkerPositions(placement)
+function getLogoMarkerSvg(placement: string, sourceValueIds?: number[]) {
+  return getLogoMarkerPositions(placement, sourceValueIds)
     .map(
       (position) => `
         <circle cx="${position.x}" cy="${position.y}" r="${LOGO_MARKER_OUTLINE_RADIUS}" fill="${LOGO_MARKER_OUTLINE}" />
@@ -5573,7 +5588,12 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetPath)) {
-      layers.push(getLogoMarkerSvg(scene.logoMarker.placement));
+      layers.push(
+        getLogoMarkerSvg(
+          scene.logoMarker.placement,
+          scene.logoMarker.sourceValueIds,
+        ),
+      );
     }
 
     if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetPath)) {

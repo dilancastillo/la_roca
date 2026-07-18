@@ -18,13 +18,13 @@ export type VisualAssetCatalog = {
     Record<keyof VisualAssetCatalog["attributeIds"], number[]>
   >;
   trimSectionValueIds?: {
-    backNeck: number;
-    upperNeck: number;
-    lowerNeck: number;
-    chestPocket: number;
-    lowerPockets: number;
-    auxiliaryPocket: number;
-    none: number;
+    backNeck: number[];
+    upperNeck: number[];
+    lowerNeck: number[];
+    chestPocket: number[];
+    lowerPockets: number[];
+    auxiliaryPocket: number[];
+    none: number[];
   };
   lowerPocketTypeValueIds?: {
     none: number[];
@@ -272,7 +272,7 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     lowerPocketModel: 154,
     chestPocketModel: 153,
     baseColor: 798,
-    trimColor: 802,
+    trimColor: 814,
     trimSections: 157,
   },
   attributeIdAliases: {
@@ -281,28 +281,30 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     lowerPocketModel: [70],
     chestPocketModel: [102],
     baseColor: [90],
-    trimColor: [91],
+    trimColor: [802, 91],
     trimSections: [92],
   },
   trimSectionValueIds: {
-    backNeck: 414,
-    upperNeck: 415,
-    lowerNeck: 422,
-    chestPocket: 418,
-    lowerPockets: 419,
-    auxiliaryPocket: 420,
-    none: 413,
+    backNeck: [414, 628],
+    upperNeck: [415, 629, 635, 1978, 1980],
+    lowerNeck: [422, 636, 1977, 1979],
+    chestPocket: [418, 632, 1986],
+    lowerPockets: [419, 633, 2087],
+    auxiliaryPocket: [420, 634],
+    none: [413, 627],
   },
   lowerPocketTypeValueIds: {
-    none: [402, 5342],
-    double: [393, 394, 395, 396, 397, 398, 399, 400, 401, 5354, 5366, 5378, 5390],
+    none: [402, 5342, 616],
+    double: [393, 394, 395, 396, 397, 398, 399, 400, 401, 5354, 5366, 5378, 5390, 607, 608, 609, 610, 611, 612, 613, 614, 615],
   },
-  lowerPocketModelNoneValueIds: [392, 1214, 5425],
+  lowerPocketModelNoneValueIds: [392, 606, 1214, 5425],
   defaultGarmentAsset: blouseModelAsset(1),
   defaultChestPocketModelAsset: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-v2.svg`,
   garmentModelsByValueId: {
     2866: blouseModelAsset(1), // Lizo en Blusa.
     2867: BLUSA_PESPUNTE_ASSET, // Pespunte en Blusa.
+    1957: blouseModelAsset(1), // No lleva pespunte en la configuracion actual.
+    1958: BLUSA_PESPUNTE_ASSET, // Si lleva pespunte en la configuracion actual.
   },
   neckModelsByValueId: {
     // IDs historicos de product.template.attribute.value.
@@ -365,6 +367,42 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2958: BLUSA_FISIOPRACTICAS_ASSET, // FISIOPRACTICAS.
     2960: BLUSA_P_PAIPILLA_ASSET, // P-PAIPILLA.
     7013: BLUSA_MARIPOSA_DIVIDIDO_ASSET, // MARIPOSA DIVIDIDO.
+    // IDs originales actuales de product.attribute.value. Se consultan antes
+    // del ID temporal de la variante y antes de cualquier nombre editable.
+    554: blouseModelAsset(1),
+    555: BLUSA_PRESILLAS_ASSET,
+    556: BLUSA_PUNTAS_ASSET,
+    557: blouseModelAsset(10),
+    558: BLUSA_JDC_ASSET,
+    559: blouseModelAsset(42),
+    560: BLUSA_CUCUTA_ASSET,
+    561: blouseModelAsset(43),
+    562: BLUSA_V_DIVIDIDO_ASSET,
+    563: blouseModelAsset(9),
+    564: BLUSA_PICOS_ASSET,
+    565: blouseModelAsset(8),
+    566: blouseModelAsset(7),
+    567: BLUSA_MARIPOSA_DIVIDIDO_ASSET,
+    1396: BLUSA_MATRIOSKA_ASSET,
+    1397: BLUSA_MARIPOSA_ASSET,
+    1398: BLUSA_2020_ASSET,
+    1399: BLUSA_DEPORTIVO_ASSET,
+    1400: BLUSA_ESTRELLA_ASSET,
+    1401: BLUSA_POLO_ASSET,
+    1987: blouseModelAsset(30),
+    1988: BLUSA_BOTONES_ASSET,
+    1989: BLUSA_2021_ASSET,
+    1990: BLUSA_CUELLO_REDONDO_ASSET,
+    1991: BLUSA_CREMALLERA_ASSET,
+    1992: BLUSA_MODELO_29_ASSET,
+    1993: BLUSA_PEDAGOGIA_ASSET,
+    1994: BLUSA_ORIENTAL_ASSET,
+    1995: BLUSA_CUELLO_ALTO_CREMALLERA_ASSET,
+    1996: BLUSA_CIRUGIA_ASSET,
+    1997: BLUSA_EL_HATO_ASSET,
+    1998: BLUSA_FISIOPRACTICAS_ASSET,
+    1999: BLUSA_P_PAIPILLA_ASSET,
+    2000: BLUSA_PICOS_ASSET,
   },
   neckModelsByValueName: {
     "cuello v": blouseModelAsset(1),
@@ -421,6 +459,10 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   garmentDetailModelsByValueName: {
     original: BLUSA_ORIGINAL_SLEEVES_ASSET,
   },
+  garmentDetailModelsByValueId: {
+    1958: `${BLUSA_DETAIL_OVERLAY_BASE}/blouse-model-45-pespunte-stitching.svg`,
+    2079: BLUSA_ORIGINAL_SLEEVES_ASSET,
+  },
   lowerPocketModelsByValueId: {
     // IDs historicos. Los SVG disponibles para bolsillos inferiores son Modelo 14, 15, 16, 18, 19 y 20.
     2578: blouseModelAsset(14),
@@ -459,6 +501,21 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2965: BLUSA_EL_HATO_LOWER_POCKET_ASSET, // BOLSILLO PRESILLAS en Blusa.
     3204: blouseModelAsset(16), // ALETAS en Uniforme.
     3205: blouseModelAsset(16), // ALETAS en Blusa.
+    // IDs originales actuales de product.attribute.value.
+    594: blouseModelAsset(14),
+    595: blouseModelAsset(15),
+    596: BLUSA_COSTURA_LOWER_POCKET_ASSET,
+    597: BLUSA_RIBETE_LOWER_POCKET_ASSET,
+    598: BLUSA_COSTURA_MARIA_LOWER_POCKET_ASSET,
+    599: BLUSA_COSTURA_TRIANGULO_LOWER_POCKET_ASSET,
+    600: BLUSA_BOLSILLO_INTERNO_RECTANGULAR_LOWER_POCKET_ASSET,
+    601: BLUSA_LOS_ANDES_LOWER_POCKET_ASSET,
+    602: BLUSA_ORIENTAL_LOWER_POCKET_ASSET,
+    603: BLUSA_RIBETE_HORIZONTAL_LOWER_POCKET_ASSET,
+    604: BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET,
+    605: BLUSA_CIRUGIA_LOWER_POCKET_ASSET,
+    2001: BLUSA_EL_HATO_LOWER_POCKET_ASSET,
+    2081: blouseModelAsset(16),
   },
   lowerPocketModelsByValueName: {
     rectangular: blouseModelAsset(14),
@@ -478,6 +535,11 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
   },
   chestPocketModelsByValueId: {
     376: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
+    590: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
+    591: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-zipper-external.svg`,
+    592: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-point.svg`,
+    1924: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-zipper-internal.svg`,
+    1925: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-point-zipper.svg`,
   },
   chestPocketModelsByValueName: {
     rectangular: `${BLUSA_DETAIL_OVERLAY_BASE}/chest-pocket-rectangular-model.svg`,
@@ -496,14 +558,17 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   aliases: ["pantalon"],
   attributeIds: {
     garmentModel: 810,
-    bootModel: 84,
+    bootModel: 160,
+    waistbandModel: 164,
     baseColor: 798,
-    trimColor: 802,
+    trimColor: 814,
     trimSections: 157,
   },
   attributeIdAliases: {
+    bootModel: [84],
+    waistbandModel: [165],
     baseColor: [90],
-    trimColor: [91],
+    trimColor: [802, 91],
     trimSections: [92],
   },
   // Modelo de pantalon controla detalles globales: Lizo usa solo la base limpia
@@ -515,6 +580,7 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   },
   garmentDetailModelsByValueId: {
     2864: PANTALON_PESPUNTE_STITCHING_ASSET,
+    1955: PANTALON_PESPUNTE_STITCHING_ASSET,
   },
   garmentModelsByValueName: {
     lizo: pantsModelAsset(1),
@@ -522,6 +588,14 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
   },
   garmentDetailModelsByValueName: {
     pespunte: PANTALON_PESPUNTE_STITCHING_ASSET,
+  },
+  bootModelsByValueId: {
+    724: PANTALON_TRADICIONAL_BOOT_ASSET,
+    725: PANTALON_RESORTE_BOOT_ASSET,
+    726: PANTALON_ABERTURA_FRONTAL_BOOT_ASSET,
+    727: PANTALON_CAMPANA_BOOT_ASSET,
+    1956: PANTALON_ABERTURA_LATERAL_BOOT_ASSET,
+    2090: PANTALON_CREMALLERA_BOOT_ASSET,
   },
   bootModelsByValueName: {
     "abertura frontal": PANTALON_ABERTURA_FRONTAL_BOOT_ASSET,
@@ -531,6 +605,12 @@ export const pantalonVisualCatalog: VisualAssetCatalog = {
     cremallera: PANTALON_CREMALLERA_BOOT_ASSET,
     resorte: PANTALON_RESORTE_BOOT_ASSET,
     tradicional: PANTALON_TRADICIONAL_BOOT_ASSET,
+  },
+  waistbandModelsByValueId: {
+    743: PANTALON_RESORTADA_WAIST_ASSET,
+    744: PANTALON_RESORTADA_WAIST_ASSET,
+    745: PANTALON_RESORTADA_WAIST_ASSET,
+    1926: PANTALON_PRETINA_BOTON_WAIST_ASSET,
   },
   waistbandModelsByValueName: {
     "completa resortada": PANTALON_RESORTADA_WAIST_ASSET,
@@ -581,7 +661,11 @@ export const uniformeVisualCatalog: VisualAssetCatalog = {
     blusaAntifluidoT180VisualCatalog.chestPocketModelsByValueName!,
   garmentDetailModelsByValueName:
     blusaAntifluidoT180VisualCatalog.garmentDetailModelsByValueName!,
+  garmentDetailModelsByValueId:
+    blusaAntifluidoT180VisualCatalog.garmentDetailModelsByValueId!,
+  bootModelsByValueId: pantalonVisualCatalog.bootModelsByValueId!,
   bootModelsByValueName: pantalonVisualCatalog.bootModelsByValueName!,
+  waistbandModelsByValueId: pantalonVisualCatalog.waistbandModelsByValueId!,
   waistbandModelsByValueName: pantalonVisualCatalog.waistbandModelsByValueName!,
   auxiliaryPocketModelsByValueId: {},
 };
@@ -663,6 +747,7 @@ export function getVisualAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const catalog = resolveVisualAssetCatalog(graphicManifestKey);
 
@@ -671,18 +756,17 @@ export function getVisualAssetPathForValue(
       matchesVisualAssetAttributeId(catalog, "neckModel", attributeId)) ||
     isNeckModelAttribute(attributeName);
 
-  if (
-    catalog &&
-    isNeckModel &&
-    normalizeLookupKey(valueName ?? "") === "v dividido"
-  ) {
-    const pathByVDivididoName = findByNormalizedName(
-      catalog.neckModelsByValueName,
-      valueName,
+  // El ID original de product.attribute.value no cambia al editar etiquetas
+  // en Odoo. El ID temporal de PTAV y el texto quedan como compatibilidad.
+  if (sourceValueId !== undefined) {
+    const pathBySourceId = getVisualAssetPath(
+      graphicManifestKey,
+      attributeId,
+      sourceValueId,
     );
 
-    if (pathByVDivididoName) {
-      return pathByVDivididoName;
+    if (pathBySourceId) {
+      return pathBySourceId;
     }
   }
 
@@ -751,6 +835,7 @@ export function getVisualBootAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const catalog = resolveVisualAssetCatalog(graphicManifestKey);
 
@@ -763,6 +848,9 @@ export function getVisualBootAssetPathForValue(
     isBootModelAttribute(attributeName)
   ) {
     return (
+      (sourceValueId === undefined
+        ? undefined
+        : catalog.bootModelsByValueId?.[sourceValueId]) ??
       catalog.bootModelsByValueId?.[valueId] ??
       findByNormalizedName(catalog.bootModelsByValueName, valueName)
     );
@@ -777,6 +865,7 @@ export function getVisualWaistbandAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const catalog = resolveVisualAssetCatalog(graphicManifestKey);
 
@@ -789,6 +878,9 @@ export function getVisualWaistbandAssetPathForValue(
     isWaistbandModelAttribute(attributeName)
   ) {
     return (
+      (sourceValueId === undefined
+        ? undefined
+        : catalog.waistbandModelsByValueId?.[sourceValueId]) ??
       catalog.waistbandModelsByValueId?.[valueId] ??
       findByNormalizedName(catalog.waistbandModelsByValueName, valueName)
     );
@@ -803,6 +895,7 @@ export function getVisualGarmentDetailAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const catalog = resolveVisualAssetCatalog(graphicManifestKey);
 
@@ -815,6 +908,9 @@ export function getVisualGarmentDetailAssetPathForValue(
     isGarmentModelAttribute(attributeName)
   ) {
     return (
+      (sourceValueId === undefined
+        ? undefined
+        : catalog.garmentDetailModelsByValueId?.[sourceValueId]) ??
       catalog.garmentDetailModelsByValueId?.[valueId] ??
       findByNormalizedName(catalog.garmentDetailModelsByValueName, valueName)
     );

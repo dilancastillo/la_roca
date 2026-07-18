@@ -30,6 +30,7 @@ export function getServerAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   return getVisualAssetPathForValue(
     graphicManifestKey,
@@ -37,6 +38,7 @@ export function getServerAssetPathForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 }
 
@@ -46,6 +48,7 @@ export function getServerGarmentDetailAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   return getVisualGarmentDetailAssetPathForValue(
     graphicManifestKey,
@@ -53,6 +56,7 @@ export function getServerGarmentDetailAssetPathForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 }
 
@@ -62,6 +66,7 @@ export function getServerBootAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   return getVisualBootAssetPathForValue(
     graphicManifestKey,
@@ -69,6 +74,7 @@ export function getServerBootAssetPathForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 }
 
@@ -78,6 +84,7 @@ export function getServerWaistbandAssetPathForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   return getVisualWaistbandAssetPathForValue(
     graphicManifestKey,
@@ -85,6 +92,7 @@ export function getServerWaistbandAssetPathForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 }
 

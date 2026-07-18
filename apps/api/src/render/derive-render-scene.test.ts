@@ -1093,7 +1093,9 @@ describe("deriveAutomationRenderScene", () => {
           ? {
               ...attribute,
               values: attribute.values.map((value) =>
-                value.id === 7013 ? { ...value, name: "V - DIVIDIDO" } : value,
+                value.id === 7013
+                  ? { ...value, sourceValueId: 562, name: "V - DIVIDIDO" }
+                  : value,
               ),
             }
           : attribute,
@@ -4379,5 +4381,110 @@ describe("deriveAutomationRenderScene", () => {
         { sourceValueId: 2109 },
       ],
     });
+  });
+
+  it("mantiene la semantica de los vivos por ID en Blusa y Pantalon", () => {
+    const renamedTrimSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 5,
+      productName: "Blusa",
+      graphicManifestKey: "blusa-antifluido-t180",
+      attributes: [
+        {
+          id: 157,
+          name: "Etiqueta de vivo cambiada",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9201,
+              sourceValueId: 1972,
+              name: "Etiqueta de valor cambiada",
+              attributeId: 157,
+              attributeName: "Etiqueta de vivo cambiada",
+            },
+          ],
+        },
+        {
+          id: 814,
+          name: "Etiqueta de color cambiada",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9202,
+              name: "Color renombrado",
+              attributeId: 814,
+              attributeName: "Etiqueta de color cambiada",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: { "157": [9201], "814": [9202] },
+    };
+
+    expect(
+      deriveAutomationRenderScene(
+        renamedTrimSession,
+        renamedTrimSession.selectedValueIds,
+      ).trimSections,
+    ).toEqual([
+      {
+        valueId: 9201,
+        sourceValueId: 1972,
+        key: "manga lineal superior",
+        label: "Etiqueta de valor cambiada",
+        colorHex: "#f4c7cc",
+      },
+    ]);
+
+    expect(
+      deriveAutomationRenderScene(
+        {
+          ...renamedTrimSession,
+          productTemplateId: 6,
+          productName: "Pantalon",
+          graphicManifestKey: "pantalon",
+          attributes: [
+            {
+              id: 157,
+              name: "Etiqueta de vivo cambiada",
+              displayType: "multi",
+              selectionMode: "multiple",
+              variantMode: "no_variant",
+              values: [
+                {
+                  id: 9201,
+                  sourceValueId: 643,
+                  name: "Etiqueta de valor cambiada",
+                  attributeId: 157,
+                  attributeName: "Etiqueta de vivo cambiada",
+                },
+              ],
+            },
+            {
+              id: 814,
+              name: "Etiqueta de color cambiada",
+              displayType: "color",
+              selectionMode: "single",
+              variantMode: "no_variant",
+              values: [
+                {
+                  id: 9202,
+                  name: "Color renombrado",
+                  attributeId: 814,
+                  attributeName: "Etiqueta de color cambiada",
+                  colorHex: "#f4c7cc",
+                },
+              ],
+            },
+          ],
+        },
+        renamedTrimSession.selectedValueIds,
+      ).trimSections[0]?.key,
+    ).toBe("bolsillo lateral de pantalon");
   });
 });

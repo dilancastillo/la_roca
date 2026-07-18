@@ -36,6 +36,7 @@ export function getImageSourceForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const path = getVisualAssetPathForValue(
     graphicManifestKey,
@@ -43,6 +44,7 @@ export function getImageSourceForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 
   return path ? `/${path}` : undefined;
@@ -54,6 +56,7 @@ export function getGarmentDetailImageSourceForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const path = getVisualGarmentDetailAssetPathForValue(
     graphicManifestKey,
@@ -61,6 +64,7 @@ export function getGarmentDetailImageSourceForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 
   return path ? `/${path}` : undefined;
@@ -72,6 +76,7 @@ export function getBootImageSourceForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const path = getVisualBootAssetPathForValue(
     graphicManifestKey,
@@ -79,6 +84,7 @@ export function getBootImageSourceForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 
   return path ? `/${path}` : undefined;
@@ -90,6 +96,7 @@ export function getWaistbandImageSourceForValue(
   valueId: number,
   attributeName?: string,
   valueName?: string,
+  sourceValueId?: number,
 ) {
   const path = getVisualWaistbandAssetPathForValue(
     graphicManifestKey,
@@ -97,6 +104,7 @@ export function getWaistbandImageSourceForValue(
     valueId,
     attributeName,
     valueName,
+    sourceValueId,
   );
 
   return path ? `/${path}` : undefined;

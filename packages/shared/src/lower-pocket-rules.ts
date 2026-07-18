@@ -3,6 +3,10 @@ import {
   matchesVisualAssetAttributeId,
   resolveVisualAssetCatalog,
 } from "./visual-assets.js";
+import {
+  CONFIGURATOR_VALUE_IDS,
+  hasSourceValueId,
+} from "./configurator-id-rules.js";
 
 export type LowerPocketLayout = "none" | "single" | "double";
 export type LowerPocketAuxiliaryAddonSide = "left" | "right" | "both";
@@ -86,7 +90,11 @@ function isNoneLowerPocketType(
     return false;
   }
 
-  if (catalog?.lowerPocketTypeValueIds?.none.includes(value.id)) {
+  if (
+    catalog?.lowerPocketTypeValueIds?.none.some(
+      (id) => id === value.id || id === value.sourceValueId,
+    )
+  ) {
     return true;
   }
 
@@ -94,9 +102,21 @@ function isNoneLowerPocketType(
 }
 
 export function getLowerPocketAuxiliaryAddon(
-  valueName: string | undefined,
+  value: Pick<AttributeValue, "name" | "sourceValueId"> | string | undefined,
 ): LowerPocketAuxiliaryAddon | undefined {
-  const name = normalize(valueName ?? "");
+  const sourceBackedValue = typeof value === "string" ? undefined : value;
+
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.lizoBoth)) return { kind: "lizo", side: "both" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.lizoLeft)) return { kind: "lizo", side: "left" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.lizoRight)) return { kind: "lizo", side: "right" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.velcroBoth)) return { kind: "velcro", side: "both" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.velcroLeft)) return { kind: "velcro", side: "left" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.velcroRight)) return { kind: "velcro", side: "right" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.overlaidBoth)) return { kind: "overlaid", side: "both" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.overlaidLeft)) return { kind: "overlaid", side: "left" };
+  if (hasSourceValueId(sourceBackedValue, CONFIGURATOR_VALUE_IDS.lowerPocketAuxiliary.overlaidRight)) return { kind: "overlaid", side: "right" };
+
+  const name = normalize(typeof value === "string" ? value : value?.name ?? "");
   const kind = name.includes("lizo")
     ? "lizo"
     : name.includes("sobrepuesto")
@@ -125,9 +145,9 @@ export function getLowerPocketAuxiliaryAddon(
 }
 
 export function getLowerPocketAuxiliaryAddonSide(
-  valueName: string | undefined,
+  value: Pick<AttributeValue, "name" | "sourceValueId"> | string | undefined,
 ): LowerPocketAuxiliaryAddonSide | undefined {
-  return getLowerPocketAuxiliaryAddon(valueName)?.side;
+  return getLowerPocketAuxiliaryAddon(value)?.side;
 }
 
 function findNoneLowerPocketModelValue(
@@ -140,6 +160,7 @@ function findNoneLowerPocketModelValue(
   return modelAttribute?.values.find(
     (value) =>
       configuredIds.has(value.id) ||
+      (value.sourceValueId !== undefined && configuredIds.has(value.sourceValueId)) ||
       normalize(value.name).includes("ninguno") ||
       normalize(value.name).includes("sin modelo"),
   );

@@ -495,7 +495,7 @@ describe("getProductAssetCatalog", () => {
         "V - DIVIDIDO",
       ),
     ).toBe(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-36-v-dividido.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
     );
 
     expect(
@@ -1039,6 +1039,60 @@ describe("getProductAssetCatalog", () => {
         999996,
         "Cinturilla",
         "Pretina de botón",
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-waist-pretina-boton.svg",
+    );
+  });
+
+  it("prioriza el ID original de Odoo sobre un nombre editable", () => {
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        145,
+        7013,
+        "Etiqueta de atributo cambiada",
+        "Etiqueta de valor cambiada",
+        562,
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-36-v-dividido.svg",
+    );
+
+    expect(
+      getImageSourceForValue(
+        "blusa-antifluido-t180",
+        154,
+        990002,
+        "Etiqueta de atributo cambiada",
+        "Etiqueta de valor cambiada",
+        603,
+      ),
+    ).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-47-ribete-horizontal-lower-pocket.svg",
+    );
+
+    expect(
+      getBootImageSourceForValue(
+        "pantalon",
+        160,
+        990003,
+        "Etiqueta de atributo cambiada",
+        "Etiqueta de valor cambiada",
+        726,
+      ),
+    ).toBe(
+      "/assets/catalog/pantalon/detail-overlays/pants-boot-abertura-frontal.svg",
+    );
+
+    expect(
+      getWaistbandImageSourceForValue(
+        "pantalon",
+        164,
+        990004,
+        "Etiqueta de atributo cambiada",
+        "Etiqueta de valor cambiada",
+        1926,
       ),
     ).toBe(
       "/assets/catalog/pantalon/detail-overlays/pants-waist-pretina-boton.svg",

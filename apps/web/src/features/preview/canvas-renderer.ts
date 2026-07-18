@@ -3,6 +3,7 @@ import {
   getPantsKneeTrimSectionBySourceValueId,
   type PantsKneeTrimSection,
 } from "@repo/shared/pants-knee-patch-rules";
+import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 1200;
@@ -1525,8 +1526,22 @@ function isBlouseScene(scene: PreviewScene, baseAssetSrc?: string) {
   );
 }
 
-function getLogoMarkerPositions(placement: string) {
+function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {
   const positions: Array<{ x: number; y: number }> = [];
+  const sourcePlacements = Object.entries(CONFIGURATOR_VALUE_IDS.logoPlacement);
+
+  for (const [placementKey, ids] of sourcePlacements) {
+    if (!ids.some((id) => sourceValueIds.includes(id))) {
+      continue;
+    }
+
+    positions.push(LOGO_MARKER_POSITIONS[placementKey as keyof typeof LOGO_MARKER_POSITIONS]);
+  }
+
+  if (positions.length > 0) {
+    return positions;
+  }
+
   const selectedPlacements = placement
     .split(",")
     .map((value) => normalize(value))
@@ -1600,7 +1615,7 @@ function isWholeCollarSection(section: PreviewScene["trimSections"][number]) {
   const key = getTrimSectionText(section);
 
   return (
-    normalize(section.label || section.key) === "cuello" ||
+    normalize(section.key || section.label) === "cuello" ||
     key.includes("cuello alto") ||
     key.includes("cuello-alto")
   );
@@ -1773,7 +1788,7 @@ function isLowerPocketTrimSection(
 function isLowerPocketRingsTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
-  const key = normalize(section.label || section.key);
+  const key = normalize(section.key || section.label);
 
   return (
     key === "aros" ||
@@ -2192,7 +2207,7 @@ function isChestPocketLowerTrimSection(
 function isZipperTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
-  return normalize(section.label || section.key) === "cremallera";
+  return normalize(section.key || section.label) === "cremallera";
 }
 
 function isSleeveTabTrimSection(section: PreviewScene["trimSections"][number]) {
@@ -2238,7 +2253,7 @@ function isFlapTrimSection(section: PreviewScene["trimSections"][number]) {
 }
 
 function isBackNeckTrimSection(section: PreviewScene["trimSections"][number]) {
-  const key = normalize(section.label || section.key);
+  const key = normalize(section.key || section.label);
 
   return (
     section.role === "backNeck" ||
@@ -2731,7 +2746,7 @@ function drawTrimSections(
   scene: PreviewScene,
 ) {
   for (const section of scene.trimSections) {
-    const key = normalize(section.label || section.key);
+    const key = normalize(section.key || section.label);
     context.save();
     context.strokeStyle = section.colorHex;
     context.fillStyle = section.colorHex;
@@ -3516,8 +3531,9 @@ async function drawChestPocketOverlay(
 function drawLogoMarker(
   context: CanvasRenderingContext2D,
   placement: string,
+  sourceValueIds?: number[],
 ) {
-  const positions = getLogoMarkerPositions(placement);
+  const positions = getLogoMarkerPositions(placement, sourceValueIds);
 
   if (positions.length === 0) {
     return;
@@ -5269,7 +5285,11 @@ async function composeSingleDesign(
     }
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {
-      drawLogoMarker(context, scene.logoMarker.placement);
+      drawLogoMarker(
+        context,
+        scene.logoMarker.placement,
+        scene.logoMarker.sourceValueIds,
+      );
     }
 
     if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetSrc)) {

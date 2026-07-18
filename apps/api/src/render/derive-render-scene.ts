@@ -7,6 +7,12 @@ import {
   type PantsKneePatchModel,
   type PantsKneePatchType,
 } from "@repo/shared/pants-knee-patch-rules";
+import {
+  CONFIGURATOR_ATTRIBUTE_IDS,
+  CONFIGURATOR_VALUE_IDS,
+  getTrimSectionKeyBySourceValueId,
+  hasSourceValueId,
+} from "@repo/shared/configurator-id-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import {
   getLowerPocketAuxiliaryAddon,
@@ -53,6 +59,7 @@ export type AutomationRenderScene = {
   chestPocketAssetPath?: string;
   logoMarker?: {
     placement: string;
+    sourceValueIds?: number[];
   };
   trimSections: Array<{
     valueId: number;
@@ -96,6 +103,17 @@ function findSelectedValue(
 
   const selectedIds = new Set(selectedValueIds[String(attribute.id)] ?? []);
   return attribute.values.find((value) => selectedIds.has(value.id));
+}
+
+function findAttributeByIdOrName(
+  session: ConfiguratorSession,
+  attributeId: number,
+  matcher: (normalizedName: string) => boolean,
+) {
+  return (
+    session.attributes.find((attribute) => attribute.id === attributeId) ??
+    findAttributeByName(session, matcher)
+  );
 }
 
 function isSleeveModelAttributeName(normalizedName: string) {
@@ -290,6 +308,7 @@ function getAssetPath(
     value.id,
     attribute.name,
     value.name,
+    value.sourceValueId,
   );
 }
 
@@ -303,7 +322,18 @@ function isVisibleChestPocketModel(valueName: string | undefined) {
   return !isNoChestPocket(normalized);
 }
 
-function isNoChestPocket(valueName: string | undefined) {
+type SourceBackedOption = ConfiguratorSession["attributes"][number]["values"][number];
+
+function getOptionName(value: SourceBackedOption | string | undefined) {
+  return typeof value === "string" ? value : value?.name;
+}
+
+function isNoChestPocket(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.noChestPocket)) {
+    return true;
+  }
+
+  const valueName = getOptionName(value);
   if (!valueName) {
     return false;
   }
@@ -317,7 +347,8 @@ function isNoChestPocket(valueName: string | undefined) {
   );
 }
 
-function isNoLogo(valueName: string | undefined) {
+function isNoLogo(value: SourceBackedOption | string | undefined) {
+  const valueName = getOptionName(value);
   if (!valueName) {
     return false;
   }
@@ -368,7 +399,9 @@ function getSelectedTrimSections(
   const roleEntries = Object.entries(catalog?.trimSectionValueIds ?? {});
 
   function resolveTrimRole(section: ConfiguratorSession["attributes"][number]["values"][number]) {
-    const configuredRole = roleEntries.find(([, valueId]) => valueId === section.id)?.[0] as
+    const configuredRole = roleEntries.find(([, valueIds]) =>
+      valueIds.includes(section.sourceValueId ?? section.id),
+    )?.[0] as
       | AutomationRenderScene["trimSections"][number]["role"]
       | undefined;
 
@@ -455,7 +488,9 @@ function getSelectedTrimSections(
               ? { sourceValueId: section.sourceValueId }
               : {}),
             ...(role ? { role } : {}),
-            key: normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
+            key:
+              getTrimSectionKeyBySourceValueId(section.sourceValueId) ??
+              normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
             label: section.name,
             colorHex: sectionColor?.colorHex ?? "#1d4ed8",
           };
@@ -473,7 +508,9 @@ function isPantsSidePocketAttributeName(normalizedName: string) {
   );
 }
 
-function isDoubleZipperSidePocket(valueName: string | undefined) {
+function isDoubleZipperSidePocket(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.pantsSidePocket.doubleZipper)) return true;
+  const valueName = getOptionName(value);
   if (!valueName) {
     return false;
   }
@@ -483,15 +520,21 @@ function isDoubleZipperSidePocket(valueName: string | undefined) {
   return normalized.includes("doble") && normalized.includes("cremallera");
 }
 
-function isExternalSidePocket(valueName: string | undefined) {
+function isExternalSidePocket(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.pantsSidePocket.external)) return true;
+  const valueName = getOptionName(value);
   return valueName ? normalize(valueName) === "externo" : false;
 }
 
-function isOriginalSidePocket(valueName: string | undefined) {
+function isOriginalSidePocket(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.pantsSidePocket.original)) return true;
+  const valueName = getOptionName(value);
   return valueName ? normalize(valueName) === "original" : false;
 }
 
-function isAsorsaludSidePocket(valueName: string | undefined) {
+function isAsorsaludSidePocket(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.pantsSidePocket.asorsalud)) return true;
+  const valueName = getOptionName(value);
   return valueName ? normalize(valueName) === "asorsalud" : false;
 }
 
@@ -690,7 +733,9 @@ function resolveKneePatchType(option: KneePatchOption): PantsKneePatchType | und
   return isPlainKneePatch(option.name) ? "plain" : undefined;
 }
 
-function isPespunteGarment(valueName: string | undefined) {
+function isPespunteGarment(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.pespunte)) return true;
+  const valueName = getOptionName(value);
   return valueName ? normalize(valueName).includes("pespunte") : false;
 }
 
@@ -699,7 +744,9 @@ const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
 const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
-function isYesOption(valueName: string | undefined) {
+function isYesOption(value: SourceBackedOption | string | undefined) {
+  if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.yes)) return true;
+  const valueName = getOptionName(value);
   return valueName ? normalize(valueName) === "si" : false;
 }
 
@@ -707,13 +754,17 @@ function hasUniformPespunteSelection(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const pespunteAttribute = findAttributeByName(
-    session,
-    (name) => name.includes("lleva") && name.includes("pespunte"),
+  const pespunteAttributes = session.attributes.filter(
+    (attribute) =>
+      attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.blousePespunte ||
+      (normalize(attribute.name).includes("lleva") &&
+        normalize(attribute.name).includes("pespunte")),
   );
 
-  return getSelectedOptions(pespunteAttribute, selectedValueIds).some((option) =>
-    isYesOption(option.name),
+  return pespunteAttributes.some((attribute) =>
+    getSelectedOptions(attribute, selectedValueIds).some(
+      (option) => isYesOption(option) || isPespunteGarment(option),
+    ),
   );
 }
 
@@ -778,8 +829,9 @@ function deriveSingleAutomationRenderScene(
       name.includes("modelo de pantalon") ||
       name.includes("modelo pantalon"),
     );
-  const sleeveModelAttribute = findAttributeByName(
+  const sleeveModelAttribute = findAttributeByIdOrName(
     session,
+    CONFIGURATOR_ATTRIBUTE_IDS.sleeveModel,
     isSleeveModelAttributeName,
   );
   const bootModelAttribute =
@@ -816,8 +868,9 @@ function deriveSingleAutomationRenderScene(
       (name.includes("bolsillo inferior") && !name.includes("tipo")),
     );
   const lowerPocketTypeAttribute = getLowerPocketTypeAttribute(session);
-  const auxiliaryPocketTypeAttribute = findAttributeByName(
+  const auxiliaryPocketTypeAttribute = findAttributeByIdOrName(
     session,
+    CONFIGURATOR_ATTRIBUTE_IDS.auxiliaryPocketType,
     isAuxiliaryPocketTypeAttributeName,
   );
   const auxiliaryPocketModelAttribute =
@@ -828,8 +881,9 @@ function deriveSingleAutomationRenderScene(
     findAttributeByName(session, (name) =>
       name.includes("modelo bolsillo auxiliar"),
     );
-  const chestPocketTypeAttribute = findAttributeByName(
+  const chestPocketTypeAttribute = findAttributeByIdOrName(
     session,
+    CONFIGURATOR_ATTRIBUTE_IDS.chestPocketModel,
     (name) => name.includes("bolsillo de pecho") && !name.includes("bordado"),
   );
   const chestPocketModelAttribute =
@@ -844,12 +898,14 @@ function deriveSingleAutomationRenderScene(
         name.includes("bolsillo") &&
         name.includes("pecho"),
     );
-  const logoAttribute = findAttributeByName(
+  const logoAttribute = findAttributeByIdOrName(
     session,
+    CONFIGURATOR_ATTRIBUTE_IDS.logo,
     (name) => name === "logo" || name.includes("logo"),
   );
-  const pantsSidePocketAttribute = findAttributeByName(
+  const pantsSidePocketAttribute = findAttributeByIdOrName(
     session,
+    CONFIGURATOR_ATTRIBUTE_IDS.pantsSidePocket,
     isPantsSidePocketAttributeName,
   );
   const rightKneePatchModelAttribute =
@@ -923,7 +979,7 @@ function deriveSingleAutomationRenderScene(
   const activeLogoOptions = getSelectedOptions(
     logoAttribute,
     selectedValueIds,
-  ).filter((option) => !isNoLogo(option.name));
+  ).filter((option) => !isNoLogo(option));
   const selectedPantsSidePocketOptions = getSelectedOptions(
     pantsSidePocketAttribute,
     selectedValueIds,
@@ -959,13 +1015,13 @@ function deriveSingleAutomationRenderScene(
     ? resolveKneePatchType(leftKneePatchType)
     : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
-    isAsorsaludSidePocket(option.name),
+    isAsorsaludSidePocket(option),
   )
     ? "asorsalud"
     : selectedPantsSidePocketOptions.some((option) =>
-          isDoubleZipperSidePocket(option.name) ||
-          isExternalSidePocket(option.name) ||
-          isOriginalSidePocket(option.name),
+          isDoubleZipperSidePocket(option) ||
+          isExternalSidePocket(option) ||
+          isOriginalSidePocket(option),
         )
       ? "doubleZipper"
       : undefined;
@@ -975,7 +1031,7 @@ function deriveSingleAutomationRenderScene(
     : undefined;
   const shouldUseDefaultGarmentUntilNeck =
     session.graphicManifestKey.includes("blusa") &&
-    isPespunteGarment(selectedGarment?.name) &&
+    isPespunteGarment(selectedGarment) &&
     !neckAssetPath;
   const garmentAssetPath = shouldUseDefaultGarmentUntilNeck
     ? getServerDefaultAssetPath(session.graphicManifestKey)
@@ -992,6 +1048,7 @@ function deriveSingleAutomationRenderScene(
         selectedGarment.id,
         garmentAttribute!.name,
         selectedGarment.name,
+        selectedGarment.sourceValueId,
       )
     : undefined;
   const sleeveDetailAssetPath = selectedSleeveModel
@@ -1001,6 +1058,7 @@ function deriveSingleAutomationRenderScene(
         selectedSleeveModel.id,
         sleeveModelAttribute!.name,
         selectedSleeveModel.name,
+        selectedSleeveModel.sourceValueId,
       )
     : undefined;
   const garmentDetailAssetPaths = compactUnique([
@@ -1015,6 +1073,7 @@ function deriveSingleAutomationRenderScene(
         selectedBootModel.id,
         bootModelAttribute!.name,
         selectedBootModel.name,
+        selectedBootModel.sourceValueId,
       )
     : undefined;
   const waistbandAssetPath = selectedWaistbandModel
@@ -1024,6 +1083,7 @@ function deriveSingleAutomationRenderScene(
         selectedWaistbandModel.id,
         waistbandModelAttribute!.name,
         selectedWaistbandModel.name,
+        selectedWaistbandModel.sourceValueId,
       )
     : undefined;
   const lowerPocketAssetPath = selectedLowerPocketModel
@@ -1033,7 +1093,7 @@ function deriveSingleAutomationRenderScene(
     lowerPocketLayout !== "none" &&
     isRectangularLowerPocketAsset(lowerPocketAssetPath)
       ? getLowerPocketAuxiliaryAddon(
-          selectedAuxiliaryPocketType?.name ?? selectedLowerPocketType?.name,
+          selectedAuxiliaryPocketType ?? selectedLowerPocketType,
         )
       : undefined;
   const auxiliaryPocketAssetPath = selectedAuxiliaryPocketModel
@@ -1041,7 +1101,7 @@ function deriveSingleAutomationRenderScene(
     : undefined;
   const chestPocketAssetPath =
     selectedChestPocketModel &&
-    !isNoChestPocket(selectedChestPocketModel.name) &&
+    !isNoChestPocket(selectedChestPocketModel) &&
     isVisibleChestPocketModel(selectedChestPocketModel.name)
       ? getAssetPath(session, chestPocketModelAttribute!, selectedChestPocketModel) ??
         getServerDefaultChestPocketAssetPath(session.graphicManifestKey)
@@ -1088,6 +1148,13 @@ function deriveSingleAutomationRenderScene(
       ? {
           logoMarker: {
             placement: activeLogoOptions.map((option) => option.name).join(", "),
+            ...(() => {
+              const sourceValueIds = activeLogoOptions.flatMap((option) =>
+                option.sourceValueId === undefined ? [] : [option.sourceValueId],
+              );
+
+              return sourceValueIds.length > 0 ? { sourceValueIds } : {};
+            })(),
           },
         }
       : {}),
