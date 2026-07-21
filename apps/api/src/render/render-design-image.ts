@@ -372,13 +372,6 @@ const lowerPocketSectionTrimOverlayByFileName: Record<
   },
 };
 
-const lowerPocketSectionTrimOutlineRadiusByFileName: Record<string, number> = {
-  "blouse-model-14.svg": 3,
-  "blouse-model-16.svg": 0,
-  "blouse-model-46-costura-triangulo-lower-pocket.svg": 3,
-  "blouse-model-47-ribete-horizontal-lower-pocket.svg": 0,
-};
-
 const lowerPocketOverlayRegionsByFileName: Record<string, OverlayRegion[]> = {
   "blouse-model-48-los-andes-lower-pocket-v2.svg": [
     { x: 225, y: 675, width: 245, height: 385 },
@@ -1376,7 +1369,6 @@ const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
 const POCKET_TRIM_LINE_WIDTH = 5;
 const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
-const POCKET_TRIM_OUTLINE_LINE_WIDTH = 11;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -2611,66 +2603,6 @@ async function recolorPngInkBuffer(buffer: Buffer, colorHex: string) {
   return await rgbaToPngBuffer(data, width, height);
 }
 
-async function createPngInkOutlineBuffer(
-  buffer: Buffer,
-  outlineColor = "#f8fafc",
-  radius = 7,
-) {
-  const { data, width, height } = await pngBufferToRaw(buffer);
-  const color = sharp({
-    create: { width: 1, height: 1, channels: 4, background: outlineColor },
-  });
-  const { data: colorSample } = await color
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const [red, green, blue] = colorSample;
-  const output = new Uint8ClampedArray(data.length);
-
-  for (let sourceOffset = 0; sourceOffset < data.length; sourceOffset += 4) {
-    const alpha = data[sourceOffset + 3] ?? 0;
-
-    if (alpha <= 0) {
-      continue;
-    }
-
-    const index = sourceOffset / 4;
-    const x = index % width;
-    const y = Math.floor(index / width);
-
-    for (let offsetY = -radius; offsetY <= radius; offsetY += 1) {
-      for (let offsetX = -radius; offsetX <= radius; offsetX += 1) {
-        if (offsetX * offsetX + offsetY * offsetY > radius * radius) {
-          continue;
-        }
-
-        const targetX = x + offsetX;
-        const targetY = y + offsetY;
-
-        if (
-          targetX < 0 ||
-          targetX >= width ||
-          targetY < 0 ||
-          targetY >= height
-        ) {
-          continue;
-        }
-
-        const targetOffset = (targetY * width + targetX) * 4;
-        output[targetOffset] = red ?? 0;
-        output[targetOffset + 1] = green ?? 0;
-        output[targetOffset + 2] = blue ?? 0;
-        output[targetOffset + 3] = Math.max(
-          output[targetOffset + 3] ?? 0,
-          alpha,
-        );
-      }
-    }
-  }
-
-  return await rgbaToPngBuffer(output, width, height);
-}
-
 async function createLowerPocketOverlayBuffer(assetPath: string) {
   const detailIndexes =
     lowerPocketDetailElementIndexesByFileName[getAssetFileName(assetPath)];
@@ -3795,17 +3727,6 @@ function allowsBackNeckTrim(assetPath: string) {
   return !noBackNeckTrimFileNames.has(getAssetFileName(assetPath));
 }
 
-function getCollarLineOutlineRadius(assetPath: string) {
-  return [
-    "blouse-model-01.svg",
-    "blouse-model-02-jdc.svg",
-    "blouse-model-30.svg",
-    "blouse-model-44-cucuta.svg",
-  ].includes(getAssetFileName(assetPath))
-    ? 3
-    : 7;
-}
-
 async function pngBufferToRaw(buffer: Buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -3938,13 +3859,7 @@ function getBackNeckTrimSvg(
   verticalOffset = BACK_NECK_STRAIGHT_VERTICAL_OFFSET,
 ) {
   return `
-    <defs>
-      <filter id="back-neck-trim-glow" x="-35%" y="-220%" width="170%" height="520%">
-        <feGaussianBlur stdDeviation="5" />
-      </filter>
-    </defs>
     <g transform="translate(0 ${verticalOffset})">
-      <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#back-neck-trim-glow)" />
       <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
     </g>
   `;
@@ -4131,7 +4046,6 @@ function getOriginalSleeveLineSvg(
   const lineAttrs = `x1="${formatSvgNumber(start.x)}" y1="${formatSvgNumber(start.y)}" x2="${formatSvgNumber(end.x)}" y2="${formatSvgNumber(end.y)}" stroke-linecap="round" stroke-linejoin="round"`;
 
   return `
-    <line ${lineAttrs} stroke="#f8fafc" stroke-width="12" />
     <line ${lineAttrs} stroke="${trimColor}" stroke-width="7" />
   `;
 }
@@ -4521,12 +4435,10 @@ function getPocketTrimLineSvg(
   x2: number,
   y: number,
   trimColor: string,
-  filterId = "lower-pocket-trim-glow",
 ) {
   const pathData = `M${x1} ${y} L${x2} ${y}`;
 
   return `
-    <path d="${pathData}" fill="none" stroke="#f8fafc" stroke-width="${POCKET_TRIM_OUTLINE_LINE_WIDTH}" stroke-linecap="butt" stroke-linejoin="round" filter="url(#${filterId})" />
     <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="${POCKET_TRIM_LINE_WIDTH}" stroke-linecap="butt" stroke-linejoin="round" />
   `;
 }
@@ -4583,14 +4495,7 @@ async function getLowerPocketTrimBandSvg(
     return "";
   }
 
-  return `
-    <defs>
-      <filter id="lower-pocket-trim-glow" x="-30%" y="-120%" width="160%" height="340%">
-        <feGaussianBlur stdDeviation="5" />
-      </filter>
-    </defs>
-    ${bands}
-  `;
+  return bands;
 }
 
 async function getChestPocketTrimLineSvg(
@@ -4609,17 +4514,9 @@ async function getChestPocketTrimLineSvg(
     bounds.x + bounds.width - POCKET_TRIM_LINE_HORIZONTAL_INSET,
     bounds.y + CHEST_POCKET_VERTICAL_OFFSET + POCKET_TRIM_LINE_WIDTH / 2,
     trimColor,
-    "chest-pocket-trim-glow",
   );
 
-  return `
-    <defs>
-      <filter id="chest-pocket-trim-glow" x="-30%" y="-120%" width="160%" height="340%">
-        <feGaussianBlur stdDeviation="5" />
-      </filter>
-    </defs>
-    ${lineSvg}
-  `;
+  return lineSvg;
 }
 
 function getFallbackGarmentSvg(fillColor: string) {
@@ -5017,11 +4914,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           `<image href="${toDataUri(filledCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else if (collarTrimOverlayBuffer) {
-        const collarTrimOutlineBuffer = await createPngInkOutlineBuffer(
-          collarTrimOverlayBuffer,
-        );
         layers.push(
-          `<image href="${toDataUri(collarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
           `<image href="${toDataUri(collarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
@@ -5068,11 +4961,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
 
       if (collarStitchesTrimOverlayBuffer) {
-        const collarStitchesTrimOutlineBuffer = await createPngInkOutlineBuffer(
-          collarStitchesTrimOverlayBuffer,
-        );
         layers.push(
-          `<image href="${toDataUri(collarStitchesTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
           `<image href="${toDataUri(collarStitchesTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       }
@@ -5085,13 +4974,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
 
     if (innerCollarTrimOverlayBuffer) {
-      const innerCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        innerCollarTrimOverlayBuffer,
-        "#f8fafc",
-        getCollarLineOutlineRadius(baseAssetPath),
-      );
       layers.push(
-        `<image href="${toDataUri(innerCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(innerCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5103,13 +4986,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
 
     if (collarRingsTrimOverlayBuffer) {
-      const collarRingsTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        collarRingsTrimOverlayBuffer,
-        "#f8fafc",
-        7,
-      );
       layers.push(
-        `<image href="${toDataUri(collarRingsTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(collarRingsTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5129,13 +5006,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         continue;
       }
 
-      const dividedCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        dividedCollarTrimOverlayBuffer,
-        "#f8fafc",
-        7,
-      );
       layers.push(
-        `<image href="${toDataUri(dividedCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(dividedCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5216,13 +5087,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         continue;
       }
 
-      const internalCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        internalCollarTrimOverlayBuffer,
-        "#f8fafc",
-        getCollarLineOutlineRadius(baseAssetPath),
-      );
       layers.push(
-        `<image href="${toDataUri(internalCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(internalCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5242,13 +5107,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         continue;
       }
 
-      const externalCollarTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        externalCollarTrimOverlayBuffer,
-        "#f8fafc",
-        getCollarLineOutlineRadius(baseAssetPath),
-      );
       layers.push(
-        `<image href="${toDataUri(externalCollarTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(externalCollarTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5259,13 +5118,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     );
 
     if (flapTrimOverlayBuffer) {
-      const flapTrimOutlineBuffer = await createPngInkOutlineBuffer(
-        flapTrimOverlayBuffer,
-        "#f8fafc",
-        7,
-      );
       layers.push(
-        `<image href="${toDataUri(flapTrimOutlineBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         `<image href="${toDataUri(flapTrimOverlayBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
       );
     }
@@ -5285,13 +5138,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         );
 
       if (backNeckTrimOverlayBuffer) {
-        const backNeckTrimOutlineBuffer = await createPngInkOutlineBuffer(
-          backNeckTrimOverlayBuffer,
-          "#f8fafc",
-          getCollarLineOutlineRadius(baseAssetPath),
-        );
         layers.push(
-          `<image href="${toDataUri(backNeckTrimOutlineBuffer)}" x="0" y="${backNeckVerticalOffset}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
           `<image href="${toDataUri(backNeckTrimOverlayBuffer)}" x="0" y="${backNeckVerticalOffset}" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       } else {
@@ -5336,11 +5183,6 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
         ];
 
       if (sectionTrimOverlays) {
-        const sectionTrimOutlineRadius =
-          lowerPocketSectionTrimOutlineRadiusByFileName[
-            getAssetFileName(scene.lowerPocketAssetPath)
-          ] ?? 7;
-
         for (const [section, trimColor] of [
           ["top", lowerPocketUpperTrimColor],
           ["bottom", lowerPocketLowerTrimColor],
@@ -5366,22 +5208,6 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             trimOverlayBuffer,
             trimColor,
           );
-
-          if (section !== "complete" && sectionTrimOutlineRadius > 0) {
-            const trimOutlineBuffer = await createPngInkOutlineBuffer(
-              trimOverlayBuffer,
-              "#f8fafc",
-              sectionTrimOutlineRadius,
-            );
-
-            layers.push(
-              getOverlaySvg(
-                `lower-pocket-${section}-trim-outline`,
-                toDataUri(trimOutlineBuffer),
-                lowerPocketRegions,
-              ),
-            );
-          }
 
           layers.push(
             getOverlaySvg(
@@ -5415,22 +5241,12 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
               ),
             );
           } else {
-            const trimOutlineBuffer = await createPngInkOutlineBuffer(
-              trimOverlayBuffer,
-              "#f8fafc",
-              7,
-            );
             const trimColorBuffer = await recolorPngInkBuffer(
               trimOverlayBuffer,
               lowerPocketTrimColor,
             );
 
             layers.push(
-              getOverlaySvg(
-                "lower-pocket-trim-outline",
-                toDataUri(trimOutlineBuffer),
-                lowerPocketRegions,
-              ),
               getOverlaySvg(
                 "lower-pocket-trim-color",
                 toDataUri(trimColorBuffer),
@@ -5511,21 +5327,12 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             continue;
           }
 
-          const trimOutlineBuffer = await createPngInkOutlineBuffer(
-            trimOverlayBuffer,
-            "#f8fafc",
-            4,
-          );
           const trimColorBuffer = await recolorPngInkBuffer(
             trimOverlayBuffer,
             trimColor,
           );
 
           layers.push(
-            getImageSvg(
-              toDataUri(trimOutlineBuffer),
-              CHEST_POCKET_VERTICAL_OFFSET,
-            ),
             getImageSvg(
               toDataUri(trimColorBuffer),
               CHEST_POCKET_VERTICAL_OFFSET,
@@ -5544,21 +5351,12 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
               getAssetFileName(scene.chestPocketAssetPath),
             )
           ) {
-            const trimOutlineBuffer = await createPngInkOutlineBuffer(
-              trimOverlayBuffer,
-              "#f8fafc",
-              4,
-            );
             const trimColorBuffer = await recolorPngInkBuffer(
               trimOverlayBuffer,
               chestPocketTrimColor,
             );
 
             layers.push(
-              getImageSvg(
-                toDataUri(trimOutlineBuffer),
-                CHEST_POCKET_VERTICAL_OFFSET,
-              ),
               getImageSvg(
                 toDataUri(trimColorBuffer),
                 CHEST_POCKET_VERTICAL_OFFSET,

@@ -953,7 +953,7 @@ describe("renderDesignImage", () => {
     expect(pocketInk).toBeGreaterThan(500);
     expect(zipperPinkWithoutTrim).toBeLessThan(20);
     expect(upperTrimBounds?.count).toBeGreaterThan(100);
-    expect(zipperTrimBounds?.count).toBeGreaterThan(180);
+    expect(zipperTrimBounds?.count).toBeGreaterThan(40);
     expect(lowerTrimBounds?.count).toBeGreaterThan(100);
     expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
       lowerTrimBounds?.minY ?? 0,
@@ -1083,7 +1083,7 @@ describe("renderDesignImage", () => {
     expect(pocketInk).toBeGreaterThan(900);
     expect(zipperPinkWithoutTrim).toBeUndefined();
     expect(upperTrimBounds?.count).toBeGreaterThan(100);
-    expect(zipperTrimBounds?.count).toBeGreaterThan(180);
+    expect(zipperTrimBounds?.count).toBeGreaterThan(40);
     expect(lowerTrimBounds?.count).toBeGreaterThan(100);
     expect(upperTrimBounds).toBeDefined();
     expect(upperTrimBounds?.maxY ?? 0).toBeLessThan(
