@@ -42,6 +42,19 @@ describe("resolveSelectedIdsForAttributeValues", () => {
       ),
     ).toEqual([100]);
   });
+
+  it("acepta IDs PAV de Odoo como respaldo y devuelve los IDs PTAV de la app", () => {
+    expect(
+      resolveSelectedIdsForAttributeValues(
+        [
+          { id: 100, sourceValueId: 1_000 },
+          { id: 200, sourceValueId: 2_000 },
+        ],
+        new Set([2_000]),
+        new Set(),
+      ),
+    ).toEqual([200]);
+  });
 });
 
 describe("toOdooImageDataUri", () => {
@@ -96,7 +109,7 @@ describe("getConfiguratorSession", () => {
     vi.clearAllMocks();
   });
 
-  it("restaura selecciones de Uniforme desde la metadata del ultimo diseno", async () => {
+  it("prioriza la linea de Odoo y usa la metadata de Uniforme solo como respaldo", async () => {
     mocks.odooRead.mockImplementation(async (_env, model: string) => {
       if (model === "sale.order.line") {
         return [
@@ -105,9 +118,19 @@ describe("getConfiguratorSession", () => {
             order_id: [68, "S00068"],
             product_id: [700, "Uniforme"],
             product_template_attribute_value_ids: [],
-            product_no_variant_attribute_value_ids: [],
-            product_custom_attribute_value_ids: [],
+            product_no_variant_attribute_value_ids: [9102],
+            product_custom_attribute_value_ids: [501],
             x_product_design_image: "png-base64",
+          },
+        ];
+      }
+
+      if (model === "product.attribute.custom.value") {
+        return [
+          {
+            id: 501,
+            custom_product_template_attribute_value_id: [9301, "Si"],
+            custom_value: "ODOO ACTUAL",
           },
         ];
       }
@@ -263,12 +286,12 @@ describe("getConfiguratorSession", () => {
     expect(session.productTemplateId).toBe(7);
     expect(session.selectedValueIds).toMatchObject({
       "90": [9001],
-      "91": [9101],
+      "91": [9102],
       "92": [9201],
       "93": [9301],
     });
     expect(session.customValuesByValueId).toEqual({
-      "9301": "LA ROCA",
+      "9301": "ODOO ACTUAL",
     });
     expect(
       session.attributes

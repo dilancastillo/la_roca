@@ -88,21 +88,35 @@ type GetConfiguratorSessionOptions = {
 const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
 
 export function resolveSelectedIdsForAttributeValues(
-  values: Array<{ id: number }>,
+  values: Array<{ id: number; sourceValueId?: number | undefined }>,
   lineValueIds: Set<number>,
   productValueIds: Set<number>,
 ) {
-  const lineSelectedIds = values
-    .map((value) => value.id)
-    .filter((valueId) => lineValueIds.has(valueId));
+  const resolveIds = (selectedIds: Set<number>) => {
+    const ptavIds = values
+      .map((value) => value.id)
+      .filter((valueId) => selectedIds.has(valueId));
+
+    if (ptavIds.length > 0) {
+      return ptavIds;
+    }
+
+    return values
+      .filter(
+        (value) =>
+          typeof value.sourceValueId === "number" &&
+          selectedIds.has(value.sourceValueId),
+      )
+      .map((value) => value.id);
+  };
+
+  const lineSelectedIds = resolveIds(lineValueIds);
 
   if (lineSelectedIds.length > 0) {
     return lineSelectedIds;
   }
 
-  return values
-    .map((value) => value.id)
-    .filter((valueId) => productValueIds.has(valueId));
+  return resolveIds(productValueIds);
 }
 
 function toMany2oneId(value: Many2one, fieldName: string): number {
@@ -449,16 +463,21 @@ function applyPersistedSelectedValueIds(
     attributes.map((attribute) => {
       const key = String(attribute.id);
       const validValueIds = new Set(attribute.values.map((value) => value.id));
+      const odooSelected = (selectedValueIds[key] ?? []).filter((valueId) =>
+        validValueIds.has(valueId),
+      );
       const persistedSelected = (persistedState.selectedValueIds[key] ?? [])
         .filter((valueId) => validValueIds.has(valueId));
+      const effectiveSelected =
+        odooSelected.length > 0 ? odooSelected : persistedSelected;
 
       return [
         key,
-        persistedSelected.length > 0
+        effectiveSelected.length > 0
           ? attribute.selectionMode === "single"
-            ? persistedSelected.slice(0, 1)
-            : persistedSelected
-          : selectedValueIds[key] ?? [],
+            ? effectiveSelected.slice(0, 1)
+            : effectiveSelected
+          : [],
       ];
     }),
   );
@@ -478,12 +497,12 @@ function applyPersistedCustomValues(
   );
 
   return {
-    ...customValuesByValueId,
     ...Object.fromEntries(
       Object.entries(persistedState.customValuesByValueId).filter(([valueId]) =>
         validValueIds.has(Number(valueId)),
       ),
     ),
+    ...customValuesByValueId,
   };
 }
 

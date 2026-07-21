@@ -256,7 +256,6 @@ export function ConfiguratorPage() {
   const configuratorPanelRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const hasInitializedExpandedAttributeRef = useRef(false);
-  const initializedLineIdRef = useRef<number | null>(null);
   const latestPreviewSceneKeyRef = useRef("");
   const previousLineIdRef = useRef<number | null>(null);
   const previousLogoSelectionKeyRef = useRef("");
@@ -265,27 +264,19 @@ export function ConfiguratorPage() {
   const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
 
   useEffect(() => {
-    if (!sessionQuery.data) {
+    if (!sessionQuery.data || sessionQuery.isFetching) {
       return;
     }
 
-    if (initializedLineIdRef.current === lineId) {
-      return;
-    }
-
-    initializedLineIdRef.current = lineId;
     dispatch({
       type: "INITIALIZE",
       value: {
-        selectedValueIds: synchronizeTextAttributeSelections(
-          sessionQuery.data,
-          sessionQuery.data.selectedValueIds,
-        ),
+        selectedValueIds: sessionQuery.data.selectedValueIds,
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
     });
     setInvalidCustomValueIds(new Set());
-  }, [lineId, sessionQuery.data]);
+  }, [lineId, sessionQuery.data, sessionQuery.isFetching]);
 
   const uiModel = useMemo(() => {
     if (!sessionQuery.data) {
@@ -446,7 +437,12 @@ export function ConfiguratorPage() {
     );
   }
 
-  if (sessionQuery.isLoading || !uiModel || !sessionQuery.data) {
+  if (
+    sessionQuery.isLoading ||
+    sessionQuery.isFetching ||
+    !uiModel ||
+    !sessionQuery.data
+  ) {
     return (
       <main className="page-state">
         <h1>Cargando configurador</h1>

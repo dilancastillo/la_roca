@@ -9,7 +9,8 @@ export function useConfiguratorSession(lineId: number, enabled = true) {
       const data = await requestJson(`/api/session/${lineId}`);
       return configuratorSessionSchema.parse(data);
     },
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: "always",
     retry: false,
     enabled,
   });
