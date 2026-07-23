@@ -133,8 +133,19 @@ function isAuxiliaryPocketTypeAttributeName(normalizedName: string) {
   );
 }
 
-function isRectangularLowerPocketAsset(assetPath: string | undefined) {
-  return assetPath?.endsWith("blouse-model-14.svg") ?? false;
+const LOWER_POCKET_AUXILIARY_ADDON_FILE_NAMES = [
+  "blouse-model-14.svg",
+  "blouse-model-15.svg",
+  "blouse-model-19-ribete-lower-pocket.svg",
+] as const;
+
+function supportsLowerPocketAuxiliaryAddon(assetPath: string | undefined) {
+  return (
+    assetPath !== undefined &&
+    LOWER_POCKET_AUXILIARY_ADDON_FILE_NAMES.some((fileName) =>
+      assetPath.endsWith(fileName),
+    )
+  );
 }
 
 function compactUnique(values: Array<string | undefined>) {
@@ -1100,7 +1111,7 @@ function deriveSingleAutomationRenderScene(
     : undefined;
   const lowerPocketAuxiliaryAddon =
     lowerPocketLayout !== "none" &&
-    isRectangularLowerPocketAsset(lowerPocketAssetPath)
+    supportsLowerPocketAuxiliaryAddon(lowerPocketAssetPath)
       ? getLowerPocketAuxiliaryAddon(
           selectedAuxiliaryPocketType ?? selectedLowerPocketType,
         )

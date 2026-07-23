@@ -7573,6 +7573,60 @@ describe("renderDesignImage", () => {
     expect(rightMarkPinkPixels).toBeGreaterThan(20);
   }, 20000);
 
+  it.each([
+    [
+      "AROS",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15.svg",
+    ],
+    [
+      "RIBETE",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-19-ribete-lower-pocket.svg",
+    ],
+  ])(
+    "dibuja auxiliares lizo, sobrepuesto y velcro sobre el bolsillo %s",
+    async (_modelName, lowerPocketAssetPath) => {
+      const pocketRegion = { x: 285, y: 725, width: 355, height: 195 };
+      const withoutAddon = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          lowerPocketAssetPath,
+        }),
+      );
+
+      for (const kind of ["lizo", "overlaid", "velcro"] as const) {
+        const withAddon = await readRawPng(
+          await renderDesignImage({
+            ...baseScene,
+            lowerPocketAssetPath,
+            lowerPocketAuxiliaryAddonKind: kind,
+            lowerPocketAuxiliaryAddonSide: "both",
+            trimSections: [
+              {
+                valueId: 423,
+                role: "auxiliaryPocket",
+                key: "bolsillo-auxiliar",
+                label: "Bolsillo auxiliar",
+                colorHex: "#f4c7cc",
+              },
+            ],
+          }),
+        );
+
+        expect(
+          countDifferentPixels(withoutAddon.data, withAddon.data),
+        ).toBeGreaterThan(100);
+        expect(
+          countPastelPinkPixelsInRegion(
+            withAddon.data,
+            withAddon.info.width,
+            pocketRegion,
+          ),
+        ).toBeGreaterThan(kind === "velcro" ? 20 : 100);
+      }
+    },
+    30000,
+  );
+
   it("dibuja la presilla de manga con el elemento extraido y color de vivo", async () => {
     const withoutTrim = await readRawPng(await renderDesignImage(baseScene));
     const withSleeveTabs = await readRawPng(

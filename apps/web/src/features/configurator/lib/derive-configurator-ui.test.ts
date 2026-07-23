@@ -283,6 +283,18 @@ const session: ConfiguratorSession = {
           attributeName: "Otro nombre para bolsillo inferior",
         },
         {
+          id: 381,
+          name: "AROS",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
+          id: 383,
+          name: "RIBETE",
+          attributeId: 70,
+          attributeName: "Otro nombre para bolsillo inferior",
+        },
+        {
           id: 382,
           name: "COSTURA",
           attributeId: 70,
@@ -1773,6 +1785,43 @@ describe("deriveConfiguratorUi", () => {
     expect(withVelcroRight.previewScene.lowerPocketAuxiliaryAddonSide).toBe(
       "right",
     );
+
+    for (const modelId of [381, 383]) {
+      const withModelLizoDouble = deriveConfiguratorUi(sessionWithSideTypes, {
+        ...sessionWithSideTypes.selectedValueIds,
+        "69": [5354],
+        "70": [modelId],
+      });
+      const withModelOverlaidLeft = deriveConfiguratorUi(sessionWithSideTypes, {
+        ...sessionWithSideTypes.selectedValueIds,
+        "69": [5358],
+        "70": [modelId],
+      });
+      const withModelVelcroRight = deriveConfiguratorUi(sessionWithSideTypes, {
+        ...sessionWithSideTypes.selectedValueIds,
+        "69": [5362],
+        "70": [modelId],
+      });
+
+      expect(
+        withModelLizoDouble.previewScene.lowerPocketAuxiliaryAddonKind,
+      ).toBe("lizo");
+      expect(
+        withModelLizoDouble.previewScene.lowerPocketAuxiliaryAddonSide,
+      ).toBe("both");
+      expect(
+        withModelOverlaidLeft.previewScene.lowerPocketAuxiliaryAddonKind,
+      ).toBe("overlaid");
+      expect(
+        withModelOverlaidLeft.previewScene.lowerPocketAuxiliaryAddonSide,
+      ).toBe("left");
+      expect(
+        withModelVelcroRight.previewScene.lowerPocketAuxiliaryAddonKind,
+      ).toBe("velcro");
+      expect(
+        withModelVelcroRight.previewScene.lowerPocketAuxiliaryAddonSide,
+      ).toBe("right");
+    }
   });
 
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {

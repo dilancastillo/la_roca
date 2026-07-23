@@ -501,7 +501,6 @@ const SLEEVE_TAB_BUTTON = {
 const SLEEVE_TAB_MARKER_HEIGHT = 52;
 const SLEEVE_TAB_MARKER_STROKE_WIDTH = 4;
 const SLEEVE_TAB_MARKER_STROKE_COLOR = "#000";
-const RECTANGULAR_LOWER_POCKET_FILE_NAME = "blouse-model-14.svg";
 const AUXILIARY_ADDON_VELCRO_MARK_PATH =
   "M86.91,10.07l2.42,2.78c.63.72,1.16,1.39,1.72,2.12h.11c.56-.78,1.12-1.45,1.69-2.14l2.39-2.76h3.34l-5.79,6.27,5.97,6.69h-3.51l-2.49-2.92c-.67-.75-1.23-1.47-1.83-2.25h-.07c-.56.78-1.16,1.47-1.79,2.25l-2.46,2.92h-3.41l6.04-6.61-5.76-6.35h3.44Z";
 const AUXILIARY_ADDON_GEOMETRY_BY_KIND = {
@@ -561,10 +560,23 @@ const AUXILIARY_ADDON_GEOMETRY_BY_KIND = {
     markPath: AUXILIARY_ADDON_VELCRO_MARK_PATH,
   },
 } as const;
-const RECTANGULAR_LOWER_POCKET_BOXES = {
-  left: { x: 353.29, y: 900.63, width: 145.5, height: 165.43 },
-  right: { x: 613.33, y: 900.63, width: 145.5, height: 165.43 },
-} as const;
+const LOWER_POCKET_AUXILIARY_ADDON_BOXES_BY_FILE_NAME: Record<
+  string,
+  Record<"left" | "right", SourceRect>
+> = {
+  "blouse-model-14.svg": {
+    left: { x: 353.29, y: 900.63, width: 145.5, height: 165.43 },
+    right: { x: 613.33, y: 900.63, width: 145.5, height: 165.43 },
+  },
+  "blouse-model-15.svg": {
+    left: { x: 352.42, y: 910.74, width: 145.5, height: 165.43 },
+    right: { x: 612.46, y: 910.74, width: 145.5, height: 165.43 },
+  },
+  "blouse-model-19-ribete-lower-pocket.svg": {
+    left: { x: 357.52, y: 900.78, width: 145.5, height: 165.43 },
+    right: { x: 617.56, y: 900.78, width: 145.5, height: 165.43 },
+  },
+};
 const ORIGINAL_SLEEVES_DETAIL_FILE_NAME =
   "blouse-model-32-original-sleeves.svg";
 const PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY =
@@ -3198,7 +3210,7 @@ function strokeAndFillRect(
   context.stroke();
 }
 
-async function drawRectangularLowerPocketAuxiliaryAddon(
+async function drawLowerPocketAuxiliaryAddon(
   context: CanvasRenderingContext2D,
   lowerPocketSrc: string,
   side: PreviewScene["lowerPocketAuxiliaryAddonSide"],
@@ -3206,10 +3218,12 @@ async function drawRectangularLowerPocketAuxiliaryAddon(
   baseColor: string,
   trimColor: string | undefined,
 ) {
-  if (
-    !side ||
-    getFileNameFromSource(lowerPocketSrc) !== RECTANGULAR_LOWER_POCKET_FILE_NAME
-  ) {
+  const pocketBoxes =
+    LOWER_POCKET_AUXILIARY_ADDON_BOXES_BY_FILE_NAME[
+      getFileNameFromSource(lowerPocketSrc)
+    ];
+
+  if (!side || !pocketBoxes) {
     return;
   }
 
@@ -3223,7 +3237,7 @@ async function drawRectangularLowerPocketAuxiliaryAddon(
   context.lineCap = "butt";
 
   for (const addonSide of getLowerPocketAuxiliaryAddonSides(side)) {
-    const pocketBox = RECTANGULAR_LOWER_POCKET_BOXES[addonSide];
+    const pocketBox = pocketBoxes[addonSide];
     const baseRect = transformSourceRect(
       scaleAuxiliaryAddonRect(geometry.base, pocketBox, geometry.square),
       transform,
@@ -5133,7 +5147,7 @@ async function composeSingleDesign(
           flap: flapTrimColor,
         },
       );
-      await drawRectangularLowerPocketAuxiliaryAddon(
+      await drawLowerPocketAuxiliaryAddon(
         context,
         scene.lowerPocketImageSrc,
         scene.lowerPocketAuxiliaryAddonSide,

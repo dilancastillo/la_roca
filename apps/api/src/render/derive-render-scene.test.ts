@@ -287,6 +287,18 @@ const session: ConfiguratorSession = {
           attributeName: "Modelo bolsillo inferior",
         },
         {
+          id: 381,
+          name: "AROS",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
+          id: 383,
+          name: "RIBETE",
+          attributeId: 70,
+          attributeName: "Modelo bolsillo inferior",
+        },
+        {
           id: 382,
           name: "COSTURA",
           attributeId: 70,
@@ -3473,6 +3485,42 @@ describe("deriveAutomationRenderScene", () => {
     expect(withVelcroLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
     expect(withVelcroRight.lowerPocketAuxiliaryAddonKind).toBe("velcro");
     expect(withVelcroRight.lowerPocketAuxiliaryAddonSide).toBe("right");
+
+    for (const modelId of [381, 383]) {
+      const withModelLizoDouble = deriveAutomationRenderScene(
+        sessionWithSideTypes,
+        {
+          ...sessionWithSideTypes.selectedValueIds,
+          "69": [5354],
+          "70": [modelId],
+        },
+      );
+      const withModelOverlaidLeft = deriveAutomationRenderScene(
+        sessionWithSideTypes,
+        {
+          ...sessionWithSideTypes.selectedValueIds,
+          "69": [5358],
+          "70": [modelId],
+        },
+      );
+      const withModelVelcroRight = deriveAutomationRenderScene(
+        sessionWithSideTypes,
+        {
+          ...sessionWithSideTypes.selectedValueIds,
+          "69": [5362],
+          "70": [modelId],
+        },
+      );
+
+      expect(withModelLizoDouble.lowerPocketAuxiliaryAddonKind).toBe("lizo");
+      expect(withModelLizoDouble.lowerPocketAuxiliaryAddonSide).toBe("both");
+      expect(withModelOverlaidLeft.lowerPocketAuxiliaryAddonKind).toBe(
+        "overlaid",
+      );
+      expect(withModelOverlaidLeft.lowerPocketAuxiliaryAddonSide).toBe("left");
+      expect(withModelVelcroRight.lowerPocketAuxiliaryAddonKind).toBe("velcro");
+      expect(withModelVelcroRight.lowerPocketAuxiliaryAddonSide).toBe("right");
+    }
   });
 
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {
