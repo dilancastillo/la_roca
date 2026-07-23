@@ -5014,6 +5014,106 @@ describe("deriveConfiguratorUi", () => {
     ).toEqual([]);
   });
 
+  it("oculta cremallera y bolsillo auxiliar cuando el modelo inferior es Ninguno", () => {
+    const lowerPocketZipperAttributeId = 815;
+    const auxiliaryPocketTypeAttributeId = 156;
+    const sessionWithLowerPocketDependencies: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: lowerPocketZipperAttributeId,
+          name: "¿Bolsillos inferiores con cremallera?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12401,
+              name: "No",
+              attributeId: lowerPocketZipperAttributeId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+            {
+              id: 12402,
+              name: "Si",
+              attributeId: lowerPocketZipperAttributeId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+          ],
+        },
+        {
+          id: auxiliaryPocketTypeAttributeId,
+          name: "Tipo de bolsillo auxiliar",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12403,
+              name: "Lizo doble",
+              attributeId: auxiliaryPocketTypeAttributeId,
+              attributeName: "Tipo de bolsillo auxiliar",
+            },
+          ],
+        },
+      ],
+    };
+    const selectedWithNone = {
+      ...session.selectedValueIds,
+      "70": [5425],
+      [String(lowerPocketZipperAttributeId)]: [12402],
+      [String(auxiliaryPocketTypeAttributeId)]: [12403],
+    };
+    const selectedWithModel = {
+      ...selectedWithNone,
+      "70": [2578],
+    };
+    const uiWithNone = deriveConfiguratorUi(
+      sessionWithLowerPocketDependencies,
+      selectedWithNone,
+    );
+    const uiWithoutModel = deriveConfiguratorUi(
+      sessionWithLowerPocketDependencies,
+      {
+        ...selectedWithNone,
+        "70": [],
+      },
+    );
+    const uiWithModel = deriveConfiguratorUi(
+      sessionWithLowerPocketDependencies,
+      selectedWithModel,
+    );
+    const sanitizedWithNone =
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithLowerPocketDependencies,
+        selectedWithNone,
+      );
+
+    expect(
+      uiWithNone.groups.map((group) => group.attributeId),
+    ).not.toContain(lowerPocketZipperAttributeId);
+    expect(
+      uiWithNone.groups.map((group) => group.attributeId),
+    ).not.toContain(auxiliaryPocketTypeAttributeId);
+    expect(
+      uiWithoutModel.groups.map((group) => group.attributeId),
+    ).not.toContain(lowerPocketZipperAttributeId);
+    expect(
+      uiWithoutModel.groups.map((group) => group.attributeId),
+    ).not.toContain(auxiliaryPocketTypeAttributeId);
+    expect(uiWithModel.groups.map((group) => group.attributeId)).toContain(
+      lowerPocketZipperAttributeId,
+    );
+    expect(uiWithModel.groups.map((group) => group.attributeId)).toContain(
+      auxiliaryPocketTypeAttributeId,
+    );
+    expect(sanitizedWithNone[String(lowerPocketZipperAttributeId)]).toEqual([]);
+    expect(sanitizedWithNone[String(auxiliaryPocketTypeAttributeId)]).toEqual(
+      [],
+    );
+  });
+
   it("solo muestra bolsillos adicionales de pantalon cuando estan en Si", () => {
     const additionalPocketsAttributeId = 12300;
     const additionalPocketsNoValueId = 12301;

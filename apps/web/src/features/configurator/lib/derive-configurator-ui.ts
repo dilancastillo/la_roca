@@ -1310,6 +1310,68 @@ function getHiddenLowerPocketZipperOptionAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenLowerPocketDependentAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const catalog = getProductAssetCatalog(session.graphicManifestKey);
+  const lowerPocketModelAttribute =
+    session.attributes.find((attribute) =>
+      matchesCatalogAttribute(catalog, "lowerPocketModel", attribute),
+    ) ??
+    findAttributeByName(
+      session,
+      (name) =>
+        name.includes("modelo bolsillo inferior") ||
+        (name.includes("bolsillo inferior") && !name.includes("tipo")),
+    );
+
+  if (!lowerPocketModelAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const noneValueIds = new Set(catalog?.lowerPocketModelNoneValueIds ?? []);
+  const selectedModels = getSelectedOptions(
+    lowerPocketModelAttribute,
+    selectedValueIds,
+  );
+  const hasConcreteModel = selectedModels.some((value) => {
+    const normalizedName = normalize(value.name);
+
+    return !(
+      noneValueIds.has(value.id) ||
+      (value.sourceValueId !== undefined &&
+        noneValueIds.has(value.sourceValueId)) ||
+      normalizedName === "ninguno" ||
+      normalizedName.includes("sin bolsillo")
+    );
+  });
+
+  if (hasConcreteModel) {
+    return hiddenAttributeIds;
+  }
+
+  for (const attribute of session.attributes) {
+    const normalizedName = normalize(attribute.name);
+    const isLowerPocketZipperAttribute =
+      attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketZipper ||
+      (normalizedName.includes("bolsillo") &&
+        normalizedName.includes("inferior") &&
+        normalizedName.includes("cremallera") &&
+        !normalizedName.includes("opciones"));
+    const isAuxiliaryPocketTypeAttribute =
+      attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.auxiliaryPocketType ||
+      isAuxiliaryPocketTypeAttributeName(normalizedName);
+
+    if (isLowerPocketZipperAttribute || isAuxiliaryPocketTypeAttribute) {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenAdditionalEmbroideryAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1432,6 +1494,7 @@ function getHiddenConditionalAttributeIds(
       session,
       selectedValueIds,
     ),
+    ...getHiddenLowerPocketDependentAttributeIds(session, selectedValueIds),
     ...getHiddenAdditionalEmbroideryAttributeIds(session, selectedValueIds),
     ...getHiddenAdditionalPantsPocketAttributeIds(
       session,
