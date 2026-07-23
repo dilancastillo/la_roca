@@ -848,6 +848,8 @@ function isPespunteGarment(value: KneePatchOption | string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -1778,18 +1780,16 @@ function deriveSingleConfiguratorUi(
   const neckImageSrc = selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
-  const shouldUseDefaultGarmentUntilNeck =
-    session.graphicManifestKey.includes("blusa") &&
-    isPespunteGarment(selectedGarment) &&
-    !neckImageSrc;
-  const garmentImageSrc = shouldUseDefaultGarmentUntilNeck
-    ? getDefaultImageSource(session.graphicManifestKey)
+  const shouldUseClosedBlouseWithoutNeck =
+    session.graphicManifestKey.includes("blusa") && !neckImageSrc;
+  const garmentImageSrc = shouldUseClosedBlouseWithoutNeck
+    ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
     : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);
   const garmentModelDetailImageSrc = selectedGarment
-    ? shouldUseDefaultGarmentUntilNeck
+    ? shouldUseClosedBlouseWithoutNeck && isPespunteGarment(selectedGarment)
       ? BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC
       : getGarmentDetailImageSourceForValue(
         session.graphicManifestKey,
