@@ -695,6 +695,15 @@ describe("renderDesignImage", () => {
         neckAssetPath,
       }),
     );
+    const withRepeatedPespunteDetail = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath: pespunteAssetPath,
+        garmentDetailAssetPath:
+          "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
+        neckAssetPath,
+      }),
+    );
     const withPespunteTrim = await readRawPng(
       await renderDesignImage({
         ...baseScene,
@@ -778,6 +787,9 @@ describe("renderDesignImage", () => {
     expect(
       countDifferentPixels(withLizo.data, withPespunteDetail.data),
     ).toBeGreaterThan(300);
+    expect(
+      countDifferentPixels(withPespunte.data, withRepeatedPespunteDetail.data),
+    ).toBe(0);
     expect(pespunteSideInk).toBeGreaterThan(lizoSideInk + 300);
     expect(pespunteDetailSideInk).toBeGreaterThan(lizoSideInk + 300);
     expect(chestPocketInk).toBeLessThan(800);

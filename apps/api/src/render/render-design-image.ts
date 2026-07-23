@@ -4604,11 +4604,21 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const garmentDetailAssetPaths =
       scene.garmentDetailAssetPaths ??
       (scene.garmentDetailAssetPath ? [scene.garmentDetailAssetPath] : []);
+    const implicitGarmentDetailAssetPath = scene.garmentAssetPath
+      ? garmentDetailOverlayByFileName[
+          getAssetFileName(scene.garmentAssetPath)
+        ]
+      : undefined;
     const hasOriginalSleevesOverlay =
       hasOriginalSleevesDetailAsset(garmentDetailAssetPaths);
 
     for (const garmentDetailAssetPath of garmentDetailAssetPaths) {
-      if (isOriginalSleevesDetailAsset(garmentDetailAssetPath)) {
+      if (
+        isOriginalSleevesDetailAsset(garmentDetailAssetPath) ||
+        (implicitGarmentDetailAssetPath &&
+          getAssetFileName(garmentDetailAssetPath) ===
+            getAssetFileName(implicitGarmentDetailAssetPath))
+      ) {
         continue;
       }
 

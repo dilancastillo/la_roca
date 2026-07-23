@@ -848,6 +848,8 @@ function isPespunteGarment(value: KneePatchOption | string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const BLUSA_PESPUNTE_MODEL_IMAGE_SRC =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
 const BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
@@ -1782,16 +1784,15 @@ function deriveSingleConfiguratorUi(
     : undefined;
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") && !neckImageSrc;
+  const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentImageSrc = shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
     : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);
-  const garmentModelDetailImageSrc = selectedGarment
-    ? shouldUseClosedBlouseWithoutNeck && isPespunteGarment(selectedGarment)
-      ? BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC
-      : getGarmentDetailImageSourceForValue(
+  const selectedGarmentDetailImageSrc = selectedGarment
+    ? getGarmentDetailImageSourceForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
         selectedGarment.id,
@@ -1799,6 +1800,13 @@ function deriveSingleConfiguratorUi(
         selectedGarment.name,
         selectedGarment.sourceValueId,
       )
+    : undefined;
+  const garmentModelDetailImageSrc = selectedGarment
+    ? garmentImageSrc === BLUSA_PESPUNTE_MODEL_IMAGE_SRC
+      ? undefined
+      : shouldUseClosedBlouseWithoutNeck && selectedGarmentIsPespunte
+        ? BLUSA_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC
+        : selectedGarmentDetailImageSrc
     : undefined;
   const sleeveDetailImageSrc = selectedSleeveModel
     ? getGarmentDetailImageSourceForValue(

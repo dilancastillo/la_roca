@@ -4753,11 +4753,21 @@ async function composeSingleDesign(
     const garmentDetailImageSrcs =
       scene.garmentDetailImageSrcs ??
       (scene.garmentDetailImageSrc ? [scene.garmentDetailImageSrc] : []);
+    const implicitGarmentDetailImageSrc = scene.garmentImageSrc
+      ? garmentDetailOverlayByFileName[
+          getFileNameFromSource(scene.garmentImageSrc)
+        ]
+      : undefined;
     const hasOriginalSleevesOverlay =
       hasOriginalSleevesDetailOverlay(garmentDetailImageSrcs);
 
     for (const garmentDetailImageSrc of garmentDetailImageSrcs) {
-      if (isOriginalSleevesDetailOverlay(garmentDetailImageSrc)) {
+      if (
+        isOriginalSleevesDetailOverlay(garmentDetailImageSrc) ||
+        (implicitGarmentDetailImageSrc &&
+          getFileNameFromSource(garmentDetailImageSrc) ===
+            getFileNameFromSource(implicitGarmentDetailImageSrc))
+      ) {
         continue;
       }
 

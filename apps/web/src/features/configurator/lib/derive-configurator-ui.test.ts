@@ -875,6 +875,47 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.lowerPocketImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato-lower-pocket.svg",
     );
+    expect(ui.previewScene.garmentDetailImageSrc).toBeUndefined();
+    expect(ui.previewScene.garmentDetailImageSrcs).toBeUndefined();
+  });
+
+  it("no duplica el detalle cuando la blusa lleva pespunte", () => {
+    const sessionWithPespunteToggle: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 811
+          ? {
+              ...attribute,
+              name: "¿Lleva pespunte?",
+              values: [
+                {
+                  id: 1957,
+                  name: "No",
+                  attributeId: 811,
+                  attributeName: "¿Lleva pespunte?",
+                },
+                {
+                  id: 1958,
+                  name: "Si",
+                  attributeId: 811,
+                  attributeName: "¿Lleva pespunte?",
+                },
+              ],
+            }
+          : attribute,
+      ),
+    };
+    const ui = deriveConfiguratorUi(sessionWithPespunteToggle, {
+      ...sessionWithPespunteToggle.selectedValueIds,
+      "811": [1958],
+      "63": [2956],
+    });
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg",
+    );
+    expect(ui.previewScene.garmentDetailImageSrc).toBeUndefined();
+    expect(ui.previewScene.garmentDetailImageSrcs).toBeUndefined();
   });
 
   it("usa la blusa cerrada si Pespunte no tiene cuello seleccionado", () => {

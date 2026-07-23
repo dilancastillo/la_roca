@@ -741,6 +741,8 @@ function isPespunteGarment(value: SourceBackedOption | string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const BLUSA_PESPUNTE_MODEL_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
 // Base temporal para Blusa y Uniforme mientras no exista un modelo de cuello seleccionado.
 const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
@@ -1034,16 +1036,15 @@ function deriveSingleAutomationRenderScene(
     : undefined;
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") && !neckAssetPath;
+  const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentAssetPath = shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
     : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
-  const garmentModelDetailAssetPath = selectedGarment
-    ? shouldUseClosedBlouseWithoutNeck && isPespunteGarment(selectedGarment)
-      ? BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH
-      : getServerGarmentDetailAssetPathForValue(
+  const selectedGarmentDetailAssetPath = selectedGarment
+    ? getServerGarmentDetailAssetPathForValue(
         session.graphicManifestKey,
         garmentAttribute!.id,
         selectedGarment.id,
@@ -1051,6 +1052,13 @@ function deriveSingleAutomationRenderScene(
         selectedGarment.name,
         selectedGarment.sourceValueId,
       )
+    : undefined;
+  const garmentModelDetailAssetPath = selectedGarment
+    ? garmentAssetPath === BLUSA_PESPUNTE_MODEL_ASSET_PATH
+      ? undefined
+      : shouldUseClosedBlouseWithoutNeck && selectedGarmentIsPespunte
+        ? BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH
+        : selectedGarmentDetailAssetPath
     : undefined;
   const sleeveDetailAssetPath = selectedSleeveModel
     ? getServerGarmentDetailAssetPathForValue(
