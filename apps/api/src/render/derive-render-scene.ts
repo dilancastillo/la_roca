@@ -741,6 +741,7 @@ function isPespunteGarment(value: SourceBackedOption | string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+// Base temporal para Blusa y Uniforme mientras no exista un modelo de cuello seleccionado.
 const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
