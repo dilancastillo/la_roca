@@ -109,7 +109,7 @@ describe("getConfiguratorSession", () => {
     vi.clearAllMocks();
   });
 
-  it("prioriza la linea de Odoo y usa la metadata de Uniforme solo como respaldo", async () => {
+  it("usa solo la linea, variante y valores personalizados de Odoo", async () => {
     mocks.odooRead.mockImplementation(async (_env, model: string) => {
       if (model === "sale.order.line") {
         return [
@@ -284,10 +284,10 @@ describe("getConfiguratorSession", () => {
     const session = await getConfiguratorSession({} as never, 170);
 
     expect(session.productTemplateId).toBe(7);
-    expect(session.selectedValueIds).toMatchObject({
-      "90": [9001],
+    expect(session.selectedValueIds).toEqual({
+      "90": [],
       "91": [9102],
-      "92": [9201],
+      "92": [],
       "93": [9301],
     });
     expect(session.customValuesByValueId).toEqual({
@@ -303,6 +303,12 @@ describe("getConfiguratorSession", () => {
         .find((attribute) => attribute.id === 91)
         ?.values.map((value) => value.sourceValueId),
     ).toEqual([19103, 19102, 19101]);
+    expect(session.attributes.map((attribute) => attribute.id)).toEqual([
+      90,
+      91,
+      92,
+      93,
+    ]);
     expect(session.status.version).toBe(4);
   });
 });

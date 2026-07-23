@@ -1,10 +1,6 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
-import {
-  parseConfiguratorStateDescription,
-  type PersistedConfiguratorState,
-} from "./configurator-state-metadata.js";
 
 type Many2one = [number, string] | false;
 
@@ -78,14 +74,11 @@ type DesignAttachmentRecord = {
   id: number;
   name: string;
   create_date?: string | false;
-  description?: string | false;
 };
 
 type GetConfiguratorSessionOptions = {
   loadCustomValues?: boolean;
 };
-
-const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
 
 export function resolveSelectedIdsForAttributeValues(
   values: Array<{ id: number; sourceValueId?: number | undefined }>,
@@ -400,110 +393,22 @@ async function loadLatestDesignAttachment(env: OdooEnv, saleOrderLineId: number)
     env,
     "ir.attachment",
     domain,
-    ["id", "name", "create_date", "description"],
+    ["id", "name", "create_date"],
     "create_date desc, id desc",
     { limit: 20 },
-  ).catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-
-    if (!message.includes("description")) {
-      return [];
-    }
-
-    return odooSearchRead<DesignAttachmentRecord>(
-      env,
-      "ir.attachment",
-      domain,
-      ["id", "name", "create_date"],
-      "create_date desc, id desc",
-      { limit: 20 },
-    ).catch(() => []);
-  });
+  ).catch(() => []);
 
   const [attachment] = attachments;
-  const configuratorState = attachments
-    .map((item) => parseConfiguratorStateDescription(item.description))
-    .find((state): state is PersistedConfiguratorState => Boolean(state));
 
   return attachment
     ? {
         version: parseDesignAttachmentVersion(attachment.name),
         generatedAt: parseOdooDatetime(attachment.create_date),
-        configuratorState,
       }
     : {
         version: 0,
         generatedAt: null,
-        configuratorState: undefined,
       };
-}
-
-function shouldUsePersistedConfiguratorState(
-  productTemplateId: number,
-  productName: string,
-  state: PersistedConfiguratorState | undefined,
-) {
-  return (
-    Boolean(state) &&
-    (productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
-      normalizeGraphicManifestKey(productName) === "uniforme")
-  );
-}
-
-function applyPersistedSelectedValueIds(
-  attributes: ConfiguratorSession["attributes"],
-  selectedValueIds: Record<string, number[]>,
-  persistedState: PersistedConfiguratorState | undefined,
-) {
-  if (!persistedState) {
-    return selectedValueIds;
-  }
-
-  return Object.fromEntries(
-    attributes.map((attribute) => {
-      const key = String(attribute.id);
-      const validValueIds = new Set(attribute.values.map((value) => value.id));
-      const odooSelected = (selectedValueIds[key] ?? []).filter((valueId) =>
-        validValueIds.has(valueId),
-      );
-      const persistedSelected = (persistedState.selectedValueIds[key] ?? [])
-        .filter((valueId) => validValueIds.has(valueId));
-      const effectiveSelected =
-        odooSelected.length > 0 ? odooSelected : persistedSelected;
-
-      return [
-        key,
-        effectiveSelected.length > 0
-          ? attribute.selectionMode === "single"
-            ? effectiveSelected.slice(0, 1)
-            : effectiveSelected
-          : [],
-      ];
-    }),
-  );
-}
-
-function applyPersistedCustomValues(
-  attributes: ConfiguratorSession["attributes"],
-  customValuesByValueId: Record<string, string>,
-  persistedState: PersistedConfiguratorState | undefined,
-) {
-  if (!persistedState) {
-    return customValuesByValueId;
-  }
-
-  const validValueIds = new Set(
-    attributes.flatMap((attribute) => attribute.values.map((value) => value.id)),
-  );
-
-  return {
-    ...Object.fromEntries(
-      Object.entries(persistedState.customValuesByValueId).filter(([valueId]) =>
-        validValueIds.has(Number(valueId)),
-      ),
-    ),
-    ...customValuesByValueId,
-  };
 }
 
 export async function getConfiguratorSession(
@@ -646,6 +551,7 @@ export async function getConfiguratorSession(
   );
   const attributeLineOrder = new Map<number, { sequence: number; index: number }>();
   const customValuesByValueId: Record<string, string> = {};
+  const customValuePtavIds = new Set<number>();
 
   for (const customAttributeValue of customAttributeValues) {
     const ptavId = Array.isArray(
@@ -658,6 +564,7 @@ export async function getConfiguratorSession(
       continue;
     }
 
+    customValuePtavIds.add(ptavId);
     customValuesByValueId[String(ptavId)] =
       typeof customAttributeValue.custom_value === "string"
         ? customAttributeValue.custom_value
@@ -682,6 +589,7 @@ export async function getConfiguratorSession(
   const lineValueIds = new Set<number>([
     ...normalizeManyIds(line.product_template_attribute_value_ids),
     ...normalizeManyIds(line.product_no_variant_attribute_value_ids),
+    ...customValuePtavIds,
   ]);
   const productValueIds = new Set<number>([
     ...normalizeManyIds(product.product_template_attribute_value_ids),
@@ -821,23 +729,6 @@ export async function getConfiguratorSession(
     env,
     saleOrderLineId,
   );
-  const persistedConfiguratorState = shouldUsePersistedConfiguratorState(
-    productTemplateId,
-    productName,
-    latestDesignAttachment.configuratorState,
-  )
-    ? latestDesignAttachment.configuratorState
-    : undefined;
-  const effectiveSelectedValueIds = applyPersistedSelectedValueIds(
-    sortedAttributes,
-    selectedValueIds,
-    persistedConfiguratorState,
-  );
-  const effectiveCustomValuesByValueId = applyPersistedCustomValues(
-    sortedAttributes,
-    customValuesByValueId,
-    persistedConfiguratorState,
-  );
 
   const exclusions = ptavs.flatMap((ptav) => {
     const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
@@ -863,8 +754,8 @@ export async function getConfiguratorSession(
     productName,
     graphicManifestKey: normalizeGraphicManifestKey(productName),
     attributes: sortedAttributes,
-    selectedValueIds: effectiveSelectedValueIds,
-    customValuesByValueId: effectiveCustomValuesByValueId,
+    selectedValueIds,
+    customValuesByValueId,
     exclusions,
     status: {
       orderState: order.state,

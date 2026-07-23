@@ -685,6 +685,16 @@ const pantalonSession: ConfiguratorSession = {
 };
 
 describe("deriveConfiguratorUi", () => {
+  it("no pinta una seccion de vivo si Odoo no tiene color de vivo seleccionado", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "91": [],
+      "92": [5146],
+    });
+
+    expect(ui.previewScene.trimSections).toEqual([]);
+  });
+
   it("selecciona Largo bota y Ancho bota automaticamente cuando Tipo bota no es Original", () => {
     const sessionWithBootMeasurements: ConfiguratorSession = {
       ...pantalonSession,
@@ -4638,6 +4648,7 @@ describe("deriveConfiguratorUi", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
       "102": [6104],
+      "91": [5152],
       "92": [7040, 7041],
     });
 
@@ -4650,14 +4661,14 @@ describe("deriveConfiguratorUi", () => {
         role: "chestPocket",
         key: "bolsillo-pecho-superior",
         label: "Bolsillo pecho superior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 7041,
         role: "chestPocket",
         key: "bolsillo-pecho-inferior",
         label: "Bolsillo pecho inferior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
     ]);
   });
@@ -4678,6 +4689,7 @@ describe("deriveConfiguratorUi", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
       "102": [6105],
+      "91": [5152],
       "92": [7040, 7042, 7041],
     });
 
@@ -4690,20 +4702,20 @@ describe("deriveConfiguratorUi", () => {
         role: "chestPocket",
         key: "bolsillo-pecho-superior",
         label: "Bolsillo pecho superior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 7041,
         role: "chestPocket",
         key: "bolsillo-pecho-inferior",
         label: "Bolsillo pecho inferior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 7042,
         key: "cremallera",
         label: "Cremallera",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
     ]);
   });
@@ -4712,6 +4724,7 @@ describe("deriveConfiguratorUi", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
       "102": [6107],
+      "91": [5152],
       "92": [7040, 7041],
     });
 
@@ -4724,14 +4737,14 @@ describe("deriveConfiguratorUi", () => {
         role: "chestPocket",
         key: "bolsillo-pecho-superior",
         label: "Bolsillo pecho superior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
       {
         valueId: 7041,
         role: "chestPocket",
         key: "bolsillo-pecho-inferior",
         label: "Bolsillo pecho inferior",
-        colorHex: "#1d4ed8",
+        colorHex: "#f4c7cc",
       },
     ]);
   });

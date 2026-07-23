@@ -541,27 +541,34 @@ function getSelectedTrimSections(
   const selectedSections =
     !sectionAttribute || enabledSections.length === 0
       ? []
-      : enabledSections.map((section) => {
+      : enabledSections.flatMap((section) => {
           const matchingColorAttribute = colorAttributes.find((attribute) =>
             normalize(attribute.name).includes(normalize(section.name)),
           );
           const sectionColor =
             findSelectedValue(matchingColorAttribute, selectedValueIds) ??
             globalColor;
+
+          if (!sectionColor?.colorHex) {
+            return [];
+          }
+
           const role = resolveTrimRole(section);
 
-          return {
-            valueId: section.id,
-            ...(section.sourceValueId !== undefined
-              ? { sourceValueId: section.sourceValueId }
-              : {}),
-            ...(role ? { role } : {}),
-            key:
-              getTrimSectionKeyBySourceValueId(section.sourceValueId) ??
-              normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
-            label: section.name,
-            colorHex: sectionColor?.colorHex ?? "#1d4ed8",
-          };
+          return [
+            {
+              valueId: section.id,
+              ...(section.sourceValueId !== undefined
+                ? { sourceValueId: section.sourceValueId }
+                : {}),
+              ...(role ? { role } : {}),
+              key:
+                getTrimSectionKeyBySourceValueId(section.sourceValueId) ??
+                normalize(section.name).replace(/[^a-z0-9]+/g, "-"),
+              label: section.name,
+              colorHex: sectionColor.colorHex,
+            },
+          ];
         });
 
   return selectedSections;

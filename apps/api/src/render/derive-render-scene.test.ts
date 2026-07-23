@@ -690,6 +690,16 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.trimSections).toEqual([]);
   });
 
+  it("no pinta una seccion de vivo si Odoo no tiene color de vivo seleccionado", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "91": [],
+      "92": [5146],
+    });
+
+    expect(scene.trimSections).toEqual([]);
+  });
+
   it("muestra la blusa cerrada hasta arriba mientras no haya cuello seleccionado", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
