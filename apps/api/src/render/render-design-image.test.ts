@@ -543,6 +543,24 @@ const straightBackNeckModelsWithoutUpperContour = new Set([
 ]);
 
 describe("renderDesignImage", () => {
+  it("rellena hasta arriba la blusa cerrada sin dibujar una V de cuello", async () => {
+    const rendered = await renderDesignImage({
+      ...baseScene,
+      garmentAssetPath:
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+      lowerPocketLayout: "none",
+    });
+    const { data, info } = await readRawPng(rendered);
+    const closedChestRegion = { x: 420, y: 180, width: 60, height: 150 };
+
+    expect(
+      countWhitePixelsInRegion(data, info.width, closedChestRegion),
+    ).toBe(0);
+    expect(
+      countDarkPixelsInRegion(data, info.width, closedChestRegion),
+    ).toBe(0);
+  });
+
   it("mantiene la cogotera recta justo debajo del contorno en todos los modelos rectos", async () => {
     for (const fileName of straightBackNeckModelFileNames) {
       const neckAssetPath = `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`;

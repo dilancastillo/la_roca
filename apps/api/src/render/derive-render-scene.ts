@@ -741,6 +741,8 @@ function isPespunteGarment(value: SourceBackedOption | string | undefined) {
 
 const BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg";
+const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -1029,18 +1031,16 @@ function deriveSingleAutomationRenderScene(
   const neckAssetPath = selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
-  const shouldUseDefaultGarmentUntilNeck =
-    session.graphicManifestKey.includes("blusa") &&
-    isPespunteGarment(selectedGarment) &&
-    !neckAssetPath;
-  const garmentAssetPath = shouldUseDefaultGarmentUntilNeck
-    ? getServerDefaultAssetPath(session.graphicManifestKey)
+  const shouldUseClosedBlouseWithoutNeck =
+    session.graphicManifestKey.includes("blusa") && !neckAssetPath;
+  const garmentAssetPath = shouldUseClosedBlouseWithoutNeck
+    ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
     : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
   const garmentModelDetailAssetPath = selectedGarment
-    ? shouldUseDefaultGarmentUntilNeck
+    ? shouldUseClosedBlouseWithoutNeck && isPespunteGarment(selectedGarment)
       ? BLUSA_PESPUNTE_STITCHING_DETAIL_ASSET_PATH
       : getServerGarmentDetailAssetPathForValue(
         session.graphicManifestKey,

@@ -678,6 +678,43 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.trimSections).toEqual([]);
   });
 
+  it("muestra la blusa cerrada hasta arriba mientras no haya cuello seleccionado", () => {
+    const scene = deriveAutomationRenderScene(session, {
+      ...session.selectedValueIds,
+      "63": [],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+    );
+    expect(scene.neckAssetPath).toBeUndefined();
+  });
+
+  it("usa la base cerrada solo en la blusa del Uniforme sin cuello", () => {
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "63": [],
+      },
+    };
+    const scene = deriveAutomationRenderScene(
+      uniformSession,
+      uniformSession.selectedValueIds,
+    );
+
+    expect(scene.uniformParts?.blouse.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+    );
+    expect(scene.uniformParts?.blouse.neckAssetPath).toBeUndefined();
+    expect(scene.uniformParts?.pants.garmentAssetPath).toBe(
+      "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+    );
+  });
+
   it("carga Pespunte como modelo de blusa base sin reemplazar cuello ni bolsillos", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
@@ -697,7 +734,7 @@ describe("deriveAutomationRenderScene", () => {
     );
   });
 
-  it("mantiene la blusa por defecto si Pespunte no tiene cuello seleccionado", () => {
+  it("usa la blusa cerrada sin cuello si Pespunte no tiene cuello seleccionado", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
       "811": [2867],
@@ -705,7 +742,7 @@ describe("deriveAutomationRenderScene", () => {
     });
 
     expect(scene.garmentAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
     );
     expect(scene.garmentDetailAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
@@ -713,7 +750,7 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
-  it("mantiene la blusa por defecto si Pespunte tiene un cuello sin asset", () => {
+  it("usa la blusa cerrada si el cuello seleccionado no tiene asset", () => {
     const sessionWithEmptyNeck: ConfiguratorSession = {
       ...session,
       attributes: session.attributes.map((attribute) =>
@@ -740,7 +777,7 @@ describe("deriveAutomationRenderScene", () => {
     });
 
     expect(scene.garmentAssetPath).toBe(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
     );
     expect(scene.garmentDetailAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-45-pespunte-stitching.svg",
