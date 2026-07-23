@@ -4090,6 +4090,14 @@ async function drawPantsKneePatchSideFromAsset(
   }
 
   if (model === "camouflage") {
+    if (trimColor) {
+      const fillCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(fillCanvas, trimColor), 0, 0);
+    }
+
     if (type === "buckle") {
       const buckleCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_SRC_BY_SIDE[side],
@@ -4097,17 +4105,6 @@ async function drawPantsKneePatchSideFromAsset(
       );
       context.drawImage(buckleCanvas, 0, 0);
       return;
-    }
-
-    if (
-      (type === "button" || type === "doubleButton" || type === "velcro") &&
-      trimColor
-    ) {
-      const fillCanvas = await createRasterCanvas(
-        PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_SRC_BY_SIDE[side],
-        sourceSrc,
-      );
-      context.drawImage(recolorCanvasInk(fillCanvas, trimColor), 0, 0);
     }
 
     const patchCanvas = await createRasterCanvas(

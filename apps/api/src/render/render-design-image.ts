@@ -2744,6 +2744,17 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   const buffers: Buffer[] = [];
   if (model === "camouflage") {
+    if (trimColor) {
+      const fillOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (fillOverlayBuffer) {
+        buffers.push(await recolorPngInkBuffer(fillOverlayBuffer, trimColor));
+      }
+    }
+
     if (type === "buckle") {
       const buckleOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_CAMOUFLAGE_BUCKLE_ASSET_BY_SIDE[side],
@@ -2755,20 +2766,6 @@ async function createPantsKneePatchSideOverlayBuffers(
       }
 
       return buffers;
-    }
-
-    if (
-      (type === "button" || type === "doubleButton" || type === "velcro") &&
-      trimColor
-    ) {
-      const fillOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        PANTS_KNEE_PATCH_CAMOUFLAGE_FILL_ASSET_BY_SIDE[side],
-        placementAssetPath,
-      );
-
-      if (fillOverlayBuffer) {
-        buffers.push(await recolorPngInkBuffer(fillOverlayBuffer, trimColor));
-      }
     }
 
     const patchOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(

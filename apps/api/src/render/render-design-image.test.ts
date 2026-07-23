@@ -2836,6 +2836,50 @@ describe("renderDesignImage", () => {
         pantsKneePatchLeftType: "velcro",
       }),
     );
+    const withUnspecifiedTypeTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchLeftModel: "camouflage",
+        trimSections: [
+          {
+            valueId: 9080,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9083,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withSnapTrim = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        pantsKneePatchRightModel: "camouflage",
+        pantsKneePatchRightType: "snap",
+        pantsKneePatchLeftModel: "camouflage",
+        pantsKneePatchLeftType: "snap",
+        trimSections: [
+          {
+            valueId: 9080,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9083,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
     const withTrimmedButton = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
@@ -2940,6 +2984,26 @@ describe("renderDesignImage", () => {
           withTrimmedButton.data,
           withTrimmedButton.info.width,
           region,
+      ),
+      0,
+    );
+    const unspecifiedTypePurpleFlapPixels = flapRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withUnspecifiedTypeTrim.data,
+          withUnspecifiedTypeTrim.info.width,
+          region,
+        ),
+      0,
+    );
+    const snapPurpleFlapPixels = flapRegions.reduce(
+      (total, region) =>
+        total +
+        countPurplePixelsInRegion(
+          withSnapTrim.data,
+          withSnapTrim.info.width,
+          region,
         ),
       0,
     );
@@ -2989,6 +3053,8 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(20);
     expect(countPurplePixels(withButtonWithoutTrim.data)).toBeLessThan(20);
     expect(purpleFlapPixels).toBeGreaterThan(1200);
+    expect(unspecifiedTypePurpleFlapPixels).toBeGreaterThan(1200);
+    expect(snapPurpleFlapPixels).toBeGreaterThan(1200);
     expect(leftOnlyPurpleFlapPixels).toBeGreaterThan(500);
     expect(rightPurpleFlapPixelsWithLeftTrim).toBeLessThan(20);
     expect(rightButtonPurplePixels).toBeGreaterThan(20);
@@ -2996,7 +3062,7 @@ describe("renderDesignImage", () => {
     expect(leftButtonPurplePixels).toBeGreaterThan(20);
     expect(leftButtonRightPurplePixels).toBeLessThan(10);
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
-  }, 20000);
+  }, 30000);
 
   it("superpone doble boton camuflado de rodilla y pinta los puntos por lado", async () => {
     const pantsScene: AutomationRenderScene = {
@@ -3038,7 +3104,7 @@ describe("renderDesignImage", () => {
     }
   }, 20000);
 
-  it("superpone bolsillos camuflados con hebilla sin color ni vivo", async () => {
+  it("superpone bolsillos camuflados con hebilla y conserva el vivo de parche", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3116,7 +3182,7 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutPatch.data, withBucklePatch.data),
     ).toBeGreaterThan(300);
     expect(buckleInk).toBeGreaterThan(baseBuckleInk + 80);
-    expect(purplePatchPixels).toBeLessThan(30);
+    expect(purplePatchPixels).toBeGreaterThan(1200);
     expect(countBrightCyanPixels(withTrimmedBucklePatch.data)).toBe(0);
   }, 20000);
 
