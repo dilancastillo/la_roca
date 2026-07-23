@@ -23,8 +23,6 @@ type VariantResolution =
   | { productId: number; resolution: "product_variant" | "created_product_variant" }
   | { productId: number; resolution: "line_attribute_values" };
 
-const UNIFORME_PRODUCT_TEMPLATE_ID = 7;
-
 function normalizeManyIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
     return [];
@@ -232,16 +230,6 @@ async function resolveVariantProduct(
   session: ConfiguratorSession,
   variantValueIds: number[],
 ): Promise<VariantResolution> {
-  if (
-    session.productTemplateId === UNIFORME_PRODUCT_TEMPLATE_ID ||
-    normalizeText(session.graphicManifestKey) === "uniforme"
-  ) {
-    return {
-      productId: session.productId,
-      resolution: "line_attribute_values",
-    };
-  }
-
   const matchingVariant = await findExactVariant(env, session, variantValueIds);
 
   if (matchingVariant) {

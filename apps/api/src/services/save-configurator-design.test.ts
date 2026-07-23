@@ -255,6 +255,13 @@ describe("saveConfiguratorDesign", () => {
       graphicManifestKey: "uniforme",
     };
     mocks.getConfiguratorSession.mockResolvedValue(uniformSession);
+    mocks.odooSearchRead.mockResolvedValue([
+      {
+        id: uniformSession.productId,
+        display_name: "Uniforme / Verde Olivo Claro",
+        product_template_attribute_value_ids: [9001],
+      },
+    ]);
     mocks.odooWrite.mockResolvedValue(true);
 
     await saveConfiguratorDesign(env, {
@@ -297,6 +304,125 @@ describe("saveConfiguratorDesign", () => {
         customValuesByValueId: {},
       },
     ]);
+  });
+
+  it("resuelve la variante exacta de Uniforme para que Odoo pueda reabrir valores personalizados", async () => {
+    const uniformSession: ConfiguratorSession = {
+      ...editableSession,
+      productId: 2333,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: 143,
+          name: "Talla de blusa",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "variant",
+          values: [
+            {
+              id: 984,
+              name: "S",
+              attributeId: 143,
+              attributeName: "Talla de blusa",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+        {
+          id: 163,
+          name: "Talla pantalon",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "variant",
+          values: [
+            {
+              id: 1236,
+              name: "30",
+              attributeId: 163,
+              attributeName: "Talla pantalon",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        "143": [984],
+        "163": [1236],
+      },
+      customValuesByValueId: {
+        "984": "S especial",
+        "1236": "30 especial",
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(uniformSession);
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    const result = await saveConfiguratorDesign(env, {
+      saleOrderLineId: 290,
+      filename: "sale-line-290-design.png",
+      imageBase64: "png-base64",
+      selectedValueIds: uniformSession.selectedValueIds,
+      customValuesByValueId: uniformSession.customValuesByValueId,
+    });
+
+    expect(mocks.odooSearchRead).toHaveBeenCalledWith(
+      env,
+      "product.product",
+      [["product_tmpl_id", "=", 7]],
+      ["id", "display_name", "product_template_attribute_value_ids"],
+      undefined,
+      { limit: 5_000 },
+    );
+    expect(mocks.odooCreate).toHaveBeenNthCalledWith(
+      1,
+      env,
+      "product.product",
+      [
+        {
+          product_tmpl_id: 7,
+          product_template_attribute_value_ids: [[6, 0, [9001, 984, 1236]]],
+          product_template_variant_value_ids: [[6, 0, [9001, 984, 1236]]],
+        },
+      ],
+    );
+    expect(mocks.odooWrite).toHaveBeenCalledWith(
+      env,
+      "sale.order.line",
+      [290],
+      expect.objectContaining({
+        product_id: 778,
+        product_template_attribute_value_ids: [[6, 0, [9001, 984, 1236]]],
+        product_no_variant_attribute_value_ids: [[6, 0, [9101]]],
+        product_custom_attribute_value_ids: [
+          [5, 0, 0],
+          [
+            0,
+            0,
+            {
+              custom_product_template_attribute_value_id: 984,
+              custom_value: "S especial",
+            },
+          ],
+          [
+            0,
+            0,
+            {
+              custom_product_template_attribute_value_id: 1236,
+              custom_value: "30 especial",
+            },
+          ],
+        ],
+      }),
+    );
+    expect(result).toMatchObject({
+      productId: 778,
+      variantResolution: "created_product_variant",
+    });
   });
 
   it("rechaza guardar cuando hay logo seleccionado pero no llega imagen del logo", async () => {
