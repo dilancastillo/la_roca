@@ -1097,6 +1097,29 @@ function isOriginalBootValue(value: KneePatchOption | string) {
   return normalize(valueName) === "original";
 }
 
+function isBootOpeningWithZipperOption(value: KneePatchOption | string) {
+  if (
+    typeof value !== "string" &&
+    (hasSourceValueId(value, CONFIGURATOR_VALUE_IDS.bootOpening.front) ||
+      hasSourceValueId(value, CONFIGURATOR_VALUE_IDS.bootOpening.lateral))
+  ) {
+    return true;
+  }
+
+  const valueName = getOptionName(value);
+
+  if (!valueName) {
+    return false;
+  }
+
+  const normalizedName = normalize(valueName);
+
+  return (
+    normalizedName === "abertura frontal" ||
+    normalizedName === "abertura lateral"
+  );
+}
+
 function getDefaultBootMeasurementValue(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
@@ -1502,6 +1525,50 @@ function getHiddenAdditionalPantsPocketAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenBootZipperAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const isPantsConfiguration =
+    isUniformeSession(session) ||
+    normalize(session.graphicManifestKey) === "pantalon";
+
+  if (!isPantsConfiguration) {
+    return hiddenAttributeIds;
+  }
+
+  const bootZipperAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.bootZipper,
+    (name) =>
+      name.includes("bota") &&
+      name.includes("cremallera") &&
+      !isBootTypeAttributeName(name),
+  );
+
+  if (!bootZipperAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const bootTypeAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.bootType,
+    isBootTypeAttributeName,
+  );
+  const hasOpeningWithZipperOption =
+    bootTypeAttribute !== undefined &&
+    getSelectedOptions(bootTypeAttribute, selectedValueIds).some((value) =>
+      isBootOpeningWithZipperOption(value),
+    );
+
+  if (!hasOpeningWithZipperOption) {
+    hiddenAttributeIds.add(bootZipperAttribute.id);
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenConditionalAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1518,6 +1585,7 @@ function getHiddenConditionalAttributeIds(
       session,
       selectedValueIds,
     ),
+    ...getHiddenBootZipperAttributeIds(session, selectedValueIds),
   ]);
 }
 

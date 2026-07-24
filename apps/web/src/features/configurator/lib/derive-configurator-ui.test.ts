@@ -695,6 +695,105 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.trimSections).toEqual([]);
   });
 
+  it("muestra Bota con cremallera solo para las aberturas frontal y lateral en Pantalon y Uniforme", () => {
+    const sessionWithBootZipper: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        pantalonSession.attributes[0]!,
+        {
+          id: 160,
+          name: "Tipo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 4266,
+              sourceValueId: 724,
+              name: "Tradicional",
+              attributeId: 160,
+              attributeName: "Tipo bota",
+            },
+            {
+              id: 4267,
+              sourceValueId: 726,
+              name: "Frontal renombrada",
+              attributeId: 160,
+              attributeName: "Tipo bota",
+            },
+            {
+              id: 4268,
+              sourceValueId: 1956,
+              name: "Lateral renombrada",
+              attributeId: 160,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+        {
+          id: 818,
+          name: "¿Bota con cremallera?",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8181,
+              name: "Si",
+              attributeId: 818,
+              attributeName: "¿Bota con cremallera?",
+            },
+            {
+              id: 8182,
+              name: "No",
+              attributeId: 818,
+              attributeName: "¿Bota con cremallera?",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        "90": [6921],
+        "160": [4266],
+        "818": [8181],
+      },
+    };
+    const getVisibleAttributeIds = (
+      targetSession: ConfiguratorSession,
+      bootTypeValueId: number,
+    ) =>
+      deriveConfiguratorUi(targetSession, {
+        ...targetSession.selectedValueIds,
+        "160": [bootTypeValueId],
+      }).groups.map((group) => group.attributeId);
+
+    expect(getVisibleAttributeIds(sessionWithBootZipper, 4266)).not.toContain(
+      818,
+    );
+    expect(getVisibleAttributeIds(sessionWithBootZipper, 4267)).toContain(818);
+    expect(getVisibleAttributeIds(sessionWithBootZipper, 4268)).toContain(818);
+    expect(
+      sanitizeSelectedValueIdsForHiddenTextAttributes(
+        sessionWithBootZipper,
+        sessionWithBootZipper.selectedValueIds,
+      )["818"],
+    ).toEqual([]);
+
+    const uniformSessionWithBootZipper: ConfiguratorSession = {
+      ...sessionWithBootZipper,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+    };
+
+    expect(
+      getVisibleAttributeIds(uniformSessionWithBootZipper, 4267),
+    ).toContain(818);
+    expect(
+      getVisibleAttributeIds(uniformSessionWithBootZipper, 4266),
+    ).not.toContain(818);
+  });
+
   it("selecciona Largo bota y Ancho bota automaticamente cuando Tipo bota no es Original", () => {
     const sessionWithBootMeasurements: ConfiguratorSession = {
       ...pantalonSession,

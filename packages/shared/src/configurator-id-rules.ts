@@ -62,6 +62,10 @@ export const CONFIGURATOR_VALUE_IDS = {
   textStyle: [1900, 1902, 1904, 1906, 1908, 1910, 2101],
   pespunte: [1955, 1958, 2078],
   originalBoot: [723],
+  bootOpening: {
+    front: [726],
+    lateral: [1956],
+  },
   noChestPocket: [593],
   pantsSidePocket: {
     original: [748],
