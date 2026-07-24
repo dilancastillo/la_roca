@@ -1635,24 +1635,12 @@ function getHiddenGenderAttributeIds(
 }
 
 export function sanitizeSelectedValueIdsForHiddenTextAttributes(
-  session: ConfiguratorSession,
+  _session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const hiddenAttributeIds = getHiddenConditionalAttributeIds(
-    session,
-    selectedValueIds,
-  );
-
-  if (hiddenAttributeIds.size === 0) {
-    return selectedValueIds;
-  }
-
-  return Object.fromEntries(
-    Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
-      attributeId,
-      hiddenAttributeIds.has(Number(attributeId)) ? [] : [...valueIds],
-    ]),
-  );
+  // Conditional visibility is presentational. Keep the values received from
+  // Odoo so temporarily hiding and showing an attribute cannot erase them.
+  return selectedValueIds;
 }
 
 function deriveSingleConfiguratorUi(

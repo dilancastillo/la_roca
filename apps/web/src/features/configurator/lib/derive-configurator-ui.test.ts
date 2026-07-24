@@ -777,7 +777,7 @@ describe("deriveConfiguratorUi", () => {
         sessionWithBootZipper,
         sessionWithBootZipper.selectedValueIds,
       )["818"],
-    ).toEqual([]);
+    ).toEqual([8181]);
 
     const uniformSessionWithBootZipper: ConfiguratorSession = {
       ...sessionWithBootZipper,
@@ -5029,14 +5029,7 @@ describe("deriveConfiguratorUi", () => {
         sessionWithTextAttributes,
         selectedValueIds,
       ),
-    ).toMatchObject(
-      Object.fromEntries(
-        textDependencies.map((_, index) => [
-          String(12000 + index * 10 + 3),
-          [],
-        ]),
-      ),
-    );
+    ).toEqual(selectedValueIds);
   });
 
   it("muestra los atributos de color y fuente de texto cuando el texto esta en Si", () => {
@@ -5172,7 +5165,7 @@ describe("deriveConfiguratorUi", () => {
         sessionWithZipperOptions,
         selectedWithNo,
       )[String(optionsAttributeId)],
-    ).toEqual([]);
+    ).toEqual([12204]);
   });
 
   it("oculta cremallera y bolsillo auxiliar cuando el modelo inferior es Ninguno", () => {
@@ -5269,9 +5262,11 @@ describe("deriveConfiguratorUi", () => {
     expect(uiWithModel.groups.map((group) => group.attributeId)).toContain(
       auxiliaryPocketTypeAttributeId,
     );
-    expect(sanitizedWithNone[String(lowerPocketZipperAttributeId)]).toEqual([]);
+    expect(sanitizedWithNone[String(lowerPocketZipperAttributeId)]).toEqual([
+      12402,
+    ]);
     expect(sanitizedWithNone[String(auxiliaryPocketTypeAttributeId)]).toEqual(
-      [],
+      [12403],
     );
   });
 
@@ -5367,16 +5362,19 @@ describe("deriveConfiguratorUi", () => {
         expect(labelsWithYes).toContain(label);
       }
 
-      expect(
+      const preservedSelections =
         sanitizeSelectedValueIdsForHiddenTextAttributes(
           pantsSession,
           selectedWithNo,
-        ),
-      ).toMatchObject(
-        Object.fromEntries(
-          dependentAttributes.map((attribute) => [String(attribute.id), []]),
-        ),
-      );
+        );
+
+      expect(preservedSelections).toMatchObject(selectedDependentValues);
+      expect({
+        ...preservedSelections,
+        [String(additionalPocketsAttributeId)]: [
+          additionalPocketsYesValueId,
+        ],
+      }).toMatchObject(selectedDependentValues);
     }
   });
 
@@ -5575,7 +5573,7 @@ describe("deriveConfiguratorUi", () => {
           [String(styleAttributeId)]: [colorAndFontValueId],
         },
       )[String(styleAttributeId)],
-    ).toEqual([]);
+    ).toEqual([colorAndFontValueId]);
   });
 
   it("oculta textos de bordados adicionales en Uniforme cuando Bordados adicionales esta en No", () => {
@@ -5720,18 +5718,7 @@ describe("deriveConfiguratorUi", () => {
         sessionWithAdditionalEmbroidery,
         selectedWithNo,
       ),
-    ).toMatchObject(
-      Object.fromEntries(
-        textDependencies.flatMap((_, index) => {
-          const baseId = 15100 + index * 10;
-
-          return [
-            [String(baseId), []],
-            [String(baseId + 3), []],
-          ];
-        }),
-      ),
-    );
+    ).toEqual(selectedWithNo);
 
     const uiWithYes = deriveConfiguratorUi(sessionWithAdditionalEmbroidery, {
       ...session.selectedValueIds,
@@ -5767,18 +5754,7 @@ describe("deriveConfiguratorUi", () => {
         blouseSession,
         selectedWithNo,
       ),
-    ).toMatchObject(
-      Object.fromEntries(
-        textDependencies.flatMap((_, index) => {
-          const baseId = 15100 + index * 10;
-
-          return [
-            [String(baseId), []],
-            [String(baseId + 3), []],
-          ];
-        }),
-      ),
-    );
+    ).toEqual(selectedWithNo);
 
     const blouseUiWithYes = deriveConfiguratorUi(blouseSession, {
       ...session.selectedValueIds,
