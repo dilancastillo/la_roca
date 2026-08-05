@@ -12,6 +12,41 @@ const appUserRecordSchema = appUserSchema.extend({
 
 type AppUserRecord = z.infer<typeof appUserRecordSchema>;
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function isAdminEmail(env: AuthEnv, email: string) {
+  const configuredEmails = (env.APP_ADMIN_EMAILS ?? "demo@la-roca.local")
+    .split(",")
+    .map(normalizeEmail)
+    .filter(Boolean);
+
+  return configuredEmails.includes(normalizeEmail(email));
+}
+
+export function withAdminFlag(
+  env: AuthEnv,
+  user: z.infer<typeof appUserSchema>,
+) {
+  const isAdmin = isAdminEmail(env, user.email);
+  const publishers = (
+    env.APP_VISUAL_CATALOG_PUBLISHER_EMAILS ??
+    env.APP_ADMIN_EMAILS ??
+    "demo@la-roca.local"
+  )
+    .split(",")
+    .map(normalizeEmail)
+    .filter(Boolean);
+
+  return appUserSchema.parse({
+    ...user,
+    isAdmin,
+    canPublishVisualCatalog:
+      isAdmin && publishers.includes(normalizeEmail(user.email)),
+  });
+}
+
 function getJwtSecret(env: AuthEnv): Uint8Array {
   const secret = env.APP_JWT_SECRET ?? "dev-la-roca-session-secret";
   return new TextEncoder().encode(secret);
@@ -123,8 +158,11 @@ export async function createSessionToken(env: AuthEnv, user: z.infer<typeof appU
 export async function verifySessionToken(env: AuthEnv, token: string) {
   const { payload } = await jwtVerify(token, getJwtSecret(env));
 
-  return appUserSchema.parse({
-    email: String(payload.sub ?? ""),
-    name: String(payload.name ?? payload.sub ?? ""),
-  });
+  return withAdminFlag(
+    env,
+    appUserSchema.parse({
+      email: String(payload.sub ?? ""),
+      name: String(payload.name ?? payload.sub ?? ""),
+    }),
+  );
 }

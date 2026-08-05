@@ -1,6 +1,7 @@
 export type PersistedConfiguratorState = {
   selectedValueIds: Record<string, number[]>;
   customValuesByValueId: Record<string, string>;
+  visualDefinitionVersionIds?: string[];
 };
 
 const CONFIGURATOR_STATE_DESCRIPTION_PREFIX = "la-roca-configurator-state:";
@@ -56,6 +57,49 @@ function normalizeCustomValuesByValueId(value: unknown) {
   );
 }
 
+function normalizeVisualDefinitionVersionIds(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function parseDescriptionPayload(
+  description: string | false | undefined,
+): Record<string, unknown> | undefined {
+  if (typeof description !== "string") {
+    return undefined;
+  }
+
+  const prefixIndex = description.indexOf(CONFIGURATOR_STATE_DESCRIPTION_PREFIX);
+
+  if (prefixIndex < 0) {
+    return undefined;
+  }
+
+  try {
+    const value = JSON.parse(
+      description
+        .slice(prefixIndex + CONFIGURATOR_STATE_DESCRIPTION_PREFIX.length)
+        .trim(),
+    ) as unknown;
+
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function normalizePersistedConfiguratorState(
   value: unknown,
 ): PersistedConfiguratorState | undefined {
@@ -71,11 +115,19 @@ function normalizePersistedConfiguratorState(
     return undefined;
   }
 
+  const visualDefinitionVersionIds = normalizeVisualDefinitionVersionIds(
+    (value as { visualDefinitionVersionIds?: unknown })
+      .visualDefinitionVersionIds,
+  );
+
   return {
     selectedValueIds,
     customValuesByValueId: normalizeCustomValuesByValueId(
       (value as { customValuesByValueId?: unknown }).customValuesByValueId,
     ),
+    ...(visualDefinitionVersionIds.length > 0
+      ? { visualDefinitionVersionIds }
+      : {}),
   };
 }
 
@@ -83,10 +135,13 @@ export function buildConfiguratorStateDescription(
   state: PersistedConfiguratorState,
 ) {
   return `${CONFIGURATOR_STATE_DESCRIPTION_PREFIX}${JSON.stringify({
-    version: 1,
+    version: 2,
     selectedValueIds: normalizeSelectedValueIds(state.selectedValueIds),
     customValuesByValueId: normalizeCustomValuesByValueId(
       state.customValuesByValueId,
+    ),
+    visualDefinitionVersionIds: normalizeVisualDefinitionVersionIds(
+      state.visualDefinitionVersionIds,
     ),
   })}`;
 }
@@ -94,25 +149,27 @@ export function buildConfiguratorStateDescription(
 export function parseConfiguratorStateDescription(
   description: string | false | undefined,
 ) {
-  if (typeof description !== "string") {
+  return normalizePersistedConfiguratorState(
+    parseDescriptionPayload(description),
+  );
+}
+
+export function parseVisualDefinitionVersionIds(
+  description: string | false | undefined,
+) {
+  const payload = parseDescriptionPayload(description);
+
+  if (
+    !payload ||
+    !Object.prototype.hasOwnProperty.call(
+      payload,
+      "visualDefinitionVersionIds",
+    )
+  ) {
     return undefined;
   }
 
-  const prefixIndex = description.indexOf(CONFIGURATOR_STATE_DESCRIPTION_PREFIX);
-
-  if (prefixIndex < 0) {
-    return undefined;
-  }
-
-  try {
-    return normalizePersistedConfiguratorState(
-      JSON.parse(
-        description
-          .slice(prefixIndex + CONFIGURATOR_STATE_DESCRIPTION_PREFIX.length)
-          .trim(),
-      ),
-    );
-  } catch {
-    return undefined;
-  }
+  return normalizeVisualDefinitionVersionIds(
+    payload.visualDefinitionVersionIds,
+  );
 }

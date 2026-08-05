@@ -350,6 +350,9 @@ export async function saveConfiguratorDesign(
     attachmentDescription: buildConfiguratorStateDescription({
       selectedValueIds,
       customValuesByValueId,
+      visualDefinitionVersionIds: (session.visualDefinitions ?? []).map(
+        (definition) => definition.id,
+      ),
     }),
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);

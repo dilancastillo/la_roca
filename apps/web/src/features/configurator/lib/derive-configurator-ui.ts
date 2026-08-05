@@ -14,6 +14,7 @@ import {
   hasSourceValueId,
 } from "@repo/shared/configurator-id-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
+import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
 import {
   getLowerPocketAuxiliaryAddon,
   getLowerPocketLayout,
@@ -1916,11 +1917,33 @@ function deriveSingleConfiguratorUi(
       : undefined;
   const hasLogoSelection = activeLogoOptions.length > 0;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
-  const neckImageSrc = selectedNeck
+  const partColorHex = session.graphicManifestKey.includes("blusa")
+    ? getPartColorHex(session, selectedValueIds, "blouse")
+    : session.graphicManifestKey.includes("pantalon")
+      ? getPartColorHex(session, selectedValueIds, "pants")
+      : undefined;
+  const baseColorHex =
+    partColorHex ?? selectedColor?.colorHex ?? "#d8dee9";
+  const trimSections = getSelectedTrimSections(session, selectedValueIds);
+  const dynamicVisualDefinitions = materializeSelectedVisualDefinitions(
+    session,
+    selectedValueIds,
+    session.graphicManifestKey,
+    baseColorHex,
+    trimSections,
+  );
+  const dynamicVisualSlots = new Set(
+    dynamicVisualDefinitions.map((definition) => definition.slot),
+  );
+  const hasDynamicNeck = dynamicVisualSlots.has("neck");
+  const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
+  const hasDynamicBoot = dynamicVisualSlots.has("boot");
+  const neckImageSrc = !hasDynamicNeck && selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
   const shouldUseClosedBlouseWithoutNeck =
-    session.graphicManifestKey.includes("blusa") && !neckImageSrc;
+    session.graphicManifestKey.includes("blusa") &&
+    (hasDynamicNeck || !neckImageSrc);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentImageSrc = shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
@@ -1958,9 +1981,12 @@ function deriveSingleConfiguratorUi(
   const garmentDetailImageSrcs = compactUnique([
     garmentModelDetailImageSrc,
     sleeveDetailImageSrc,
+    ...dynamicVisualDefinitions.map(
+      (definition) => definition.svgDataUri,
+    ),
   ]);
   const garmentDetailImageSrc = garmentDetailImageSrcs[0];
-  const bootImageSrc = selectedBootModel
+  const bootImageSrc = !hasDynamicBoot && selectedBootModel
     ? getBootImageSourceForValue(
         session.graphicManifestKey,
         bootModelAttribute!.id,
@@ -1980,8 +2006,11 @@ function deriveSingleConfiguratorUi(
         selectedWaistbandModel.sourceValueId,
       )
     : undefined;
+  const resolvedLowerPocketLayout = hasDynamicLowerPocket
+    ? "none"
+    : lowerPocketLayout;
   const lowerPocketImageSrc =
-    lowerPocketLayout !== "none" && selectedLowerPocketModel
+    resolvedLowerPocketLayout !== "none" && selectedLowerPocketModel
       ? getImageSource(
           session.graphicManifestKey,
           lowerPocketModelAttribute!,
@@ -1989,7 +2018,7 @@ function deriveSingleConfiguratorUi(
         )
       : undefined;
   const lowerPocketAuxiliaryAddon =
-    lowerPocketLayout !== "none" &&
+    resolvedLowerPocketLayout !== "none" &&
     supportsLowerPocketAuxiliaryAddon(lowerPocketImageSrc)
       ? getLowerPocketAuxiliaryAddon(
           selectedAuxiliaryPocketType ?? selectedLowerPocketType,
@@ -2016,7 +2045,7 @@ function deriveSingleConfiguratorUi(
     summary,
     previewScene: {
       productName: session.productName,
-      baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
+      baseColorHex,
       garmentImageSrc,
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
@@ -2037,7 +2066,7 @@ function deriveSingleConfiguratorUi(
         : {}),
       neckImageSrc,
       lowerPocketImageSrc,
-      lowerPocketLayout,
+      lowerPocketLayout: resolvedLowerPocketLayout,
       ...(lowerPocketAuxiliaryAddon
         ? {
             lowerPocketAuxiliaryAddonKind: lowerPocketAuxiliaryAddon.kind,
@@ -2074,7 +2103,7 @@ function deriveSingleConfiguratorUi(
             })(),
           }
         : undefined,
-      trimSections: getSelectedTrimSections(session, selectedValueIds),
+      trimSections,
     },
     logoSelection:
       logoAttribute && hasLogoSelection

@@ -4,6 +4,7 @@ coverage
 .wrangler
 .dev.vars
 .dev.vars.*
+!apps/api/.dev.vars.example
 .env
 .env.*
 playwright-report
@@ -11,3 +12,7 @@ test-results
 .DS_Store
 .vercel
 *.tsbuildinfo
+.visual-catalog
+.visual-catalog-tests
+tmp/api-dist
+tmp/visual-catalog-*.log

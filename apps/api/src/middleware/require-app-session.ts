@@ -1,6 +1,7 @@
 import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { verifySessionToken } from "../lib/auth.js";
+import { withAdminFlag } from "../lib/auth.js";
 import {
   type AppEnv,
   type AppVariables,
@@ -17,10 +18,13 @@ export function requireAppSession() {
       const appEnv = getAppEnv(c);
 
       if (appEnv.ALLOW_DEV_BYPASS_ACCESS === "true") {
-        c.set("user", {
-          email: appEnv.DEV_SESSION_USER_EMAIL ?? "demo@la-roca.local",
-          name: appEnv.DEV_SESSION_USER_NAME ?? "Demo La Roca",
-        });
+        c.set(
+          "user",
+          withAdminFlag(appEnv, {
+            email: appEnv.DEV_SESSION_USER_EMAIL ?? "demo@la-roca.local",
+            name: appEnv.DEV_SESSION_USER_NAME ?? "Demo La Roca",
+          }),
+        );
         await next();
         return;
       }

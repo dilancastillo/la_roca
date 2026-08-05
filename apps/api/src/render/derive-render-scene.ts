@@ -14,6 +14,7 @@ import {
   hasSourceValueId,
 } from "@repo/shared/configurator-id-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
+import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
 import {
   getLowerPocketAuxiliaryAddon,
   getLowerPocketLayout,
@@ -1049,11 +1050,33 @@ function deriveSingleAutomationRenderScene(
       ? "doubleZipper"
       : undefined;
   const lowerPocketLayout = getLowerPocketLayout(session, selectedValueIds);
-  const neckAssetPath = selectedNeck
+  const partColorHex = session.graphicManifestKey.includes("blusa")
+    ? getPartColorHex(session, selectedValueIds, "blouse")
+    : session.graphicManifestKey.includes("pantalon")
+      ? getPartColorHex(session, selectedValueIds, "pants")
+      : undefined;
+  const baseColorHex =
+    partColorHex ?? selectedColor?.colorHex ?? "#d8dee9";
+  const trimSections = getSelectedTrimSections(session, selectedValueIds);
+  const dynamicVisualDefinitions = materializeSelectedVisualDefinitions(
+    session,
+    selectedValueIds,
+    session.graphicManifestKey,
+    baseColorHex,
+    trimSections,
+  );
+  const dynamicVisualSlots = new Set(
+    dynamicVisualDefinitions.map((definition) => definition.slot),
+  );
+  const hasDynamicNeck = dynamicVisualSlots.has("neck");
+  const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
+  const hasDynamicBoot = dynamicVisualSlots.has("boot");
+  const neckAssetPath = !hasDynamicNeck && selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
   const shouldUseClosedBlouseWithoutNeck =
-    session.graphicManifestKey.includes("blusa") && !neckAssetPath;
+    session.graphicManifestKey.includes("blusa") &&
+    (hasDynamicNeck || !neckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentAssetPath = shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
@@ -1091,9 +1114,12 @@ function deriveSingleAutomationRenderScene(
   const garmentDetailAssetPaths = compactUnique([
     garmentModelDetailAssetPath,
     sleeveDetailAssetPath,
+    ...dynamicVisualDefinitions.map(
+      (definition) => definition.svgDataUri,
+    ),
   ]);
   const garmentDetailAssetPath = garmentDetailAssetPaths[0];
-  const bootAssetPath = selectedBootModel
+  const bootAssetPath = !hasDynamicBoot && selectedBootModel
     ? getServerBootAssetPathForValue(
         session.graphicManifestKey,
         bootModelAttribute!.id,
@@ -1113,11 +1139,14 @@ function deriveSingleAutomationRenderScene(
         selectedWaistbandModel.sourceValueId,
       )
     : undefined;
-  const lowerPocketAssetPath = selectedLowerPocketModel
+  const resolvedLowerPocketLayout = hasDynamicLowerPocket
+    ? "none"
+    : lowerPocketLayout;
+  const lowerPocketAssetPath = !hasDynamicLowerPocket && selectedLowerPocketModel
     ? getAssetPath(session, lowerPocketModelAttribute!, selectedLowerPocketModel)
     : undefined;
   const lowerPocketAuxiliaryAddon =
-    lowerPocketLayout !== "none" &&
+    resolvedLowerPocketLayout !== "none" &&
     supportsLowerPocketAuxiliaryAddon(lowerPocketAssetPath)
       ? getLowerPocketAuxiliaryAddon(
           selectedAuxiliaryPocketType ?? selectedLowerPocketType,
@@ -1136,7 +1165,7 @@ function deriveSingleAutomationRenderScene(
 
   return {
     productName: session.productName,
-    baseColorHex: selectedColor?.colorHex ?? "#d8dee9",
+    baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),
@@ -1156,10 +1185,10 @@ function deriveSingleAutomationRenderScene(
       ? { pantsKneePatchLeftType: leftKneePatchTypeValue }
       : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
-    ...(lowerPocketLayout !== "none" && lowerPocketAssetPath
+    ...(resolvedLowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }
       : {}),
-    lowerPocketLayout,
+    lowerPocketLayout: resolvedLowerPocketLayout,
     ...(lowerPocketAuxiliaryAddon
       ? {
           lowerPocketAuxiliaryAddonKind: lowerPocketAuxiliaryAddon.kind,
@@ -1185,7 +1214,7 @@ function deriveSingleAutomationRenderScene(
           },
         }
       : {}),
-    trimSections: getSelectedTrimSections(session, selectedValueIds),
+    trimSections,
   };
 }
 

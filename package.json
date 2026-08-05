@@ -2,6 +2,9 @@
   "name": "configurador-dotaciones",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22 <26"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -9,15 +12,19 @@
   "scripts": {
     "dev:web": "npm --workspace @app/web run dev",
     "dev:api": "npm --workspace @app/api run dev",
+    "dev:api:local": "npm run build:shared && tsc -p apps/api/tsconfig.json --noEmit false --outDir tmp/api-dist --rootDir . && node --env-file=apps/api/.dev.vars --env-file=.env.local scripts/dev-api.mjs",
     "build:shared": "npm --workspace @repo/shared run build",
     "build:web": "npm run build:shared && npm --workspace @app/web run build",
-    "build:vercel": "npm run build:web",
+    "build:vercel": "npm run typecheck && npm --workspace @app/web run build",
     "typecheck:vercel": "tsc -p tsconfig.vercel.json --noEmit",
     "typecheck:web": "npm --workspace @app/web run typecheck",
     "typecheck:api": "npm --workspace @app/api run typecheck",
     "typecheck:shared": "npm --workspace @repo/shared run typecheck",
     "typecheck": "npm run typecheck:shared && npm run build:shared && npm run typecheck:api && npm run typecheck:web && npm run typecheck:vercel",
     "test": "npm run test --workspaces --if-present",
+    "test:catalog": "npm --workspace @app/api run test:catalog && npm --workspace @app/web run test",
+    "verify:production": "npm run typecheck && npm run test:catalog && npm run build:web",
+    "generate:app-user": "node scripts/generate-app-user.mjs",
     "lint": "npm run lint --workspaces --if-present"
   },
   "dependencies": {

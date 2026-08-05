@@ -14,6 +14,10 @@
       "types": "./dist/schemas/configurator.d.ts",
       "default": "./dist/schemas/configurator.js"
     },
+    "./schemas/visual-catalog": {
+      "types": "./dist/schemas/visual-catalog.d.ts",
+      "default": "./dist/schemas/visual-catalog.js"
+    },
     "./lower-pocket-rules": {
       "types": "./dist/lower-pocket-rules.d.ts",
       "default": "./dist/lower-pocket-rules.js"
@@ -29,6 +33,10 @@
     "./visual-assets": {
       "types": "./dist/visual-assets.d.ts",
       "default": "./dist/visual-assets.js"
+    },
+    "./visual-catalog-runtime": {
+      "types": "./dist/visual-catalog-runtime.d.ts",
+      "default": "./dist/visual-catalog-runtime.js"
     }
   },
   "files": [

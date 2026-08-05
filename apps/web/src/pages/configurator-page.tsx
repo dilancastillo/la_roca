@@ -27,6 +27,7 @@ import {
   type RenderedPreview,
 } from "../features/preview/rendered-preview";
 import { saveDesign } from "../features/save-design/save-design";
+import { saveVisualReleaseScenario } from "../features/visual-catalog/api";
 
 function formatDateTime(value: string | null) {
   if (!value) {
@@ -222,13 +223,20 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-export function ConfiguratorPage() {
-  const { saleOrderLineId } = useParams();
+type ConfiguratorPageProps = {
+  catalogPreview?: boolean;
+};
+
+type LaboratoryView = "candidate" | "baseline" | "compare";
+
+export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPageProps) {
+  const { saleOrderLineId, visualReleaseId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const authQuery = useAuthSession();
   const lineId = Number(saleOrderLineId);
+  const scenarioId = new URLSearchParams(location.search).get("scenario") ?? undefined;
 
   const [state, dispatch] = useReducer(configuratorReducer, {
     selectedValueIds: {},
@@ -238,6 +246,10 @@ export function ConfiguratorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [laboratoryView, setLaboratoryView] = useState<LaboratoryView>("candidate");
+  const [scenarioName, setScenarioName] = useState(
+    scenarioId ? "Escenario recuperado" : `Prueba linea ${saleOrderLineId ?? ""}`,
+  );
   const [logoAttachment, setLogoAttachment] =
     useState<UploadedAttachment | null>(null);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
@@ -261,7 +273,21 @@ export function ConfiguratorPage() {
   const previousLogoSelectionKeyRef = useRef("");
 
   const nextUrl = `/login?next=${encodeURIComponent(location.pathname)}`;
-  const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data));
+  const hasValidReleaseId = Boolean(catalogPreview && visualReleaseId);
+  const sessionQuery = useConfiguratorSession(lineId, Boolean(authQuery.data), {
+    ...(visualReleaseId ? { visualReleaseId } : {}),
+    view: "candidate",
+    ...(scenarioId ? { scenarioId } : {}),
+  });
+  const baselineSessionQuery = useConfiguratorSession(
+    lineId,
+    Boolean(authQuery.data && hasValidReleaseId),
+    {
+      ...(visualReleaseId ? { visualReleaseId } : {}),
+      view: "baseline",
+      ...(scenarioId ? { scenarioId } : {}),
+    },
+  );
 
   useEffect(() => {
     if (!sessionQuery.data || sessionQuery.isFetching) {
@@ -285,6 +311,17 @@ export function ConfiguratorPage() {
 
     return deriveConfiguratorUi(sessionQuery.data, state.selectedValueIds);
   }, [sessionQuery.data, state.selectedValueIds]);
+
+  const baselineUiModel = useMemo(() => {
+    if (!catalogPreview || !baselineSessionQuery.data) {
+      return null;
+    }
+
+    return deriveConfiguratorUi(
+      baselineSessionQuery.data,
+      state.selectedValueIds,
+    );
+  }, [baselineSessionQuery.data, catalogPreview, state.selectedValueIds]);
 
   useEffect(() => {
     if (uiModel?.logoSelection) {
@@ -319,6 +356,13 @@ export function ConfiguratorPage() {
   const previewSceneKey = useMemo(
     () => (uiModel ? createPreviewSceneKey(uiModel.previewScene) : ""),
     [uiModel],
+  );
+  const baselinePreviewSceneKey = useMemo(
+    () =>
+      baselineUiModel
+        ? createPreviewSceneKey(baselineUiModel.previewScene)
+        : "",
+    [baselineUiModel],
   );
 
   useEffect(() => {
@@ -423,6 +467,24 @@ export function ConfiguratorPage() {
     return <Navigate to={nextUrl} replace />;
   }
 
+  if (catalogPreview && !authQuery.data.user.isAdmin) {
+    return (
+      <main className="page-state">
+        <h1>Acceso restringido</h1>
+        <p>El laboratorio visual esta disponible solo para administradores.</p>
+      </main>
+    );
+  }
+
+  if (catalogPreview && !visualReleaseId) {
+    return (
+      <main className="page-state">
+        <h1>Release invalida</h1>
+        <p>Vuelve al catalogo y abre nuevamente el laboratorio.</p>
+      </main>
+    );
+  }
+
   if (sessionQuery.isError) {
     const errorMessage =
       sessionQuery.error instanceof Error
@@ -437,11 +499,29 @@ export function ConfiguratorPage() {
     );
   }
 
+  if (catalogPreview && baselineSessionQuery.isError) {
+    const errorMessage =
+      baselineSessionQuery.error instanceof Error
+        ? baselineSessionQuery.error.message
+        : "No se pudo reconstruir la version publicada para comparar.";
+
+    return (
+      <main className="page-state">
+        <h1>No se pudo cargar la comparacion</h1>
+        <p>{errorMessage}</p>
+      </main>
+    );
+  }
+
   if (
     sessionQuery.isLoading ||
     sessionQuery.isFetching ||
     !uiModel ||
-    !sessionQuery.data
+    !sessionQuery.data ||
+    (catalogPreview &&
+      (baselineSessionQuery.isLoading ||
+        baselineSessionQuery.isFetching ||
+        !baselineUiModel))
   ) {
     return (
       <main className="page-state">
@@ -453,7 +533,9 @@ export function ConfiguratorPage() {
 
   const session = sessionQuery.data;
   const ui = uiModel;
-  const isReadOnly = !session.status.canEdit || session.status.isLocked;
+  const isReadOnly = catalogPreview
+    ? false
+    : !session.status.canEdit || session.status.isLocked;
   const completedGroups = ui.groups.filter(
     (group) => (state.selectedValueIds[String(group.attributeId)] ?? []).length > 0,
   ).length;
@@ -794,6 +876,40 @@ export function ConfiguratorPage() {
       return;
     }
 
+    if (catalogPreview) {
+      if (!visualReleaseId) {
+        setSaveError("No se pudo identificar la release que estas probando.");
+        return;
+      }
+
+      if (!scenarioName.trim()) {
+        setSaveError("Escribe un nombre para reconocer este escenario de prueba.");
+        return;
+      }
+
+      try {
+        setIsSaving(true);
+        const scenario = await saveVisualReleaseScenario(visualReleaseId, {
+          displayName: scenarioName.trim(),
+          saleOrderLineId: lineId,
+          selectedValueIds: selectedValueIdsForSave,
+          customValuesByValueId: state.customValuesByValueId,
+        });
+        setSaveMessage(
+          `Escenario "${scenario.displayName}" guardado solo en el laboratorio. Odoo no fue modificado.`,
+        );
+      } catch (error) {
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : "No se pudo guardar el escenario de prueba.",
+        );
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
     const previewBlob =
       currentPreview?.renderKey === previewSceneKey ? currentPreview.blob : null;
 
@@ -850,10 +966,21 @@ export function ConfiguratorPage() {
   }
 
   return (
-    <main className="configurator-page">
+    <main
+      className={[
+        "configurator-page",
+        catalogPreview ? "configurator-page--laboratory" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <header className="app-header">
         <div className="app-header__title">
-          <p className="eyebrow">Configurador visual externo</p>
+          <p className="eyebrow">
+            {catalogPreview
+              ? "Laboratorio visual, sin escritura en Odoo"
+              : "Configurador visual externo"}
+          </p>
           <h1>{session.productName}</h1>
           <div className="app-header__subline">
             <p className="page-subtitle">
@@ -867,6 +994,21 @@ export function ConfiguratorPage() {
         </div>
 
         <div className="app-header__meta">
+          {authQuery.data.user.isAdmin ? (
+            <button
+              type="button"
+              className="secondary-button secondary-button--compact"
+              onClick={() =>
+                navigate(
+                  catalogPreview
+                    ? "/tools/visual-catalog?tab=releases"
+                    : "/tools/visual-catalog",
+                )
+              }
+            >
+              {catalogPreview ? "Volver a releases" : "Catalogo visual"}
+            </button>
+          ) : null}
           <div className="meta-pill meta-pill--compact">
             <span>Usuario</span>
             <strong>{authQuery.data.user.name}</strong>
@@ -884,6 +1026,51 @@ export function ConfiguratorPage() {
           </button>
         </div>
       </header>
+
+      {catalogPreview ? (
+        <section className="visual-laboratory-bar" aria-label="Controles del laboratorio">
+          <div className="visual-laboratory-bar__identity">
+            <span>Release candidata</span>
+            <strong>
+              R{session.visualReleaseNumber ?? "?"} · Linea #{lineId}
+            </strong>
+            <small>Ningun cambio de esta pantalla se envia a Odoo.</small>
+          </div>
+
+          <div className="visual-laboratory-modes" role="group" aria-label="Vista de comparacion">
+            <button
+              type="button"
+              className={laboratoryView === "candidate" ? "is-active" : ""}
+              onClick={() => setLaboratoryView("candidate")}
+            >
+              Candidata
+            </button>
+            <button
+              type="button"
+              className={laboratoryView === "baseline" ? "is-active" : ""}
+              onClick={() => setLaboratoryView("baseline")}
+            >
+              Publicada
+            </button>
+            <button
+              type="button"
+              className={laboratoryView === "compare" ? "is-active" : ""}
+              onClick={() => setLaboratoryView("compare")}
+            >
+              Comparar
+            </button>
+          </div>
+
+          <label className="visual-laboratory-scenario-name">
+            Nombre del escenario
+            <input
+              value={scenarioName}
+              onChange={(event) => setScenarioName(event.target.value)}
+              maxLength={180}
+            />
+          </label>
+        </section>
+      ) : null}
 
       {hasNotices ? (
         <section className="notice-tray" aria-live="polite">
@@ -1063,16 +1250,19 @@ export function ConfiguratorPage() {
                   disabled={
                     isSaving ||
                     isReadOnly ||
-                    currentPreview?.renderKey !== previewSceneKey
+                    (!catalogPreview &&
+                      currentPreview?.renderKey !== previewSceneKey)
                   }
                 >
                   {isSaving
                     ? "Guardando..."
                     : isReadOnly
                       ? "Solo lectura"
-                      : currentPreview?.renderKey === previewSceneKey
-                        ? "Guardar diseno"
-                        : "Preparando imagen..."}
+                      : catalogPreview
+                        ? "Guardar escenario de prueba"
+                        : currentPreview?.renderKey === previewSceneKey
+                          ? "Guardar diseno"
+                          : "Preparando imagen..."}
                 </button>
 
                 {saveMessage ? (
@@ -1091,13 +1281,54 @@ export function ConfiguratorPage() {
           </div>
         </aside>
 
-        <section className="preview-panel" aria-label="Panel de previsualizacion">
-          <DesignPreviewCanvas
-            scene={ui.previewScene}
-            renderKey={previewSceneKey}
-            readOnly={isReadOnly}
-            onBlobReady={handleBlobReady}
-          />
+        <section
+          className={[
+            "preview-panel",
+            catalogPreview ? "preview-panel--laboratory" : "",
+            catalogPreview && laboratoryView === "compare"
+              ? "preview-panel--comparison"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-label="Panel de previsualizacion"
+        >
+          {catalogPreview && laboratoryView === "compare" && baselineUiModel ? (
+            <div className="visual-laboratory-comparison">
+              <figure>
+                <figcaption>Candidata R{session.visualReleaseNumber ?? "?"}</figcaption>
+                <DesignPreviewCanvas
+                  scene={ui.previewScene}
+                  renderKey={previewSceneKey}
+                  readOnly={false}
+                  onBlobReady={handleBlobReady}
+                />
+              </figure>
+              <figure>
+                <figcaption>Version publicada</figcaption>
+                <DesignPreviewCanvas
+                  scene={baselineUiModel.previewScene}
+                  renderKey={baselinePreviewSceneKey}
+                  readOnly
+                  onBlobReady={() => undefined}
+                />
+              </figure>
+            </div>
+          ) : catalogPreview && laboratoryView === "baseline" && baselineUiModel ? (
+            <DesignPreviewCanvas
+              scene={baselineUiModel.previewScene}
+              renderKey={baselinePreviewSceneKey}
+              readOnly
+              onBlobReady={() => undefined}
+            />
+          ) : (
+            <DesignPreviewCanvas
+              scene={ui.previewScene}
+              renderKey={previewSceneKey}
+              readOnly={isReadOnly}
+              onBlobReady={handleBlobReady}
+            />
+          )}
         </section>
       </div>
     </main>

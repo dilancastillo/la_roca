@@ -1570,6 +1570,22 @@ function resolveAssetFilePaths(assetPath: string): [string, string] {
 }
 
 async function readAssetFile(assetPath: string) {
+  if (assetPath.startsWith("data:image/svg+xml")) {
+    const separatorIndex = assetPath.indexOf(",");
+
+    if (separatorIndex < 0) {
+      throw new Error("El SVG dinamico no tiene un data URI valido.");
+    }
+
+    const metadata = assetPath.slice(0, separatorIndex);
+    const payload = assetPath.slice(separatorIndex + 1);
+    const svgText = metadata.includes(";base64")
+      ? Buffer.from(payload, "base64").toString("utf8")
+      : decodeURIComponent(payload);
+
+    return Buffer.from(svgText);
+  }
+
   const [fromRepoRoot, fromApiWorkspace] = resolveAssetFilePaths(assetPath);
 
   try {
@@ -1588,6 +1604,10 @@ async function readAssetFile(assetPath: string) {
 }
 
 function getAssetFileName(assetPath: string) {
+  if (assetPath.startsWith("data:image/svg+xml")) {
+    return "visual-catalog-runtime.svg";
+  }
+
   return assetPath.split(/[\\/]/).pop() ?? assetPath;
 }
 
@@ -2281,7 +2301,10 @@ function isBackNeckTrimSection(
 }
 
 function isSvgAsset(assetPath: string) {
-  return assetPath.toLowerCase().endsWith(".svg");
+  return (
+    assetPath.startsWith("data:image/svg+xml") ||
+    assetPath.toLowerCase().endsWith(".svg")
+  );
 }
 
 function getSvgViewBox(svgText: string) {

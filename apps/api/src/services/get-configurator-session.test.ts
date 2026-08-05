@@ -2,10 +2,47 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import {
   getConfiguratorSession,
+  resolvePinnedVisualDefinitionIds,
   resolveOdooOptionImageSrc,
   resolveSelectedIdsForAttributeValues,
   toOdooImageDataUri,
 } from "./get-configurator-session.js";
+
+describe("resolvePinnedVisualDefinitionIds", () => {
+  it("usa el catalogo actual para adjuntos antiguos de lineas editables", () => {
+    expect(
+      resolvePinnedVisualDefinitionIds({
+        hasAttachment: true,
+        canEdit: true,
+        visualDefinitionVersionIds: undefined,
+      }),
+    ).toBeUndefined();
+  });
+
+  it("preserva lineas historicas bloqueadas y fijaciones explicitas", () => {
+    expect(
+      resolvePinnedVisualDefinitionIds({
+        hasAttachment: true,
+        canEdit: false,
+        visualDefinitionVersionIds: undefined,
+      }),
+    ).toEqual([]);
+    expect(
+      resolvePinnedVisualDefinitionIds({
+        hasAttachment: true,
+        canEdit: true,
+        visualDefinitionVersionIds: [],
+      }),
+    ).toEqual([]);
+    expect(
+      resolvePinnedVisualDefinitionIds({
+        hasAttachment: true,
+        canEdit: true,
+        visualDefinitionVersionIds: ["definition-v1"],
+      }),
+    ).toEqual(["definition-v1"]);
+  });
+});
 
 const mocks = vi.hoisted(() => ({
   odooRead: vi.fn(),

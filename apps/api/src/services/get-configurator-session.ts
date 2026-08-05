@@ -1,6 +1,12 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
-import type { OdooEnv } from "../lib/app-env.js";
+import type { AppEnv, OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
+import { parseVisualDefinitionVersionIds } from "./configurator-state-metadata.js";
+import { loadActiveVisualDefinitions } from "./visual-catalog-repository.js";
+import {
+  getOrCreateLineVisualRelease,
+  getVisualRelease,
+} from "./visual-release-repository.js";
 
 type Many2one = [number, string] | false;
 
@@ -74,10 +80,14 @@ type DesignAttachmentRecord = {
   id: number;
   name: string;
   create_date?: string | false;
+  description?: string | false;
 };
 
 type GetConfiguratorSessionOptions = {
   loadCustomValues?: boolean;
+  visualDefinitionIdsOverride?: string[];
+  visualReleaseId?: string;
+  pinActiveVisualRelease?: boolean;
 };
 
 export function resolveSelectedIdsForAttributeValues(
@@ -393,26 +403,51 @@ async function loadLatestDesignAttachment(env: OdooEnv, saleOrderLineId: number)
     env,
     "ir.attachment",
     domain,
-    ["id", "name", "create_date"],
+    ["id", "name", "create_date", "description"],
     "create_date desc, id desc",
     { limit: 20 },
   ).catch(() => []);
 
   const [attachment] = attachments;
+  const visualDefinitionVersionIds = attachment
+    ? parseVisualDefinitionVersionIds(attachment.description)
+    : undefined;
 
   return attachment
     ? {
+        hasAttachment: true,
         version: parseDesignAttachmentVersion(attachment.name),
         generatedAt: parseOdooDatetime(attachment.create_date),
+        visualDefinitionVersionIds,
       }
     : {
+        hasAttachment: false,
         version: 0,
         generatedAt: null,
+        visualDefinitionVersionIds: undefined,
       };
 }
 
+export function resolvePinnedVisualDefinitionIds({
+  hasAttachment,
+  canEdit,
+  visualDefinitionVersionIds,
+}: {
+  hasAttachment: boolean;
+  canEdit: boolean;
+  visualDefinitionVersionIds: string[] | undefined;
+}) {
+  if (visualDefinitionVersionIds !== undefined) {
+    return visualDefinitionVersionIds;
+  }
+
+  // Legacy editable drafts can adopt the current catalog. Locked historical
+  // lines without catalog metadata keep using their previously saved render.
+  return hasAttachment && !canEdit ? [] : undefined;
+}
+
 export async function getConfiguratorSession(
-  env: OdooEnv,
+  env: AppEnv,
   saleOrderLineId: number,
   options: GetConfiguratorSessionOptions = {},
 ): Promise<ConfiguratorSession> {
@@ -729,6 +764,50 @@ export async function getConfiguratorSession(
     env,
     saleOrderLineId,
   );
+  const canEdit = order.state === "draft" || order.state === "sent";
+  const pinnedVisualDefinitionIds = options.visualDefinitionIdsOverride
+    ? undefined
+    : resolvePinnedVisualDefinitionIds({
+        hasAttachment: latestDesignAttachment.hasAttachment,
+        canEdit,
+        visualDefinitionVersionIds:
+          latestDesignAttachment.visualDefinitionVersionIds,
+      });
+  const visualRelease =
+    pinnedVisualDefinitionIds === undefined
+      ? options.visualReleaseId
+        ? await getVisualRelease(env, options.visualReleaseId)
+        : options.pinActiveVisualRelease === false
+          ? null
+          : await getOrCreateLineVisualRelease(env, saleOrderLineId)
+      : null;
+  const releaseDefinitionIds =
+    options.visualDefinitionIdsOverride ?? visualRelease?.definitionIds;
+  const requiresPinnedVisualCatalog =
+    (pinnedVisualDefinitionIds?.length ?? 0) > 0 ||
+    (releaseDefinitionIds?.length ?? 0) > 0;
+  const visualCatalogWarnings: string[] = [];
+  const visualDefinitions = await loadActiveVisualDefinitions(
+    env,
+    productTemplateId,
+    pinnedVisualDefinitionIds,
+    releaseDefinitionIds,
+  ).catch((error) => {
+    if (requiresPinnedVisualCatalog) {
+      throw new Error(
+        error instanceof Error
+          ? `No se pudo cargar la version visual fijada: ${error.message}`
+          : "No se pudo cargar la version visual fijada.",
+      );
+    }
+
+    visualCatalogWarnings.push(
+      error instanceof Error
+        ? `No se pudo cargar el catalogo visual: ${error.message}`
+        : "No se pudo cargar el catalogo visual.",
+    );
+    return [];
+  });
 
   const exclusions = ptavs.flatMap((ptav) => {
     const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
@@ -743,8 +822,6 @@ export async function getConfiguratorSession(
     }));
   });
 
-  const canEdit = order.state === "draft" || order.state === "sent";
-
   return {
     saleOrderLineId,
     saleOrderId: order.id,
@@ -757,6 +834,9 @@ export async function getConfiguratorSession(
     selectedValueIds,
     customValuesByValueId,
     exclusions,
+    visualDefinitions,
+    visualReleaseId: visualRelease?.id ?? options.visualReleaseId ?? null,
+    visualReleaseNumber: visualRelease?.number ?? null,
     status: {
       orderState: order.state,
       canEdit,
@@ -768,6 +848,10 @@ export async function getConfiguratorSession(
       typeof line.x_product_design_image === "string"
         ? line.x_product_design_image
         : null,
-    warnings: [...ptavWarnings, ...attributeValueWarnings],
+    warnings: [
+      ...ptavWarnings,
+      ...attributeValueWarnings,
+      ...visualCatalogWarnings,
+    ],
   };
 }

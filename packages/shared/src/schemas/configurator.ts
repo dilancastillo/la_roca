@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { activeVisualDefinitionSchema } from "./visual-catalog.js";
 
 export const configuratorValueSchema = z.object({
   id: z.number(),
@@ -56,6 +57,9 @@ export const configuratorSessionSchema = z.object({
   status: configuratorStatusSchema,
   existingDesignBase64: z.string().min(1).nullable().optional(),
   warnings: z.array(z.string()).default([]),
+  visualDefinitions: z.array(activeVisualDefinitionSchema).optional(),
+  visualReleaseId: z.string().uuid().nullable().optional(),
+  visualReleaseNumber: z.number().int().positive().nullable().optional(),
 });
 
 export type ConfiguratorSession = z.infer<typeof configuratorSessionSchema>;
@@ -90,6 +94,8 @@ export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;
 export const appUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
+  isAdmin: z.boolean().optional(),
+  canPublishVisualCatalog: z.boolean().optional(),
 });
 
 export const authSessionSchema = z.object({
