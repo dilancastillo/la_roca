@@ -732,7 +732,10 @@ export async function cloneVisualDefinition(
   const metadata = storedVisualDefinitionSchema.parse({
     ...current,
     id,
-    version: current.version,
+    // Drafts do not own a public version number. Supabase only enforces
+    // uniqueness for versions greater than zero, and approval assigns the
+    // next immutable version in the series.
+    version: 0,
     status: "draft",
     ...assetKeys,
     createdBy: actorEmail,

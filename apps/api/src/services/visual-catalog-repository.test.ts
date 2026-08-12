@@ -92,6 +92,8 @@ describe("visual catalog repository", () => {
       firstApproved.id,
       actorEmail,
     );
+    expect(cloned.version).toBe(0);
+
     const updatedClone = await updateVisualDefinition(
       env,
       cloned.id,

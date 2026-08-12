@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { deriveAutomationRenderScene } from "./derive-render-scene.js";
 import { renderDesignImage } from "./render-design-image.js";
@@ -131,5 +132,43 @@ describe("catalogo visual en la escena de automatizacion", () => {
 
     expect(Array.from(image.subarray(1, 4))).toEqual([80, 78, 71]);
     expect(image.byteLength).toBeGreaterThan(10_000);
+  }, 30_000);
+
+  it("conserva elementos dinamicos que sobresalen del limite de tinta de la prenda", async () => {
+    const overflowRuntimeSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+        <rect x="500" y="80" width="80" height="40" fill="#ff00ff" />
+      </svg>
+    `;
+    const overflowSession: ConfiguratorSession = {
+      ...session,
+      visualDefinitions: session.visualDefinitions?.map((definition) => ({
+        ...definition,
+        runtimeSvg: overflowRuntimeSvg,
+      })),
+    };
+    const scene = deriveAutomationRenderScene(
+      overflowSession,
+      overflowSession.selectedValueIds,
+    );
+    const image = await renderDesignImage(scene);
+    const { data } = await sharp(image)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    let accentPixels = 0;
+
+    for (let offset = 0; offset < data.length; offset += 4) {
+      if (
+        (data[offset] ?? 0) > 240 &&
+        (data[offset + 1] ?? 255) < 30 &&
+        (data[offset + 2] ?? 0) > 240 &&
+        (data[offset + 3] ?? 0) > 200
+      ) {
+        accentPixels += 1;
+      }
+    }
+
+    expect(accentPixels).toBeGreaterThan(100);
   }, 30_000);
 });

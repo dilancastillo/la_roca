@@ -2822,6 +2822,52 @@ export async function createRasterCanvas(src: string, placementSrc = src) {
   return await promise;
 }
 
+async function createCoordinateAlignedRasterCanvas(
+  src: string,
+  placementSrc: string,
+) {
+  const cacheKey = `coordinate-aligned::${src}::${placementSrc}`;
+  const existing = rasterCache.get(cacheKey);
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const [processed, placement] = await Promise.all([
+      getProcessedImage(src),
+      getProcessedImage(placementSrc),
+    ]);
+    const { bounds } = placement;
+    const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
+    const scaleX = drawWidth / bounds.width;
+    const scaleY = drawHeight / bounds.height;
+    const rasterCanvas = document.createElement("canvas");
+    rasterCanvas.width = CANVAS_WIDTH;
+    rasterCanvas.height = CANVAS_HEIGHT;
+    const rasterContext = rasterCanvas.getContext("2d");
+
+    if (!rasterContext) {
+      throw new Error("No se pudo rasterizar el asset alineado.");
+    }
+
+    rasterContext.imageSmoothingEnabled = true;
+    rasterContext.imageSmoothingQuality = "high";
+    rasterContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    rasterContext.drawImage(
+      processed.canvas,
+      drawX - bounds.x * scaleX,
+      drawY - bounds.y * scaleY,
+      processed.canvas.width * scaleX,
+      processed.canvas.height * scaleY,
+    );
+
+    return rasterCanvas;
+  })();
+
+  rasterCache.set(cacheKey, promise);
+  return await promise;
+}
+
 function hasNearbyInk(
   data: Uint8ClampedArray,
   width: number,
@@ -3867,7 +3913,12 @@ async function drawGarmentDetailOverlay(
     overlaySrc,
     placementSrc,
   );
-  const overlayCanvas = await createRasterCanvas(resolvedOverlaySrc, placementSrc);
+  const overlayCanvas = resolvedOverlaySrc.startsWith("data:image/svg+xml")
+    ? await createCoordinateAlignedRasterCanvas(
+        resolvedOverlaySrc,
+        placementSrc,
+      )
+    : await createRasterCanvas(resolvedOverlaySrc, placementSrc);
   context.drawImage(
     trimColor && isPespunteDetailOverlay(resolvedOverlaySrc)
       ? recolorCanvasInk(overlayCanvas, trimColor)

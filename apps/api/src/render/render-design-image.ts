@@ -2609,6 +2609,72 @@ async function createOverlayBufferFromProcessed(
   return await placeProcessedBufferOnCanvas(imageBuffer, placement.bounds);
 }
 
+async function createCoordinateAlignedOverlayBufferFromProcessed(
+  processed: ProcessedImage,
+  placement: ProcessedImage,
+) {
+  const imageBuffer = await rgbaToPngBuffer(
+    processed.data,
+    processed.width,
+    processed.height,
+  );
+  const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(
+    placement.bounds,
+  );
+  const scaleX = drawWidth / placement.bounds.width;
+  const scaleY = drawHeight / placement.bounds.height;
+  const scaledWidth = Math.max(1, Math.round(processed.width * scaleX));
+  const scaledHeight = Math.max(1, Math.round(processed.height * scaleY));
+  const offsetX = Math.round(drawX - placement.bounds.x * scaleX);
+  const offsetY = Math.round(drawY - placement.bounds.y * scaleY);
+  const sourceLeft = Math.max(0, -offsetX);
+  const sourceTop = Math.max(0, -offsetY);
+  const destinationLeft = Math.max(0, offsetX);
+  const destinationTop = Math.max(0, offsetY);
+  const visibleWidth = Math.min(
+    scaledWidth - sourceLeft,
+    CANVAS_WIDTH - destinationLeft,
+  );
+  const visibleHeight = Math.min(
+    scaledHeight - sourceTop,
+    CANVAS_HEIGHT - destinationTop,
+  );
+  const canvas = sharp({
+    create: {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  });
+
+  if (visibleWidth <= 0 || visibleHeight <= 0) {
+    return await canvas.png().toBuffer();
+  }
+
+  const visibleOverlay = await sharp(imageBuffer)
+    .resize(scaledWidth, scaledHeight, { fit: "fill" })
+    .extract({
+      left: sourceLeft,
+      top: sourceTop,
+      width: visibleWidth,
+      height: visibleHeight,
+    })
+    .png()
+    .toBuffer();
+
+  return await canvas
+    .composite([
+      {
+        input: visibleOverlay,
+        left: destinationLeft,
+        top: destinationTop,
+      },
+    ])
+    .png()
+    .toBuffer();
+}
+
 async function createOverlayBuffer(assetPath: string) {
   const processed = await loadProcessedImage(assetPath);
   return await createOverlayBufferFromProcessed(processed);
@@ -3282,10 +3348,17 @@ async function createGarmentDetailAssetOverlayBuffer(
     loadProcessedImage(placementAssetPath),
   ]);
 
-  const overlayBuffer = await createOverlayBufferFromProcessed(
-    overlayProcessed,
-    placementProcessed,
-  );
+  const overlayBuffer = resolvedOverlayAssetPath.startsWith(
+    "data:image/svg+xml",
+  )
+    ? await createCoordinateAlignedOverlayBufferFromProcessed(
+        overlayProcessed,
+        placementProcessed,
+      )
+    : await createOverlayBufferFromProcessed(
+        overlayProcessed,
+        placementProcessed,
+      );
 
   return trimColor && isPespunteDetailOverlayAsset(resolvedOverlayAssetPath)
     ? await recolorPngInkBuffer(overlayBuffer, trimColor)
