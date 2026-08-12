@@ -9,7 +9,7 @@
     "deploy": "echo El despliegue se realiza desde Vercel",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:catalog": "vitest run src/lib/app-env.test.ts src/lib/auth.test.ts src/render/visual-catalog-render-scene.test.ts src/render/visual-catalog-runtime.test.ts src/services/configurator-state-metadata.test.ts src/services/get-configurator-session.test.ts src/services/get-visual-catalog-products.test.ts src/services/save-configurator-design.test.ts src/services/visual-catalog-repository.test.ts src/services/visual-release-repository.test.ts",
+    "test:catalog": "vitest run src/lib/app-env.test.ts src/lib/auth.test.ts src/lib/postgres-datetime.test.ts src/render/visual-catalog-render-scene.test.ts src/render/visual-catalog-runtime.test.ts src/services/configurator-state-metadata.test.ts src/services/get-configurator-session.test.ts src/services/get-visual-catalog-products.test.ts src/services/save-configurator-design.test.ts src/services/visual-catalog-repository.test.ts src/services/visual-catalog-supabase.test.ts src/services/visual-release-repository.test.ts",
     "lint": "echo lint pendiente"
   },
   "dependencies": {

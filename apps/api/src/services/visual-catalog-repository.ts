@@ -18,6 +18,7 @@ import {
   resolveVisualCatalogBackend,
   type AppEnv,
 } from "../lib/app-env.js";
+import { normalizePostgresDatetime } from "../lib/postgres-datetime.js";
 
 const storedVisualDefinitionSchema = visualDefinitionSummarySchema.extend({
   originalAssetKey: z.string().min(1),
@@ -290,10 +291,10 @@ class SupabaseVisualCatalogStore implements VisualCatalogStore {
       runtimeAssetKey: row.runtime_asset_key,
       createdBy: row.created_by,
       approvedBy: row.approved_by,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      submittedAt: row.submitted_at,
-      publishedAt: row.published_at,
+      createdAt: normalizePostgresDatetime(row.created_at),
+      updatedAt: normalizePostgresDatetime(row.updated_at),
+      submittedAt: normalizePostgresDatetime(row.submitted_at),
+      publishedAt: normalizePostgresDatetime(row.published_at),
     });
   }
 
@@ -356,7 +357,7 @@ class SupabaseVisualCatalogStore implements VisualCatalogStore {
         definitionId: row.definition_id,
         action: row.action,
         actorEmail: row.actor_email,
-        createdAt: row.created_at,
+        createdAt: normalizePostgresDatetime(row.created_at),
         details: row.details,
       }),
     );

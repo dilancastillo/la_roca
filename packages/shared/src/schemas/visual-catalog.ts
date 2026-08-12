@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const VISUAL_CATALOG_SVG_MAX_BYTES = 800_000;
 export const VISUAL_CATALOG_MUTATION_MAX_BYTES = 3_500_000;
+const isoDatetimeSchema = z.string().datetime({ offset: true });
 
 function getUtf8ByteLength(value: string) {
   return new TextEncoder().encode(value).byteLength;
@@ -116,10 +117,10 @@ const visualDefinitionMetadataShape = {
   referenceAssetSrc: z.string().min(1).max(500),
   createdBy: z.string().email(),
   approvedBy: z.string().email().nullable(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  submittedAt: z.string().datetime().nullable(),
-  publishedAt: z.string().datetime().nullable(),
+  createdAt: isoDatetimeSchema,
+  updatedAt: isoDatetimeSchema,
+  submittedAt: isoDatetimeSchema.nullable(),
+  publishedAt: isoDatetimeSchema.nullable(),
 } as const;
 
 export const visualDefinitionSummarySchema = z.object(
@@ -210,7 +211,7 @@ export const visualCatalogAuditEventSchema = z.object({
     "cloned",
   ]),
   actorEmail: z.string().email(),
-  createdAt: z.string().datetime(),
+  createdAt: isoDatetimeSchema,
   details: z.record(z.string(), z.unknown()).default({}),
 });
 export type VisualCatalogAuditEvent = z.infer<
@@ -264,7 +265,7 @@ export type VisualCatalogProduct = z.infer<
 
 export const visualCatalogProductListSchema = z.object({
   products: z.array(visualCatalogProductSchema),
-  refreshedAt: z.string().datetime(),
+  refreshedAt: isoDatetimeSchema,
 });
 
 export const visualReleaseStatusSchema = z.enum([
@@ -305,11 +306,11 @@ export const visualReleaseSchema = z.object({
   createdBy: z.string().email(),
   approvedBy: z.string().email().nullable(),
   publishedBy: z.string().email().nullable(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  submittedAt: z.string().datetime().nullable(),
-  approvedAt: z.string().datetime().nullable(),
-  publishedAt: z.string().datetime().nullable(),
+  createdAt: isoDatetimeSchema,
+  updatedAt: isoDatetimeSchema,
+  submittedAt: isoDatetimeSchema.nullable(),
+  approvedAt: isoDatetimeSchema.nullable(),
+  publishedAt: isoDatetimeSchema.nullable(),
 });
 export type VisualRelease = z.infer<typeof visualReleaseSchema>;
 
@@ -341,8 +342,8 @@ export const visualReleaseScenarioSchema = z.object({
   selectedValueIds: z.record(z.string(), z.array(z.number())),
   customValuesByValueId: z.record(z.string(), z.string()).default({}),
   createdBy: z.string().email(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: isoDatetimeSchema,
+  updatedAt: isoDatetimeSchema,
 });
 export type VisualReleaseScenario = z.infer<
   typeof visualReleaseScenarioSchema
@@ -372,7 +373,7 @@ export const visualReleaseAuditEventSchema = z.object({
     "scenario_saved",
   ]),
   actorEmail: z.string().email(),
-  createdAt: z.string().datetime(),
+  createdAt: isoDatetimeSchema,
   details: z.record(z.string(), z.unknown()).default({}),
 });
 export type VisualReleaseAuditEvent = z.infer<

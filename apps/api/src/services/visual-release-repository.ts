@@ -18,11 +18,12 @@ import {
   resolveVisualCatalogBackend,
   type AppEnv,
 } from "../lib/app-env.js";
+import { normalizePostgresDatetime } from "../lib/postgres-datetime.js";
 
 const lineReleasePinSchema = z.object({
   saleOrderLineId: z.number().int().positive(),
   releaseId: z.string().uuid(),
-  createdAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
 });
 
 type LineReleasePin = z.infer<typeof lineReleasePinSchema>;
@@ -306,11 +307,11 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
       createdBy: row.created_by,
       approvedBy: row.approved_by,
       publishedBy: row.published_by,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      submittedAt: row.submitted_at,
-      approvedAt: row.approved_at,
-      publishedAt: row.published_at,
+      createdAt: normalizePostgresDatetime(row.created_at),
+      updatedAt: normalizePostgresDatetime(row.updated_at),
+      submittedAt: normalizePostgresDatetime(row.submitted_at),
+      approvedAt: normalizePostgresDatetime(row.approved_at),
+      publishedAt: normalizePostgresDatetime(row.published_at),
     });
   }
 
@@ -368,8 +369,8 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
         selectedValueIds: row.selected_value_ids,
         customValuesByValueId: row.custom_values_by_value_id,
         createdBy: row.created_by,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: normalizePostgresDatetime(row.created_at),
+        updatedAt: normalizePostgresDatetime(row.updated_at),
       }),
     );
   }
@@ -399,7 +400,7 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
         releaseId: row.release_id,
         action: row.action,
         actorEmail: row.actor_email,
-        createdAt: row.created_at,
+        createdAt: normalizePostgresDatetime(row.created_at),
         details: row.details,
       }),
     );
@@ -422,7 +423,13 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
   async getLinePin(saleOrderLineId: number) {
     const response = await this.request(`visual_catalog_line_release_pins?sale_order_line_id=eq.${saleOrderLineId}&select=*`);
     const [row] = (await response.json()) as Record<string, unknown>[];
-    return row ? lineReleasePinSchema.parse({ saleOrderLineId: row.sale_order_line_id, releaseId: row.release_id, createdAt: row.created_at }) : null;
+    return row
+      ? lineReleasePinSchema.parse({
+          saleOrderLineId: row.sale_order_line_id,
+          releaseId: row.release_id,
+          createdAt: normalizePostgresDatetime(row.created_at),
+        })
+      : null;
   }
 
   async upsertLinePin(pin: LineReleasePin) {
