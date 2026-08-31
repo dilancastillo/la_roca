@@ -2,7 +2,10 @@ import type {
   VisualElementPaint,
   VisualPlacement,
 } from "@repo/shared/schemas/visual-catalog";
-import { getVisualElementVisibilityToken } from "@repo/shared/visual-catalog-runtime";
+import {
+  getVisualElementVisibilityToken,
+  isThinVisualPolygonPoints,
+} from "@repo/shared/visual-catalog-runtime";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const DRAWABLE_SELECTOR =
@@ -234,6 +237,15 @@ function applyElementPaint(
     return;
   }
 
+  if (
+    element.localName === "line" &&
+    (paint.mode === "base_fill" || paint.mode === "trim_fill")
+  ) {
+    throw new Error(
+      "Un elemento line no admite relleno. Usa Color base, linea o Vivo, linea.",
+    );
+  }
+
   if (paint.mode === "base_fill") {
     appendImportantStyle(element, "fill:__VC_BASE_COLOR__!important;");
     return;
@@ -262,7 +274,12 @@ function applyElementPaint(
     paint.mode === "trim_fill"
       ? `__VC_TRIM_FILL_${paint.trimSourceValueId}__`
       : `__VC_TRIM_STROKE_${paint.trimSourceValueId}__`;
-  const property = paint.mode === "trim_fill" ? "fill" : "stroke";
+  const isThinVisualPolygon =
+    paint.mode === "trim_stroke" &&
+    element.localName === "polygon" &&
+    isThinVisualPolygonPoints(element.getAttribute("points") ?? undefined);
+  const property =
+    paint.mode === "trim_fill" || isThinVisualPolygon ? "fill" : "stroke";
   appendImportantStyle(element, `${property}:${token}!important;`);
 }
 
@@ -276,10 +293,25 @@ export function buildRuntimeVisualSvg({
     throw new Error("Selecciona al menos un elemento del SVG.");
   }
 
+  const duplicateSelectedIds = Array.from(
+    new Set(
+      selectedElementIds.filter(
+        (elementId, index) => selectedElementIds.indexOf(elementId) !== index,
+      ),
+    ),
+  );
+
+  if (duplicateSelectedIds.length > 0) {
+    throw new Error(
+      `La seleccion contiene IDs duplicados: ${duplicateSelectedIds.join(", ")}. Vuelve a seleccionar los elementos del SVG.`,
+    );
+  }
+
   const document = parseSvg(normalizedSvg);
   const sourceRoot = document.documentElement as unknown as SVGElement;
   const sourceViewBox = readViewBox(sourceRoot);
   const selectedIds = new Set(selectedElementIds);
+  const selectedIdOccurrences = new Map<string, number>();
 
   document.querySelectorAll<SVGElement>(DRAWABLE_SELECTOR).forEach((element) => {
     if (isInsideDefinition(element)) {
@@ -293,6 +325,11 @@ export function buildRuntimeVisualSvg({
       return;
     }
 
+    selectedIdOccurrences.set(
+      elementId,
+      (selectedIdOccurrences.get(elementId) ?? 0) + 1,
+    );
+
     applyElementPaint(
       element,
       elementPaints[elementId],
@@ -301,6 +338,26 @@ export function buildRuntimeVisualSvg({
     element.removeAttribute("data-vc-id");
     element.removeAttribute("data-vc-selected");
   });
+
+  const missingSelectedIds = selectedElementIds.filter(
+    (elementId) => !selectedIdOccurrences.has(elementId),
+  );
+
+  if (missingSelectedIds.length > 0) {
+    throw new Error(
+      `Los elementos seleccionados ya no existen en el SVG normalizado: ${missingSelectedIds.join(", ")}. Vuelve a seleccionar los elementos antes de guardar.`,
+    );
+  }
+
+  const duplicateNormalizedIds = Array.from(selectedIdOccurrences.entries())
+    .filter(([, occurrences]) => occurrences > 1)
+    .map(([elementId]) => elementId);
+
+  if (duplicateNormalizedIds.length > 0) {
+    throw new Error(
+      `El SVG normalizado contiene IDs visuales duplicados: ${duplicateNormalizedIds.join(", ")}. Vuelve a cargar el archivo SVG.`,
+    );
+  }
 
   const runtimeDocument = document.implementation.createDocument(
     SVG_NAMESPACE,

@@ -185,7 +185,65 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).toContain("display:inline");
     expect(svg).toContain("display:none");
     expect(svg).toContain("stroke:#123456");
-    expect(svg).toContain("stroke:none");
+    expect(svg).not.toContain("__VC_TRIM_STROKE_1000__");
+    expect(svg).not.toContain("stroke:none");
+  });
+
+  it("conserva el bolsillo original cuando la linea no resuelve el color de vivo", () => {
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition(
+        "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
+        "component",
+        [],
+      ),
+      slot: "lower_pocket",
+      selectedElementIds: ["left-pocket", "right-pocket", "auxiliary-line"],
+      elementPaints: {
+        "left-pocket": {
+          mode: "trim_stroke",
+          trimSourceValueId: 633,
+          visibilityConditions: [],
+        },
+        "right-pocket": {
+          mode: "trim_stroke",
+          trimSourceValueId: 633,
+          visibilityConditions: [],
+        },
+        "auxiliary-line": {
+          mode: "trim_fill",
+          trimSourceValueId: 634,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg>
+          <style>.st1{fill:none;stroke:#000}</style>
+          <polyline class="st1" style="stroke:__VC_TRIM_STROKE_633__!important;" />
+          <polyline class="st1" style="stroke:__VC_TRIM_STROKE_633__!important;" />
+          <line class="st1" style="fill:__VC_TRIM_FILL_634__!important;" />
+        </svg>
+      `,
+    };
+    const svgWithoutTrim = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#aabbcc", []).split(",")[1] ?? "",
+    );
+    const svgWithTrim = decodeURIComponent(
+      materializeVisualDefinitionSvg(
+        definition,
+        "#aabbcc",
+        [
+          { valueId: 633, sourceValueId: 633, colorHex: "#123456" },
+          { valueId: 634, sourceValueId: 634, colorHex: "#654321" },
+        ],
+      ).split(",")[1] ?? "",
+    );
+
+    expect(svgWithoutTrim).toContain(".st1{fill:none;stroke:#000}");
+    expect(svgWithoutTrim).not.toContain("stroke:none");
+    expect(svgWithoutTrim).not.toMatch(/__VC_[A-Z0-9_]+__/);
+    expect(svgWithTrim.match(/stroke:#123456/g)).toHaveLength(2);
+    expect(svgWithTrim).toContain("stroke:#654321");
+    expect(svgWithTrim).not.toContain("fill:#654321");
   });
 
   it("reconoce el ID fuente estable y no depende del PTAV representativo", () => {

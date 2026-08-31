@@ -137,6 +137,54 @@ export const visualDefinitionSchema = visualDefinitionSummarySchema.extend({
 });
 export type VisualDefinition = z.infer<typeof visualDefinitionSchema>;
 
+function escapeXmlAttribute(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function countOccurrences(value: string, fragment: string) {
+  return value.split(fragment).length - 1;
+}
+
+function getExpectedRuntimeTokens(
+  selectedElementIds: string[],
+  elementPaints: Record<string, VisualElementPaint>,
+) {
+  const tokens = new Map<string, number>();
+  const addToken = (token: string) => {
+    tokens.set(token, (tokens.get(token) ?? 0) + 1);
+  };
+
+  selectedElementIds.forEach((elementId, index) => {
+    const paint = elementPaints[elementId];
+
+    if (!paint) {
+      return;
+    }
+
+    if (paint.visibilityConditions.length > 0) {
+      addToken(`__VC_VISIBILITY_${index}__`);
+    }
+
+    if (paint.mode === "base_fill" || paint.mode === "base_stroke") {
+      addToken("__VC_BASE_COLOR__");
+    } else if (paint.mode === "outline") {
+      addToken("__VC_OUTLINE_COLOR__");
+    } else if (
+      (paint.mode === "trim_fill" || paint.mode === "trim_stroke") &&
+      paint.trimSourceValueId !== undefined
+    ) {
+      const property = paint.mode === "trim_fill" ? "FILL" : "STROKE";
+      addToken(`__VC_TRIM_${property}_${paint.trimSourceValueId}__`);
+    }
+  });
+
+  return tokens;
+}
+
 export const visualDefinitionMutationSchema = z
   .object({
     displayName: z.string().min(1).max(180),
@@ -163,6 +211,64 @@ export const visualDefinitionMutationSchema = z
         message:
           "La definicion completa supera el limite seguro de 3.5 MB para Vercel.",
       });
+    }
+
+    const selectedIds = new Set(mutation.selectedElementIds);
+
+    if (selectedIds.size !== mutation.selectedElementIds.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["selectedElementIds"],
+        message: "Los elementos seleccionados no pueden contener IDs duplicados.",
+      });
+    }
+
+    for (const elementId of selectedIds) {
+      const marker = `data-vc-id="${escapeXmlAttribute(elementId)}"`;
+      const occurrences = countOccurrences(mutation.normalizedSvg, marker);
+
+      if (occurrences === 0) {
+        context.addIssue({
+          code: "custom",
+          path: ["selectedElementIds"],
+          message: `El elemento seleccionado ${elementId} no existe en normalizedSvg.`,
+        });
+      } else if (occurrences > 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["normalizedSvg"],
+          message: `El ID visual ${elementId} esta duplicado en normalizedSvg.`,
+        });
+      }
+    }
+
+    const stalePaintIds = Object.keys(mutation.elementPaints).filter(
+      (elementId) => !selectedIds.has(elementId),
+    );
+
+    if (stalePaintIds.length > 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["elementPaints"],
+        message: `Hay pinturas vinculadas a elementos no seleccionados: ${stalePaintIds.join(", ")}.`,
+      });
+    }
+
+    const expectedTokens = getExpectedRuntimeTokens(
+      mutation.selectedElementIds,
+      mutation.elementPaints,
+    );
+
+    for (const [token, expectedOccurrences] of expectedTokens) {
+      const actualOccurrences = countOccurrences(mutation.runtimeSvg, token);
+
+      if (actualOccurrences !== expectedOccurrences) {
+        context.addIssue({
+          code: "custom",
+          path: ["runtimeSvg"],
+          message: `runtimeSvg debe contener ${expectedOccurrences} ocurrencia(s) de ${token}; contiene ${actualOccurrences}.`,
+        });
+      }
     }
   });
 export type VisualDefinitionMutation = z.infer<
