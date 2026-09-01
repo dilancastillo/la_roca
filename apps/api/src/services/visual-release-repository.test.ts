@@ -201,4 +201,166 @@ describe("visual release repository", () => {
       (candidate) => candidate.id === release.id,
     )?.status).toBe("candidate");
   });
+
+  it("rechaza definiciones en borrador al crear un release candidato", async () => {
+    const draft = await createVisualDefinition(
+      env,
+      {
+        ...mutation,
+        displayName: "Bolsillo inferior borrador",
+        slot: "lower_pocket",
+        binding: {
+          ...mutation.binding,
+          attributeId: 154,
+          valueId: 382,
+          sourceValueId: 596,
+          attributeName: "Modelo bolsillo inferior",
+          valueName: "COSTURA",
+        },
+        selectedElementIds: ["bolsillo"],
+        elementPaints: {
+          bolsillo: {
+            mode: "trim_stroke",
+            trimSourceValueId: 9001,
+            visibilityConditions: [],
+          },
+        },
+        normalizedSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path data-vc-id="bolsillo" d="M0 0L20 20"/></svg>',
+        runtimeSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path stroke="__VC_TRIM_STROKE_9001__" d="M0 0L20 20"/></svg>',
+      },
+      actorEmail,
+    );
+
+    // Un borrador NO puede entrar a un release — ese es el comportamiento que
+    // explica por qué la candidata no muestra definiciones del editor
+    await expect(
+      createVisualReleaseCandidate(
+        env,
+        {
+          displayName: "Release con borrador",
+          notes: "",
+          changedDefinitionIds: [draft.id],
+        },
+        await listVisualDefinitions(env),
+        actorEmail,
+      ),
+    ).rejects.toThrow(/aprobados/i);
+
+    expect(draft.status).toBe("draft");
+  });
+
+  it("la candidata del laboratorio muestra definiciones aprobadas incluidas en el release", async () => {
+    // Flujo correcto: draft → submit → approve → release → laboratorio
+    const neckDraft = await createVisualDefinition(
+      env,
+      {
+        ...mutation,
+        displayName: "Cuello laboratorio",
+        binding: {
+          ...mutation.binding,
+          sourceValueId: 564,
+          valueId: 336,
+          valueName: "PRESILLAS",
+        },
+        selectedElementIds: ["neck"],
+        elementPaints: {
+          neck: { mode: "base_fill", visibilityConditions: [] },
+        },
+        normalizedSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path data-vc-id="neck" d="M0 0L20 20"/></svg>',
+        runtimeSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path fill="__VC_BASE_COLOR__" d="M0 0L20 20"/></svg>',
+      },
+      actorEmail,
+    );
+    const pocketDraft = await createVisualDefinition(
+      env,
+      {
+        ...mutation,
+        displayName: "Bolsillo laboratorio",
+        slot: "lower_pocket",
+        binding: {
+          ...mutation.binding,
+          attributeId: 154,
+          valueId: 383,
+          sourceValueId: 597,
+          attributeName: "Modelo bolsillo inferior",
+          valueName: "RIBETE",
+        },
+        selectedElementIds: ["bolsillo"],
+        elementPaints: {
+          bolsillo: {
+            mode: "trim_stroke",
+            trimSourceValueId: 9002,
+            visibilityConditions: [],
+          },
+        },
+        normalizedSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path data-vc-id="bolsillo" d="M0 0L20 20"/></svg>',
+        runtimeSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path stroke="__VC_TRIM_STROKE_9002__" d="M0 0L20 20"/></svg>',
+      },
+      actorEmail,
+    );
+
+    // Ambos deben aprobarse antes de poder entrar al release
+    await submitVisualDefinition(env, neckDraft.id, actorEmail);
+    const neckApproved = await approveVisualDefinition(env, neckDraft.id, actorEmail);
+
+    await submitVisualDefinition(env, pocketDraft.id, actorEmail);
+    const pocketApproved = await approveVisualDefinition(env, pocketDraft.id, actorEmail);
+
+    expect(neckApproved.status).toBe("approved");
+    expect(pocketApproved.status).toBe("approved");
+
+    // Crear el release candidato con ambas definiciones aprobadas
+    const candidate = await createVisualReleaseCandidate(
+      env,
+      {
+        displayName: "Release laboratorio",
+        notes: "",
+        changedDefinitionIds: [neckApproved.id, pocketApproved.id],
+      },
+      await listVisualDefinitions(env),
+      actorEmail,
+    );
+
+    expect(candidate.status).toBe("candidate");
+    // El release candidato incluye ambas definiciones — las que el
+    // laboratorio cargará via visualDefinitionIdsOverride
+    expect(candidate.definitionIds).toContain(neckApproved.id);
+    expect(candidate.definitionIds).toContain(pocketApproved.id);
+
+    // Un draft creado después NO aparece en el release ya existente
+    const lateDraft = await createVisualDefinition(
+      env,
+      {
+        ...mutation,
+        displayName: "Bolsillo tarde — borrador",
+        slot: "lower_pocket",
+        binding: {
+          ...mutation.binding,
+          attributeId: 154,
+          valueId: 384,
+          sourceValueId: 598,
+          attributeName: "Modelo bolsillo inferior",
+          valueName: "COSTURA TARDE",
+        },
+        selectedElementIds: ["bolsillo"],
+        elementPaints: {
+          bolsillo: { mode: "preserve", visibilityConditions: [] },
+        },
+        normalizedSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path data-vc-id="bolsillo" d="M0 0L20 20"/></svg>',
+        runtimeSvg:
+          '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L20 20"/></svg>',
+      },
+      actorEmail,
+    );
+
+    // Este draft NO está en el release — por eso no aparece en el laboratorio
+    expect(candidate.definitionIds).not.toContain(lateDraft.id);
+  });
 });

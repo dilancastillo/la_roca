@@ -114,6 +114,25 @@ function replaceTrimColorTokens(
 ) {
   return runtimeSvg
     .replace(
+      /(fill|stroke):(__VC_TRIM_(?:FILL|STROKE)_(\d+)__)(!important)?;?/g,
+      (
+        _declaration,
+        property: string,
+        _token: string,
+        sourceValueId: string,
+        important: string | undefined,
+      ) => {
+        const color = getTrimColor(trimSections, Number(sourceValueId));
+
+        // Si la linea de venta no tiene color para esta seccion, conservar el
+        // estilo original del SVG. Reemplazar por "none" hacia desaparecer
+        // componentes cuyo mismo trazo representa el bolsillo y su vivo.
+        return color
+          ? `${property}:${color}${important ?? ""};`
+          : "";
+      },
+    )
+    .replace(
       /__VC_TRIM_FILL_(\d+)__/g,
       (_token, sourceValueId: string) =>
         getTrimColor(trimSections, Number(sourceValueId)) ?? "none",
@@ -123,6 +142,78 @@ function replaceTrimColorTokens(
       (_token, sourceValueId: string) =>
         getTrimColor(trimSections, Number(sourceValueId)) ?? "none",
     );
+}
+
+function normalizeImpossibleLinePaints(runtimeSvg: string) {
+  return runtimeSvg.replace(/<line\b[^>]*>/g, (lineMarkup) =>
+    lineMarkup.replace(
+      /fill:(__VC_(?:BASE_COLOR|TRIM_FILL_\d+)__)(!important)?;?/g,
+      (_declaration, token: string, important: string | undefined) =>
+        `stroke:${token}${important ?? ""};`,
+    ),
+  );
+}
+
+export function isThinVisualPolygonPoints(rawPoints: string | undefined) {
+  if (!rawPoints) {
+    return false;
+  }
+
+  const coordinates = rawPoints.match(
+    /[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi,
+  );
+
+  if (!coordinates || coordinates.length < 6 || coordinates.length % 2 !== 0) {
+    return false;
+  }
+
+  const points = Array.from({ length: coordinates.length / 2 }, (_, index) => ({
+    x: Number(coordinates[index * 2]),
+    y: Number(coordinates[index * 2 + 1]),
+  }));
+
+  if (points.some(({ x, y }) => !Number.isFinite(x) || !Number.isFinite(y))) {
+    return false;
+  }
+
+  const xs = points.map(({ x }) => x);
+  const ys = points.map(({ y }) => y);
+  const boundingArea =
+    (Math.max(...xs) - Math.min(...xs)) *
+    (Math.max(...ys) - Math.min(...ys));
+
+  if (boundingArea <= 0) {
+    return false;
+  }
+
+  const polygonArea = Math.abs(
+    points.reduce((area, point, index) => {
+      const nextPoint = points[(index + 1) % points.length] ?? point;
+      return area + point.x * nextPoint.y - nextPoint.x * point.y;
+    }, 0) / 2,
+  );
+
+  // Corel y otros editores convierten con frecuencia una linea gruesa en un
+  // poligono largo y angosto. En esos casos el color visible pertenece al
+  // relleno de la figura, aunque funcionalmente el usuario lo configure como
+  // "Vivo, linea".
+  return polygonArea / boundingArea <= 0.2;
+}
+
+function normalizeThinPolygonVisualStrokes(runtimeSvg: string) {
+  return runtimeSvg.replace(/<polygon\b[^>]*>/g, (polygonMarkup) => {
+    const points = polygonMarkup.match(/\bpoints=(?:"([^"]*)"|'([^']*)')/i);
+
+    if (!isThinVisualPolygonPoints(points?.[1] ?? points?.[2])) {
+      return polygonMarkup;
+    }
+
+    return polygonMarkup.replace(
+      /stroke:(__VC_TRIM_STROKE_\d+__)(!important)?;?/g,
+      (_declaration, token: string, important: string | undefined) =>
+        `fill:${token}${important ?? ""};`,
+    );
+  });
 }
 
 function getTrimColor(
@@ -182,7 +273,9 @@ export function materializeVisualDefinitionSvg(
     selectedValueIds: Record<string, number[]>;
   },
 ) {
-  let runtimeSvg = definition.runtimeSvg;
+  let runtimeSvg = normalizeThinPolygonVisualStrokes(
+    normalizeImpossibleLinePaints(definition.runtimeSvg),
+  );
 
   definition.selectedElementIds.forEach((elementId, index) => {
     const conditions =

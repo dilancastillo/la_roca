@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import type { VisualDefinitionMutation } from "@repo/shared/schemas/visual-catalog";
+import {
+  visualDefinitionMutationSchema,
+  type VisualDefinitionMutation,
+} from "@repo/shared/schemas/visual-catalog";
 import {
   approveVisualDefinition,
   cloneVisualDefinition,
@@ -61,6 +64,54 @@ const mutation: VisualDefinitionMutation = {
 
 afterAll(async () => {
   await rm(dataDirectory, { recursive: true, force: true });
+});
+
+describe("integridad de definiciones visuales", () => {
+  it("acepta una definicion cuyos IDs y tokens son coherentes", () => {
+    expect(visualDefinitionMutationSchema.safeParse(mutation).success).toBe(true);
+  });
+
+  it("rechaza elementos seleccionados ausentes o duplicados", () => {
+    const missing = visualDefinitionMutationSchema.safeParse({
+      ...mutation,
+      selectedElementIds: ["neck", "missing"],
+    });
+    const duplicated = visualDefinitionMutationSchema.safeParse({
+      ...mutation,
+      selectedElementIds: ["neck", "neck"],
+    });
+
+    expect(missing.error?.issues.map((issue) => issue.message).join(" ")).toContain(
+      "missing",
+    );
+    expect(
+      duplicated.error?.issues.map((issue) => issue.message).join(" "),
+    ).toMatch(/duplicados/i);
+  });
+
+  it("rechaza un runtime sin los tokens de vivo y visibilidad configurados", () => {
+    const result = visualDefinitionMutationSchema.safeParse({
+      ...mutation,
+      elementPaints: {
+        neck: {
+          mode: "trim_stroke",
+          trimSourceValueId: 9001,
+          visibilityConditions: [
+            {
+              attributeId: 90,
+              attributeName: "Seccion de vivo",
+              sourceValueIds: [9001],
+              valueNames: ["Cuello"],
+            },
+          ],
+        },
+      },
+    });
+    const messages = result.error?.issues.map((issue) => issue.message).join(" ");
+
+    expect(messages).toContain("__VC_TRIM_STROKE_9001__");
+    expect(messages).toContain("__VC_VISIBILITY_0__");
+  });
 });
 
 describe("visual catalog repository", () => {

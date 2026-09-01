@@ -814,13 +814,21 @@ export function VisualCatalogPage() {
       return;
     }
 
+    const isDeselecting = selectedElementIds.includes(elementId);
+
     setSelectedElementIds((current) =>
-      current.includes(elementId)
+      isDeselecting
         ? current.filter((id) => id !== elementId)
         : [...current, elementId],
     );
-    setElementPaints((current) =>
-      current[elementId]
+    setElementPaints((current) => {
+      if (isDeselecting) {
+        const next = { ...current };
+        delete next[elementId];
+        return next;
+      }
+
+      return current[elementId]
         ? current
         : {
             ...current,
@@ -828,8 +836,8 @@ export function VisualCatalogPage() {
               mode: "preserve",
               visibilityConditions: [],
             },
-          },
-    );
+          };
+    });
   }
 
   async function handleReusePublishedSelection() {
@@ -1441,7 +1449,10 @@ export function VisualCatalogPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedElementIds([])}
+                onClick={() => {
+                  setSelectedElementIds([]);
+                  setElementPaints({});
+                }}
                 disabled={!indexedSvg}
               >
                 Limpiar

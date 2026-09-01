@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
+import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import type { ActiveVisualDefinition } from "@repo/shared/schemas/visual-catalog";
+import { materializeVisualDefinitionSvg } from "@repo/shared/visual-catalog-runtime";
 import {
   buildRuntimePreviewDataUri,
   buildRuntimeVisualSvg,
@@ -106,5 +109,315 @@ describe("svg-editor", () => {
         buildRuntimePreviewDataUri(runtimeSvg).split(",")[1] ?? "",
       ),
     ).toContain("display:inline");
+  });
+
+  it("materializa vivos y condiciones aunque el runtime no conserve los IDs del editor", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect id="body" x="5" y="5" width="90" height="90" />
+        <path id="trim-line" d="M10 20 L90 20" />
+        <rect id="trim-fill" x="10" y="30" width="80" height="10" />
+        <circle id="unused-circle" cx="20" cy="60" r="5" />
+        <line id="unused-line" x1="30" y1="60" x2="70" y2="60" />
+        <polygon id="unused-polygon" points="10,80 20,70 30,80" />
+        <ellipse id="unused-ellipse" cx="70" cy="80" rx="10" ry="5" />
+      </svg>
+    `);
+    const selectedElementIds = ["body", "trim-line", "trim-fill"];
+    const elementPaints: ActiveVisualDefinition["elementPaints"] = {
+      body: { mode: "base_fill", visibilityConditions: [] },
+      "trim-line": {
+        mode: "trim_stroke",
+        trimSourceValueId: 9001,
+        visibilityConditions: [
+          {
+            attributeId: 90,
+            attributeName: "Seccion de vivo",
+            sourceValueIds: [9001],
+            valueNames: ["Cuello"],
+          },
+        ],
+      },
+      "trim-fill": {
+        mode: "trim_fill",
+        trimSourceValueId: 9002,
+        visibilityConditions: [
+          {
+            attributeId: 90,
+            attributeName: "Seccion de vivo",
+            sourceValueIds: [9002],
+            valueNames: ["Bolsillo"],
+          },
+        ],
+      },
+    };
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds,
+      elementPaints,
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+    const definition: ActiveVisualDefinition = {
+      id: "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
+      seriesId: "2387ea71-e800-40ca-82e0-b343a7740141",
+      version: 1,
+      displayName: "Regresion H-005",
+      slot: "lower_pocket",
+      layer: "component",
+      binding: {
+        productTemplateIds: [7],
+        attributeId: 63,
+        valueId: 334,
+        sourceValueId: 562,
+        attributeName: "Modelo",
+        valueName: "COSTURA",
+      },
+      activationConditions: [],
+      selectedElementIds,
+      elementPaints,
+      runtimeSvg,
+    };
+    const session = {
+      saleOrderLineId: 1,
+      saleOrderId: 2,
+      orderName: "S00001",
+      productId: 3,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        {
+          id: 90,
+          name: "Seccion de vivo",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 501,
+              sourceValueId: 9001,
+              name: "Cuello",
+              attributeId: 90,
+              attributeName: "Seccion de vivo",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: { "90": [501] },
+      customValuesByValueId: {},
+      exclusions: [],
+      visualDefinitions: [definition],
+      status: {
+        orderState: "draft",
+        canEdit: true,
+        isLocked: false,
+        version: 0,
+        generatedAt: null,
+      },
+      existingDesignBase64: null,
+      warnings: [],
+    } satisfies ConfiguratorSession;
+    const materializedSvg = decodeURIComponent(
+      materializeVisualDefinitionSvg(
+        definition,
+        "#aabbcc",
+        [
+          { valueId: 501, sourceValueId: 9001, colorHex: "#123456" },
+          { valueId: 502, sourceValueId: 9002, colorHex: "#654321" },
+        ],
+        { session, selectedValueIds: session.selectedValueIds },
+      ).split(",")[1] ?? "",
+    );
+    expect(indexed.normalizedSvg.match(/data-vc-id=/g)).toHaveLength(7);
+    expect(runtimeSvg).not.toContain("data-vc-id");
+    expect(
+      runtimeSvg.match(/<(?:rect|path|circle|line|polygon|ellipse)\b/g),
+    ).toHaveLength(3);
+    expect(runtimeSvg).toContain("__VC_BASE_COLOR__");
+    expect(runtimeSvg).toContain("__VC_TRIM_STROKE_9001__");
+    expect(runtimeSvg).toContain("__VC_TRIM_FILL_9002__");
+    expect(materializedSvg).toContain("fill:#aabbcc!important");
+    expect(materializedSvg).toContain("stroke:#123456!important");
+    expect(materializedSvg).toContain("fill:#654321!important");
+    expect(materializedSvg).toContain("display:inline!important");
+    expect(materializedSvg).toContain("display:none!important");
+    expect(materializedSvg).not.toMatch(/__VC_[A-Z0-9_]+__/);
+  });
+
+  it("rechaza selecciones que ya no existen en el SVG normalizado", () => {
+    const indexed = indexVisualSvg(SOURCE_SVG);
+
+    expect(() =>
+      buildRuntimeVisualSvg({
+        normalizedSvg: indexed.normalizedSvg,
+        selectedElementIds: ["body", "elemento-desactualizado"],
+        elementPaints: {
+          body: { mode: "base_fill", visibilityConditions: [] },
+          "elemento-desactualizado": {
+            mode: "trim_stroke",
+            trimSourceValueId: 9001,
+            visibilityConditions: [],
+          },
+        },
+        placement: {
+          targetWidth: 1080,
+          targetHeight: 1350,
+          x: 0,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+        },
+      }),
+    ).toThrow(/elemento-desactualizado/);
+  });
+
+  it("rechaza IDs seleccionados duplicados para conservar el orden de condiciones", () => {
+    const indexed = indexVisualSvg(SOURCE_SVG);
+
+    expect(() =>
+      buildRuntimeVisualSvg({
+        normalizedSvg: indexed.normalizedSvg,
+        selectedElementIds: ["body", "body"],
+        elementPaints: {
+          body: { mode: "base_fill", visibilityConditions: [] },
+        },
+        placement: {
+          targetWidth: 1080,
+          targetHeight: 1350,
+          x: 0,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+        },
+      }),
+    ).toThrow(/duplicados/i);
+  });
+
+  it("rechaza Vivo relleno sobre lineas que solo pueden pintarse por trazo", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <line id="auxiliary" x1="10" y1="20" x2="90" y2="20" stroke="#000" />
+      </svg>
+    `);
+
+    expect(() =>
+      buildRuntimeVisualSvg({
+        normalizedSvg: indexed.normalizedSvg,
+        selectedElementIds: ["auxiliary"],
+        elementPaints: {
+          auxiliary: {
+            mode: "trim_fill",
+            trimSourceValueId: 634,
+            visibilityConditions: [],
+          },
+        },
+        placement: {
+          targetWidth: 1080,
+          targetHeight: 1350,
+          x: 0,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+        },
+      }),
+    ).toThrow(/Vivo, linea/i);
+  });
+
+  it("pinta como relleno los vivos lineales exportados como poligonos delgados", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <polygon id="thin-trim" points="10,10 90,90 88,92 8,12" fill="#000" />
+        <polygon id="regular-shape" points="10,80 50,20 90,80" fill="#000" />
+        <polyline id="real-line" points="10,50 50,55 90,50" stroke="#000" fill="none" />
+      </svg>
+    `);
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["thin-trim", "regular-shape", "real-line"],
+      elementPaints: {
+        "thin-trim": {
+          mode: "trim_stroke",
+          trimSourceValueId: 1967,
+          visibilityConditions: [],
+        },
+        "regular-shape": {
+          mode: "trim_stroke",
+          trimSourceValueId: 630,
+          visibilityConditions: [],
+        },
+        "real-line": {
+          mode: "trim_stroke",
+          trimSourceValueId: 633,
+          visibilityConditions: [],
+        },
+      },
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+
+    expect(runtimeSvg).toContain("fill:__VC_TRIM_STROKE_1967__!important");
+    expect(runtimeSvg).toContain("stroke:__VC_TRIM_STROKE_630__!important");
+    expect(runtimeSvg).toContain("stroke:__VC_TRIM_STROKE_633__!important");
+  });
+
+  it("corrige al materializar runtimes historicos con vivos lineales en poligonos", () => {
+    const definition = {
+      id: "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
+      seriesId: "2387ea71-e800-40ca-82e0-b343a7740141",
+      version: 1,
+      displayName: "Cuello historico",
+      slot: "neck",
+      layer: "component",
+      binding: {
+        productTemplateIds: [7],
+        attributeId: 145,
+        valueId: 334,
+        sourceValueId: 554,
+        attributeName: "Modelo de cuello",
+        valueName: "CUELLO V",
+      },
+      activationConditions: [],
+      selectedElementIds: ["thin-trim"],
+      elementPaints: {
+        "thin-trim": {
+          mode: "trim_stroke",
+          trimSourceValueId: 1967,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+          <polygon points="10,10 90,90 88,92 8,12" fill="#000"
+            style="stroke:__VC_TRIM_STROKE_1967__!important;" />
+        </svg>
+      `,
+    } satisfies ActiveVisualDefinition;
+    const materializedSvg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#ffffff", [
+        { valueId: 501, sourceValueId: 1967, colorHex: "#00a6d6" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(materializedSvg).toContain("fill:#00a6d6!important");
+    expect(materializedSvg).not.toContain("stroke:#00a6d6!important");
+    expect(materializedSvg).not.toContain("__VC_TRIM_STROKE_1967__");
   });
 });
