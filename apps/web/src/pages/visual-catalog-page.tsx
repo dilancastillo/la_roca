@@ -42,6 +42,11 @@ import {
   indexVisualSvg,
   type IndexedVisualSvg,
 } from "../features/visual-catalog/lib/svg-editor";
+import {
+  getCompatibleVisualCatalogAttributes,
+  isBindingAttributeInVisualSlot,
+  isTrimValueInVisualSlot,
+} from "../features/visual-catalog/lib/odoo-option-compatibility";
 import { ApiError } from "../lib/api-client";
 
 const SLOT_OPTIONS: Array<{
@@ -152,11 +157,14 @@ function getCommonAttributes(products: VisualCatalogProduct[]) {
 
 function getSortedBindingAttributes(
   attributes: CommonAttribute[],
+  slot: VisualSlot,
 ) {
-  return attributes;
+  return attributes.filter((attribute) =>
+    isBindingAttributeInVisualSlot(slot, attribute),
+  );
 }
 
-function getTrimOptions(attributes: CommonAttribute[]) {
+function getTrimOptions(attributes: CommonAttribute[], slot: VisualSlot) {
   return attributes
     .filter((attribute) => {
       const name = normalize(attribute.name);
@@ -166,10 +174,12 @@ function getTrimOptions(attributes: CommonAttribute[]) {
       );
     })
     .flatMap((attribute) =>
-      attribute.values.map((value) => ({
-        id: value.sourceValueId,
-        label: `${attribute.name}: ${value.name}`,
-      })),
+      attribute.values
+        .filter((value) => isTrimValueInVisualSlot(slot, value))
+        .map((value) => ({
+          id: value.sourceValueId,
+          label: `${attribute.name}: ${value.name}`,
+        })),
     );
 }
 
@@ -542,8 +552,8 @@ export function VisualCatalogPage() {
     [selectedProducts],
   );
   const bindingAttributes = useMemo(
-    () => getSortedBindingAttributes(commonAttributes),
-    [commonAttributes],
+    () => getSortedBindingAttributes(commonAttributes, slot),
+    [commonAttributes, slot],
   );
   const selectedAttribute =
     bindingAttributes.find((attribute) => attribute.id === attributeId) ??
@@ -552,6 +562,20 @@ export function VisualCatalogPage() {
     selectedAttribute?.values.find(
       (value) => value.sourceValueId === valueSourceId,
     ) ?? null;
+  const compatibleAttributes = useMemo(
+    () =>
+      getCompatibleVisualCatalogAttributes(
+        selectedProducts,
+        commonAttributes,
+        selectedAttribute && selectedValue
+          ? {
+              attributeId: selectedAttribute.id,
+              sourceValueId: selectedValue.sourceValueId,
+            }
+          : null,
+      ),
+    [commonAttributes, selectedAttribute, selectedProducts, selectedValue],
+  );
   const reusableSelectionCandidates = useMemo(() => {
     if (!indexedSvg || !selectedAttribute || !selectedValue) {
       return [];
@@ -605,8 +629,8 @@ export function VisualCatalogPage() {
     slot,
   ]);
   const trimOptions = useMemo(
-    () => getTrimOptions(commonAttributes),
-    [commonAttributes],
+    () => getTrimOptions(compatibleAttributes, slot),
+    [compatibleAttributes, slot],
   );
   const referenceAssetSrc = getReferenceAsset(slot);
   const selectableMarkup = useMemo(
@@ -998,6 +1022,23 @@ export function VisualCatalogPage() {
       return;
     }
 
+    const availableTrimSourceValueIds = new Set(
+      trimOptions.map((option) => option.id),
+    );
+    const hasIncompatibleTrim = Object.values(elementPaints).some(
+      (paint) =>
+        (paint.mode === "trim_fill" || paint.mode === "trim_stroke") &&
+        (paint.trimSourceValueId === undefined ||
+          !availableTrimSourceValueIds.has(paint.trimSourceValueId)),
+    );
+
+    if (hasIncompatibleTrim) {
+      setError(
+        "Hay elementos vinculados a una sección de vivo que no corresponde al componente y valor activador seleccionados.",
+      );
+      return;
+    }
+
     const representativeValue = selectedProducts[0]?.attributes
       .find((attribute) => attribute.id === selectedAttribute.id)
       ?.values.find(
@@ -1343,7 +1384,7 @@ export function VisualCatalogPage() {
             <div className="visual-editor__section">
               <ConditionsEditor
                 title="Reglas adicionales"
-                attributes={commonAttributes}
+                attributes={compatibleAttributes}
                 conditions={activationConditions}
                 onChange={setActivationConditions}
               />
@@ -1543,7 +1584,7 @@ export function VisualCatalogPage() {
                     ) : null}
                     <ConditionsEditor
                       title="Mostrar este elemento cuando"
-                      attributes={commonAttributes}
+                      attributes={compatibleAttributes}
                       conditions={paint.visibilityConditions}
                       onChange={(conditions) =>
                         updateElementConditions(elementId, conditions)

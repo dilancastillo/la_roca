@@ -1,0 +1,130 @@
+import type {
+  VisualCatalogOdooAttribute,
+  VisualCatalogProduct,
+} from "@repo/shared/schemas/visual-catalog";
+import { describe, expect, it } from "vitest";
+import {
+  getCompatibleVisualCatalogAttributes,
+  isBindingAttributeInVisualSlot,
+  isTrimValueInVisualSlot,
+} from "./odoo-option-compatibility";
+
+const neckAttribute: VisualCatalogOdooAttribute = {
+  id: 145,
+  name: "Modelo de cuello",
+  sequence: 1,
+  values: [
+    {
+      id: 334,
+      sourceValueId: 554,
+      name: "CUELLO V",
+      sequence: 1,
+      excludedValueIds: [5002],
+    },
+  ],
+};
+
+const trimAttribute: VisualCatalogOdooAttribute = {
+  id: 157,
+  name: "Sección de vivo",
+  sequence: 2,
+  values: [
+    {
+      id: 5001,
+      sourceValueId: 630,
+      name: "Cuello V lineal externo derecho",
+      sequence: 1,
+      excludedValueIds: [],
+    },
+    {
+      id: 5002,
+      sourceValueId: 1980,
+      name: "Cuello Borde Dividido superior",
+      sequence: 2,
+      excludedValueIds: [],
+    },
+    {
+      id: 5003,
+      sourceValueId: 633,
+      name: "Bolsillos inferiores parte superior derecha",
+      sequence: 3,
+      excludedValueIds: [],
+    },
+    {
+      id: 5004,
+      sourceValueId: 1979,
+      name: "Cuello Borde Dividido inferior",
+      sequence: 4,
+      excludedValueIds: [334],
+    },
+    {
+      id: 5005,
+      sourceValueId: 2103,
+      name: "Bolsillo inferior aletas",
+      sequence: 5,
+      excludedValueIds: [],
+    },
+  ],
+};
+
+const product: VisualCatalogProduct = {
+  id: 5,
+  name: "Blusa",
+  family: "blouse",
+  attributes: [neckAttribute, trimAttribute],
+  warnings: [],
+};
+
+describe("compatibilidad de opciones del catálogo visual", () => {
+  it("muestra solamente el atributo activador propio del componente", () => {
+    expect(isBindingAttributeInVisualSlot("neck", neckAttribute)).toBe(true);
+    expect(isBindingAttributeInVisualSlot("lower_pocket", neckAttribute)).toBe(
+      false,
+    );
+    expect(isBindingAttributeInVisualSlot("boot", neckAttribute)).toBe(false);
+  });
+
+  it("aplica las exclusiones de Odoo en ambos sentidos", () => {
+    const attributes = getCompatibleVisualCatalogAttributes(
+      [product],
+      [neckAttribute, trimAttribute],
+      { attributeId: 145, sourceValueId: 554 },
+    );
+    const trimValues = attributes.find((attribute) => attribute.id === 157)?.values;
+
+    expect(trimValues?.map((value) => value.sourceValueId)).toEqual([
+      630,
+      633,
+      2103,
+    ]);
+  });
+
+  it("separa los vivos por la parte que se modela en el editor", () => {
+    expect(
+      trimAttribute.values
+        .filter((value) => isTrimValueInVisualSlot("neck", value))
+        .map((value) => value.sourceValueId),
+    ).toEqual([630, 1980, 1979]);
+
+    expect(
+      trimAttribute.values
+        .filter((value) => isTrimValueInVisualSlot("lower_pocket", value))
+        .map((value) => value.sourceValueId),
+    ).toEqual([633, 2103]);
+  });
+
+  it("combina la pieza del editor con la compatibilidad del valor activador", () => {
+    const compatibleAttributes = getCompatibleVisualCatalogAttributes(
+      [product],
+      [neckAttribute, trimAttribute],
+      { attributeId: 145, sourceValueId: 554 },
+    );
+    const visibleNeckTrims = compatibleAttributes
+      .find((attribute) => attribute.id === 157)
+      ?.values.filter((value) => isTrimValueInVisualSlot("neck", value));
+
+    expect(visibleNeckTrims?.map((value) => value.sourceValueId)).toEqual([
+      630,
+    ]);
+  });
+});
