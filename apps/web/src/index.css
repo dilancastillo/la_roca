@@ -1710,6 +1710,28 @@ main {
   object-fit: contain;
 }
 
+.visual-runtime-preview .visual-runtime-preview__highlight {
+  pointer-events: none;
+  animation: visual-runtime-highlight-blink 720ms ease-in-out infinite;
+}
+
+@keyframes visual-runtime-highlight-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.16;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-runtime-preview .visual-runtime-preview__highlight {
+    animation: none;
+  }
+}
+
 .visual-element-row {
   display: grid;
   gap: 7px;

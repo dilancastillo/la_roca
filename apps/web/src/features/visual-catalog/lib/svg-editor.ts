@@ -416,3 +416,54 @@ export function buildRuntimePreviewDataUri(runtimeSvg: string) {
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(previewSvg)}`;
 }
+
+export function buildRuntimeHighlightPreviewDataUri(
+  runtimeSvg: string,
+  channel: "fill" | "stroke" | "both",
+) {
+  if (!/<svg\b/i.test(runtimeSvg) || !/<g\b/i.test(runtimeSvg)) {
+    return "";
+  }
+
+  const filterId = "vc-preview-neon-highlight";
+  const filterMarkup = `<defs><filter id="${filterId}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB"><feFlood flood-color="#39ff14" result="neon-color"/><feComposite in="neon-color" in2="SourceAlpha" operator="in" result="neon"/><feGaussianBlur in="neon" stdDeviation="5" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="neon"/></feMerge></filter></defs>`;
+  let highlightedSvg = runtimeSvg;
+  const firstGroupIndex = highlightedSvg.search(/<g\b/i);
+
+  if (channel !== "both" && firstGroupIndex >= 0) {
+    const beforeContent = highlightedSvg.slice(0, firstGroupIndex);
+    const content = highlightedSvg.slice(firstGroupIndex).replace(
+      /<(path|rect|circle|ellipse|line|polyline|polygon|use|text)\b[^>]*>/gi,
+      (markup) => {
+        const declaration =
+          channel === "fill"
+            ? "fill:#39ff14!important;stroke:none!important;"
+            : "fill:none!important;stroke:#39ff14!important;";
+
+        if (/\bstyle=("[^"]*"|'[^']*')/i.test(markup)) {
+          return markup.replace(
+            /\bstyle=("([^"]*)"|'([^']*)')/i,
+            (_style, _quoted, doubleQuoted: string, singleQuoted: string) => {
+              const currentStyle = doubleQuoted ?? singleQuoted ?? "";
+              const separator =
+                currentStyle.length > 0 && !currentStyle.trimEnd().endsWith(";")
+                  ? ";"
+                  : "";
+
+              return `style="${currentStyle}${separator}${declaration}"`;
+            },
+          );
+        }
+
+        return markup.replace(/>$/, ` style="${declaration}">`);
+      },
+    );
+    highlightedSvg = `${beforeContent}${content}`;
+  }
+
+  highlightedSvg = highlightedSvg
+    .replace(/(<svg\b[^>]*>)/i, `$1${filterMarkup}`)
+    .replace(/<g\b/i, `<g filter="url(#${filterId})"`);
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(highlightedSvg)}`;
+}

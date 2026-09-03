@@ -36,6 +36,7 @@ import {
 } from "../features/visual-catalog/api";
 import { VisualReleaseManager } from "../features/visual-catalog/visual-release-manager";
 import {
+  buildRuntimeHighlightPreviewDataUri,
   buildRuntimePreviewDataUri,
   buildRuntimeVisualSvg,
   buildSelectableSvgMarkup,
@@ -524,6 +525,9 @@ export function VisualCatalogPage() {
   const [sourceFileName, setSourceFileName] = useState("");
   const [indexedSvg, setIndexedSvg] = useState<IndexedVisualSvg | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
+  const [highlightedElementId, setHighlightedElementId] = useState<
+    string | null
+  >(null);
   const [elementPaints, setElementPaints] = useState<
     Record<string, VisualElementPaint>
   >({});
@@ -661,6 +665,56 @@ export function VisualCatalogPage() {
       return "";
     }
   }, [elementPaints, indexedSvg, placement, selectedElementIds]);
+  const runtimeHighlightSrc = useMemo(() => {
+    if (
+      !indexedSvg ||
+      !highlightedElementId ||
+      !selectedElementIds.includes(highlightedElementId)
+    ) {
+      return "";
+    }
+
+    try {
+      const activePaint = elementPaints[highlightedElementId] ?? {
+        mode: "preserve" as const,
+        visibilityConditions: [],
+      };
+      const highlightSvg = buildRuntimeVisualSvg({
+        normalizedSvg: indexedSvg.normalizedSvg,
+        selectedElementIds: [highlightedElementId],
+        elementPaints: {
+          [highlightedElementId]: {
+            ...activePaint,
+            visibilityConditions: [],
+          },
+        },
+        placement,
+      });
+      const highlightChannel =
+        activePaint.mode === "base_fill" || activePaint.mode === "trim_fill"
+          ? "fill"
+          : activePaint.mode === "base_stroke" ||
+              activePaint.mode === "outline"
+            ? "stroke"
+            : activePaint.mode === "trim_stroke"
+              ? highlightSvg.includes("fill:__VC_TRIM_STROKE_")
+                ? "fill"
+                : "stroke"
+              : "both";
+      return buildRuntimeHighlightPreviewDataUri(
+        highlightSvg,
+        highlightChannel,
+      );
+    } catch {
+      return "";
+    }
+  }, [
+    elementPaints,
+    highlightedElementId,
+    indexedSvg,
+    placement,
+    selectedElementIds,
+  ]);
 
   async function refreshVersions() {
     const [nextDefinitions, nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
@@ -813,6 +867,7 @@ export function VisualCatalogPage() {
       setSourceFileName(file.name);
       setIndexedSvg(indexed);
       setSelectedElementIds([]);
+      setHighlightedElementId(null);
       setElementPaints({});
       setMessage(`${indexed.elements.length} elementos disponibles.`);
     } catch (fileError) {
@@ -891,6 +946,7 @@ export function VisualCatalogPage() {
         }
 
         setSelectedElementIds(definition.selectedElementIds);
+        setHighlightedElementId(null);
         setElementPaints(
           Object.fromEntries(
             definition.selectedElementIds.map((id) => [
@@ -987,6 +1043,7 @@ export function VisualCatalogPage() {
     setSourceFileName("");
     setIndexedSvg(null);
     setSelectedElementIds([]);
+    setHighlightedElementId(null);
     setElementPaints({});
     setPlacement(DEFAULT_PLACEMENT);
     setDisplayName("");
@@ -1110,6 +1167,7 @@ export function VisualCatalogPage() {
     setSourceFileName(`${definition.displayName}.svg`);
     setIndexedSvg(indexed);
     setSelectedElementIds(definition.selectedElementIds);
+    setHighlightedElementId(null);
     setElementPaints(definition.elementPaints);
     setPlacement(definition.placement);
     setView("editor");
@@ -1472,6 +1530,7 @@ export function VisualCatalogPage() {
                   const allIds =
                     indexedSvg?.elements.map((element) => element.id) ?? [];
                   setSelectedElementIds(allIds);
+                  setHighlightedElementId(null);
                   setElementPaints((current) =>
                     Object.fromEntries(
                       allIds.map((id) => [
@@ -1492,6 +1551,7 @@ export function VisualCatalogPage() {
                 type="button"
                 onClick={() => {
                   setSelectedElementIds([]);
+                  setHighlightedElementId(null);
                   setElementPaints({});
                 }}
                 disabled={!indexedSvg}
@@ -1525,6 +1585,14 @@ export function VisualCatalogPage() {
                 {runtimePreviewSrc ? (
                   <img src={runtimePreviewSrc} alt="" />
                 ) : null}
+                {runtimeHighlightSrc ? (
+                  <img
+                    className="visual-runtime-preview__highlight"
+                    src={runtimeHighlightSrc}
+                    alt=""
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
             </div>
           </div>
@@ -1547,7 +1615,12 @@ export function VisualCatalogPage() {
                   paint.mode === "trim_stroke";
 
                 return (
-                  <div className="visual-element-row" key={elementId}>
+                  <div
+                    className="visual-element-row"
+                    key={elementId}
+                    onFocusCapture={() => setHighlightedElementId(elementId)}
+                    onPointerDown={() => setHighlightedElementId(elementId)}
+                  >
                     <strong>{element?.label ?? elementId}</strong>
                     <select
                       value={paint.mode}

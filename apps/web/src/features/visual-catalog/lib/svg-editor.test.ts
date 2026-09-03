@@ -5,6 +5,7 @@ import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import type { ActiveVisualDefinition } from "@repo/shared/schemas/visual-catalog";
 import { materializeVisualDefinitionSvg } from "@repo/shared/visual-catalog-runtime";
 import {
+  buildRuntimeHighlightPreviewDataUri,
   buildRuntimePreviewDataUri,
   buildRuntimeVisualSvg,
   buildSelectableSvgMarkup,
@@ -109,6 +110,44 @@ describe("svg-editor", () => {
         buildRuntimePreviewDataUri(runtimeSvg).split(",")[1] ?? "",
       ),
     ).toContain("display:inline");
+  });
+
+  it("crea un resaltado neon aislado para la vista previa", () => {
+    const indexed = indexVisualSvg(SOURCE_SVG);
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["trim"],
+      elementPaints: {
+        trim: { mode: "preserve", visibilityConditions: [] },
+      },
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+    const highlightDataUri = buildRuntimeHighlightPreviewDataUri(
+      runtimeSvg,
+      "fill",
+    );
+    const highlightedSvg = decodeURIComponent(
+      highlightDataUri.split(",")[1] ?? "",
+    );
+
+    expect(highlightedSvg).toContain("#39ff14");
+    expect(highlightedSvg).toContain("vc-preview-neon-highlight");
+    expect(highlightedSvg).toContain(
+      'filter="url(#vc-preview-neon-highlight)"',
+    );
+    expect(highlightedSvg).toContain(
+      "fill:#39ff14!important;stroke:none!important;",
+    );
+    expect(runtimeSvg).not.toContain("vc-preview-neon-highlight");
+    expect(runtimeSvg).not.toContain("stroke:none!important");
   });
 
   it("materializa vivos y condiciones aunque el runtime no conserve los IDs del editor", () => {
