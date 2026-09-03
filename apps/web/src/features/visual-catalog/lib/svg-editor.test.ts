@@ -111,6 +111,43 @@ describe("svg-editor", () => {
     ).toContain("display:inline");
   });
 
+  it("hace titilar solo el elemento activo en la vista previa", () => {
+    const indexed = indexVisualSvg(SOURCE_SVG);
+    const input = {
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["body", "trim"],
+      elementPaints: {
+        body: { mode: "preserve" as const, visibilityConditions: [] },
+        trim: { mode: "preserve" as const, visibilityConditions: [] },
+      },
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    };
+    const previewSvg = buildRuntimeVisualSvg({
+      ...input,
+      previewActiveElementId: "trim",
+    });
+    expect(previewSvg).toContain("<animate");
+    expect(previewSvg).toContain('id="vc-preview-neon-highlight"');
+    expect(previewSvg).toContain('filter="url(#vc-preview-neon-highlight)"');
+    expect(previewSvg).toContain("0.224 0 0 0 0 1 0 0 0 0 0.078");
+    expect(previewSvg).toMatch(
+      /<path[^>]*d="M20 60 L80 60"[^>]*><animate[^>]*attributeName="opacity"/,
+    );
+    expect(previewSvg.match(/<animate/g)).toHaveLength(1);
+    expect(buildRuntimeVisualSvg(input)).not.toContain("<animate");
+    expect(buildRuntimeVisualSvg(input)).not.toContain(
+      "vc-preview-neon-highlight",
+    );
+  });
+
   it("materializa vivos y condiciones aunque el runtime no conserve los IDs del editor", () => {
     const indexed = indexVisualSvg(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
