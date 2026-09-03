@@ -8,7 +8,6 @@ import {
 } from "@repo/shared/visual-catalog-runtime";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-const PREVIEW_NEON_FILTER_ID = "vc-preview-neon-highlight";
 const DRAWABLE_SELECTOR =
   "path,rect,circle,ellipse,line,polyline,polygon,use,text";
 const BLOCKED_SELECTOR =
@@ -36,7 +35,6 @@ type RuntimeSvgInput = {
   selectedElementIds: string[];
   elementPaints: Record<string, VisualElementPaint>;
   placement: VisualPlacement;
-  previewActiveElementId?: string;
 };
 
 function parseSvg(svgText: string) {
@@ -290,7 +288,6 @@ export function buildRuntimeVisualSvg({
   selectedElementIds,
   elementPaints,
   placement,
-  previewActiveElementId,
 }: RuntimeSvgInput) {
   if (selectedElementIds.length === 0) {
     throw new Error("Selecciona al menos un elemento del SVG.");
@@ -338,17 +335,6 @@ export function buildRuntimeVisualSvg({
       elementPaints[elementId],
       getVisualElementVisibilityToken(selectedElementIds.indexOf(elementId)),
     );
-
-    if (elementId === previewActiveElementId) {
-      element.setAttribute("filter", `url(#${PREVIEW_NEON_FILTER_ID})`);
-      const animation = document.createElementNS(SVG_NAMESPACE, "animate");
-      animation.setAttribute("attributeName", "opacity");
-      animation.setAttribute("values", "1;0.2;1");
-      animation.setAttribute("dur", "0.8s");
-      animation.setAttribute("repeatCount", "indefinite");
-      element.append(animation);
-    }
-
     element.removeAttribute("data-vc-id");
     element.removeAttribute("data-vc-selected");
   });
@@ -386,53 +372,6 @@ export function buildRuntimeVisualSvg({
   );
   runtimeRoot.setAttribute("width", String(placement.targetWidth));
   runtimeRoot.setAttribute("height", String(placement.targetHeight));
-
-  if (previewActiveElementId) {
-    const defs = runtimeDocument.createElementNS(SVG_NAMESPACE, "defs");
-    const filter = runtimeDocument.createElementNS(SVG_NAMESPACE, "filter");
-    filter.setAttribute("id", PREVIEW_NEON_FILTER_ID);
-    filter.setAttribute("x", "-60%");
-    filter.setAttribute("y", "-60%");
-    filter.setAttribute("width", "220%");
-    filter.setAttribute("height", "220%");
-    filter.setAttribute("color-interpolation-filters", "sRGB");
-
-    const neonColor = runtimeDocument.createElementNS(
-      SVG_NAMESPACE,
-      "feColorMatrix",
-    );
-    neonColor.setAttribute("in", "SourceGraphic");
-    neonColor.setAttribute("type", "matrix");
-    neonColor.setAttribute(
-      "values",
-      "0 0 0 0 0.224 0 0 0 0 1 0 0 0 0 0.078 0 0 0 1 0",
-    );
-    neonColor.setAttribute("result", "neon");
-
-    const glow = runtimeDocument.createElementNS(
-      SVG_NAMESPACE,
-      "feGaussianBlur",
-    );
-    glow.setAttribute("in", "neon");
-    glow.setAttribute("stdDeviation", "3");
-    glow.setAttribute("result", "glow");
-
-    const merge = runtimeDocument.createElementNS(SVG_NAMESPACE, "feMerge");
-    const glowNode = runtimeDocument.createElementNS(
-      SVG_NAMESPACE,
-      "feMergeNode",
-    );
-    glowNode.setAttribute("in", "glow");
-    const neonNode = runtimeDocument.createElementNS(
-      SVG_NAMESPACE,
-      "feMergeNode",
-    );
-    neonNode.setAttribute("in", "neon");
-    merge.append(glowNode, neonNode);
-    filter.append(neonColor, glow, merge);
-    defs.append(filter);
-    runtimeRoot.append(defs);
-  }
 
   const rotationGroup = runtimeDocument.createElementNS(SVG_NAMESPACE, "g");
   const centerX = placement.targetWidth / 2;

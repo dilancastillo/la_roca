@@ -524,7 +524,6 @@ export function VisualCatalogPage() {
   const [sourceFileName, setSourceFileName] = useState("");
   const [indexedSvg, setIndexedSvg] = useState<IndexedVisualSvg | null>(null);
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
-  const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [elementPaints, setElementPaints] = useState<
     Record<string, VisualElementPaint>
   >({});
@@ -656,19 +655,12 @@ export function VisualCatalogPage() {
           selectedElementIds,
           elementPaints,
           placement,
-          ...(activeElementId ? { previewActiveElementId: activeElementId } : {}),
         }),
       );
     } catch {
       return "";
     }
-  }, [
-    activeElementId,
-    elementPaints,
-    indexedSvg,
-    placement,
-    selectedElementIds,
-  ]);
+  }, [elementPaints, indexedSvg, placement, selectedElementIds]);
 
   async function refreshVersions() {
     const [nextDefinitions, nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
@@ -821,7 +813,6 @@ export function VisualCatalogPage() {
       setSourceFileName(file.name);
       setIndexedSvg(indexed);
       setSelectedElementIds([]);
-      setActiveElementId(null);
       setElementPaints({});
       setMessage(`${indexed.elements.length} elementos disponibles.`);
     } catch (fileError) {
@@ -848,7 +839,6 @@ export function VisualCatalogPage() {
     }
 
     const isDeselecting = selectedElementIds.includes(elementId);
-    setActiveElementId(isDeselecting ? null : elementId);
 
     setSelectedElementIds((current) =>
       isDeselecting
@@ -901,7 +891,6 @@ export function VisualCatalogPage() {
         }
 
         setSelectedElementIds(definition.selectedElementIds);
-        setActiveElementId(null);
         setElementPaints(
           Object.fromEntries(
             definition.selectedElementIds.map((id) => [
@@ -998,7 +987,6 @@ export function VisualCatalogPage() {
     setSourceFileName("");
     setIndexedSvg(null);
     setSelectedElementIds([]);
-    setActiveElementId(null);
     setElementPaints({});
     setPlacement(DEFAULT_PLACEMENT);
     setDisplayName("");
@@ -1122,7 +1110,6 @@ export function VisualCatalogPage() {
     setSourceFileName(`${definition.displayName}.svg`);
     setIndexedSvg(indexed);
     setSelectedElementIds(definition.selectedElementIds);
-    setActiveElementId(null);
     setElementPaints(definition.elementPaints);
     setPlacement(definition.placement);
     setView("editor");
@@ -1485,7 +1472,6 @@ export function VisualCatalogPage() {
                   const allIds =
                     indexedSvg?.elements.map((element) => element.id) ?? [];
                   setSelectedElementIds(allIds);
-                  setActiveElementId(null);
                   setElementPaints((current) =>
                     Object.fromEntries(
                       allIds.map((id) => [
@@ -1506,7 +1492,6 @@ export function VisualCatalogPage() {
                 type="button"
                 onClick={() => {
                   setSelectedElementIds([]);
-                  setActiveElementId(null);
                   setElementPaints({});
                 }}
                 disabled={!indexedSvg}
@@ -1562,12 +1547,7 @@ export function VisualCatalogPage() {
                   paint.mode === "trim_stroke";
 
                 return (
-                  <div
-                    className="visual-element-row"
-                    key={elementId}
-                    onFocusCapture={() => setActiveElementId(elementId)}
-                    onMouseDown={() => setActiveElementId(elementId)}
-                  >
+                  <div className="visual-element-row" key={elementId}>
                     <strong>{element?.label ?? elementId}</strong>
                     <select
                       value={paint.mode}
