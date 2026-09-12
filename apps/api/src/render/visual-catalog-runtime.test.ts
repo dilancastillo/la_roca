@@ -392,6 +392,35 @@ describe("runtime del catalogo visual general", () => {
     expect(svgWithTrim).not.toContain("fill:#654321");
   });
 
+  it("oculta el relleno original cuando una seccion de vivo no tiene color", () => {
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition(
+        "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
+        "component",
+        [],
+      ),
+      selectedElementIds: ["neck-background"],
+      elementPaints: {
+        "neck-background": {
+          mode: "trim_fill",
+          trimSourceValueId: 1967,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg:
+        '<svg><path id="neck-background" fill="#ffffff" style="fill:__VC_TRIM_FILL_1967__!important;" /></svg>',
+    };
+
+    const svgWithoutTrim = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#ffc400", []).split(",")[1] ??
+        "",
+    );
+
+    expect(svgWithoutTrim).toContain('fill="#ffffff"');
+    expect(svgWithoutTrim).toContain("fill:none!important");
+    expect(svgWithoutTrim).not.toMatch(/__VC_[A-Z0-9_]+__/);
+  });
+
   it("reconoce el ID fuente estable y no depende del PTAV representativo", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

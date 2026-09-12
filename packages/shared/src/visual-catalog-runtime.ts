@@ -193,11 +193,15 @@ function replaceTrimColorTokens(
       ) => {
         const color = getTrimColor(trimSections, Number(sourceValueId));
 
-        // Si la linea de venta no tiene color para esta seccion, conservar el
-        // estilo original del SVG. Reemplazar por "none" hacia desaparecer
-        // componentes cuyo mismo trazo representa el bolsillo y su vivo.
-        return color
-          ? `${property}:${color}${important ?? ""};`
+        if (color) {
+          return `${property}:${color}${important ?? ""};`;
+        }
+
+        // Una linea sin color conserva el trazo original porque ese mismo
+        // vector puede dibujar el bolsillo. Un relleno sin color debe ocultarse:
+        // conservarlo reactivaria fondos blancos del SVG sobre la prenda.
+        return property === "fill"
+          ? `fill:none${important ?? ""};`
           : "";
       },
     )
