@@ -215,8 +215,51 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).toContain("display:inline");
     expect(svg).toContain("display:none");
     expect(svg).toContain("stroke:#123456");
+    expect(svg).toContain('data-vc-linear-trim-texture="cord"');
+    expect(svg).toContain("stroke-width:12px!important");
+    expect(svg).toContain("stroke-dasharray:4 6!important");
     expect(svg).not.toContain("__VC_TRIM_STROKE_1000__");
     expect(svg).not.toContain("stroke:none");
+  });
+
+  it("aplica textura solo a Vivo, linea y conserva Vivo, relleno", () => {
+    const definition = makeDefinition(
+      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
+      "component",
+      [],
+    );
+    definition.selectedElementIds = ["linear", "filled"];
+    definition.elementPaints = {
+      linear: {
+        mode: "trim_stroke",
+        trimSourceValueId: 1001,
+        visibilityConditions: [],
+      },
+      filled: {
+        mode: "trim_fill",
+        trimSourceValueId: 1000,
+        visibilityConditions: [],
+      },
+    };
+    definition.runtimeSvg =
+      '<svg><path id="linear" style="display:__VC_VISIBILITY_0__;fill:none;stroke:__VC_TRIM_STROKE_1001__!important;"/><path id="filled" style="display:__VC_VISIBILITY_1__;fill:__VC_TRIM_FILL_1000__!important;"/></svg>';
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(
+        definition,
+        "#aabbcc",
+        [
+          { valueId: 501, sourceValueId: 1001, colorHex: "#123456" },
+          { valueId: 502, sourceValueId: 1000, colorHex: "#654321" },
+        ],
+        { session, selectedValueIds: session.selectedValueIds },
+      ).split(",")[1] ?? "",
+    );
+
+    expect(svg.match(/data-vc-linear-trim-texture="cord"/g)).toHaveLength(1);
+    expect(svg).toContain("stroke:#123456!important");
+    expect(svg).toContain("fill:#654321!important");
+    expect(svg).not.toContain("stroke:#654321");
   });
 
   it("trata condiciones repetidas del mismo atributo como alternativas OR", () => {
