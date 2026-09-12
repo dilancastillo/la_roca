@@ -289,99 +289,6 @@ function normalizeThinPolygonVisualStrokes(runtimeSvg: string) {
   });
 }
 
-const LINEAR_TRIM_MAIN_WIDTH = 12;
-const LINEAR_TRIM_SHADOW_WIDTH = 15;
-
-function appendInlineSvgStyle(markup: string, declarations: string) {
-  const styleAttribute = /\sstyle=("([^"]*)"|'([^']*)')/i;
-
-  if (styleAttribute.test(markup)) {
-    return markup.replace(
-      styleAttribute,
-      (
-        _attribute,
-        _quotedStyle: string,
-        doubleStyle: string,
-        singleStyle: string,
-      ) => {
-        const currentStyle = doubleStyle ?? singleStyle ?? "";
-        return ` style="${currentStyle}${currentStyle.endsWith(";") || currentStyle.length === 0 ? "" : ";"}${declarations}"`;
-      },
-    );
-  }
-
-  return markup.replace(/\s*\/>$/, ` style="${declarations}" />`);
-}
-
-function removeDuplicateSvgIdentity(markup: string) {
-  return markup
-    .replace(/\s+id=("[^"]*"|'[^']*')/i, "")
-    .replace(/\s+data-vc-id=("[^"]*"|'[^']*')/i, "");
-}
-
-function replaceLinearTrimStrokeToken(markup: string, stroke: string) {
-  return markup.replace(
-    /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-    `stroke:${stroke}!important;`,
-  );
-}
-
-function addLinearTrimTexture(
-  runtimeSvg: string,
-  trimSections: VisualRuntimeTrimSection[],
-) {
-  const geometryElement =
-    /<(path|line|polyline|polygon|rect|circle|ellipse)\b[^>]*stroke:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
-
-  return runtimeSvg.replace(
-    geometryElement,
-    (markup, _tagName: string, sourceValueId: string) => {
-      if (!getTrimColor(trimSections, Number(sourceValueId))) {
-        return markup;
-      }
-
-      const visibility = markup.match(
-        /display:(__VC_VISIBILITY_\d+__)(!important)?;?/,
-      );
-      const visibilityStyle = visibility
-        ? ` style="display:${visibility[1]}${visibility[2] ?? ""};"`
-        : "";
-      const cleanMarkup = visibility
-        ? markup.replace(visibility[0], "")
-        : markup;
-      const commonStyle =
-        "fill:none!important;stroke-linecap:round!important;stroke-linejoin:round!important;";
-      const main = appendInlineSvgStyle(
-        cleanMarkup,
-        `${commonStyle}stroke-width:${LINEAR_TRIM_MAIN_WIDTH}px!important;`,
-      );
-      const shadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          "#071015",
-        ),
-        `${commonStyle}stroke-width:${LINEAR_TRIM_SHADOW_WIDTH}px!important;stroke-opacity:0.32!important;`,
-      );
-      const highlight = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          "#ffffff",
-        ),
-        `${commonStyle}stroke-width:2.4px!important;stroke-dasharray:4 6!important;stroke-opacity:0.62!important;`,
-      );
-      const weaveShadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          "#071015",
-        ),
-        `${commonStyle}stroke-width:1.6px!important;stroke-dasharray:4 6!important;stroke-dashoffset:5!important;stroke-opacity:0.3!important;`,
-      );
-
-      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${shadow}${main}${highlight}${weaveShadow}</g>`;
-    },
-  );
-}
-
 function getTrimColor(
   trimSections: VisualRuntimeTrimSection[],
   sourceValueId: number,
@@ -439,11 +346,8 @@ export function materializeVisualDefinitionSvg(
     selectedValueIds: Record<string, number[]>;
   },
 ) {
-  let runtimeSvg = addLinearTrimTexture(
-    normalizeThinPolygonVisualStrokes(
-      normalizeImpossibleLinePaints(definition.runtimeSvg),
-    ),
-    trimSections,
+  let runtimeSvg = normalizeThinPolygonVisualStrokes(
+    normalizeImpossibleLinePaints(definition.runtimeSvg),
   );
 
   definition.selectedElementIds.forEach((elementId, index) => {
