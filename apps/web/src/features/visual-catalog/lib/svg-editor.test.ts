@@ -373,47 +373,6 @@ describe("svg-editor", () => {
     ).toThrow(/Vivo, linea/i);
   });
 
-  it("mantiene visibles los paths abiertos al elegir modos de relleno", () => {
-    const indexed = indexVisualSvg(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <path id="open-trim" d="M10 20 C35 5 65 5 90 20" fill="none" stroke="#000" />
-      </svg>
-    `);
-    const placement = {
-      targetWidth: 1080,
-      targetHeight: 1350,
-      x: 0,
-      y: 0,
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-    };
-
-    const baseRuntime = buildRuntimeVisualSvg({
-      normalizedSvg: indexed.normalizedSvg,
-      selectedElementIds: ["open-trim"],
-      elementPaints: {
-        "open-trim": { mode: "base_fill", visibilityConditions: [] },
-      },
-      placement,
-    });
-    const trimRuntime = buildRuntimeVisualSvg({
-      normalizedSvg: indexed.normalizedSvg,
-      selectedElementIds: ["open-trim"],
-      elementPaints: {
-        "open-trim": {
-          mode: "trim_fill",
-          trimSourceValueId: 634,
-          visibilityConditions: [],
-        },
-      },
-      placement,
-    });
-
-    expect(baseRuntime).toContain("stroke:__VC_BASE_COLOR__!important");
-    expect(trimRuntime).toContain("stroke:__VC_TRIM_FILL_634__!important");
-  });
-
   it("pinta como relleno los vivos lineales exportados como poligonos delgados", () => {
     const indexed = indexVisualSvg(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">

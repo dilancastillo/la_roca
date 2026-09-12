@@ -221,15 +221,6 @@ function appendImportantStyle(element: Element, declaration: string) {
   );
 }
 
-function isOpenPath(element: Element) {
-  if (element.localName !== "path") {
-    return false;
-  }
-
-  const pathData = element.getAttribute("d")?.trim() ?? "";
-  return pathData.length > 0 && !/[zZ]\s*$/.test(pathData);
-}
-
 function applyElementPaint(
   element: Element,
   paint: VisualElementPaint | undefined,
@@ -256,10 +247,7 @@ function applyElementPaint(
   }
 
   if (paint.mode === "base_fill") {
-    appendImportantStyle(
-      element,
-      `${isOpenPath(element) ? "stroke" : "fill"}:__VC_BASE_COLOR__!important;`,
-    );
+    appendImportantStyle(element, "fill:__VC_BASE_COLOR__!important;");
     return;
   }
 
@@ -291,9 +279,7 @@ function applyElementPaint(
     element.localName === "polygon" &&
     isThinVisualPolygonPoints(element.getAttribute("points") ?? undefined);
   const property =
-    (paint.mode === "trim_fill" && !isOpenPath(element)) || isThinVisualPolygon
-      ? "fill"
-      : "stroke";
+    paint.mode === "trim_fill" || isThinVisualPolygon ? "fill" : "stroke";
   appendImportantStyle(element, `${property}:${token}!important;`);
 }
 

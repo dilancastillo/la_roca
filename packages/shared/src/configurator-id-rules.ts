@@ -58,7 +58,6 @@ export const CONFIGURATOR_ATTRIBUTE_IDS = {
 
 export const CONFIGURATOR_VALUE_IDS = {
   yes: [579, 581, 583, 585, 587, 589, 1955, 1958, 1965, 2084, 2100, 2113, 2118, 2120],
-  man: [531],
   woman: [532],
   textStyle: [1900, 1902, 1904, 1906, 1908, 1910, 2101],
   pespunte: [1955, 1958, 2078],
@@ -77,12 +76,12 @@ export const CONFIGURATOR_VALUE_IDS = {
   lowerPocketAuxiliary: {
     lizoBoth: [618],
     velcroBoth: [619],
-    lizoRight: [620],
-    lizoLeft: [621],
-    velcroLeft: [622],
-    velcroRight: [623],
-    overlaidLeft: [624],
-    overlaidRight: [625],
+    lizoLeft: [620],
+    lizoRight: [621],
+    velcroRight: [622],
+    velcroLeft: [623],
+    overlaidRight: [624],
+    overlaidLeft: [625],
     overlaidBoth: [626],
   },
   logoPlacement: {
@@ -106,22 +105,6 @@ export function hasSourceValueId(
   ids: readonly number[],
 ) {
   return value?.sourceValueId !== undefined && ids.includes(value.sourceValueId);
-}
-
-export function isManConfiguratorValue(value: SourceBackedValue | undefined) {
-  if (hasSourceValueId(value, CONFIGURATOR_VALUE_IDS.man)) {
-    return true;
-  }
-
-  if (hasSourceValueId(value, CONFIGURATOR_VALUE_IDS.woman)) {
-    return false;
-  }
-
-  return value?.name
-    ?.normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim()
-    .toLowerCase() === "hombre";
 }
 
 /**

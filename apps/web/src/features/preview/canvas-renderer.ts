@@ -13,20 +13,6 @@ const TARGET_RECT = {
   width: 724,
   height: 980,
 };
-const BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC =
-  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
-const MAN_NECK_COMPOSITE_REGION = {
-  x: 230,
-  y: 50,
-  width: 440,
-  height: 460,
-};
-const MAN_BASE_UPPER_NECKLINE_ERASE_REGION = {
-  x: 307,
-  y: 125,
-  width: 268,
-  height: 8,
-};
 
 export type OverlayRegion = {
   x: number;
@@ -2999,20 +2985,6 @@ async function drawTintedBaseFromAsset(
   context.drawImage(baseCanvas, 0, 0);
 }
 
-async function drawTintedAssetRegion(
-  context: CanvasRenderingContext2D,
-  src: string,
-  fillColor: string,
-  region: OverlayRegion,
-) {
-  context.save();
-  context.beginPath();
-  context.rect(region.x, region.y, region.width, region.height);
-  context.clip();
-  await drawTintedBaseFromAsset(context, src, fillColor);
-  context.restore();
-}
-
 async function drawOverlayInRegions(
   context: CanvasRenderingContext2D,
   src: string,
@@ -4822,43 +4794,13 @@ async function composeSingleDesign(
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  const baseAssetSrc =
-    scene.neckImageSrc ??
-    (scene.preserveGarmentSilhouette
-      ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
-      : scene.garmentImageSrc);
-  const visualBaseAssetSrc = scene.preserveGarmentSilhouette
-    ? scene.garmentImageSrc ?? baseAssetSrc
-    : baseAssetSrc;
+  const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
 
-  if (visualBaseAssetSrc) {
-    await drawTintedBaseFromAsset(
-      context,
-      visualBaseAssetSrc,
-      scene.baseColorHex,
-    );
+  if (baseAssetSrc) {
+    await drawTintedBaseFromAsset(context, baseAssetSrc, scene.baseColorHex);
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
     drawGarmentBase(context, "transparent");
-  }
-
-  if (scene.preserveGarmentSilhouette) {
-    context.fillStyle = scene.baseColorHex;
-    context.fillRect(
-      MAN_BASE_UPPER_NECKLINE_ERASE_REGION.x,
-      MAN_BASE_UPPER_NECKLINE_ERASE_REGION.y,
-      MAN_BASE_UPPER_NECKLINE_ERASE_REGION.width,
-      MAN_BASE_UPPER_NECKLINE_ERASE_REGION.height,
-    );
-  }
-
-  if (scene.preserveGarmentSilhouette && scene.neckImageSrc) {
-    await drawTintedAssetRegion(
-      context,
-      scene.neckImageSrc,
-      scene.baseColorHex,
-      MAN_NECK_COMPOSITE_REGION,
-    );
   }
 
   if (baseAssetSrc) {

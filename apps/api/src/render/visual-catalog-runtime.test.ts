@@ -54,36 +54,6 @@ const session: ConfiguratorSession = {
         },
       ],
     },
-    {
-      id: 156,
-      name: "Tipo de bolsillo auxiliar",
-      displayType: "radio",
-      selectionMode: "single",
-      variantMode: "no_variant",
-      values: [
-        {
-          id: 600,
-          sourceValueId: 618,
-          name: "Lizo doble",
-          attributeId: 156,
-          attributeName: "Tipo de bolsillo auxiliar",
-        },
-        {
-          id: 601,
-          sourceValueId: 620,
-          name: "Lizo derecho",
-          attributeId: 156,
-          attributeName: "Tipo de bolsillo auxiliar",
-        },
-        {
-          id: 602,
-          sourceValueId: 621,
-          name: "Lizo izquierdo",
-          attributeId: 156,
-          attributeName: "Tipo de bolsillo auxiliar",
-        },
-      ],
-    },
   ],
   selectedValueIds: {
     "63": [334],
@@ -217,79 +187,6 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).toContain("stroke:#123456");
     expect(svg).not.toContain("__VC_TRIM_STROKE_1000__");
     expect(svg).not.toContain("stroke:none");
-  });
-
-  it("trata condiciones repetidas del mismo atributo como alternativas OR", () => {
-    const definition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    definition.elementPaints.left!.visibilityConditions = [
-      {
-        attributeId: 90,
-        attributeName: "Seccion de vivo",
-        sourceValueIds: [1000],
-        valueNames: ["Cuello"],
-      },
-      {
-        attributeId: 90,
-        attributeName: "Seccion de vivo",
-        sourceValueIds: [1001],
-        valueNames: ["Cogotera"],
-      },
-    ];
-
-    const dataUri = materializeVisualDefinitionSvg(
-      definition,
-      "#aabbcc",
-      [],
-      { session, selectedValueIds: session.selectedValueIds },
-    );
-    const svg = decodeURIComponent(dataUri.split(",")[1] ?? "");
-
-    expect(svg).toContain("display:inline");
-  });
-
-  it("activa ambos vectores laterales cuando Odoo selecciona Lizo doble", () => {
-    const definition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    definition.elementPaints.left!.visibilityConditions = [
-      {
-        attributeId: 156,
-        attributeName: "Tipo de bolsillo auxiliar",
-        sourceValueIds: [621],
-        valueNames: ["Lizo izquierdo"],
-      },
-    ];
-    definition.elementPaints.right!.visibilityConditions = [
-      {
-        attributeId: 156,
-        attributeName: "Tipo de bolsillo auxiliar",
-        sourceValueIds: [620],
-        valueNames: ["Lizo derecho"],
-      },
-    ];
-
-    const svgWithDouble = decodeURIComponent(
-      materializeVisualDefinitionSvg(definition, "#aabbcc", [], {
-        session,
-        selectedValueIds: { ...session.selectedValueIds, "156": [600] },
-      }).split(",")[1] ?? "",
-    );
-    const svgWithRight = decodeURIComponent(
-      materializeVisualDefinitionSvg(definition, "#aabbcc", [], {
-        session,
-        selectedValueIds: { ...session.selectedValueIds, "156": [601] },
-      }).split(",")[1] ?? "",
-    );
-
-    expect(svgWithDouble.match(/display:inline/g)).toHaveLength(2);
-    expect(svgWithRight.match(/display:inline/g)).toHaveLength(1);
-    expect(svgWithRight.match(/display:none/g)).toHaveLength(1);
   });
 
   it("conserva el bolsillo original cuando la linea no resuelve el color de vivo", () => {

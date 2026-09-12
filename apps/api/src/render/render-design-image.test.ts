@@ -51,18 +51,6 @@ function countDifferentPixels(left: Buffer, right: Buffer) {
   return count;
 }
 
-function countDifferentPixelsBelowRow(
-  left: Buffer,
-  right: Buffer,
-  width: number,
-  startRow: number,
-) {
-  return countDifferentPixels(
-    left.subarray(startRow * width * 4),
-    right.subarray(startRow * width * 4),
-  );
-}
-
 function countNeonGreenPixels(buffer: Buffer) {
   let count = 0;
 
@@ -570,40 +558,6 @@ describe("renderDesignImage", () => {
     ).toBe(0);
     expect(
       countDarkPixelsInRegion(data, info.width, closedChestRegion),
-    ).toBe(0);
-  });
-
-  it("compone el cuello sobre Hombre sin reemplazar la silueta masculina", async () => {
-    const manScene: AutomationRenderScene = {
-      productName: "Blusa",
-      baseColorHex: "#FFC400",
-      garmentAssetPath:
-        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg",
-      preserveGarmentSilhouette: true,
-      lowerPocketLayout: "none",
-      trimSections: [],
-    };
-    const [baseImage, neckImage] = await Promise.all([
-      readRawPng(await renderDesignImage(manScene)),
-      readRawPng(
-        await renderDesignImage({
-          ...manScene,
-          neckAssetPath:
-            "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-02-jdc.svg",
-        }),
-      ),
-    ]);
-
-    expect(countDifferentPixels(baseImage.data, neckImage.data)).toBeGreaterThan(
-      1_000,
-    );
-    expect(
-      countDifferentPixelsBelowRow(
-        baseImage.data,
-        neckImage.data,
-        baseImage.info.width,
-        520,
-      ),
     ).toBe(0);
   });
 

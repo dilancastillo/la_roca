@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { listVisualDefinitions } from "./visual-catalog-repository.js";
-import {
-  getVisualRelease,
-  listVisualReleases,
-} from "./visual-release-repository.js";
+import { listVisualReleases } from "./visual-release-repository.js";
 
 const env = {
   VISUAL_CATALOG_BACKEND: "supabase",
@@ -115,84 +112,5 @@ describe("Supabase visual catalog datetime boundaries", () => {
 
     expect(release?.createdAt).toBe("2026-08-11T19:55:00.123Z");
     expect(release?.updatedAt).toBe("2026-08-11T20:05:00.654Z");
-  });
-
-  it("consulta una release puntual por UUID sin descargar todo el historial", async () => {
-    const releaseId = "20000000-0000-4000-8000-000000000001";
-    const fetchMock = vi.fn(async (_input: string | URL | Request) =>
-      Response.json([
-        {
-          id: releaseId,
-          number: 61,
-          display_name: "V19 CUELLO",
-          notes: "",
-          status: "active",
-          definition_ids: [definitionId],
-          changed_definition_ids: [definitionId],
-          baseline_definition_ids: [],
-          base_release_id: null,
-          checklist: {},
-          created_by: "admin@la-roca.local",
-          approved_by: "admin@la-roca.local",
-          published_by: "admin@la-roca.local",
-          created_at: "2026-09-12T17:00:00+00:00",
-          updated_at: "2026-09-12T17:05:00+00:00",
-          submitted_at: "2026-09-12T17:02:00+00:00",
-          approved_at: "2026-09-12T17:03:00+00:00",
-          published_at: "2026-09-12T17:05:00+00:00",
-        },
-      ]),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const release = await getVisualRelease(env, releaseId);
-    const requestedUrl = String(fetchMock.mock.calls[0]?.[0]);
-
-    expect(release.id).toBe(releaseId);
-    expect(requestedUrl).toContain(
-      `visual_catalog_releases?id=eq.${releaseId}&select=*&limit=1`,
-    );
-    expect(requestedUrl).not.toContain("order=number.desc");
-  });
-
-  it("reintenta una lectura puntual cuando Supabase responde 504", async () => {
-    const releaseId = "20000000-0000-4000-8000-000000000001";
-    const fetchMock = vi
-      .fn(async (_input: string | URL | Request) =>
-        Response.json([], { status: 504 }),
-      )
-      .mockResolvedValueOnce(
-        Response.json({ message: "Gateway Timeout" }, { status: 504 }),
-      )
-      .mockResolvedValueOnce(
-        Response.json([
-          {
-            id: releaseId,
-            number: 61,
-            display_name: "V19 CUELLO",
-            notes: "",
-            status: "active",
-            definition_ids: [definitionId],
-            changed_definition_ids: [definitionId],
-            baseline_definition_ids: [],
-            base_release_id: null,
-            checklist: {},
-            created_by: "admin@la-roca.local",
-            approved_by: "admin@la-roca.local",
-            published_by: "admin@la-roca.local",
-            created_at: "2026-09-12T17:00:00+00:00",
-            updated_at: "2026-09-12T17:05:00+00:00",
-            submitted_at: "2026-09-12T17:02:00+00:00",
-            approved_at: "2026-09-12T17:03:00+00:00",
-            published_at: "2026-09-12T17:05:00+00:00",
-          },
-        ]),
-      );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const release = await getVisualRelease(env, releaseId);
-
-    expect(release.status).toBe("active");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

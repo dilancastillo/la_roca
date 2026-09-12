@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   getCompatibleVisualCatalogAttributes,
   isBindingAttributeInVisualSlot,
+  isTrimValueInVisualSlot,
 } from "./odoo-option-compatibility";
 
 const neckAttribute: VisualCatalogOdooAttribute = {
@@ -87,7 +88,7 @@ describe("compatibilidad de opciones del catálogo visual", () => {
     const attributes = getCompatibleVisualCatalogAttributes(
       [product],
       [neckAttribute, trimAttribute],
-      [{ attributeId: 145, sourceValueIds: [554] }],
+      { attributeId: 145, sourceValueId: 554 },
     );
     const trimValues = attributes.find((attribute) => attribute.id === 157)?.values;
 
@@ -98,91 +99,32 @@ describe("compatibilidad de opciones del catálogo visual", () => {
     ]);
   });
 
-  it("deja que las exclusiones de Odoo decidan todas las opciones compatibles", () => {
+  it("separa los vivos por la parte que se modela en el editor", () => {
+    expect(
+      trimAttribute.values
+        .filter((value) => isTrimValueInVisualSlot("neck", value))
+        .map((value) => value.sourceValueId),
+    ).toEqual([630, 1980, 1979]);
+
+    expect(
+      trimAttribute.values
+        .filter((value) => isTrimValueInVisualSlot("lower_pocket", value))
+        .map((value) => value.sourceValueId),
+    ).toEqual([633, 2103]);
+  });
+
+  it("combina la pieza del editor con la compatibilidad del valor activador", () => {
     const compatibleAttributes = getCompatibleVisualCatalogAttributes(
       [product],
       [neckAttribute, trimAttribute],
-      [{ attributeId: 145, sourceValueIds: [554] }],
+      { attributeId: 145, sourceValueId: 554 },
     );
     const visibleNeckTrims = compatibleAttributes
       .find((attribute) => attribute.id === 157)
-      ?.values;
+      ?.values.filter((value) => isTrimValueInVisualSlot("neck", value));
 
     expect(visibleNeckTrims?.map((value) => value.sourceValueId)).toEqual([
       630,
-      633,
-      2103,
     ]);
-  });
-
-  it("recalcula todos los atributos con cada seleccion adicional de Odoo", () => {
-    const auxiliaryType: VisualCatalogOdooAttribute = {
-      id: 156,
-      name: "Tipo de bolsillo auxiliar",
-      sequence: 3,
-      values: [
-        {
-          id: 6001,
-          sourceValueId: 620,
-          name: "Lizo izquierdo",
-          sequence: 1,
-          excludedValueIds: [5003],
-        },
-      ],
-    };
-    const productWithAuxiliaryType: VisualCatalogProduct = {
-      ...product,
-      attributes: [neckAttribute, auxiliaryType, trimAttribute],
-    };
-
-    const attributes = getCompatibleVisualCatalogAttributes(
-      [productWithAuxiliaryType],
-      [neckAttribute, auxiliaryType, trimAttribute],
-      [
-        { attributeId: 145, sourceValueIds: [554] },
-        { attributeId: 156, sourceValueIds: [620] },
-      ],
-    );
-    const trimValues = attributes.find((attribute) => attribute.id === 157)?.values;
-
-    expect(trimValues?.map((value) => value.sourceValueId)).toEqual([
-      630,
-      2103,
-    ]);
-  });
-
-  it("conserva una opcion cuando existe al menos una alternativa OR compatible", () => {
-    const attributes = getCompatibleVisualCatalogAttributes(
-      [product],
-      [neckAttribute, trimAttribute],
-      [{ attributeId: 157, sourceValueIds: [630, 1980] }],
-    );
-
-    expect(
-      attributes
-        .find((attribute) => attribute.id === 145)
-        ?.values.map((value) => value.sourceValueId),
-    ).toEqual([554]);
-  });
-
-  it("conserva opciones de Odoo aunque otra plantilla no tenga ese atributo", () => {
-    const productWithoutTrim: VisualCatalogProduct = {
-      id: 7,
-      name: "Uniforme",
-      family: "uniform",
-      attributes: [neckAttribute],
-      warnings: [],
-    };
-    const attributes = getCompatibleVisualCatalogAttributes(
-      [product, productWithoutTrim],
-      [trimAttribute],
-      [{ attributeId: 145, sourceValueIds: [554] }],
-    );
-
-    expect(
-      attributes
-        .find((attribute) => attribute.id === 157)
-        ?.values.map((value) => value.sourceValueId),
-    ).toEqual([630, 633, 2103]);
   });
 });
