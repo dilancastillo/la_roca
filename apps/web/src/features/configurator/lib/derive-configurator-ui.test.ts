@@ -954,6 +954,91 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });
 
+  it("cambia a la base masculina cuando Odoo selecciona Hombre", () => {
+    const genderAttribute: ConfiguratorSession["attributes"][number] = {
+      id: 142,
+      name: "Género",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 1421,
+          sourceValueId: 531,
+          name: "Hombre",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+        {
+          id: 1422,
+          sourceValueId: 532,
+          name: "Mujer",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+      ],
+    };
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [genderAttribute, ...session.attributes],
+    };
+
+    const manUi = deriveConfiguratorUi(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [],
+      "142": [1421],
+    });
+    const womanUi = deriveConfiguratorUi(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [],
+      "142": [1422],
+    });
+
+    expect(manUi.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg",
+    );
+    expect(manUi.previewScene.preserveGarmentSilhouette).toBe(true);
+    expect(womanUi.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+    );
+  });
+
+  it("conserva la base masculina cuando Hombre selecciona un modelo de cuello", () => {
+    const genderAttribute: ConfiguratorSession["attributes"][number] = {
+      id: 142,
+      name: "Género",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 1421,
+          sourceValueId: 531,
+          name: "Hombre",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+      ],
+    };
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [genderAttribute, ...session.attributes],
+    };
+    const ui = deriveConfiguratorUi(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [2590],
+      "142": [1421],
+    });
+
+    expect(ui.previewScene.garmentImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg",
+    );
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(ui.previewScene.preserveGarmentSilhouette).toBe(true);
+  });
+
   it("usa la base cerrada solo en la blusa del preview de Uniforme", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,
@@ -1931,6 +2016,52 @@ describe("deriveConfiguratorUi", () => {
         withModelVelcroRight.previewScene.lowerPocketAuxiliaryAddonSide,
       ).toBe("right");
     }
+  });
+
+  it("respeta los lados reales enviados por Odoo para bolsillos auxiliares", () => {
+    const sourceValues = [
+      [618, "Lizo doble", "lizo", "both"],
+      [620, "Lizo derecho", "lizo", "right"],
+      [621, "Lizo izquierdo", "lizo", "left"],
+      [619, "Velcro doble", "velcro", "both"],
+      [622, "Velcro izquierdo", "velcro", "left"],
+      [623, "Velcro derecho", "velcro", "right"],
+      [624, "Sobrepuesto izquierdo", "overlaid", "left"],
+      [625, "Sobrepuesto derecho", "overlaid", "right"],
+      [626, "Sobrepuesto doble", "overlaid", "both"],
+    ] as const;
+    const auxiliaryAttributeId = 156;
+    const sessionWithOdooAuxiliaryTypes: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: auxiliaryAttributeId,
+          name: "Tipo de bolsillo auxiliar",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: sourceValues.map(([sourceValueId, name], index) => ({
+            id: 9400 + index,
+            sourceValueId,
+            name,
+            attributeId: auxiliaryAttributeId,
+            attributeName: "Tipo de bolsillo auxiliar",
+          })),
+        },
+      ],
+    };
+
+    sourceValues.forEach(([, , expectedKind, expectedSide], index) => {
+      const ui = deriveConfiguratorUi(sessionWithOdooAuxiliaryTypes, {
+        ...sessionWithOdooAuxiliaryTypes.selectedValueIds,
+        "70": [2578],
+        [String(auxiliaryAttributeId)]: [9400 + index],
+      });
+
+      expect(ui.previewScene.lowerPocketAuxiliaryAddonKind).toBe(expectedKind);
+      expect(ui.previewScene.lowerPocketAuxiliaryAddonSide).toBe(expectedSide);
+    });
   });
 
   it("resuelve LOS ANDES y ALETAS con sus IDs actuales de Odoo", () => {

@@ -712,6 +712,91 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
+  it("usa la misma base masculina en el render cuando Odoo selecciona Hombre", () => {
+    const genderAttribute: ConfiguratorSession["attributes"][number] = {
+      id: 142,
+      name: "Género",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 1421,
+          sourceValueId: 531,
+          name: "Hombre",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+        {
+          id: 1422,
+          sourceValueId: 532,
+          name: "Mujer",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+      ],
+    };
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [genderAttribute, ...session.attributes],
+    };
+
+    const manScene = deriveAutomationRenderScene(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [],
+      "142": [1421],
+    });
+    const womanScene = deriveAutomationRenderScene(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [],
+      "142": [1422],
+    });
+
+    expect(manScene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg",
+    );
+    expect(manScene.preserveGarmentSilhouette).toBe(true);
+    expect(womanScene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+    );
+  });
+
+  it("conserva la base masculina en el render al escoger un cuello", () => {
+    const genderAttribute: ConfiguratorSession["attributes"][number] = {
+      id: 142,
+      name: "Género",
+      displayType: "radio",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        {
+          id: 1421,
+          sourceValueId: 531,
+          name: "Hombre",
+          attributeId: 142,
+          attributeName: "Género",
+        },
+      ],
+    };
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [genderAttribute, ...session.attributes],
+    };
+    const scene = deriveAutomationRenderScene(sessionWithGender, {
+      ...session.selectedValueIds,
+      "63": [334],
+      "142": [1421],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg",
+    );
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    expect(scene.preserveGarmentSilhouette).toBe(true);
+  });
+
   it("usa la base cerrada solo en la blusa del Uniforme sin cuello", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,
@@ -3531,6 +3616,52 @@ describe("deriveAutomationRenderScene", () => {
       expect(withModelVelcroRight.lowerPocketAuxiliaryAddonKind).toBe("velcro");
       expect(withModelVelcroRight.lowerPocketAuxiliaryAddonSide).toBe("right");
     }
+  });
+
+  it("conserva los lados reales de Odoo al generar la imagen guardada", () => {
+    const sourceValues = [
+      [618, "Lizo doble", "lizo", "both"],
+      [620, "Lizo derecho", "lizo", "right"],
+      [621, "Lizo izquierdo", "lizo", "left"],
+      [619, "Velcro doble", "velcro", "both"],
+      [622, "Velcro izquierdo", "velcro", "left"],
+      [623, "Velcro derecho", "velcro", "right"],
+      [624, "Sobrepuesto izquierdo", "overlaid", "left"],
+      [625, "Sobrepuesto derecho", "overlaid", "right"],
+      [626, "Sobrepuesto doble", "overlaid", "both"],
+    ] as const;
+    const auxiliaryAttributeId = 156;
+    const sessionWithOdooAuxiliaryTypes: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: auxiliaryAttributeId,
+          name: "Tipo de bolsillo auxiliar",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: sourceValues.map(([sourceValueId, name], index) => ({
+            id: 9400 + index,
+            sourceValueId,
+            name,
+            attributeId: auxiliaryAttributeId,
+            attributeName: "Tipo de bolsillo auxiliar",
+          })),
+        },
+      ],
+    };
+
+    sourceValues.forEach(([, , expectedKind, expectedSide], index) => {
+      const scene = deriveAutomationRenderScene(sessionWithOdooAuxiliaryTypes, {
+        ...sessionWithOdooAuxiliaryTypes.selectedValueIds,
+        "70": [2578],
+        [String(auxiliaryAttributeId)]: [9400 + index],
+      });
+
+      expect(scene.lowerPocketAuxiliaryAddonKind).toBe(expectedKind);
+      expect(scene.lowerPocketAuxiliaryAddonSide).toBe(expectedSide);
+    });
   });
 
   it("aplica COSTURA como modelo de bolsillo inferior con vivos superior y bajo separados", () => {

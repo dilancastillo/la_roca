@@ -4,6 +4,7 @@ import type {
   VisualActivationCondition,
   VisualSlot,
 } from "./schemas/visual-catalog.js";
+import { getLowerPocketAuxiliaryAddon } from "./lower-pocket-rules.js";
 
 export type VisualRuntimeTrimSection = {
   valueId: number;
@@ -67,22 +68,90 @@ function getSelectedSourceValueIds(
   );
 }
 
+function isDoubleAuxiliarySelectionForSideCondition(
+  condition: VisualActivationCondition,
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const attribute = session.attributes.find(
+    (candidate) => candidate.id === condition.attributeId,
+  );
+
+  if (!attribute) {
+    return false;
+  }
+
+  const selectedIds = new Set(
+    selectedValueIds[String(condition.attributeId)] ?? [],
+  );
+  const selectedAddons = attribute.values
+    .filter(
+      (value) =>
+        selectedIds.has(value.id) ||
+        (value.sourceValueId !== undefined &&
+          selectedIds.has(value.sourceValueId)),
+    )
+    .flatMap((value) => {
+      const addon = getLowerPocketAuxiliaryAddon(value);
+      return addon?.side === "both" ? [addon] : [];
+    });
+  const allowedAddons = attribute.values
+    .filter((value) =>
+      condition.sourceValueIds.includes(value.sourceValueId ?? value.id),
+    )
+    .flatMap((value) => {
+      const addon = getLowerPocketAuxiliaryAddon(value);
+      return addon ? [addon] : [];
+    });
+
+  return selectedAddons.some((selectedAddon) =>
+    allowedAddons.some(
+      (allowedAddon) => allowedAddon.kind === selectedAddon.kind,
+    ),
+  );
+}
+
 function areActivationConditionsSelected(
   conditions: VisualActivationCondition[],
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  return conditions.every((condition) => {
-    const selectedSourceIds = getSelectedSourceValueIds(
-      session,
-      selectedValueIds,
-      condition.attributeId,
-    );
+  const sourceValueIdsByAttribute = new Map<number, Set<number>>();
 
-    return condition.sourceValueIds.some((sourceValueId) =>
-      selectedSourceIds.has(sourceValueId),
+  for (const condition of conditions) {
+    const sourceValueIds =
+      sourceValueIdsByAttribute.get(condition.attributeId) ?? new Set<number>();
+
+    condition.sourceValueIds.forEach((sourceValueId) =>
+      sourceValueIds.add(sourceValueId),
     );
-  });
+    sourceValueIdsByAttribute.set(condition.attributeId, sourceValueIds);
+  }
+
+  return Array.from(sourceValueIdsByAttribute).every(
+    ([attributeId, allowedSourceValueIds]) => {
+      const selectedSourceIds = getSelectedSourceValueIds(
+        session,
+        selectedValueIds,
+        attributeId,
+      );
+
+      return (
+        Array.from(allowedSourceValueIds).some((sourceValueId) =>
+          selectedSourceIds.has(sourceValueId),
+        ) ||
+        conditions
+          .filter((condition) => condition.attributeId === attributeId)
+          .some((condition) =>
+            isDoubleAuxiliarySelectionForSideCondition(
+              condition,
+              session,
+              selectedValueIds,
+            ),
+          )
+      );
+    },
+  );
 }
 
 function isBindingSelected(

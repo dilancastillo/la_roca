@@ -46,7 +46,7 @@ import {
 import {
   getCompatibleVisualCatalogAttributes,
   isBindingAttributeInVisualSlot,
-  isTrimValueInVisualSlot,
+  type VisualCatalogSourceSelection,
 } from "../features/visual-catalog/lib/odoo-option-compatibility";
 import { ApiError } from "../lib/api-client";
 
@@ -83,6 +83,9 @@ const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
     "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
   boot: "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
 };
+const MAN_NECK_REFERENCE_ASSET =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg";
+const MAN_REFERENCE_SCALE = 0.8;
 
 const PAINT_OPTIONS: Array<{
   value: VisualElementPaint["mode"];
@@ -156,6 +159,35 @@ function getCommonAttributes(products: VisualCatalogProduct[]) {
     .filter((attribute) => attribute.values.length > 0);
 }
 
+function getOdooAttributes(products: VisualCatalogProduct[]) {
+  const attributesById = new Map<number, CommonAttribute>();
+
+  products.forEach((product) => {
+    product.attributes.forEach((attribute) => {
+      const current = attributesById.get(attribute.id);
+
+      if (!current) {
+        attributesById.set(attribute.id, {
+          ...attribute,
+          values: [...attribute.values],
+        });
+        return;
+      }
+
+      const knownSourceValueIds = new Set(
+        current.values.map((value) => value.sourceValueId),
+      );
+      current.values.push(
+        ...attribute.values.filter(
+          (value) => !knownSourceValueIds.has(value.sourceValueId),
+        ),
+      );
+    });
+  });
+
+  return Array.from(attributesById.values());
+}
+
 function getSortedBindingAttributes(
   attributes: CommonAttribute[],
   slot: VisualSlot,
@@ -165,7 +197,7 @@ function getSortedBindingAttributes(
   );
 }
 
-function getTrimOptions(attributes: CommonAttribute[], slot: VisualSlot) {
+function getTrimOptions(attributes: CommonAttribute[]) {
   return attributes
     .filter((attribute) => {
       const name = normalize(attribute.name);
@@ -175,13 +207,43 @@ function getTrimOptions(attributes: CommonAttribute[], slot: VisualSlot) {
       );
     })
     .flatMap((attribute) =>
-      attribute.values
-        .filter((value) => isTrimValueInVisualSlot(slot, value))
-        .map((value) => ({
-          id: value.sourceValueId,
-          label: `${attribute.name}: ${value.name}`,
-        })),
+      attribute.values.map((value) => ({
+        id: value.sourceValueId,
+        label: `${attribute.name}: ${value.name}`,
+      })),
     );
+}
+
+function getConditionSelections(
+  conditions: VisualActivationCondition[],
+): VisualCatalogSourceSelection[] {
+  return conditions
+    .filter((condition) => condition.sourceValueIds.length > 0)
+    .map((condition) => ({
+      attributeId: condition.attributeId,
+      sourceValueIds: condition.sourceValueIds,
+    }));
+}
+
+function getPreviewElementPaints(
+  elementPaints: Record<string, VisualElementPaint>,
+  selectedElementIds: string[],
+) {
+  const previewPaints = { ...elementPaints };
+
+  selectedElementIds.forEach((elementId) => {
+    const paint = previewPaints[elementId];
+
+    if (
+      paint &&
+      (paint.mode === "trim_fill" || paint.mode === "trim_stroke") &&
+      paint.trimSourceValueId === undefined
+    ) {
+      previewPaints[elementId] = { ...paint, trimSourceValueId: 0 };
+    }
+  });
+
+  return previewPaints;
 }
 
 function getDefinitionStatusLabel(
@@ -307,18 +369,37 @@ function getDefinitionOdooIssues(
 function ConditionsEditor({
   title,
   attributes,
+  products,
+  baseSelections,
   conditions,
   onChange,
   compact = false,
 }: {
   title: string;
   attributes: CommonAttribute[];
+  products: VisualCatalogProduct[];
+  baseSelections: VisualCatalogSourceSelection[];
   conditions: VisualActivationCondition[];
   onChange: (conditions: VisualActivationCondition[]) => void;
   compact?: boolean;
 }) {
+  function getAvailableAttributes(excludedConditionIndex?: number) {
+    return getCompatibleVisualCatalogAttributes(
+      products,
+      attributes,
+      [
+        ...baseSelections,
+        ...getConditionSelections(
+          conditions.filter(
+            (_condition, index) => index !== excludedConditionIndex,
+          ),
+        ),
+      ],
+    );
+  }
+
   function addCondition() {
-    const attribute = attributes[0];
+    const attribute = getAvailableAttributes()[0];
     const value = attribute?.values[0];
 
     if (!attribute || !value) {
@@ -337,7 +418,7 @@ function ConditionsEditor({
   }
 
   function updateAttribute(index: number, attributeId: number) {
-    const attribute = attributes.find(
+    const attribute = getAvailableAttributes(index).find(
       (candidate) => candidate.id === attributeId,
     );
     const value = attribute?.values[0];
@@ -362,7 +443,7 @@ function ConditionsEditor({
 
   function updateValues(index: number, sourceValueIds: number[]) {
     const condition = conditions[index];
-    const attribute = attributes.find(
+    const attribute = getAvailableAttributes(index).find(
       (candidate) => candidate.id === condition?.attributeId,
     );
 
@@ -387,6 +468,22 @@ function ConditionsEditor({
     );
   }
 
+  function toggleValue(index: number, sourceValueId: number, checked: boolean) {
+    const selectedSourceValueIds = new Set(
+      conditions[index]?.sourceValueIds ?? [],
+    );
+
+    if (checked) {
+      selectedSourceValueIds.add(sourceValueId);
+    } else {
+      selectedSourceValueIds.delete(sourceValueId);
+    }
+
+    updateValues(index, Array.from(selectedSourceValueIds));
+  }
+
+  const availableAttributesForNewCondition = getAvailableAttributes();
+
   return (
     <div
       className={`catalog-condition-editor${compact ? " catalog-condition-editor--compact" : ""}`}
@@ -396,7 +493,7 @@ function ConditionsEditor({
         <button
           type="button"
           onClick={addCondition}
-          disabled={attributes.length === 0}
+          disabled={availableAttributesForNewCondition.length === 0}
         >
           Agregar condicion
         </button>
@@ -407,7 +504,8 @@ function ConditionsEditor({
         </p>
       ) : (
         conditions.map((condition, index) => {
-          const attribute = attributes.find(
+          const rowAttributes = getAvailableAttributes(index);
+          const attribute = rowAttributes.find(
             (candidate) => candidate.id === condition.attributeId,
           );
 
@@ -429,38 +527,38 @@ function ConditionsEditor({
                       {condition.attributeName} (no disponible)
                     </option>
                   ) : null}
-                  {attributes.map((candidate) => (
+                  {rowAttributes.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>
                       {candidate.name}
                     </option>
                   ))}
                 </select>
               </label>
-              <label>
-                Valores alternativos (OR)
-                <select
-                  multiple
-                  size={Math.min(4, Math.max(2, attribute?.values.length ?? 2))}
-                  value={condition.sourceValueIds.map(String)}
-                  onChange={(event) =>
-                    updateValues(
-                      index,
-                      Array.from(event.target.selectedOptions).map((option) =>
-                        Number(option.value),
-                      ),
-                    )
-                  }
-                >
+              <fieldset className="catalog-condition-values">
+                <legend>Valores alternativos (OR)</legend>
+                <div className="catalog-condition-values__options">
                   {attribute?.values.map((value) => (
-                    <option
-                      key={value.sourceValueId}
-                      value={value.sourceValueId}
-                    >
-                      {value.name} (ID {value.sourceValueId})
-                    </option>
+                    <label key={value.sourceValueId}>
+                      <input
+                        type="checkbox"
+                        checked={condition.sourceValueIds.includes(
+                          value.sourceValueId,
+                        )}
+                        onChange={(event) =>
+                          toggleValue(
+                            index,
+                            value.sourceValueId,
+                            event.target.checked,
+                          )
+                        }
+                      />
+                      <span>
+                        {value.name} (ID {value.sourceValueId})
+                      </span>
+                    </label>
                   ))}
-                </select>
-              </label>
+                </div>
+              </fieldset>
               <button
                 type="button"
                 className="catalog-condition-row__remove"
@@ -514,6 +612,9 @@ export function VisualCatalogPage() {
   const [productsRefreshedAt, setProductsRefreshedAt] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [slot, setSlot] = useState<VisualSlot>("neck");
+  const [neckReferenceModel, setNeckReferenceModel] = useState<
+    "woman" | "man"
+  >("woman");
   const [layer, setLayer] = useState<VisualLayer>("component");
   const [attributeId, setAttributeId] = useState<number | null>(null);
   const [valueSourceId, setValueSourceId] = useState<number | null>(null);
@@ -551,9 +652,15 @@ export function VisualCatalogPage() {
       ),
     [compatibleProducts, selectedProductIds],
   );
+  const odooScopeProducts =
+    selectedProducts.length > 0 ? selectedProducts : compatibleProducts;
   const commonAttributes = useMemo(
     () => getCommonAttributes(selectedProducts),
     [selectedProducts],
+  );
+  const odooAttributes = useMemo(
+    () => getOdooAttributes(odooScopeProducts),
+    [odooScopeProducts],
   );
   const bindingAttributes = useMemo(
     () => getSortedBindingAttributes(commonAttributes, slot),
@@ -566,19 +673,17 @@ export function VisualCatalogPage() {
     selectedAttribute?.values.find(
       (value) => value.sourceValueId === valueSourceId,
     ) ?? null;
-  const compatibleAttributes = useMemo(
+  const bindingSelections = useMemo<VisualCatalogSourceSelection[]>(
     () =>
-      getCompatibleVisualCatalogAttributes(
-        selectedProducts,
-        commonAttributes,
-        selectedAttribute && selectedValue
-          ? {
+      selectedAttribute && selectedValue
+        ? [
+            {
               attributeId: selectedAttribute.id,
-              sourceValueId: selectedValue.sourceValueId,
-            }
-          : null,
-      ),
-    [commonAttributes, selectedAttribute, selectedProducts, selectedValue],
+              sourceValueIds: [selectedValue.sourceValueId],
+            },
+          ]
+        : [],
+    [selectedAttribute, selectedValue],
   );
   const reusableSelectionCandidates = useMemo(() => {
     if (!indexedSvg || !selectedAttribute || !selectedValue) {
@@ -632,11 +737,49 @@ export function VisualCatalogPage() {
     selectedValue,
     slot,
   ]);
-  const trimOptions = useMemo(
-    () => getTrimOptions(compatibleAttributes, slot),
-    [compatibleAttributes, slot],
+  const activeSelections = useMemo(
+    () => [
+      ...bindingSelections,
+      ...getConditionSelections(activationConditions),
+    ],
+    [activationConditions, bindingSelections],
   );
-  const referenceAssetSrc = getReferenceAsset(slot);
+  const trimOptions = useMemo(
+    () =>
+      getTrimOptions(
+        getCompatibleVisualCatalogAttributes(
+          odooScopeProducts,
+          odooAttributes,
+          activeSelections,
+        ),
+      ),
+    [activeSelections, odooAttributes, odooScopeProducts],
+  );
+  const referenceAssetSrc =
+    slot === "neck" && neckReferenceModel === "man"
+      ? MAN_NECK_REFERENCE_ASSET
+      : getReferenceAsset(slot);
+  const runtimePlacement = useMemo(
+    () =>
+      slot === "neck" && neckReferenceModel === "man"
+        ? {
+            ...placement,
+            x:
+              placement.x +
+              (placement.targetWidth * (1 - MAN_REFERENCE_SCALE)) / 2,
+            y:
+              placement.y +
+              (placement.targetHeight * (1 - MAN_REFERENCE_SCALE)) / 2,
+            scaleX: placement.scaleX * MAN_REFERENCE_SCALE,
+            scaleY: placement.scaleY * MAN_REFERENCE_SCALE,
+          }
+        : placement,
+    [neckReferenceModel, placement, slot],
+  );
+  const sourceCanvasClassName =
+    slot === "neck" && neckReferenceModel === "man"
+      ? "visual-source-canvas visual-source-canvas--man"
+      : "visual-source-canvas";
   const selectableMarkup = useMemo(
     () =>
       indexedSvg
@@ -657,14 +800,17 @@ export function VisualCatalogPage() {
         buildRuntimeVisualSvg({
           normalizedSvg: indexedSvg.normalizedSvg,
           selectedElementIds,
-          elementPaints,
-          placement,
+          elementPaints: getPreviewElementPaints(
+            elementPaints,
+            selectedElementIds,
+          ),
+          placement: runtimePlacement,
         }),
       );
     } catch {
       return "";
     }
-  }, [elementPaints, indexedSvg, placement, selectedElementIds]);
+  }, [elementPaints, indexedSvg, runtimePlacement, selectedElementIds]);
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -679,16 +825,22 @@ export function VisualCatalogPage() {
         mode: "preserve" as const,
         visibilityConditions: [],
       };
+      const previewActivePaint =
+        (activePaint.mode === "trim_fill" ||
+          activePaint.mode === "trim_stroke") &&
+        activePaint.trimSourceValueId === undefined
+          ? { ...activePaint, trimSourceValueId: 0 }
+          : activePaint;
       const highlightSvg = buildRuntimeVisualSvg({
         normalizedSvg: indexedSvg.normalizedSvg,
         selectedElementIds: [highlightedElementId],
         elementPaints: {
           [highlightedElementId]: {
-            ...activePaint,
+            ...previewActivePaint,
             visibilityConditions: [],
           },
         },
-        placement,
+        placement: runtimePlacement,
       });
       const highlightChannel =
         activePaint.mode === "base_fill" || activePaint.mode === "trim_fill"
@@ -712,7 +864,7 @@ export function VisualCatalogPage() {
     elementPaints,
     highlightedElementId,
     indexedSvg,
-    placement,
+    runtimePlacement,
     selectedElementIds,
   ]);
 
@@ -1039,6 +1191,7 @@ export function VisualCatalogPage() {
     setAttributeId(null);
     setValueSourceId(null);
     setActivationConditions([]);
+    setNeckReferenceModel("woman");
     setOriginalSvg("");
     setSourceFileName("");
     setIndexedSvg(null);
@@ -1079,19 +1232,35 @@ export function VisualCatalogPage() {
       return;
     }
 
-    const availableTrimSourceValueIds = new Set(
-      trimOptions.map((option) => option.id),
-    );
     const hasIncompatibleTrim = Object.values(elementPaints).some(
-      (paint) =>
-        (paint.mode === "trim_fill" || paint.mode === "trim_stroke") &&
-        (paint.trimSourceValueId === undefined ||
-          !availableTrimSourceValueIds.has(paint.trimSourceValueId)),
+      (paint) => {
+        if (paint.mode !== "trim_fill" && paint.mode !== "trim_stroke") {
+          return false;
+        }
+
+        const availableTrimSourceValueIds = new Set(
+          getTrimOptions(
+            getCompatibleVisualCatalogAttributes(
+              odooScopeProducts,
+              odooAttributes,
+              [
+                ...activeSelections,
+                ...getConditionSelections(paint.visibilityConditions),
+              ],
+            ),
+          ).map((option) => option.id),
+        );
+
+        return (
+          paint.trimSourceValueId === undefined ||
+          !availableTrimSourceValueIds.has(paint.trimSourceValueId)
+        );
+      },
     );
 
     if (hasIncompatibleTrim) {
       setError(
-        "Hay elementos vinculados a una sección de vivo que no corresponde al componente y valor activador seleccionados.",
+        "Hay elementos vinculados a una sección de vivo incompatible con las selecciones según las exclusiones de Odoo.",
       );
       return;
     }
@@ -1113,7 +1282,7 @@ export function VisualCatalogPage() {
         normalizedSvg: indexedSvg.normalizedSvg,
         selectedElementIds,
         elementPaints,
-        placement,
+        placement: runtimePlacement,
       });
       const mutation = {
         displayName: displayName.trim() || selectedValue.name,
@@ -1157,6 +1326,11 @@ export function VisualCatalogPage() {
     const indexed = indexVisualSvg(definition.normalizedSvg);
     setEditingDefinitionId(definition.id);
     setSlot(definition.slot);
+    setNeckReferenceModel(
+      definition.referenceAssetSrc === MAN_NECK_REFERENCE_ASSET
+        ? "man"
+        : "woman",
+    );
     setLayer(definition.layer);
     setSelectedProductIds(definition.binding.productTemplateIds);
     setAttributeId(definition.binding.attributeId);
@@ -1301,6 +1475,33 @@ export function VisualCatalogPage() {
                   {new Date(productsRefreshedAt).toLocaleString("es-CO")}
                 </small>
               ) : null}
+              {slot === "neck" ? (
+                <div className="catalog-reference-selector">
+                  <strong>Modelo de referencia</strong>
+                  <div
+                    className="chip-grid"
+                    role="group"
+                    aria-label="Modelo de referencia"
+                  >
+                    {(
+                      [
+                        ["woman", "Mujer"],
+                        ["man", "Hombre"],
+                      ] as const
+                    ).map(([model, label]) => (
+                      <button
+                        key={model}
+                        type="button"
+                        className={`option-chip${neckReferenceModel === model ? " option-chip--selected" : ""}`}
+                        aria-pressed={neckReferenceModel === model}
+                        onClick={() => setNeckReferenceModel(model)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <label>
                 Componente
                 <select
@@ -1442,7 +1643,9 @@ export function VisualCatalogPage() {
             <div className="visual-editor__section">
               <ConditionsEditor
                 title="Reglas adicionales"
-                attributes={compatibleAttributes}
+                attributes={commonAttributes}
+                products={selectedProducts}
+                baseSelections={bindingSelections}
                 conditions={activationConditions}
                 onChange={setActivationConditions}
               />
@@ -1569,7 +1772,7 @@ export function VisualCatalogPage() {
             </div>
 
             <div
-              className="visual-source-canvas"
+              className={sourceCanvasClassName}
               onClick={handleSvgElementClick}
               dangerouslySetInnerHTML={{
                 __html:
@@ -1581,7 +1784,15 @@ export function VisualCatalogPage() {
             <div className="visual-preview-panel">
               <h2>Resultado</h2>
               <div className="visual-runtime-preview">
-                <img src={referenceAssetSrc} alt="" />
+                <img
+                  className={
+                    slot === "neck" && neckReferenceModel === "man"
+                      ? "visual-runtime-preview__reference--man"
+                      : undefined
+                  }
+                  src={referenceAssetSrc}
+                  alt=""
+                />
                 {runtimePreviewSrc ? (
                   <img src={runtimePreviewSrc} alt="" />
                 ) : null}
@@ -1613,6 +1824,17 @@ export function VisualCatalogPage() {
                 const usesTrim =
                   paint.mode === "trim_fill" ||
                   paint.mode === "trim_stroke";
+                const elementSelections = [
+                  ...activeSelections,
+                  ...getConditionSelections(paint.visibilityConditions),
+                ];
+                const elementTrimOptions = getTrimOptions(
+                  getCompatibleVisualCatalogAttributes(
+                    odooScopeProducts,
+                    odooAttributes,
+                    elementSelections,
+                  ),
+                );
 
                 return (
                   <div
@@ -1648,7 +1870,7 @@ export function VisualCatalogPage() {
                         }
                       >
                         <option value="">Seccion de vivo</option>
-                        {trimOptions.map((option) => (
+                        {elementTrimOptions.map((option) => (
                           <option key={option.id} value={option.id}>
                             {option.label}
                           </option>
@@ -1657,7 +1879,9 @@ export function VisualCatalogPage() {
                     ) : null}
                     <ConditionsEditor
                       title="Mostrar este elemento cuando"
-                      attributes={compatibleAttributes}
+                      attributes={commonAttributes}
+                      products={selectedProducts}
+                      baseSelections={activeSelections}
                       conditions={paint.visibilityConditions}
                       onChange={(conditions) =>
                         updateElementConditions(elementId, conditions)

@@ -12,6 +12,7 @@ import {
   CONFIGURATOR_VALUE_IDS,
   getTrimSectionKeyBySourceValueId,
   hasSourceValueId,
+  isManConfiguratorValue,
 } from "@repo/shared/configurator-id-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
@@ -58,6 +59,8 @@ export type PreviewScene = {
     blouse: PreviewScene;
     pants: PreviewScene;
   };
+  preserveGarmentSilhouette?: boolean | undefined;
+  hasDynamicNeck?: boolean | undefined;
   garmentImageSrc?: string | undefined;
   garmentDetailImageSrc?: string | undefined;
   garmentDetailImageSrcs?: string[] | undefined;
@@ -871,6 +874,8 @@ const BLUSA_PESPUNTE_MODEL_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
 const BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+const BLUSA_MAN_BASE_IMAGE_SRC =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -1705,6 +1710,11 @@ function deriveSingleConfiguratorUi(
       name.includes("color de tela base") ||
       name.includes("tela base"),
     );
+  const genderAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.gender,
+    (name) => name === "genero",
+  );
   const neckAttribute =
     session.attributes.find(
       (attribute) => matchesCatalogAttribute(catalog, "neckModel", attribute),
@@ -1828,6 +1838,7 @@ function deriveSingleConfiguratorUi(
     );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
+  const selectedGender = findSelectedValue(genderAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedSleeveModel = findSelectedValue(
     sleeveModelAttribute,
@@ -1945,7 +1956,12 @@ function deriveSingleConfiguratorUi(
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckImageSrc);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentImageSrc = shouldUseClosedBlouseWithoutNeck
+  const shouldUseManBase =
+    session.graphicManifestKey.includes("blusa") &&
+    isManConfiguratorValue(selectedGender);
+  const garmentImageSrc = shouldUseManBase
+    ? BLUSA_MAN_BASE_IMAGE_SRC
+    : shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
     : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
@@ -2046,6 +2062,8 @@ function deriveSingleConfiguratorUi(
     previewScene: {
       productName: session.productName,
       baseColorHex,
+      ...(shouldUseManBase ? { preserveGarmentSilhouette: true } : {}),
+      ...(hasDynamicNeck ? { hasDynamicNeck: true } : {}),
       garmentImageSrc,
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),

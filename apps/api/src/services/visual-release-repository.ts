@@ -30,6 +30,7 @@ type LineReleasePin = z.infer<typeof lineReleasePinSchema>;
 
 interface VisualReleaseStore {
   listReleases(): Promise<VisualRelease[]>;
+  getRelease(releaseId: string): Promise<VisualRelease | null>;
   reserveReleaseNumber(): Promise<number>;
   upsertRelease(release: VisualRelease): Promise<void>;
   getActiveReleaseId(): Promise<string | null>;
@@ -102,6 +103,13 @@ class FileVisualReleaseStore implements VisualReleaseStore {
       [],
     );
     return releases.sort((left, right) => right.number - left.number);
+  }
+
+  async getRelease(releaseId: string) {
+    return (
+      (await this.listReleases()).find((release) => release.id === releaseId) ??
+      null
+    );
   }
 
   async reserveReleaseNumber() {
@@ -253,20 +261,40 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
   }
 
   private async request(pathname: string, init?: RequestInit) {
-    const response = await fetch(`${this.baseUrl}/rest/v1/${pathname}`, {
-      ...init,
-      headers: {
-        apikey: this.serviceRoleKey,
-        Authorization: `Bearer ${this.serviceRoleKey}`,
-        "Content-Type": "application/json",
-        Prefer: "return=representation,resolution=merge-duplicates",
-        ...init?.headers,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Supabase releases respondio ${response.status}: ${await response.text()}`);
+    const method = (init?.method ?? "GET").toUpperCase();
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(`${this.baseUrl}/rest/v1/${pathname}`, {
+        ...init,
+        headers: {
+          apikey: this.serviceRoleKey,
+          Authorization: `Bearer ${this.serviceRoleKey}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation,resolution=merge-duplicates",
+          ...init?.headers,
+        },
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      const responseText = await response.text();
+      const canRetry =
+        method === "GET" &&
+        [502, 503, 504].includes(response.status) &&
+        attempt < 2;
+
+      if (!canRetry) {
+        throw new Error(
+          `Supabase releases respondio ${response.status}: ${responseText}`,
+        );
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
     }
-    return response;
+
+    throw new Error("Supabase releases no respondio despues de los reintentos.");
   }
 
   private releaseToRow(release: VisualRelease) {
@@ -318,6 +346,14 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
   async listReleases() {
     const response = await this.request("visual_catalog_releases?select=*&order=number.desc");
     return ((await response.json()) as Record<string, unknown>[]).map((row) => this.rowToRelease(row));
+  }
+
+  async getRelease(releaseId: string) {
+    const response = await this.request(
+      `visual_catalog_releases?id=eq.${encodeURIComponent(releaseId)}&select=*&limit=1`,
+    );
+    const [row] = (await response.json()) as Record<string, unknown>[];
+    return row ? this.rowToRelease(row) : null;
   }
 
   async reserveReleaseNumber() {
@@ -546,7 +582,7 @@ export async function listVisualReleases(env: Partial<AppEnv>) {
 }
 
 export async function getVisualRelease(env: Partial<AppEnv>, releaseId: string) {
-  const release = (await getStore(env).listReleases()).find((candidate) => candidate.id === releaseId);
+  const release = await getStore(env).getRelease(releaseId);
   if (!release) throw new Error("La release visual no existe.");
   return release;
 }
@@ -673,7 +709,7 @@ export async function restoreVisualRelease(env: Partial<AppEnv>, releaseId: stri
 export async function getActiveVisualRelease(env: Partial<AppEnv>) {
   const store = getStore(env);
   const activeId = await store.getActiveReleaseId();
-  return activeId ? (await store.listReleases()).find((release) => release.id === activeId) ?? null : null;
+  return activeId ? await store.getRelease(activeId) : null;
 }
 
 export async function getOrCreateLineVisualRelease(env: Partial<AppEnv>, saleOrderLineId: number) {

@@ -12,6 +12,7 @@ import {
   CONFIGURATOR_VALUE_IDS,
   getTrimSectionKeyBySourceValueId,
   hasSourceValueId,
+  isManConfiguratorValue,
 } from "@repo/shared/configurator-id-rules";
 import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
@@ -40,6 +41,8 @@ export type AutomationRenderScene = {
     blouse: AutomationRenderScene;
     pants: AutomationRenderScene;
   };
+  preserveGarmentSilhouette?: boolean;
+  hasDynamicNeck?: boolean;
   garmentAssetPath?: string;
   garmentDetailAssetPath?: string;
   garmentDetailAssetPaths?: string[];
@@ -765,6 +768,8 @@ const BLUSA_PESPUNTE_MODEL_ASSET_PATH =
 // Base temporal para Blusa y Uniforme mientras no exista un modelo de cuello seleccionado.
 const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+const BLUSA_MAN_BASE_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-man.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -839,6 +844,11 @@ function deriveSingleAutomationRenderScene(
       name.includes("color de tela base") ||
       name.includes("tela base"),
     );
+  const genderAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.gender,
+    (name) => name === "genero",
+  );
   const neckAttribute =
     session.attributes.find(
       (attribute) => matchesCatalogAttribute(catalog, "neckModel", attribute),
@@ -962,6 +972,7 @@ function deriveSingleAutomationRenderScene(
     );
 
   const selectedColor = findSelectedValue(colorAttribute, selectedValueIds);
+  const selectedGender = findSelectedValue(genderAttribute, selectedValueIds);
   const selectedGarment = findSelectedValue(garmentAttribute, selectedValueIds);
   const selectedSleeveModel = findSelectedValue(
     sleeveModelAttribute,
@@ -1078,7 +1089,12 @@ function deriveSingleAutomationRenderScene(
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentAssetPath = shouldUseClosedBlouseWithoutNeck
+  const shouldUseManBase =
+    session.graphicManifestKey.includes("blusa") &&
+    isManConfiguratorValue(selectedGender);
+  const garmentAssetPath = shouldUseManBase
+    ? BLUSA_MAN_BASE_ASSET_PATH
+    : shouldUseClosedBlouseWithoutNeck
     ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
     : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
@@ -1166,6 +1182,8 @@ function deriveSingleAutomationRenderScene(
   return {
     productName: session.productName,
     baseColorHex,
+    ...(shouldUseManBase ? { preserveGarmentSilhouette: true } : {}),
+    ...(hasDynamicNeck ? { hasDynamicNeck: true } : {}),
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),

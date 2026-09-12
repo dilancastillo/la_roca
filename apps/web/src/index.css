@@ -1546,6 +1546,38 @@ main {
   color: #8b1e16;
 }
 
+.catalog-condition-values {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid #cbd5dc;
+  padding: 7px;
+}
+
+.catalog-condition-values legend {
+  padding: 0 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.catalog-condition-values__options {
+  display: grid;
+  gap: 5px;
+  max-height: 156px;
+  overflow-y: auto;
+}
+
+.catalog-condition-values__options label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.catalog-condition-values__options input {
+  margin-top: 3px;
+}
+
 .catalog-condition-editor--compact {
   border-top: 1px dashed #cbd5dc;
   padding-top: 8px;
@@ -1668,6 +1700,11 @@ main {
   display: block;
 }
 
+.visual-source-canvas--man svg {
+  transform: scale(0.8);
+  transform-origin: center;
+}
+
 .visual-source-canvas [data-vc-id] {
   cursor: pointer;
   transition: opacity 120ms ease, filter 120ms ease;
@@ -1708,11 +1745,25 @@ main {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: translateY(2%) scale(0.96);
+  transform-origin: center;
+}
+
+.visual-runtime-preview img.visual-runtime-preview__reference--man {
+  transform: translateY(2%) scale(0.768);
 }
 
 .visual-runtime-preview .visual-runtime-preview__highlight {
   pointer-events: none;
   animation: visual-runtime-highlight-blink 720ms ease-in-out infinite;
+}
+
+.catalog-reference-selector {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #d6dfe6;
 }
 
 @keyframes visual-runtime-highlight-blink {

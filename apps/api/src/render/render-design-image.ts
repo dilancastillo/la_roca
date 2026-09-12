@@ -16,6 +16,20 @@ const TARGET_RECT = {
   width: 724,
   height: 980,
 };
+const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+const MAN_NECK_COMPOSITE_REGION = {
+  x: 230,
+  y: 50,
+  width: 440,
+  height: 460,
+};
+const MAN_BASE_UPPER_NECKLINE_ERASE_REGION = {
+  x: 307,
+  y: 125,
+  width: 268,
+  height: 8,
+};
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
   "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
@@ -4678,11 +4692,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   const layers: string[] = [
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,
   ];
-  const baseAssetPath = scene.neckAssetPath ?? scene.garmentAssetPath;
+  const baseAssetPath =
+    scene.neckAssetPath ??
+    (scene.preserveGarmentSilhouette
+      ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
+      : scene.garmentAssetPath);
+  const visualBaseAssetPath = scene.preserveGarmentSilhouette
+    ? scene.garmentAssetPath ?? baseAssetPath
+    : baseAssetPath;
 
-  if (baseAssetPath) {
+  if (visualBaseAssetPath) {
     const baseBuffer = await createTintedBaseBuffer(
-      baseAssetPath,
+      visualBaseAssetPath,
       scene.baseColorHex,
     );
     layers.push(
@@ -4690,6 +4711,27 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     );
   } else {
     layers.push(getFallbackGarmentSvg(scene.baseColorHex));
+  }
+
+  if (scene.preserveGarmentSilhouette) {
+    layers.push(
+      `<rect x="${MAN_BASE_UPPER_NECKLINE_ERASE_REGION.x}" y="${MAN_BASE_UPPER_NECKLINE_ERASE_REGION.y}" width="${MAN_BASE_UPPER_NECKLINE_ERASE_REGION.width}" height="${MAN_BASE_UPPER_NECKLINE_ERASE_REGION.height}" fill="${scene.baseColorHex}" />`,
+    );
+  }
+
+  if (scene.preserveGarmentSilhouette && scene.neckAssetPath) {
+    const neckCompositeBuffer = await createTintedBaseBuffer(
+      scene.neckAssetPath,
+      scene.baseColorHex,
+    );
+    layers.push(`
+      <defs>
+        <clipPath id="man-neck-composite-clip">
+          <rect x="${MAN_NECK_COMPOSITE_REGION.x}" y="${MAN_NECK_COMPOSITE_REGION.y}" width="${MAN_NECK_COMPOSITE_REGION.width}" height="${MAN_NECK_COMPOSITE_REGION.height}" />
+        </clipPath>
+      </defs>
+      <image href="${toDataUri(neckCompositeBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" clip-path="url(#man-neck-composite-clip)" />
+    `);
   }
 
   if (baseAssetPath) {
