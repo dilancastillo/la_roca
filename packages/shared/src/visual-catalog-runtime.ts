@@ -72,30 +72,17 @@ function areActivationConditionsSelected(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const alternativesByAttribute = new Map<number, Set<number>>();
-
-  for (const condition of conditions) {
-    const alternatives =
-      alternativesByAttribute.get(condition.attributeId) ?? new Set<number>();
-    condition.sourceValueIds.forEach((sourceValueId) =>
-      alternatives.add(sourceValueId),
-    );
-    alternativesByAttribute.set(condition.attributeId, alternatives);
-  }
-
-  return Array.from(alternativesByAttribute.entries()).every(
-    ([attributeId, alternatives]) => {
+  return conditions.every((condition) => {
     const selectedSourceIds = getSelectedSourceValueIds(
       session,
       selectedValueIds,
-      attributeId,
+      condition.attributeId,
     );
 
-    return Array.from(alternatives).some((sourceValueId) =>
+    return condition.sourceValueIds.some((sourceValueId) =>
       selectedSourceIds.has(sourceValueId),
     );
-    },
-  );
+  });
 }
 
 function isBindingSelected(
@@ -219,282 +206,18 @@ export function isThinVisualPolygonPoints(rawPoints: string | undefined) {
 
 function normalizeThinPolygonVisualStrokes(runtimeSvg: string) {
   return runtimeSvg.replace(/<polygon\b[^>]*>/g, (polygonMarkup) => {
-    const persistedLinearFill = polygonMarkup.match(
-      /fill:(__VC_TRIM_STROKE_\d+__)(!important)?;?/,
-    );
-
-    if (persistedLinearFill) {
-      const token = persistedLinearFill[1] ?? "";
-      const important = persistedLinearFill[2] ?? "";
-      const withDarkEdgeToken = polygonMarkup.includes(`stroke:${token}`)
-        ? polygonMarkup
-        : polygonMarkup.replace(
-            persistedLinearFill[0],
-            `fill:${token}${important};stroke:${token}${important};`,
-          );
-
-      return withDarkEdgeToken.includes("data-vc-linear-trim-polygon")
-        ? withDarkEdgeToken
-        : withDarkEdgeToken.replace(
-            /<polygon\b/i,
-            '<polygon data-vc-linear-trim-polygon="true"',
-          );
-    }
-
     const points = polygonMarkup.match(/\bpoints=(?:"([^"]*)"|'([^']*)')/i);
 
     if (!isThinVisualPolygonPoints(points?.[1] ?? points?.[2])) {
       return polygonMarkup;
     }
 
-    const normalizedMarkup = polygonMarkup.replace(
+    return polygonMarkup.replace(
       /stroke:(__VC_TRIM_STROKE_\d+__)(!important)?;?/g,
       (_declaration, token: string, important: string | undefined) =>
-        `fill:${token}${important ?? ""};stroke:${token}${important ?? ""};`,
-    );
-
-    return normalizedMarkup.replace(
-      /<polygon\b/i,
-      '<polygon data-vc-linear-trim-polygon="true"',
+        `fill:${token}${important ?? ""};`,
     );
   });
-}
-
-function normalizeNeckVectorStrokeWidths(runtimeSvg: string) {
-  return runtimeSvg.replace(
-    /<(path|rect|circle|ellipse|line|polyline|polygon|use)\b[^>]*__VC_TRIM_(?:FILL|STROKE)_\d+__[^>]*>/gi,
-    (elementMarkup) => {
-      const strokeStyle =
-        "stroke-width:3px!important;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;";
-      const styleMatch = elementMarkup.match(/\bstyle=("([^"]*)"|'([^']*)')/i);
-
-      if (styleMatch) {
-        const styleValue = styleMatch[2] ?? styleMatch[3] ?? "";
-        const quote = styleMatch[1]?.startsWith("'") ? "'" : '"';
-        return elementMarkup.replace(
-          styleMatch[0],
-          `style=${quote}${styleValue}${strokeStyle}${quote}`,
-        );
-      }
-
-      return elementMarkup.replace(/\s*\/>$|>$/, (ending: string) =>
-        ending === "/>"
-          ? ` style="${strokeStyle}"/>`
-          : ` style="${strokeStyle}">`,
-      );
-    },
-  );
-}
-
-const LINEAR_TRIM_MAIN_WIDTH = 10;
-const LINEAR_TRIM_SHADOW_WIDTH = 15;
-const LINEAR_TRIM_DARK_EDGE = "#003f59";
-const LINEAR_TRIM_COLOR_FACTOR = 0.78;
-
-function appendInlineSvgStyle(markup: string, declarations: string) {
-  const styleAttribute = /\sstyle=("([^"]*)"|'([^']*)')/i;
-
-  if (styleAttribute.test(markup)) {
-    return markup.replace(
-      styleAttribute,
-      (_attribute, _quotedStyle: string, doubleStyle: string, singleStyle: string) => {
-        const currentStyle = doubleStyle ?? singleStyle ?? "";
-        const separator =
-          currentStyle.length === 0 || currentStyle.endsWith(";") ? "" : ";";
-        return ` style="${currentStyle}${separator}${declarations}"`;
-      },
-    );
-  }
-
-  return markup.replace(/\s*\/>$/, ` style="${declarations}" />`);
-}
-
-function removeDuplicateSvgIdentity(markup: string) {
-  return markup
-    .replace(/\s+id=("[^"]*"|'[^']*')/i, "")
-    .replace(/\s+data-vc-id=("[^"]*"|'[^']*')/i, "");
-}
-
-function replaceLinearTrimStrokeToken(markup: string, stroke: string) {
-  return markup.replace(
-    /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-    `stroke:${stroke}!important;`,
-  );
-}
-
-function addLinearTrimTexture(
-  runtimeSvg: string,
-  trimSections: VisualRuntimeTrimSection[],
-) {
-  const geometryElement =
-    /<(path|line|polyline|polygon|rect|circle|ellipse)\b[^>]*stroke:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
-
-  return runtimeSvg.replace(
-    geometryElement,
-    (markup, _tagName: string, sourceValueId: string) => {
-      if (markup.includes('data-vc-linear-trim-polygon="true"')) {
-        return markup;
-      }
-
-      const trimColor = getTrimColor(trimSections, Number(sourceValueId));
-      if (!trimColor) {
-        return markup;
-      }
-      const linearTrimColor = darkenTrimColor(trimColor);
-
-      const visibility = markup.match(
-        /display:(__VC_VISIBILITY_\d+__)(!important)?;?/,
-      );
-      const visibilityStyle = visibility
-        ? ` style="display:${visibility[1]}${visibility[2] ?? ""};"`
-        : "";
-      const cleanMarkup = visibility ? markup.replace(visibility[0], "") : markup;
-      const commonStyle =
-        "fill:none!important;vector-effect:non-scaling-stroke;stroke-linecap:round!important;stroke-linejoin:round!important;";
-      const main = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(cleanMarkup, linearTrimColor),
-        `${commonStyle}stroke-width:${LINEAR_TRIM_MAIN_WIDTH}px!important;`,
-      );
-      const shadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        `${commonStyle}stroke-width:${LINEAR_TRIM_SHADOW_WIDTH}px!important;stroke-opacity:0.9!important;`,
-      );
-      const highlight = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(removeDuplicateSvgIdentity(cleanMarkup), "#ffffff"),
-        `${commonStyle}stroke-width:3.2px!important;stroke-dasharray:5 5!important;stroke-opacity:0.92!important;`,
-      );
-      const weaveShadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        `${commonStyle}stroke-width:2px!important;stroke-dasharray:5 5!important;stroke-dashoffset:5!important;stroke-opacity:0.72!important;`,
-      );
-
-      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${shadow}${main}${highlight}${weaveShadow}</g>`;
-    },
-  );
-}
-
-function createLinearTrimPolygonStitch(markup: string) {
-  const pointsAttribute = markup.match(/\bpoints=(?:"([^"]*)"|'([^']*)')/i);
-  const coordinates = (pointsAttribute?.[1] ?? pointsAttribute?.[2] ?? "")
-    .match(/-?(?:\d+\.?\d*|\.\d+)/g)
-    ?.map(Number);
-
-  if (coordinates?.length === 8) {
-    const points = Array.from({ length: 4 }, (_, index) => ({
-      x: coordinates[index * 2] ?? 0,
-      y: coordinates[index * 2 + 1] ?? 0,
-    }));
-    const start = {
-      x: ((points[0]?.x ?? 0) + (points[3]?.x ?? 0)) / 2,
-      y: ((points[0]?.y ?? 0) + (points[3]?.y ?? 0)) / 2,
-    };
-    const end = {
-      x: ((points[1]?.x ?? 0) + (points[2]?.x ?? 0)) / 2,
-      y: ((points[1]?.y ?? 0) + (points[2]?.y ?? 0)) / 2,
-    };
-
-    return `<line data-vc-linear-trim-stitch="true" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" pathLength="100" style="fill:none;stroke:#ffffff!important;stroke-width:2.6px!important;vector-effect:non-scaling-stroke;stroke-dasharray:1 2!important;stroke-linecap:round!important;pointer-events:none;"/>`;
-  }
-
-  return appendInlineSvgStyle(
-    removeDuplicateSvgIdentity(markup)
-      .replace(
-        /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-        "fill:none!important;",
-      )
-      .replace(
-        /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-        "stroke:#ffffff!important;",
-      ),
-    "stroke-width:2.6px!important;vector-effect:non-scaling-stroke;stroke-dasharray:1 2!important;stroke-linecap:round!important;pointer-events:none;",
-  ).replace(/<polygon\b/i, '<polygon data-vc-linear-trim-stitch="true"');
-}
-
-function addLinearTrimPolygonTexture(
-  runtimeSvg: string,
-  trimSections: VisualRuntimeTrimSection[],
-) {
-  const viewBox = runtimeSvg.match(
-    /\bviewBox=(?:"[\d.+-]+[ ,]+[\d.+-]+[ ,]+([\d.+-]+)[ ,]+[\d.+-]+"|'[\d.+-]+[ ,]+[\d.+-]+[ ,]+([\d.+-]+)[ ,]+[\d.+-]+')/i,
-  );
-  const sourceWidth = Number(viewBox?.[1] ?? viewBox?.[2] ?? 1080);
-  const patternSize = Math.max(8, sourceWidth / 105);
-  const lightStroke = patternSize * 0.16;
-  const darkStroke = patternSize * 0.11;
-  const texturedPolygon =
-    /<polygon\b[^>]*data-vc-linear-trim-polygon="true"[^>]*fill:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
-  let hasTexturedPolygon = false;
-  const texturedSvg = runtimeSvg.replace(
-    texturedPolygon,
-    (markup, sourceValueId: string) => {
-      const trimColor = getTrimColor(trimSections, Number(sourceValueId));
-      if (!trimColor) {
-        return markup;
-      }
-      const linearTrimColor = darkenTrimColor(trimColor);
-
-      hasTexturedPolygon = true;
-      const visibility = markup.match(
-        /display:(__VC_VISIBILITY_\d+__)(!important)?;?/,
-      );
-      const visibilityStyle = visibility
-        ? ` style="display:${visibility[1]}${visibility[2] ?? ""};"`
-        : "";
-      const cleanMarkup = visibility ? markup.replace(visibility[0], "") : markup;
-      const shadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup).replace(
-            /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "fill:none!important;",
-          ),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        "vector-effect:non-scaling-stroke;stroke-width:11px!important;stroke-linejoin:round!important;stroke-opacity:0.82!important;",
-      );
-      const main = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          cleanMarkup.replace(
-            /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            `fill:${linearTrimColor}!important;`,
-          ),
-          linearTrimColor,
-        ),
-        "vector-effect:non-scaling-stroke;stroke-width:7px!important;stroke-linejoin:round!important;",
-      );
-      const weave = appendInlineSvgStyle(
-        removeDuplicateSvgIdentity(cleanMarkup)
-          .replace(
-            /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "fill:url(#vc-linear-trim-weave)!important;",
-          )
-          .replace(
-            /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "stroke:none!important;",
-          ),
-        "opacity:0.96!important;pointer-events:none;",
-      );
-      const stitch = createLinearTrimPolygonStitch(cleanMarkup);
-
-      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${shadow}${main}${weave}${stitch}</g>`;
-    },
-  );
-
-  if (!hasTexturedPolygon) {
-    return texturedSvg;
-  }
-
-  const size = patternSize.toFixed(2);
-  const half = (patternSize / 2).toFixed(2);
-  const textureDefinition =
-    `<defs data-vc-linear-trim-defs="true"><pattern id="vc-linear-trim-weave" width="${size}" height="${size}" patternUnits="userSpaceOnUse"><path d="M0 ${size} L${size} 0" fill="none" stroke="#ffffff" stroke-width="${lightStroke.toFixed(2)}" opacity="0.95"/><path d="M0 0 L${size} ${size}" fill="none" stroke="${LINEAR_TRIM_DARK_EDGE}" stroke-width="${darkStroke.toFixed(2)}" opacity="0.82"/><circle cx="${half}" cy="${half}" r="${(patternSize * 0.08).toFixed(2)}" fill="#ffffff" opacity="0.9"/></pattern></defs>`;
-
-  return texturedSvg.replace(/<svg\b[^>]*>/i, (svgTag) => `${svgTag}${textureDefinition}`);
 }
 
 function getTrimColor(
@@ -506,24 +229,6 @@ function getTrimColor(
       section.sourceValueId === sourceValueId ||
       section.valueId === sourceValueId,
   )?.colorHex;
-}
-
-function darkenTrimColor(colorHex: string) {
-  const normalized = colorHex.trim().match(/^#([0-9a-f]{6})$/i);
-  if (!normalized?.[1]) {
-    return colorHex;
-  }
-
-  const channels = normalized[1].match(/.{2}/g) ?? [];
-  const darkened = channels
-    .map((channel) =>
-      Math.round(Number.parseInt(channel, 16) * LINEAR_TRIM_COLOR_FACTOR)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("");
-
-  return `#${darkened}`;
 }
 
 export function getSelectedVisualDefinitions(
@@ -575,13 +280,6 @@ export function materializeVisualDefinitionSvg(
   let runtimeSvg = normalizeThinPolygonVisualStrokes(
     normalizeImpossibleLinePaints(definition.runtimeSvg),
   );
-
-  if (definition.slot === "neck") {
-    runtimeSvg = normalizeNeckVectorStrokeWidths(runtimeSvg);
-  }
-
-  runtimeSvg = addLinearTrimPolygonTexture(runtimeSvg, trimSections);
-  runtimeSvg = addLinearTrimTexture(runtimeSvg, trimSections);
 
   definition.selectedElementIds.forEach((elementId, index) => {
     const conditions =

@@ -184,156 +184,9 @@ describe("runtime del catalogo visual general", () => {
 
     expect(svg).toContain("display:inline");
     expect(svg).toContain("display:none");
-    expect(svg).toContain("stroke:#0e2943");
-    expect(svg).toContain('data-vc-linear-trim-texture="cord"');
-    expect(svg).toContain("stroke-width:10px!important");
-    expect(svg).toContain("stroke-dasharray:5 5!important");
+    expect(svg).toContain("stroke:#123456");
     expect(svg).not.toContain("__VC_TRIM_STROKE_1000__");
     expect(svg).not.toContain("stroke:none");
-  });
-
-  it("trata condiciones repetidas del mismo atributo como alternativas OR", () => {
-    const definition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    definition.selectedElementIds = ["auxiliary-left"];
-    definition.elementPaints = {
-      "auxiliary-left": {
-        mode: "trim_stroke",
-        trimSourceValueId: 1001,
-        visibilityConditions: [
-          {
-            attributeId: 90,
-            attributeName: "Seccion de vivo",
-            sourceValueIds: [1000],
-            valueNames: ["Cuello"],
-          },
-          {
-            attributeId: 90,
-            attributeName: "Seccion de vivo",
-            sourceValueIds: [1001],
-            valueNames: ["Cogotera"],
-          },
-        ],
-      },
-    };
-    definition.runtimeSvg =
-      '<svg><path style="display:__VC_VISIBILITY_0__;stroke:__VC_TRIM_STROKE_1001__!important;"/></svg>';
-
-    const svg = decodeURIComponent(
-      materializeVisualDefinitionSvg(
-        definition,
-        "#aabbcc",
-        [{ valueId: 501, sourceValueId: 1001, colorHex: "#123456" }],
-        { session, selectedValueIds: session.selectedValueIds },
-      ).split(",")[1] ?? "",
-    );
-
-    expect(svg).toContain("display:inline");
-    expect(svg).not.toContain("display:none");
-  });
-
-  it("aplica grosor y textura solo a Vivo, linea", () => {
-    const definition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    definition.selectedElementIds = ["linear", "filled"];
-    definition.elementPaints = {
-      linear: {
-        mode: "trim_stroke",
-        trimSourceValueId: 1001,
-        visibilityConditions: [],
-      },
-      filled: {
-        mode: "trim_fill",
-        trimSourceValueId: 1000,
-        visibilityConditions: [],
-      },
-    };
-    definition.runtimeSvg =
-      '<svg><path id="linear" style="display:__VC_VISIBILITY_0__;fill:none;stroke:__VC_TRIM_STROKE_1001__!important;"/><path id="filled" style="display:__VC_VISIBILITY_1__;fill:__VC_TRIM_FILL_1000__!important;"/></svg>';
-
-    const svg = decodeURIComponent(
-      materializeVisualDefinitionSvg(
-        definition,
-        "#aabbcc",
-        [
-          { valueId: 501, sourceValueId: 1001, colorHex: "#123456" },
-          { valueId: 502, sourceValueId: 1000, colorHex: "#654321" },
-        ],
-        { session, selectedValueIds: session.selectedValueIds },
-      ).split(",")[1] ?? "",
-    );
-
-    expect(svg.match(/data-vc-linear-trim-texture="cord"/g)).toHaveLength(1);
-    expect(svg).toContain("stroke:#0e2943!important");
-    expect(svg).toContain("fill:#654321!important");
-    expect(svg).not.toContain("stroke:#654321");
-  });
-
-  it("texturiza los vivos lineales exportados como poligonos angostos", () => {
-    const definition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    definition.selectedElementIds = ["linear-polygon"];
-    definition.elementPaints = {
-      "linear-polygon": {
-        mode: "trim_stroke",
-        trimSourceValueId: 1001,
-        visibilityConditions: [],
-      },
-    };
-    definition.runtimeSvg =
-      '<svg viewBox="0 0 1080 1350"><polygon points="0,0 100,100 95,105 -5,5" style="display:__VC_VISIBILITY_0__;fill:__VC_TRIM_STROKE_1001__!important;"/></svg>';
-
-    const svg = decodeURIComponent(
-      materializeVisualDefinitionSvg(definition, "#aabbcc", [
-        { valueId: 501, sourceValueId: 1001, colorHex: "#123456" },
-      ]).split(",")[1] ?? "",
-    );
-
-    expect(svg).toContain('data-vc-linear-trim-texture="woven"');
-    expect(svg).toContain('id="vc-linear-trim-weave"');
-    expect(svg).toContain("fill:#0e2943!important");
-    expect(svg).toContain("stroke:#0e2943!important");
-    expect(svg).toContain("stroke-width:7px!important");
-    expect(svg).toContain("stroke:#003f59!important");
-    expect(svg).toContain("fill:url(#vc-linear-trim-weave)!important");
-    expect(svg).toContain('data-vc-linear-trim-stitch="true"');
-    expect(svg).toContain('pathLength="100"');
-    expect(svg).toContain("stroke-dasharray:1 2!important");
-  });
-
-  it("mantiene gruesos los vectores seleccionados del cuello sin afectar otros componentes", () => {
-    const neckDefinition = makeDefinition(
-      "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
-      "component",
-      [],
-    );
-    const neckSvg = decodeURIComponent(
-      materializeVisualDefinitionSvg(
-        neckDefinition,
-        "#aabbcc",
-        [],
-      ).split(",")[1] ?? "",
-    );
-    const pocketSvg = decodeURIComponent(
-      materializeVisualDefinitionSvg(
-        { ...neckDefinition, slot: "lower_pocket" },
-        "#aabbcc",
-        [],
-      ).split(",")[1] ?? "",
-    );
-
-    expect(neckSvg.match(/stroke-width:3px!important/g)).toHaveLength(2);
-    expect(neckSvg).toContain("vector-effect:non-scaling-stroke");
-    expect(pocketSvg).not.toContain("stroke-width:3px!important");
   });
 
   it("conserva el bolsillo original cuando la linea no resuelve el color de vivo", () => {
@@ -388,7 +241,7 @@ describe("runtime del catalogo visual general", () => {
     expect(svgWithoutTrim).toContain(".st1{fill:none;stroke:#000}");
     expect(svgWithoutTrim).not.toContain("stroke:none");
     expect(svgWithoutTrim).not.toMatch(/__VC_[A-Z0-9_]+__/);
-    expect(svgWithTrim.match(/stroke:#0e2943/g)).toHaveLength(2);
+    expect(svgWithTrim.match(/stroke:#123456/g)).toHaveLength(2);
     expect(svgWithTrim).toContain("stroke:#654321");
     expect(svgWithTrim).not.toContain("fill:#654321");
   });

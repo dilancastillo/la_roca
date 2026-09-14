@@ -30,7 +30,6 @@ export type IndexedVisualSvg = {
   };
 };
 
-
 type RuntimeSvgInput = {
   normalizedSvg: string;
   selectedElementIds: string[];
@@ -186,6 +185,7 @@ export function indexVisualSvg(svgText: string): IndexedVisualSvg {
   }
 
   root.setAttribute("xmlns", SVG_NAMESPACE);
+
   return {
     normalizedSvg: serialize(document),
     elements: indexedElements,
