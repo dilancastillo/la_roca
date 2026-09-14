@@ -1,6 +1,8 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
@@ -490,6 +492,8 @@ function ConditionsEditor({
 }
 
 export function VisualCatalogPage() {
+  const sourceCanvasRef = useRef<HTMLDivElement>(null);
+  const [silhouetteElementId, setSilhouetteElementId] = useState<string | null>(null);
   const authQuery = useAuthSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -512,6 +516,7 @@ export function VisualCatalogPage() {
   >([]);
   const [products, setProducts] = useState<VisualCatalogProduct[]>([]);
   const [productsRefreshedAt, setProductsRefreshedAt] = useState("");
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [slot, setSlot] = useState<VisualSlot>("neck");
   const [layer, setLayer] = useState<VisualLayer>("component");
@@ -633,10 +638,13 @@ export function VisualCatalogPage() {
     slot,
   ]);
   const trimOptions = useMemo(
-    () => getTrimOptions(compatibleAttributes, slot),
-    [compatibleAttributes, slot],
+    () => getTrimOptions(commonAttributes, slot),
+    [commonAttributes, slot],
   );
   const referenceAssetSrc = getReferenceAsset(slot);
+  const uploadedSilhouetteIsActive = Boolean(
+    silhouetteElementId && selectedElementIds.includes(silhouetteElementId),
+  );
   const selectableMarkup = useMemo(
     () =>
       indexedSvg
@@ -647,6 +655,33 @@ export function VisualCatalogPage() {
         : "",
     [indexedSvg, selectedElementIds],
   );
+  useLayoutEffect(() => {
+    const svg = sourceCanvasRef.current?.querySelector("svg");
+    if (!svg) {
+      setSilhouetteElementId(null);
+      return;
+    }
+
+    let largestId: string | null = null;
+    let largestArea = 0;
+    const drawables = Array.from(
+      svg.querySelectorAll<SVGGraphicsElement>("[data-vc-id]"),
+    );
+    for (const element of drawables) {
+      try {
+        const bounds = element.getBBox();
+        const area = bounds.width * bounds.height;
+        const id = element.dataset.vcId;
+        if (id && area > largestArea) {
+          largestId = id;
+          largestArea = area;
+        }
+      } catch {
+        // Un nodo sin caja visual no puede representar la silueta principal.
+      }
+    }
+    setSilhouetteElementId(largestId);
+  }, [indexedSvg, selectableMarkup]);
   const runtimePreviewSrc = useMemo(() => {
     if (!indexedSvg || selectedElementIds.length === 0) {
       return "";
@@ -659,12 +694,14 @@ export function VisualCatalogPage() {
           selectedElementIds,
           elementPaints,
           placement,
+          allowIncompletePaints: true,
+          silhouetteElementId,
         }),
       );
     } catch {
       return "";
     }
-  }, [elementPaints, indexedSvg, placement, selectedElementIds]);
+  }, [elementPaints, indexedSvg, placement, selectedElementIds, silhouetteElementId]);
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -731,9 +768,17 @@ export function VisualCatalogPage() {
   }
 
   async function refreshProducts(forceRefresh = false) {
-    const result = await fetchVisualCatalogProducts(forceRefresh);
-    setProducts(result.products);
-    setProductsRefreshedAt(result.refreshedAt);
+    setIsLoadingProducts(true);
+    try {
+      let result = await fetchVisualCatalogProducts(forceRefresh);
+      if (!forceRefresh && result.products.length === 0) {
+        result = await fetchVisualCatalogProducts(true);
+      }
+      setProducts(result.products);
+      setProductsRefreshedAt(result.refreshedAt);
+    } finally {
+      setIsLoadingProducts(false);
+    }
   }
 
   async function refreshCatalog(forceOdooRefresh = false) {
@@ -1114,6 +1159,7 @@ export function VisualCatalogPage() {
         selectedElementIds,
         elementPaints,
         placement,
+        silhouetteElementId,
       });
       const mutation = {
         displayName: displayName.trim() || selectedValue.name,
@@ -1367,7 +1413,9 @@ export function VisualCatalogPage() {
                 ))}
                 {compatibleProducts.length === 0 ? (
                   <p className="catalog-empty">
-                    No hay productos compatibles cargados desde Odoo.
+                    {isLoadingProducts
+                      ? "Cargando productos y atributos desde Odoo..."
+                      : "No hay productos compatibles cargados desde Odoo."}
                   </p>
                 ) : null}
               </fieldset>
@@ -1569,6 +1617,7 @@ export function VisualCatalogPage() {
             </div>
 
             <div
+              ref={sourceCanvasRef}
               className="visual-source-canvas"
               onClick={handleSvgElementClick}
               dangerouslySetInnerHTML={{
@@ -1581,7 +1630,9 @@ export function VisualCatalogPage() {
             <div className="visual-preview-panel">
               <h2>Resultado</h2>
               <div className="visual-runtime-preview">
-                <img src={referenceAssetSrc} alt="" />
+                {!uploadedSilhouetteIsActive || !runtimePreviewSrc ? (
+                  <img src={referenceAssetSrc} alt="" />
+                ) : null}
                 {runtimePreviewSrc ? (
                   <img src={runtimePreviewSrc} alt="" />
                 ) : null}

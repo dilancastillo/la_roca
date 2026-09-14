@@ -112,6 +112,32 @@ describe("svg-editor", () => {
     ).toContain("display:inline");
   });
 
+  it("mantiene la vista previa visible mientras falta elegir la seccion del vivo", () => {
+    const indexed = indexVisualSvg(SOURCE_SVG);
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["body", "trim"],
+      elementPaints: {
+        body: { mode: "preserve", visibilityConditions: [] },
+        trim: { mode: "trim_stroke", visibilityConditions: [] },
+      },
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+      allowIncompletePaints: true,
+    });
+
+    expect(runtimeSvg).toContain('id="body"');
+    expect(runtimeSvg).toContain('id="trim"');
+    expect(runtimeSvg).not.toContain("__VC_TRIM_STROKE_");
+  });
+
   it("crea un resaltado neon aislado para la vista previa", () => {
     const indexed = indexVisualSvg(SOURCE_SVG);
     const runtimeSvg = buildRuntimeVisualSvg({
@@ -284,7 +310,8 @@ describe("svg-editor", () => {
     expect(runtimeSvg).toContain("__VC_TRIM_STROKE_9001__");
     expect(runtimeSvg).toContain("__VC_TRIM_FILL_9002__");
     expect(materializedSvg).toContain("fill:#aabbcc!important");
-    expect(materializedSvg).toContain("stroke:#123456!important");
+    expect(materializedSvg).toContain("stroke:#0e2943!important");
+    expect(materializedSvg).toContain('data-vc-linear-trim-texture="cord"');
     expect(materializedSvg).toContain("fill:#654321!important");
     expect(materializedSvg).toContain("display:inline!important");
     expect(materializedSvg).toContain("display:none!important");
@@ -417,6 +444,35 @@ describe("svg-editor", () => {
     expect(runtimeSvg).toContain("stroke:__VC_TRIM_STROKE_633__!important");
   });
 
+  it("marca la silueta seleccionada para reemplazar la base del laboratorio", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <path d="M10 10 H90 V90 H10 Z" />
+        <path d="M40 10 L50 30 L60 10" />
+      </svg>
+    `);
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["vc-element-1", "vc-element-2"],
+      elementPaints: {
+        "vc-element-1": { mode: "preserve", visibilityConditions: [] },
+        "vc-element-2": { mode: "preserve", visibilityConditions: [] },
+      },
+      silhouetteElementId: "vc-element-1",
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+
+    expect(runtimeSvg).toContain('data-vc-replaces-base-silhouette="true"');
+  });
+
   it("corrige al materializar runtimes historicos con vivos lineales en poligonos", () => {
     const definition = {
       id: "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
@@ -455,8 +511,9 @@ describe("svg-editor", () => {
       ]).split(",")[1] ?? "",
     );
 
-    expect(materializedSvg).toContain("fill:#00a6d6!important");
-    expect(materializedSvg).not.toContain("stroke:#00a6d6!important");
+    expect(materializedSvg).toContain("fill:#0081a7!important");
+    expect(materializedSvg).toContain("stroke:#003f59!important");
+    expect(materializedSvg).toContain('data-vc-linear-trim-texture="woven"');
     expect(materializedSvg).not.toContain("__VC_TRIM_STROKE_1967__");
   });
 });

@@ -13,6 +13,15 @@ const TARGET_RECT = {
   width: 724,
   height: 980,
 };
+const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const CLOSED_NO_COLLAR_MASK_CLOSURE = {
+  x1: 379,
+  x2: 694,
+  y: 146,
+  thickness: 4,
+  sourceWidth: 1080,
+  sourceHeight: 1350,
+};
 
 export type OverlayRegion = {
   x: number;
@@ -2642,8 +2651,9 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
-async function getInteriorMask(src: string) {
-  const existing = maskCache.get(src);
+async function getInteriorMask(src: string, closeSmallGaps = false) {
+  const cacheKey = `${src}::close-gaps=${closeSmallGaps}`;
+  const existing = maskCache.get(cacheKey);
   if (existing) {
     return await existing;
   }
@@ -2671,8 +2681,56 @@ async function getInteriorMask(src: string) {
       }
     }
 
+    const floodBarrier = closeSmallGaps ? new Uint8Array(ink) : ink;
+    if (closeSmallGaps) {
+      const radius = 4;
+      for (let index = 0; index < pixelCount; index += 1) {
+        if (!ink[index]) continue;
+        const centerX = index % width;
+        const centerY = Math.floor(index / width);
+        for (let y = Math.max(0, centerY - radius); y <= Math.min(height - 1, centerY + radius); y += 1) {
+          for (let x = Math.max(0, centerX - radius); x <= Math.min(width - 1, centerX + radius); x += 1) {
+            floodBarrier[y * width + x] = 1;
+          }
+        }
+      }
+    }
+
+    if (getFileNameFromSource(src) === CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+      const scaleX = width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
+      const scaleY = height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
+      const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
+      const endX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x2 * scaleX);
+      const centerY = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.y * scaleY);
+      const halfThickness = Math.max(
+        1,
+        Math.ceil(
+          (CLOSED_NO_COLLAR_MASK_CLOSURE.thickness * scaleY) / 2,
+        ),
+      );
+
+      for (
+        let y = Math.max(0, centerY - halfThickness);
+        y <= Math.min(height - 1, centerY + halfThickness);
+        y += 1
+      ) {
+        for (
+          let x = Math.max(0, startX);
+          x <= Math.min(width - 1, endX);
+          x += 1
+        ) {
+          ink[y * width + x] = 1;
+        }
+      }
+    }
+
     function enqueue(index: number) {
-      if (index < 0 || index >= pixelCount || ink[index] || outside[index]) {
+      if (
+        index < 0 ||
+        index >= pixelCount ||
+        floodBarrier[index] ||
+        outside[index]
+      ) {
         return;
       }
 
@@ -2724,10 +2782,34 @@ async function getInteriorMask(src: string) {
 
     const maskImageData = maskContext.createImageData(width, height);
     const maskData = maskImageData.data;
+    const closingRadius = 4;
 
     for (let index = 0; index < pixelCount; index += 1) {
       if (ink[index] || outside[index]) {
         continue;
+      }
+
+      if (closeSmallGaps) {
+        const centerX = index % width;
+        const centerY = Math.floor(index / width);
+        let touchesOutside = false;
+        for (
+          let y = Math.max(0, centerY - closingRadius);
+          y <= Math.min(height - 1, centerY + closingRadius) && !touchesOutside;
+          y += 1
+        ) {
+          for (
+            let x = Math.max(0, centerX - closingRadius);
+            x <= Math.min(width - 1, centerX + closingRadius);
+            x += 1
+          ) {
+            if (outside[y * width + x]) {
+              touchesOutside = true;
+              break;
+            }
+          }
+        }
+        if (touchesOutside) continue;
       }
 
       const offset = index * 4;
@@ -2741,7 +2823,7 @@ async function getInteriorMask(src: string) {
     return maskCanvas;
   })();
 
-  maskCache.set(src, promise);
+  maskCache.set(cacheKey, promise);
   return await promise;
 }
 
@@ -2980,8 +3062,9 @@ async function drawTintedBaseFromAsset(
   context: CanvasRenderingContext2D,
   src: string,
   fillColor: string,
+  includeOutline = true,
 ) {
-  const baseCanvas = await createTintedBaseCanvas(src, fillColor);
+  const baseCanvas = await createTintedBaseCanvas(src, fillColor, includeOutline);
   context.drawImage(baseCanvas, 0, 0);
 }
 
@@ -4711,9 +4794,13 @@ function allowsBackNeckTrim(sourceSrc: string) {
   return !noBackNeckTrimFileNames.has(getFileNameFromSource(sourceSrc));
 }
 
-export async function createTintedBaseCanvas(src: string, fillColor: string) {
+export async function createTintedBaseCanvas(
+  src: string,
+  fillColor: string,
+  includeOutline = true,
+) {
   const processed = await getProcessedImage(src);
-  const mask = await getInteriorMask(src);
+  const mask = await getInteriorMask(src, !includeOutline);
   const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
   const tintCanvas = document.createElement("canvas");
@@ -4756,17 +4843,19 @@ export async function createTintedBaseCanvas(src: string, fillColor: string) {
     drawHeight,
   );
 
-  tintContext.drawImage(
-    processed.canvas,
-    bounds.x,
-    bounds.y,
-    bounds.width,
-    bounds.height,
-    drawX,
-    drawY,
-    drawWidth,
-    drawHeight,
-  );
+  if (includeOutline) {
+    tintContext.drawImage(
+      processed.canvas,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+    );
+  }
 
   return tintCanvas;
 }
@@ -4797,7 +4886,12 @@ async function composeSingleDesign(
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
 
   if (baseAssetSrc) {
-    await drawTintedBaseFromAsset(context, baseAssetSrc, scene.baseColorHex);
+    await drawTintedBaseFromAsset(
+      context,
+      baseAssetSrc,
+      scene.baseColorHex,
+      !scene.suppressGarmentBaseOutline,
+    );
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
     drawGarmentBase(context, "transparent");
@@ -4914,7 +5008,8 @@ async function composeSingleDesign(
       scene,
       isLowerCollarSection,
     );
-    const backNeckTrimColor = allowsBackNeckTrim(baseAssetSrc)
+    const backNeckTrimColor =
+      !scene.suppressGarmentBaseOutline && allowsBackNeckTrim(baseAssetSrc)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
     const lowerPocketFileName = scene.lowerPocketImageSrc

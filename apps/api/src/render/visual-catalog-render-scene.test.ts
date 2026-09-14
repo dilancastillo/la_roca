@@ -123,6 +123,31 @@ describe("catalogo visual en la escena de automatizacion", () => {
     ).not.toBe(true);
   });
 
+  it("usa como base una definicion que contiene una silueta seleccionada", () => {
+    const markedRuntimeSvg = runtimeSvg.replace(
+      "<path ",
+      '<path data-vc-replaces-base-silhouette="true" ',
+    );
+    const scene = deriveAutomationRenderScene(
+      {
+        ...session,
+        visualDefinitions: session.visualDefinitions?.map((definition) => ({
+          ...definition,
+          runtimeSvg: markedRuntimeSvg,
+        })),
+      },
+      session.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).toMatch(/^data:image\/svg\+xml/);
+    expect(scene.suppressGarmentBaseOutline).toBe(true);
+    expect(
+      scene.garmentDetailAssetPaths?.some((assetPath) =>
+        assetPath.startsWith("data:image/svg+xml"),
+      ),
+    ).toBe(true);
+  });
+
   it("rasteriza el SVG dinamico en la imagen que se guarda en Odoo", async () => {
     const scene = deriveAutomationRenderScene(
       session,

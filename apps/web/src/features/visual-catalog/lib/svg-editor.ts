@@ -30,11 +30,14 @@ export type IndexedVisualSvg = {
   };
 };
 
+
 type RuntimeSvgInput = {
   normalizedSvg: string;
   selectedElementIds: string[];
   elementPaints: Record<string, VisualElementPaint>;
   placement: VisualPlacement;
+  allowIncompletePaints?: boolean;
+  silhouetteElementId?: string | null;
 };
 
 function parseSvg(svgText: string) {
@@ -185,7 +188,6 @@ export function indexVisualSvg(svgText: string): IndexedVisualSvg {
   }
 
   root.setAttribute("xmlns", SVG_NAMESPACE);
-
   return {
     normalizedSvg: serialize(document),
     elements: indexedElements,
@@ -225,6 +227,7 @@ function applyElementPaint(
   element: Element,
   paint: VisualElementPaint | undefined,
   visibilityToken: string,
+  allowIncompletePaints = false,
 ) {
   if (paint?.visibilityConditions.length) {
     appendImportantStyle(
@@ -265,6 +268,9 @@ function applyElementPaint(
   }
 
   if (paint.trimSourceValueId === undefined) {
+    if (allowIncompletePaints) {
+      return;
+    }
     throw new Error(
       "Cada elemento de vivo debe vincularse con una opcion de Seccion de vivo.",
     );
@@ -288,6 +294,8 @@ export function buildRuntimeVisualSvg({
   selectedElementIds,
   elementPaints,
   placement,
+  allowIncompletePaints = false,
+  silhouetteElementId = null,
 }: RuntimeSvgInput) {
   if (selectedElementIds.length === 0) {
     throw new Error("Selecciona al menos un elemento del SVG.");
@@ -334,7 +342,11 @@ export function buildRuntimeVisualSvg({
       element,
       elementPaints[elementId],
       getVisualElementVisibilityToken(selectedElementIds.indexOf(elementId)),
+      allowIncompletePaints,
     );
+    if (elementId === silhouetteElementId) {
+      element.setAttribute("data-vc-replaces-base-silhouette", "true");
+    }
     element.removeAttribute("data-vc-id");
     element.removeAttribute("data-vc-selected");
   });

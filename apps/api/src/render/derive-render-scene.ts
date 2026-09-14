@@ -41,6 +41,7 @@ export type AutomationRenderScene = {
     pants: AutomationRenderScene;
   };
   garmentAssetPath?: string;
+  suppressGarmentBaseOutline?: boolean;
   garmentDetailAssetPath?: string;
   garmentDetailAssetPaths?: string[];
   bootAssetPath?: string;
@@ -1077,9 +1078,14 @@ function deriveSingleAutomationRenderScene(
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckAssetPath);
+  const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
+    (definition) => definition.replacesBaseSilhouette,
+  );
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentAssetPath = shouldUseClosedBlouseWithoutNeck
-    ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
+  const garmentAssetPath = dynamicBaseSilhouette
+    ? dynamicBaseSilhouette.svgDataUri
+    : shouldUseClosedBlouseWithoutNeck
+      ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
     : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
@@ -1167,6 +1173,9 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
+    ...(dynamicBaseSilhouette
+      ? { suppressGarmentBaseOutline: true }
+      : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),

@@ -16,6 +16,15 @@ const TARGET_RECT = {
   width: 724,
   height: 980,
 };
+const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const CLOSED_NO_COLLAR_MASK_CLOSURE = {
+  x1: 379,
+  x2: 694,
+  y: 146,
+  thickness: 4,
+  sourceWidth: 1080,
+  sourceHeight: 1350,
+};
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
   "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
@@ -2461,7 +2470,11 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
-function computeInteriorMask(processed: ProcessedImage) {
+function computeInteriorMask(
+  processed: ProcessedImage,
+  assetPath: string,
+  closeSmallGaps = false,
+) {
   const pixelCount = processed.width * processed.height;
   const ink = new Uint8Array(pixelCount);
   const outside = new Uint8Array(pixelCount);
@@ -2473,8 +2486,62 @@ function computeInteriorMask(processed: ProcessedImage) {
     }
   }
 
+  const floodBarrier = closeSmallGaps ? new Uint8Array(ink) : ink;
+  if (closeSmallGaps) {
+    const radius = 4;
+    for (let index = 0; index < pixelCount; index += 1) {
+      if (!ink[index]) continue;
+      const centerX = index % processed.width;
+      const centerY = Math.floor(index / processed.width);
+      for (
+        let y = Math.max(0, centerY - radius);
+        y <= Math.min(processed.height - 1, centerY + radius);
+        y += 1
+      ) {
+        for (
+          let x = Math.max(0, centerX - radius);
+          x <= Math.min(processed.width - 1, centerX + radius);
+          x += 1
+        ) {
+          floodBarrier[y * processed.width + x] = 1;
+        }
+      }
+    }
+  }
+
+  if (getAssetFileName(assetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+    const scaleX = processed.width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
+    const scaleY = processed.height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
+    const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
+    const endX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x2 * scaleX);
+    const centerY = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.y * scaleY);
+    const halfThickness = Math.max(
+      1,
+      Math.ceil((CLOSED_NO_COLLAR_MASK_CLOSURE.thickness * scaleY) / 2),
+    );
+
+    for (
+      let y = Math.max(0, centerY - halfThickness);
+      y <= Math.min(processed.height - 1, centerY + halfThickness);
+      y += 1
+    ) {
+      for (
+        let x = Math.max(0, startX);
+        x <= Math.min(processed.width - 1, endX);
+        x += 1
+      ) {
+        ink[y * processed.width + x] = 1;
+      }
+    }
+  }
+
   function enqueue(index: number) {
-    if (index < 0 || index >= pixelCount || ink[index] || outside[index]) {
+    if (
+      index < 0 ||
+      index >= pixelCount ||
+      floodBarrier[index] ||
+      outside[index]
+    ) {
       return;
     }
     outside[index] = 1;
@@ -2507,10 +2574,35 @@ function computeInteriorMask(processed: ProcessedImage) {
   }
 
   const mask = new Uint8ClampedArray(pixelCount * 4);
+  const closingRadius = 4;
 
   for (let index = 0; index < pixelCount; index += 1) {
     if (ink[index] || outside[index]) {
       continue;
+    }
+
+    if (closeSmallGaps) {
+      const centerX = index % processed.width;
+      const centerY = Math.floor(index / processed.width);
+      let touchesOutside = false;
+      for (
+        let y = Math.max(0, centerY - closingRadius);
+        y <= Math.min(processed.height - 1, centerY + closingRadius) &&
+        !touchesOutside;
+        y += 1
+      ) {
+        for (
+          let x = Math.max(0, centerX - closingRadius);
+          x <= Math.min(processed.width - 1, centerX + closingRadius);
+          x += 1
+        ) {
+          if (outside[y * processed.width + x]) {
+            touchesOutside = true;
+            break;
+          }
+        }
+      }
+      if (touchesOutside) continue;
     }
 
     const offset = index * 4;
@@ -2564,9 +2656,13 @@ async function placeProcessedBufferOnCanvas(
     .toBuffer();
 }
 
-async function createTintedBaseBuffer(assetPath: string, fillColor: string) {
+async function createTintedBaseBuffer(
+  assetPath: string,
+  fillColor: string,
+  includeOutline = true,
+) {
   const processed = await loadProcessedImage(assetPath);
-  const mask = computeInteriorMask(processed);
+  const mask = computeInteriorMask(processed, assetPath, !includeOutline);
   const tint = new Uint8ClampedArray(processed.data.length);
   const color = sharp({
     create: { width: 1, height: 1, channels: 4, background: fillColor },
@@ -2585,7 +2681,7 @@ async function createTintedBaseBuffer(assetPath: string, fillColor: string) {
       tint[offset + 3] = alpha ?? 255;
     }
 
-    if ((processed.data[offset + 3] ?? 0) > 0) {
+    if (includeOutline && (processed.data[offset + 3] ?? 0) > 0) {
       tint[offset] = processed.data[offset] ?? 0;
       tint[offset + 1] = processed.data[offset + 1] ?? 0;
       tint[offset + 2] = processed.data[offset + 2] ?? 0;
@@ -4684,6 +4780,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     const baseBuffer = await createTintedBaseBuffer(
       baseAssetPath,
       scene.baseColorHex,
+      !scene.suppressGarmentBaseOutline,
     );
     layers.push(
       `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
@@ -4837,7 +4934,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isLowerCollarSection,
     );
-    const backNeckTrimColor = allowsBackNeckTrim(baseAssetPath)
+    const backNeckTrimColor =
+      !scene.suppressGarmentBaseOutline && allowsBackNeckTrim(baseAssetPath)
       ? getTrimSectionColor(scene, isBackNeckTrimSection)
       : undefined;
     const lowerPocketFileName = scene.lowerPocketAssetPath

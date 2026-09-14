@@ -59,6 +59,7 @@ export type PreviewScene = {
     pants: PreviewScene;
   };
   garmentImageSrc?: string | undefined;
+  suppressGarmentBaseOutline?: boolean | undefined;
   garmentDetailImageSrc?: string | undefined;
   garmentDetailImageSrcs?: string[] | undefined;
   bootImageSrc?: string | undefined;
@@ -1944,9 +1945,14 @@ function deriveSingleConfiguratorUi(
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckImageSrc);
+  const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
+    (definition) => definition.replacesBaseSilhouette,
+  );
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentImageSrc = shouldUseClosedBlouseWithoutNeck
-    ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
+  const garmentImageSrc = dynamicBaseSilhouette
+    ? dynamicBaseSilhouette.svgDataUri
+    : shouldUseClosedBlouseWithoutNeck
+      ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
     : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
@@ -2047,6 +2053,9 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
+      ...(dynamicBaseSilhouette
+        ? { suppressGarmentBaseOutline: true }
+        : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),
