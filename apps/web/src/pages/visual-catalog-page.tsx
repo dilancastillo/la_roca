@@ -1,6 +1,8 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
@@ -490,6 +492,8 @@ function ConditionsEditor({
 }
 
 export function VisualCatalogPage() {
+  const sourceCanvasRef = useRef<HTMLDivElement>(null);
+  const [silhouetteElementId, setSilhouetteElementId] = useState<string | null>(null);
   const authQuery = useAuthSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -637,6 +641,9 @@ export function VisualCatalogPage() {
     [compatibleAttributes, slot],
   );
   const referenceAssetSrc = getReferenceAsset(slot);
+  const uploadedSilhouetteIsActive = Boolean(
+    silhouetteElementId && selectedElementIds.includes(silhouetteElementId),
+  );
   const selectableMarkup = useMemo(
     () =>
       indexedSvg
@@ -647,6 +654,33 @@ export function VisualCatalogPage() {
         : "",
     [indexedSvg, selectedElementIds],
   );
+  useLayoutEffect(() => {
+    const svg = sourceCanvasRef.current?.querySelector("svg");
+    if (!svg) {
+      setSilhouetteElementId(null);
+      return;
+    }
+
+    let largestId: string | null = null;
+    let largestArea = 0;
+    const drawables = Array.from(
+      svg.querySelectorAll<SVGGraphicsElement>("[data-vc-id]"),
+    );
+    for (const element of drawables) {
+      try {
+        const bounds = element.getBBox();
+        const area = bounds.width * bounds.height;
+        const id = element.dataset.vcId;
+        if (id && area > largestArea) {
+          largestId = id;
+          largestArea = area;
+        }
+      } catch {
+        // Un nodo sin caja visual no puede representar la silueta principal.
+      }
+    }
+    setSilhouetteElementId(largestId);
+  }, [indexedSvg, selectableMarkup]);
   const runtimePreviewSrc = useMemo(() => {
     if (!indexedSvg || selectedElementIds.length === 0) {
       return "";
@@ -1569,6 +1603,7 @@ export function VisualCatalogPage() {
             </div>
 
             <div
+              ref={sourceCanvasRef}
               className="visual-source-canvas"
               onClick={handleSvgElementClick}
               dangerouslySetInnerHTML={{
@@ -1581,7 +1616,9 @@ export function VisualCatalogPage() {
             <div className="visual-preview-panel">
               <h2>Resultado</h2>
               <div className="visual-runtime-preview">
-                <img src={referenceAssetSrc} alt="" />
+                {!uploadedSilhouetteIsActive ? (
+                  <img src={referenceAssetSrc} alt="" />
+                ) : null}
                 {runtimePreviewSrc ? (
                   <img src={runtimePreviewSrc} alt="" />
                 ) : null}

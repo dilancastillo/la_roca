@@ -16,6 +16,15 @@ const TARGET_RECT = {
   width: 724,
   height: 980,
 };
+const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const CLOSED_NO_COLLAR_MASK_CLOSURE = {
+  x1: 379,
+  x2: 694,
+  y: 146,
+  thickness: 4,
+  sourceWidth: 1080,
+  sourceHeight: 1350,
+};
 
 const PANTS_SIDE_POCKET_DOUBLE_ZIPPER_TRIM_ASSET =
   "assets/catalog/pantalon/trim-overlays/pants-side-pocket-double-zipper.svg";
@@ -2461,7 +2470,7 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
-function computeInteriorMask(processed: ProcessedImage) {
+function computeInteriorMask(processed: ProcessedImage, assetPath: string) {
   const pixelCount = processed.width * processed.height;
   const ink = new Uint8Array(pixelCount);
   const outside = new Uint8Array(pixelCount);
@@ -2470,6 +2479,32 @@ function computeInteriorMask(processed: ProcessedImage) {
   for (let index = 0; index < pixelCount; index += 1) {
     if ((processed.data[index * 4 + 3] ?? 0) > 20) {
       ink[index] = 1;
+    }
+  }
+
+  if (getAssetFileName(assetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+    const scaleX = processed.width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
+    const scaleY = processed.height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
+    const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
+    const endX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x2 * scaleX);
+    const centerY = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.y * scaleY);
+    const halfThickness = Math.max(
+      1,
+      Math.ceil((CLOSED_NO_COLLAR_MASK_CLOSURE.thickness * scaleY) / 2),
+    );
+
+    for (
+      let y = Math.max(0, centerY - halfThickness);
+      y <= Math.min(processed.height - 1, centerY + halfThickness);
+      y += 1
+    ) {
+      for (
+        let x = Math.max(0, startX);
+        x <= Math.min(processed.width - 1, endX);
+        x += 1
+      ) {
+        ink[y * processed.width + x] = 1;
+      }
     }
   }
 
@@ -2566,7 +2601,7 @@ async function placeProcessedBufferOnCanvas(
 
 async function createTintedBaseBuffer(assetPath: string, fillColor: string) {
   const processed = await loadProcessedImage(assetPath);
-  const mask = computeInteriorMask(processed);
+  const mask = computeInteriorMask(processed, assetPath);
   const tint = new Uint8ClampedArray(processed.data.length);
   const color = sharp({
     create: { width: 1, height: 1, channels: 4, background: fillColor },
