@@ -678,11 +678,18 @@ export async function getActiveVisualRelease(env: Partial<AppEnv>) {
 
 export async function getOrCreateLineVisualRelease(env: Partial<AppEnv>, saleOrderLineId: number) {
   const store = getStore(env);
-  const existing = await store.getLinePin(saleOrderLineId);
-  if (existing) return await getVisualRelease(env, existing.releaseId).catch(() => null);
   const active = await getActiveVisualRelease(env);
   if (!active) return null;
-  await store.upsertLinePin(lineReleasePinSchema.parse({ saleOrderLineId, releaseId: active.id, createdAt: new Date().toISOString() }));
+
+  const existing = await store.getLinePin(saleOrderLineId);
+  if (existing?.releaseId !== active.id) {
+    await store.upsertLinePin(lineReleasePinSchema.parse({
+      saleOrderLineId,
+      releaseId: active.id,
+      createdAt: new Date().toISOString(),
+    }));
+  }
+
   return active;
 }
 

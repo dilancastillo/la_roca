@@ -149,7 +149,7 @@ describe("visual release repository", () => {
 
     expect(secondRelease.baselineDefinitionIds).toEqual([firstDefinition.id]);
     expect(secondRelease.definitionIds).toEqual([secondDefinition.id]);
-    expect((await getOrCreateLineVisualRelease(env, 101))?.id).toBe(firstRelease.id);
+    expect((await getOrCreateLineVisualRelease(env, 101))?.id).toBe(secondRelease.id);
     expect((await getOrCreateLineVisualRelease(env, 102))?.id).toBe(secondRelease.id);
 
     const restored = await restoreVisualRelease(env, firstRelease.id, actorEmail);
