@@ -5170,109 +5170,117 @@ async function composeSingleDesign(
       pantsKneePatchRightButtonTrimColor,
       pantsKneePatchLeftButtonTrimColor,
     );
-    await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
-    await drawCollarTrimFromAsset(context, baseAssetSrc, collarStitchesTrimColor);
-    await drawHighCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      highCollarTrimColor,
-    );
-    await drawInnerCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      innerCollarTrimColor,
-    );
-    await drawCollarRingsTrimFromAsset(
-      context,
-      baseAssetSrc,
-      collarRingsTrimColor,
-    );
-    await drawDividedCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "upper",
-      upperDividedCollarTrimColor,
-    );
-    await drawDividedCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "lower",
-      lowerDividedCollarTrimColor,
-    );
-    await drawCompleteInteriorCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "left",
-      leftCompleteInteriorCollarTrimColor,
-    );
-    await drawCompleteInteriorCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "right",
-      rightCompleteInteriorCollarTrimColor,
-    );
-    await drawLowerCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      lowerCollarTrimColor,
-    );
-    await drawThickInteriorCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "left",
-      leftThickInteriorCollarTrimColor,
-    );
-    await drawThickInteriorCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "right",
-      rightThickInteriorCollarTrimColor,
-    );
-    await drawDefaultExternalCollarLinesFromAsset(context, baseAssetSrc);
-    await drawInternalCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "left",
-      leftInternalCollarTrimColor,
-    );
-    await drawInternalCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "right",
-      rightInternalCollarTrimColor,
-    );
-    await drawExternalCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "left",
-      leftExternalCollarTrimColor,
-    );
-    await drawExternalCollarTrimFromAsset(
-      context,
-      baseAssetSrc,
-      "right",
-      rightExternalCollarTrimColor,
-    );
-    await drawFlapTrimFromAsset(context, baseAssetSrc, flapTrimColor);
-    const drewAssetBackNeckTrim = await drawBackNeckTrimFromAsset(
-      context,
-      baseAssetSrc,
-      backNeckTrimColor,
-    );
-
-    if (!drewAssetBackNeckTrim) {
-      const baseAssetFileName = getFileNameFromSource(baseAssetSrc);
-      const backNeckPathData =
-        backNeckTrimPathDataByFileName[baseAssetFileName];
-      drawBackNeckTrim(
+    // Dynamic catalog necks already contain their own visible trim paths.
+    // Applying these legacy filename-based overlays too duplicates the neck
+    // and, for EL HATO, paints the obsolete rectangular fill asset.
+    if (!scene.hasDynamicNeckVisual) {
+      await drawCollarTrimFromAsset(context, baseAssetSrc, collarTrimColor);
+      await drawCollarTrimFromAsset(
         context,
-        backNeckTrimColor,
-        backNeckPathData,
-        getBackNeckTrimVerticalOffset(baseAssetFileName, backNeckPathData),
+        baseAssetSrc,
+        collarStitchesTrimColor,
       );
-    }
+      await drawHighCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        highCollarTrimColor,
+      );
+      await drawInnerCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        innerCollarTrimColor,
+      );
+      await drawCollarRingsTrimFromAsset(
+        context,
+        baseAssetSrc,
+        collarRingsTrimColor,
+      );
+      await drawDividedCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "upper",
+        upperDividedCollarTrimColor,
+      );
+      await drawDividedCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "lower",
+        lowerDividedCollarTrimColor,
+      );
+      await drawCompleteInteriorCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "left",
+        leftCompleteInteriorCollarTrimColor,
+      );
+      await drawCompleteInteriorCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "right",
+        rightCompleteInteriorCollarTrimColor,
+      );
+      await drawLowerCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        lowerCollarTrimColor,
+      );
+      await drawThickInteriorCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "left",
+        leftThickInteriorCollarTrimColor,
+      );
+      await drawThickInteriorCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "right",
+        rightThickInteriorCollarTrimColor,
+      );
+      await drawDefaultExternalCollarLinesFromAsset(context, baseAssetSrc);
+      await drawInternalCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "left",
+        leftInternalCollarTrimColor,
+      );
+      await drawInternalCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "right",
+        rightInternalCollarTrimColor,
+      );
+      await drawExternalCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "left",
+        leftExternalCollarTrimColor,
+      );
+      await drawExternalCollarTrimFromAsset(
+        context,
+        baseAssetSrc,
+        "right",
+        rightExternalCollarTrimColor,
+      );
+      await drawFlapTrimFromAsset(context, baseAssetSrc, flapTrimColor);
+      const drewAssetBackNeckTrim = await drawBackNeckTrimFromAsset(
+        context,
+        baseAssetSrc,
+        backNeckTrimColor,
+      );
 
-    await drawNeckModelDetails(context, baseAssetSrc);
+      if (!drewAssetBackNeckTrim) {
+        const baseAssetFileName = getFileNameFromSource(baseAssetSrc);
+        const backNeckPathData = backNeckTrimPathDataByFileName[baseAssetFileName];
+        drawBackNeckTrim(
+          context,
+          backNeckTrimColor,
+          backNeckPathData,
+          getBackNeckTrimVerticalOffset(baseAssetFileName, backNeckPathData),
+        );
+      }
+
+      await drawNeckModelDetails(context, baseAssetSrc);
+    }
 
     if (scene.lowerPocketImageSrc && scene.lowerPocketLayout !== "none") {
       await drawLowerPocketOverlay(

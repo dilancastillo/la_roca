@@ -262,11 +262,13 @@ export const visualDefinitionMutationSchema = z
     for (const [token, expectedOccurrences] of expectedTokens) {
       const actualOccurrences = countOccurrences(mutation.runtimeSvg, token);
 
-      if (actualOccurrences !== expectedOccurrences) {
+      // Un path compuesto puede dividirse en varias áreas visibles; se exige
+      // que no falte ningún token, pero se permiten ocurrencias adicionales.
+      if (actualOccurrences < expectedOccurrences) {
         context.addIssue({
           code: "custom",
           path: ["runtimeSvg"],
-          message: `runtimeSvg debe contener ${expectedOccurrences} ocurrencia(s) de ${token}; contiene ${actualOccurrences}.`,
+          message: `runtimeSvg debe contener al menos ${expectedOccurrences} ocurrencia(s) de ${token}; contiene ${actualOccurrences}.`,
         });
       }
     }

@@ -70,6 +70,11 @@ export type PreviewScene = {
   pantsKneePatchLeftModel?: PantsKneePatchModel | undefined;
   pantsKneePatchLeftType?: PantsKneePatchType | undefined;
   neckImageSrc?: string | undefined;
+  /**
+   * El SVG del catálogo ya dibuja el cuello. El canvas no debe superponerle
+   * los overlays históricos asociados al nombre del archivo.
+   */
+  hasDynamicNeckVisual?: boolean | undefined;
   lowerPocketImageSrc?: string | undefined;
   lowerPocketLayout: LowerPocketLayout;
   lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind | undefined;
@@ -2074,6 +2079,8 @@ function deriveSingleConfiguratorUi(
         ? { pantsKneePatchLeftType: leftKneePatchTypeValue }
         : {}),
       neckImageSrc,
+      // Señal explícita para que canvas-renderer evite duplicar el cuello.
+      ...(hasDynamicNeck ? { hasDynamicNeckVisual: true } : {}),
       lowerPocketImageSrc,
       lowerPocketLayout: resolvedLowerPocketLayout,
       ...(lowerPocketAuxiliaryAddon

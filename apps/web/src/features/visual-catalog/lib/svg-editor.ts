@@ -223,6 +223,127 @@ function appendImportantStyle(element: Element, declaration: string) {
   );
 }
 
+const PATH_COMMAND_PARAMETER_COUNTS: Record<string, number> = {
+  A: 7,
+  C: 6,
+  H: 1,
+  L: 2,
+  M: 2,
+  Q: 4,
+  S: 4,
+  T: 2,
+  V: 1,
+  Z: 0,
+};
+
+/**
+ * Corel puede exportar varias piezas cerradas en un único path. Un fill sobre
+ * ese path rellena también el espacio entre piezas y termina como una caja.
+ */
+function splitClosedPathSubpaths(rawPathData: string) {
+  const tokens = Array.from(
+    rawPathData.matchAll(
+      /([AaCcHhLlMmQqSsTtVvZz])|([-+]?(?:(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?))/g,
+    ),
+    (match) => match[1] ?? match[2] ?? "",
+  );
+  const subpaths: string[] = [];
+  let index = 0;
+  let command = "";
+  let x = 0;
+  let y = 0;
+  let startX = 0;
+  let startY = 0;
+  let currentSubpath: string[] | null = null;
+  let currentSubpathIsClosed = false;
+
+  const pushCurrentSubpath = () => {
+    if (currentSubpath?.length && currentSubpathIsClosed) {
+      subpaths.push(currentSubpath.join(" "));
+    }
+    currentSubpath = null;
+    currentSubpathIsClosed = false;
+  };
+
+  while (index < tokens.length) {
+    if (/^[AaCcHhLlMmQqSsTtVvZz]$/.test(tokens[index] ?? "")) {
+      command = tokens[index] ?? "";
+      index += 1;
+    }
+    if (!command) return null;
+
+    const upperCommand = command.toUpperCase();
+    const parameterCount = PATH_COMMAND_PARAMETER_COUNTS[upperCommand];
+    if (parameterCount === undefined) return null;
+
+    if (upperCommand === "Z") {
+      currentSubpath?.push("Z");
+      x = startX;
+      y = startY;
+      currentSubpathIsClosed = true;
+      command = "";
+      continue;
+    }
+
+    let isFirstMove = upperCommand === "M";
+    while (
+      index < tokens.length &&
+      !/^[AaCcHhLlMmQqSsTtVvZz]$/.test(tokens[index] ?? "")
+    ) {
+      const values: number[] = tokens
+        .slice(index, index + parameterCount)
+        .map(Number);
+      if (values.length !== parameterCount || values.some(Number.isNaN)) {
+        return null;
+      }
+      index += parameterCount;
+
+      const isRelative = command === command.toLowerCase();
+      if (upperCommand === "M" && isFirstMove) {
+        pushCurrentSubpath();
+        x = isRelative ? x + (values[0] ?? 0) : (values[0] ?? 0);
+        y = isRelative ? y + (values[1] ?? 0) : (values[1] ?? 0);
+        startX = x;
+        startY = y;
+        currentSubpath = [`M ${x} ${y}`];
+        isFirstMove = false;
+        continue;
+      }
+
+      if (!currentSubpath) return null;
+      currentSubpath.push(`${command} ${values.join(" ")}`);
+      const lastX = values[values.length - 2] ?? 0;
+      const lastY = values[values.length - 1] ?? 0;
+      if (upperCommand === "H") {
+        x = isRelative ? x + (values[0] ?? 0) : (values[0] ?? 0);
+      } else if (upperCommand === "V") {
+        y = isRelative ? y + (values[0] ?? 0) : (values[0] ?? 0);
+      } else {
+        x = isRelative ? x + lastX : lastX;
+        y = isRelative ? y + lastY : lastY;
+      }
+    }
+  }
+
+  pushCurrentSubpath();
+  return subpaths.length > 1 ? subpaths : null;
+}
+
+function splitCompoundTrimFillPath(element: SVGElement) {
+  if (element.localName !== "path") return [element];
+
+  const subpaths = splitClosedPathSubpaths(element.getAttribute("d") ?? "");
+  if (!subpaths) return [element];
+
+  return subpaths.map((pathData, index) => {
+    const path =
+      index === 0 ? element : (element.cloneNode(true) as SVGElement);
+    path.setAttribute("d", pathData);
+    path.setAttribute("data-vc-safe-trim-fill", "true");
+    return path;
+  });
+}
+
 function applyElementPaint(
   element: Element,
   paint: VisualElementPaint | undefined,
@@ -338,17 +459,29 @@ export function buildRuntimeVisualSvg({
       (selectedIdOccurrences.get(elementId) ?? 0) + 1,
     );
 
-    applyElementPaint(
-      element,
-      elementPaints[elementId],
-      getVisualElementVisibilityToken(selectedElementIds.indexOf(elementId)),
-      allowIncompletePaints,
-    );
-    if (elementId === silhouetteElementId) {
-      element.setAttribute("data-vc-replaces-base-silhouette", "true");
+    const paint = elementPaints[elementId];
+    const paintedElements =
+      paint?.mode === "trim_fill"
+        ? splitCompoundTrimFillPath(element)
+        : [element];
+
+    if (paintedElements.length > 1) {
+      element.replaceWith(...paintedElements);
     }
-    element.removeAttribute("data-vc-id");
-    element.removeAttribute("data-vc-selected");
+
+    for (const paintedElement of paintedElements) {
+      applyElementPaint(
+        paintedElement,
+        paint,
+        getVisualElementVisibilityToken(selectedElementIds.indexOf(elementId)),
+        allowIncompletePaints,
+      );
+      if (elementId === silhouetteElementId) {
+        paintedElement.setAttribute("data-vc-replaces-base-silhouette", "true");
+      }
+      paintedElement.removeAttribute("data-vc-id");
+      paintedElement.removeAttribute("data-vc-selected");
+    }
   });
 
   const missingSelectedIds = selectedElementIds.filter(

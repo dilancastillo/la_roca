@@ -112,6 +112,39 @@ describe("svg-editor", () => {
     ).toContain("display:inline");
   });
 
+  it("separa piezas cerradas de un path antes de aplicar vivo relleno", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <path id="cuello" d="M10 10 L30 10 L30 30 Z m40 0 L20 0 L20 20 Z" />
+      </svg>
+    `);
+
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["cuello"],
+      elementPaints: {
+        cuello: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      placement: {
+        targetWidth: 100,
+        targetHeight: 100,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+
+    expect((runtimeSvg.match(/<path\b/g) ?? [])).toHaveLength(2);
+    expect(runtimeSvg).toContain('data-vc-safe-trim-fill="true"');
+    expect((runtimeSvg.match(/__VC_TRIM_FILL_635__/g) ?? [])).toHaveLength(2);
+  });
+
   it("mantiene la vista previa visible mientras falta elegir la seccion del vivo", () => {
     const indexed = indexVisualSvg(SOURCE_SVG);
     const runtimeSvg = buildRuntimeVisualSvg({

@@ -187,7 +187,8 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).toContain("stroke:#0e2943");
     expect(svg).toContain('data-vc-linear-trim-texture="cord"');
     expect(svg).toContain("stroke-width:10px!important");
-    expect(svg).toContain("stroke-dasharray:5 5!important");
+    // El vivo lineal ya no genera la antigua capa blanca punteada.
+    expect(svg).not.toContain("stroke-dasharray:5 5!important");
     expect(svg).not.toContain("__VC_TRIM_STROKE_1000__");
     expect(svg).not.toContain("stroke:none");
   });
@@ -304,10 +305,11 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).toContain("stroke:#0e2943!important");
     expect(svg).toContain("stroke-width:7px!important");
     expect(svg).toContain("stroke:#003f59!important");
-    expect(svg).toContain("fill:url(#vc-linear-trim-weave)!important");
-    expect(svg).toContain('data-vc-linear-trim-stitch="true"');
-    expect(svg).toContain('pathLength="100"');
-    expect(svg).toContain("stroke-dasharray:1 2!important");
+    // El vivo poligonal aprobado es sólido: sin entramado ni puntada blanca.
+    expect(svg).not.toContain("fill:url(#vc-linear-trim-weave)!important");
+    expect(svg).not.toContain('data-vc-linear-trim-stitch="true"');
+    expect(svg).not.toContain('pathLength="100"');
+    expect(svg).not.toContain("stroke-dasharray:1 2!important");
   });
 
   it("conserva en negro los vectores de cuello sin vivo seleccionado", () => {
@@ -450,6 +452,62 @@ describe("runtime del catalogo visual general", () => {
     expect(svgWithoutTrim).toContain('fill="#ffffff"');
     expect(svgWithoutTrim).toContain("fill:none!important");
     expect(svgWithoutTrim).not.toMatch(/__VC_[A-Z0-9_]+__/);
+  });
+
+  it("no rellena un contorno Corel declarado con fill:none", () => {
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("contorno-corel", "component", []),
+      selectedElementIds: ["contorno"],
+      elementPaints: {
+        contorno: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg>
+          <style>.fil1 { fill:none; stroke:#000; }</style>
+          <path class="fil1" d="M0 0 H100 V100 H0 Z"
+            style="fill:__VC_TRIM_FILL_635__!important;" />
+        </svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#aabbcc", [
+        { valueId: 635, sourceValueId: 635, colorHex: "#18a9d3" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("stroke:#18a9d3!important;");
+    expect(svg).not.toContain("fill:#18a9d3!important;");
+  });
+
+  it("pinta con el color base un área segura de cuello sin vivo seleccionado", () => {
+    // Simula una pieza cerrada separada por el editor desde un SVG de Corel.
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("cuello-relleno-seguro", "neck", []),
+      selectedElementIds: ["cuello"],
+      elementPaints: {
+        cuello: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg><path data-vc-safe-trim-fill="true" d="M0 0 H100 V100 H0 Z"
+          style="fill:__VC_TRIM_FILL_635__!important;" /></svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#aabbcc", []).split(",")[1] ??
+        "",
+    );
+
+    expect(svg).toContain("fill:#aabbcc!important;");
   });
 
   it("reconoce el ID fuente estable y no depende del PTAV representativo", () => {

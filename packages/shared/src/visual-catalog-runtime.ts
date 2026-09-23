@@ -196,6 +196,94 @@ function normalizeImpossibleLinePaints(runtimeSvg: string) {
   );
 }
 
+function normalizeUnfilledTrimAreas(runtimeSvg: string) {
+  const unfilledClasses = new Set<string>();
+
+  // Solo se analiza CSS dentro de <style>: metadata de Illustrator/Corel puede
+  // contener decenas de miles de caracteres y no representa estilos SVG.
+  for (const styleMatch of runtimeSvg.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) {
+    const styleText = styleMatch[1] ?? "";
+    for (const rule of styleText.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const selectors = rule[1] ?? "";
+      const declarations = rule[2] ?? "";
+      if (!/\bfill\s*:\s*none\b/i.test(declarations)) continue;
+      for (const className of selectors.matchAll(/\.([\w-]+)/g)) {
+        if (className[1]) unfilledClasses.add(className[1]);
+      }
+    }
+  }
+
+  return runtimeSvg.replace(
+    /<(path|rect|circle|ellipse|polyline|polygon)\b[^>]*>/gi,
+    (markup) => {
+      const trimFill = markup.match(
+        /fill:(__VC_TRIM_FILL_\d+__)(!important)?;?/,
+      );
+      // El editor separa las áreas cerradas de un path compuesto y las marca
+      // como seguras. Esas áreas sí representan relleno aunque el CSS de
+      // Corel use `fill:none` como estilo base para el path original.
+      if (
+        !trimFill ||
+        /\bdata-vc-safe-trim-fill=(?:"true"|'true')/i.test(markup)
+      ) {
+        return markup;
+      }
+
+      const classMatch = markup.match(
+        /\bclass=(?:"([^"]*)"|'([^']*)')/i,
+      );
+      const classNames = (classMatch?.[1] ?? classMatch?.[2] ?? "")
+        .split(/\s+/)
+        .filter(Boolean);
+      const isUnfilled =
+        /\bfill=(?:"none"|'none')/i.test(markup) ||
+        /(?:^|[;\s])fill\s*:\s*none(?:!important)?\s*;/i.test(markup) ||
+        classNames.some((className) => unfilledClasses.has(className));
+
+      return isUnfilled
+        ? markup.replace(
+            trimFill[0],
+            `stroke:${trimFill[1]}${trimFill[2] ?? ""};`,
+          )
+        : markup;
+    },
+  );
+}
+
+function applyBaseColorToUnselectedSafeTrimFills(
+  runtimeSvg: string,
+  baseColorHex: string,
+  trimSections: VisualRuntimeTrimSection[],
+) {
+  return runtimeSvg.replace(
+    /<(path|rect|circle|ellipse|polyline|polygon)\b[^>]*>/gi,
+    (markup) => {
+      // Solo las áreas cerradas que el editor separó son seguras para recibir
+      // color base. Así un cuello dinámico sin vivo se integra a la prenda sin
+      // reactivar fondos o contornos exportados como fill:none por Corel.
+      if (!/\bdata-vc-safe-trim-fill=(?:"true"|'true')/i.test(markup)) {
+        return markup;
+      }
+
+      // Si la sección no tiene color de vivo, sustituimos el token por el
+      // color base; si sí lo tiene, dejamos el token para que se resuelva al
+      // color seleccionado en el paso normal de materialización.
+      return markup.replace(
+        /fill:(__VC_TRIM_FILL_(\d+)__)(!important)?;?/g,
+        (
+          declaration,
+          _token: string,
+          sourceValueId: string,
+          important: string | undefined,
+        ) =>
+          getTrimColor(trimSections, Number(sourceValueId))
+            ? declaration
+            : `fill:${baseColorHex}${important ?? ""};`,
+      );
+    },
+  );
+}
+
 export function isThinVisualPolygonPoints(rawPoints: string | undefined) {
   if (!rawPoints) {
     return false;
@@ -387,60 +475,15 @@ function addLinearTrimTexture(
         ),
         `${commonStyle}stroke-width:${LINEAR_TRIM_SHADOW_WIDTH}px!important;stroke-opacity:0.9!important;`,
       );
-      const highlight = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(removeDuplicateSvgIdentity(cleanMarkup), "#ffffff"),
-        `${commonStyle}stroke-width:3.2px!important;stroke-dasharray:5 5!important;stroke-opacity:0.92!important;`,
-      );
-      const weaveShadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        `${commonStyle}stroke-width:2px!important;stroke-dasharray:5 5!important;stroke-dashoffset:5!important;stroke-opacity:0.72!important;`,
-      );
-
-      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${shadow}${main}${highlight}${weaveShadow}</g>`;
+      // Se eliminó highlight (línea blanca punteada stroke-dasharray:5 5) y weaveShadow (sombra punteada)
+      // para quitar la textura blanca del vivo lineal (cord).
+      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${shadow}${main}</g>`;
     },
   );
 }
 
-function createLinearTrimPolygonStitch(markup: string) {
-  const pointsAttribute = markup.match(/\bpoints=(?:"([^"]*)"|'([^']*)')/i);
-  const coordinates = (pointsAttribute?.[1] ?? pointsAttribute?.[2] ?? "")
-    .match(/-?(?:\d+\.?\d*|\.\d+)/g)
-    ?.map(Number);
-
-  if (coordinates?.length === 8) {
-    const points = Array.from({ length: 4 }, (_, index) => ({
-      x: coordinates[index * 2] ?? 0,
-      y: coordinates[index * 2 + 1] ?? 0,
-    }));
-    const start = {
-      x: ((points[0]?.x ?? 0) + (points[3]?.x ?? 0)) / 2,
-      y: ((points[0]?.y ?? 0) + (points[3]?.y ?? 0)) / 2,
-    };
-    const end = {
-      x: ((points[1]?.x ?? 0) + (points[2]?.x ?? 0)) / 2,
-      y: ((points[1]?.y ?? 0) + (points[2]?.y ?? 0)) / 2,
-    };
-
-    return `<line data-vc-linear-trim-stitch="true" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" pathLength="100" style="fill:none;stroke:#ffffff!important;stroke-width:2.6px!important;vector-effect:non-scaling-stroke;stroke-dasharray:1 2!important;stroke-linecap:round!important;pointer-events:none;"/>`;
-  }
-
-  return appendInlineSvgStyle(
-    removeDuplicateSvgIdentity(markup)
-      .replace(
-        /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-        "fill:none!important;",
-      )
-      .replace(
-        /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-        "stroke:#ffffff!important;",
-      ),
-    "stroke-width:2.6px!important;vector-effect:non-scaling-stroke;stroke-dasharray:1 2!important;stroke-linecap:round!important;pointer-events:none;",
-  ).replace(/<polygon\b/i, '<polygon data-vc-linear-trim-stitch="true"');
-}
-
+// La puntada blanca pertenecía a la textura eliminada; se retira el helper
+// para que el runtime conserve únicamente el vivo poligonal sólido aprobado.
 function addLinearTrimPolygonTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
@@ -492,21 +535,10 @@ function addLinearTrimPolygonTexture(
         ),
         "vector-effect:non-scaling-stroke;stroke-width:7px!important;stroke-linejoin:round!important;",
       );
-      const weave = appendInlineSvgStyle(
-        removeDuplicateSvgIdentity(cleanMarkup)
-          .replace(
-            /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "fill:url(#vc-linear-trim-weave)!important;",
-          )
-          .replace(
-            /stroke:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "stroke:none!important;",
-          ),
-        "opacity:0.96!important;pointer-events:none;",
-      );
-      const stitch = createLinearTrimPolygonStitch(cleanMarkup);
-
-      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${shadow}${main}${weave}${stitch}</g>`;
+      // No creamos las capas weave ni stitch: ambas introducían la textura
+      // blanca que se retiró del vivo poligonal. Omitirlas evita variables
+      // sin uso y conserva únicamente sombra + color sólido aprobados.
+      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${shadow}${main}</g>`;
     },
   );
 
@@ -598,11 +630,18 @@ export function materializeVisualDefinitionSvg(
   },
 ) {
   let runtimeSvg = normalizeThinPolygonVisualStrokes(
-    normalizeImpossibleLinePaints(definition.runtimeSvg),
+    normalizeUnfilledTrimAreas(normalizeImpossibleLinePaints(definition.runtimeSvg)),
   );
 
   if (definition.slot === "neck") {
     runtimeSvg = normalizeNeckVectorStrokeWidths(runtimeSvg);
+    // Esta regla es exclusiva de cuellos dinámicos: los demás componentes
+    // pueden tener áreas vacías intencionales y no deben recibir color base.
+    runtimeSvg = applyBaseColorToUnselectedSafeTrimFills(
+      runtimeSvg,
+      baseColorHex,
+      trimSections,
+    );
   }
 
   runtimeSvg = addLinearTrimPolygonTexture(runtimeSvg, trimSections);
