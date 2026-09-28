@@ -1187,7 +1187,10 @@ export function VisualCatalogPage() {
         : await createVisualDefinition(mutation);
       setEditingDefinitionId(definition.id);
       await refreshVersions();
-      setMessage(`Borrador guardado: ${definition.displayName}.`);
+      setMessage(
+        `Borrador guardado: ${definition.displayName} v${definition.version}. ` +
+          "Las releases ya creadas conservan su fotografia; aprueba esta version y crea una candidata nueva para probarla en el laboratorio.",
+      );
     } catch (saveError) {
       setError(
         saveError instanceof Error

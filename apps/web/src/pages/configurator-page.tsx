@@ -1034,6 +1034,16 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
             <strong>
               R{session.visualReleaseNumber ?? "?"} · Linea #{lineId}
             </strong>
+            {(session.visualDefinitions?.length ?? 0) > 0 ? (
+              <small>
+                Componentes de esta fotografia: {(session.visualDefinitions ?? [])
+                  .map(
+                    (definition) =>
+                      `${definition.displayName} v${definition.version}`,
+                  )
+                  .join(" · ")}
+              </small>
+            ) : null}
             <small>Ningun cambio de esta pantalla se envia a Odoo.</small>
           </div>
 

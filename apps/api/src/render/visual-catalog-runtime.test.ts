@@ -193,6 +193,54 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("stroke:none");
   });
 
+  it("oculta solo el vivo condicionado y conserva el cuello cuando no coincide", () => {
+    const definition = makeDefinition(
+      "dd18d909-b725-4a49-a251-2ab0c8465b20",
+      "component",
+      [],
+    );
+    definition.runtimeSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <path data-vc-element="left" d="M10 10 L30 30" style="display:__VC_VISIBILITY_0__;fill:none;stroke:#111827;" />
+        <path data-vc-element="right" d="M70 10 L90 30" style="display:__VC_VISIBILITY_1__;fill:none;stroke:#111827;" />
+      </svg>
+    `;
+    definition.selectedElementIds = ["left", "right"];
+    definition.elementPaints = {
+      left: {
+        mode: "preserve",
+        visibilityConditions: [],
+      },
+      right: {
+        mode: "trim_fill",
+        trimSourceValueId: 1000,
+        visibilityConditions: [
+          {
+            attributeId: 90,
+            attributeName: "Seccion de vivo",
+            sourceValueIds: [1000],
+            valueNames: ["Cuello alto"],
+          },
+        ],
+      },
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(
+        definition,
+        "#aabbcc",
+        [],
+        { session, selectedValueIds: session.selectedValueIds },
+      ).split(",")[1] ?? "",
+    );
+
+    // El contorno del cuello permanece aun cuando el vivo no aplica.
+    expect(svg).toContain("display:inline");
+    // El vivo condicionado no deja un relleno visible cuando no se selecciona.
+    expect(svg).toContain("display:none");
+    expect(svg).toContain("fill:none");
+  });
+
   it("trata condiciones repetidas del mismo atributo como alternativas OR", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

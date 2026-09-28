@@ -82,6 +82,57 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function getDefinitionTargetKey(definition: VisualDefinitionSummary) {
+  const sourceValueId =
+    definition.binding.sourceValueId ?? definition.binding.valueId;
+  const productTemplateIds = [...definition.binding.productTemplateIds]
+    .sort((left, right) => left - right)
+    .join(",");
+  const activationConditions = definition.activationConditions
+    .map((condition) => ({
+      attributeId: condition.attributeId,
+      sourceValueIds: [...condition.sourceValueIds].sort(
+        (left, right) => left - right,
+      ),
+    }))
+    .sort(
+      (left, right) =>
+        left.attributeId - right.attributeId ||
+        left.sourceValueIds.join(",").localeCompare(
+          right.sourceValueIds.join(","),
+        ),
+    );
+
+  return [
+    definition.slot,
+    definition.layer,
+    definition.binding.attributeId,
+    sourceValueId,
+    productTemplateIds,
+    JSON.stringify(activationConditions),
+  ].join(":");
+}
+
+function getNewerDefinition(
+  definition: VisualDefinitionSummary,
+  definitions: VisualDefinitionSummary[],
+) {
+  const targetKey = getDefinitionTargetKey(definition);
+
+  return definitions
+    .filter(
+      (candidate) =>
+        candidate.id !== definition.id &&
+        candidate.status === "approved" &&
+        getDefinitionTargetKey(candidate) === targetKey,
+    )
+    .sort(
+      (left, right) =>
+        right.version - left.version ||
+        right.updatedAt.localeCompare(left.updatedAt),
+    )[0];
+}
+
 type VisualReleaseManagerProps = {
   definitions: VisualDefinitionSummary[];
   releases: VisualRelease[];
@@ -215,6 +266,40 @@ export function VisualReleaseManager({
       return;
     }
 
+    const staleDefinitions = release.definitionIds
+      .map((definitionId) => definitionsById.get(definitionId))
+      .filter(
+        (definition): definition is VisualDefinitionSummary =>
+          Boolean(definition),
+      )
+      .map((definition) => ({
+        definition,
+        newer: getNewerDefinition(definition, definitions),
+      }))
+      .filter(
+        (candidate): candidate is {
+          definition: VisualDefinitionSummary;
+          newer: VisualDefinitionSummary;
+        } => Boolean(candidate.newer));
+
+    if (staleDefinitions.length > 0) {
+      const versions = staleDefinitions
+        .map(
+          ({ definition, newer }) =>
+            `${definition.displayName} v${definition.version} (existe v${newer.version})`,
+        )
+        .join(", ");
+
+      if (
+        !window.confirm(
+          `R${release.number} conserva una fotografia anterior: ${versions}. ` +
+            "Abrirla sirve para comparar, pero no probara la configuracion mas reciente. ¿Abrir de todas formas?",
+        )
+      ) {
+        return;
+      }
+    }
+
     onOpenLaboratory(release.id, saleOrderLineId);
   }
 
@@ -339,10 +424,37 @@ export function VisualReleaseManager({
                   <div>
                     {release.changedDefinitionIds.map((definitionId) => (
                       <span key={definitionId}>
-                        {definitionsById.get(definitionId)?.displayName ??
-                          definitionId.slice(0, 8)}
+                        {(() => {
+                          const definition = definitionsById.get(definitionId);
+                          return definition
+                            ? `${definition.displayName} · v${definition.version}`
+                            : definitionId.slice(0, 8);
+                        })()}
                       </span>
                     ))}
+                  </div>
+                </div>
+
+                <div className="visual-release-changes">
+                  <strong>Fotografia que probara el laboratorio</strong>
+                  <div>
+                    {release.definitionIds.map((definitionId) => {
+                      const definition = definitionsById.get(definitionId);
+                      const newer = definition
+                        ? getNewerDefinition(definition, definitions)
+                        : undefined;
+
+                      return (
+                        <span key={definitionId}>
+                          {definition
+                            ? `${definition.displayName} · v${definition.version}`
+                            : definitionId.slice(0, 8)}
+                          {newer
+                            ? ` · hay v${newer.version} mas reciente`
+                            : ""}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
