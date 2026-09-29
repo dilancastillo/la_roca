@@ -500,6 +500,34 @@ function hasSameTarget(left: VisualDefinitionSummary, right: VisualDefinitionSum
     JSON.stringify(leftProducts) === JSON.stringify(rightProducts);
 }
 
+/**
+ * Definitions created before gender was part of the visual identity have no
+ * activation conditions. Keeping one beside a new Hombre/Mujer neck makes both
+ * match the same configuration and produces a duplicated render.
+ */
+function shouldReplaceLegacyUngenderedNeck(
+  baseline: VisualDefinitionSummary,
+  candidate: VisualDefinitionSummary,
+) {
+  return baseline.slot === "neck" &&
+    baseline.activationConditions.length === 0 &&
+    candidate.activationConditions.length > 0 &&
+    baseline.layer === candidate.layer &&
+    baseline.binding.attributeId === candidate.binding.attributeId &&
+    (baseline.binding.sourceValueId ?? baseline.binding.valueId) ===
+      (candidate.binding.sourceValueId ?? candidate.binding.valueId) &&
+    hasSameProductScope(baseline, candidate);
+}
+
+function hasSameProductScope(
+  left: VisualDefinitionSummary,
+  right: VisualDefinitionSummary,
+) {
+  const leftProducts = [...left.binding.productTemplateIds].sort((a, b) => a - b);
+  const rightProducts = [...right.binding.productTemplateIds].sort((a, b) => a - b);
+  return JSON.stringify(leftProducts) === JSON.stringify(rightProducts);
+}
+
 function hasOverlappingProductScope(
   left: VisualDefinitionSummary,
   right: VisualDefinitionSummary,
@@ -594,7 +622,14 @@ export async function createVisualReleaseCandidate(
       `La version ${unsafeScopeChange.displayName} cambia parcialmente las plantillas del componente anterior. Conserva exactamente el mismo alcance o crea versiones separadas antes de publicar.`,
     );
   }
-  const retained = baselineDefinitions.filter((baseline) => !selected.some((candidate) => hasSameTarget(baseline, candidate)));
+  const retained = baselineDefinitions.filter(
+    (baseline) =>
+      !selected.some(
+        (candidate) =>
+          hasSameTarget(baseline, candidate) ||
+          shouldReplaceLegacyUngenderedNeck(baseline, candidate),
+      ),
+  );
   const now = new Date().toISOString();
   const release = visualReleaseSchema.parse({
     id: randomUUID(),

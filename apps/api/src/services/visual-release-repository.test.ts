@@ -161,6 +161,62 @@ describe("visual release repository", () => {
     ).toBe("retired");
   });
 
+  it("sustituye el cuello heredado sin genero por versiones Hombre y Mujer", async () => {
+    const legacy = await approveDefinition({
+      ...mutation,
+      displayName: "Cuello compartido heredado",
+      binding: {
+        ...mutation.binding,
+        sourceValueId: 9551,
+        valueId: 9551,
+        valueName: "CUELLO PRUEBA GENERO",
+      },
+    });
+    await makeActiveRelease("Base cuello heredado", [legacy.id]);
+
+    const woman = await approveDefinition({
+      ...mutation,
+      displayName: "Cuello prueba Mujer",
+      binding: legacy.binding,
+      activationConditions: [
+        {
+          attributeId: 142,
+          attributeName: "Genero",
+          sourceValueIds: [530],
+          valueNames: ["Mujer"],
+        },
+      ],
+    });
+    const man = await approveDefinition({
+      ...mutation,
+      displayName: "Cuello prueba Hombre",
+      binding: legacy.binding,
+      activationConditions: [
+        {
+          attributeId: 142,
+          attributeName: "Genero",
+          sourceValueIds: [531],
+          valueNames: ["Hombre"],
+        },
+      ],
+    });
+
+    const candidate = await createVisualReleaseCandidate(
+      env,
+      {
+        displayName: "Cuellos separados por genero",
+        notes: "",
+        changedDefinitionIds: [woman.id, man.id],
+      },
+      await listVisualDefinitions(env),
+      actorEmail,
+    );
+
+    expect(candidate.definitionIds).toContain(woman.id);
+    expect(candidate.definitionIds).toContain(man.id);
+    expect(candidate.definitionIds).not.toContain(legacy.id);
+  });
+
   it("guarda escenarios de laboratorio sin modificar la release", async () => {
     const definition = await approveDefinition({
       ...mutation,
