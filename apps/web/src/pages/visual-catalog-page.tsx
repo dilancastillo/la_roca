@@ -149,6 +149,20 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
+function getDefinitionGenderLabel(definition: {
+  activationConditions: VisualActivationCondition[];
+}) {
+  const genderCondition = definition.activationConditions.find(
+    (condition) => normalize(condition.attributeName) === "genero",
+  );
+  const genderValue = genderCondition?.valueNames.find((valueName) => {
+    const normalizedValue = normalize(valueName);
+    return normalizedValue === "hombre" || normalizedValue === "mujer";
+  });
+
+  return genderValue?.trim() ?? null;
+}
+
 function supportsSlot(product: VisualCatalogProduct, slot: VisualSlot) {
   return slot === "boot"
     ? product.family === "pants" || product.family === "uniform"
@@ -1248,10 +1262,13 @@ export function VisualCatalogPage() {
       const definition = editingDefinitionId
         ? await updateVisualDefinition(editingDefinitionId, mutation)
         : await createVisualDefinition(mutation);
+      const genderLabel = getDefinitionGenderLabel(definition);
       setEditingDefinitionId(definition.id);
       await refreshVersions();
       setMessage(
-        `Borrador guardado: ${definition.displayName} v${definition.version}. ` +
+        `Borrador guardado: ${definition.displayName}${
+          genderLabel ? ` · ${genderLabel}` : ""
+        } v${definition.version}. ` +
           "Las releases ya creadas conservan su fotografia; aprueba esta version y crea una candidata nueva para probarla en el laboratorio.",
       );
     } catch (saveError) {
@@ -1867,6 +1884,7 @@ export function VisualCatalogPage() {
           ) : (
             definitions.map((definition) => {
               const issues = getDefinitionOdooIssues(definition, products);
+              const genderLabel = getDefinitionGenderLabel(definition);
               const productNames = definition.binding.productTemplateIds.map(
                 (productTemplateId) =>
                   products.find(
@@ -1882,7 +1900,10 @@ export function VisualCatalogPage() {
                     >
                       {getDefinitionStatusLabel(definition.status)}
                     </span>
-                    <h2>{definition.displayName}</h2>
+                    <h2>
+                      {definition.displayName}
+                      {genderLabel ? ` · ${genderLabel}` : ""}
+                    </h2>
                     <p>
                       {definition.binding.attributeName}:{" "}
                       {definition.binding.valueName}
