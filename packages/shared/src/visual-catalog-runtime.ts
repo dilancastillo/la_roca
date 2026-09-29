@@ -589,7 +589,7 @@ export function getSelectedVisualDefinitions(
   selectedValueIds: Record<string, number[]>,
   manifestKey: string,
 ) {
-  return (session.visualDefinitions ?? []).filter(
+  const matchingDefinitions = (session.visualDefinitions ?? []).filter(
     (definition) =>
       definition.binding.productTemplateIds.includes(
         session.productTemplateId,
@@ -601,7 +601,37 @@ export function getSelectedVisualDefinitions(
         session,
         selectedValueIds,
       ),
-  ).sort((left, right) => {
+  );
+
+  // Las versiones antiguas de cuello no tienen condición de género. Se
+  // conservan para que sigan atendiendo Mujer, pero cuando una versión del
+  // mismo cuello coincide explícitamente (por ejemplo, Hombre), esa versión
+  // específica debe reemplazar la heredada en el render actual.
+  const definitions = matchingDefinitions.filter((definition) => {
+    if (definition.slot !== "neck" || definition.activationConditions.length > 0) {
+      return true;
+    }
+
+    const sourceValueId =
+      definition.binding.sourceValueId ?? definition.binding.valueId;
+    const productTemplateIds = [...definition.binding.productTemplateIds]
+      .sort((left, right) => left - right)
+      .join(",");
+
+    return !matchingDefinitions.some((candidate) =>
+      candidate.id !== definition.id &&
+      candidate.slot === "neck" &&
+      candidate.activationConditions.length > 0 &&
+      candidate.layer === definition.layer &&
+      candidate.binding.attributeId === definition.binding.attributeId &&
+      (candidate.binding.sourceValueId ?? candidate.binding.valueId) === sourceValueId &&
+      [...candidate.binding.productTemplateIds]
+        .sort((left, right) => left - right)
+        .join(",") === productTemplateIds,
+    );
+  });
+
+  return definitions.sort((left, right) => {
     const layerOrder = {
       structure: 0,
       component: 1,

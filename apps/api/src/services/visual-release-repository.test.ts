@@ -161,7 +161,7 @@ describe("visual release repository", () => {
     ).toBe("retired");
   });
 
-  it("sustituye el cuello heredado sin genero por versiones Hombre y Mujer", async () => {
+  it("conserva el cuello heredado junto a versiones por genero", async () => {
     const legacy = await approveDefinition({
       ...mutation,
       displayName: "Cuello compartido heredado",
@@ -214,7 +214,9 @@ describe("visual release repository", () => {
 
     expect(candidate.definitionIds).toContain(woman.id);
     expect(candidate.definitionIds).toContain(man.id);
-    expect(candidate.definitionIds).not.toContain(legacy.id);
+    // El motor de render elige el reemplazo de género que aplica. Mantener la
+    // versión histórica evita que Mujer pierda los modelos ya publicados.
+    expect(candidate.definitionIds).toContain(legacy.id);
   });
 
   it("guarda escenarios de laboratorio sin modificar la release", async () => {

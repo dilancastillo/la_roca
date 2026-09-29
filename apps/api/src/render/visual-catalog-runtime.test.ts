@@ -166,6 +166,63 @@ describe("runtime del catalogo visual general", () => {
     ]);
   });
 
+  it("prefiere el cuello específico de Hombre y conserva el heredado para Mujer", () => {
+    const legacy = makeDefinition("cuello-heredado", "component", []);
+    const man = makeDefinition("cuello-hombre", "component", []);
+    man.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [531],
+        valueNames: ["Hombre"],
+      },
+    ];
+
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: 142,
+          name: "Genero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 531,
+              sourceValueId: 531,
+              name: "Hombre",
+              attributeId: 142,
+              attributeName: "Genero",
+            },
+            {
+              id: 530,
+              sourceValueId: 530,
+              name: "Mujer",
+              attributeId: 142,
+              attributeName: "Genero",
+            },
+          ],
+        },
+      ],
+    };
+
+    const forMan = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [legacy, man] },
+      { ...session.selectedValueIds, "142": [531] },
+      "uniforme",
+    );
+    const forWoman = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [legacy, man] },
+      { ...session.selectedValueIds, "142": [530] },
+      "uniforme",
+    );
+
+    expect(forMan.map((definition) => definition.id)).toEqual(["cuello-hombre"]);
+    expect(forWoman.map((definition) => definition.id)).toEqual(["cuello-heredado"]);
+  });
+
   it("resuelve visibilidad por elemento y toma colores solo de la orden", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",
