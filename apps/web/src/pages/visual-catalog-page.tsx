@@ -1329,6 +1329,10 @@ export function VisualCatalogPage() {
   ) {
     clearNotices();
     setIsBusy(true);
+    const definitionGenderLabel = getDefinitionGenderLabel(definition);
+    const definitionDisplayLabel = `${definition.displayName}${
+      definitionGenderLabel ? ` · ${definitionGenderLabel}` : ""
+    }`;
 
     try {
       if (action === "edit") {
@@ -1338,12 +1342,12 @@ export function VisualCatalogPage() {
       } else if (action === "submit") {
         await submitVisualDefinition(definition.id);
         await refreshVersions();
-        setMessage(`${definition.displayName} esta en revision.`);
+        setMessage(`${definitionDisplayLabel} esta en revision.`);
       } else if (action === "approve") {
         const approved = await approveVisualDefinition(definition.id);
         await refreshVersions();
         setMessage(
-          `${approved.displayName} version ${approved.version} aprobada para una release.`,
+          `${definitionDisplayLabel} version ${approved.version} aprobada para una release.`,
         );
       } else {
         const cloned = await cloneVisualDefinition(definition.id);

@@ -82,6 +82,26 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getDefinitionDisplayLabel(definition: VisualDefinitionSummary) {
+  const genderCondition = definition.activationConditions.find(
+    (condition) => normalize(condition.attributeName) === "genero",
+  );
+  const genderValue = genderCondition?.valueNames.find((valueName) => {
+    const normalizedValue = normalize(valueName);
+    return normalizedValue === "hombre" || normalizedValue === "mujer";
+  });
+
+  return `${definition.displayName}${genderValue ? ` · ${genderValue.trim()}` : ""}`;
+}
+
 function getDefinitionTargetKey(definition: VisualDefinitionSummary) {
   const sourceValueId =
     definition.binding.sourceValueId ?? definition.binding.valueId;
@@ -286,7 +306,7 @@ export function VisualReleaseManager({
       const versions = staleDefinitions
         .map(
           ({ definition, newer }) =>
-            `${definition.displayName} v${definition.version} (existe v${newer.version})`,
+            `${getDefinitionDisplayLabel(definition)} v${definition.version} (existe v${newer.version})`,
         )
         .join(", ");
 
@@ -365,7 +385,7 @@ export function VisualReleaseManager({
                   }
                 />
                 <span>
-                  <strong>{definition.displayName}</strong>
+                  <strong>{getDefinitionDisplayLabel(definition)}</strong>
                   <small>
                     {definition.binding.attributeName}: {definition.binding.valueName} ·
                     version {definition.version}
@@ -427,7 +447,7 @@ export function VisualReleaseManager({
                         {(() => {
                           const definition = definitionsById.get(definitionId);
                           return definition
-                            ? `${definition.displayName} · v${definition.version}`
+                            ? `${getDefinitionDisplayLabel(definition)} · v${definition.version}`
                             : definitionId.slice(0, 8);
                         })()}
                       </span>
@@ -447,7 +467,7 @@ export function VisualReleaseManager({
                       return (
                         <span key={definitionId}>
                           {definition
-                            ? `${definition.displayName} · v${definition.version}`
+                            ? `${getDefinitionDisplayLabel(definition)} · v${definition.version}`
                             : definitionId.slice(0, 8)}
                           {newer
                             ? ` · hay v${newer.version} mas reciente`
