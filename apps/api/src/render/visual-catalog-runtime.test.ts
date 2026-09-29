@@ -535,7 +535,7 @@ describe("runtime del catalogo visual general", () => {
   it("pinta con el color base un área segura de cuello sin vivo seleccionado", () => {
     // Simula una pieza cerrada separada por el editor desde un SVG de Corel.
     const definition: ActiveVisualDefinition = {
-      ...makeDefinition("cuello-relleno-seguro", "neck", []),
+      ...makeDefinition("cuello-relleno-seguro", "component", []),
       selectedElementIds: ["cuello"],
       elementPaints: {
         cuello: {

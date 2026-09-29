@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,6 +17,7 @@ import {
   type VisualElementPaint,
   type VisualLayer,
   type VisualPlacement,
+  type VisualRenderMode,
   type VisualRelease,
   type VisualSlot,
 } from "@repo/shared/schemas/visual-catalog";
@@ -86,6 +86,11 @@ const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
   boot: "/assets/catalog/pantalon/svg-clean/pants-model-01.svg",
 };
 
+const MEN_CLOSED_NO_COLLAR_REFERENCE_ASSET =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
+
+type EditorReferenceSilhouette = "woman" | "man";
+
 const PAINT_OPTIONS: Array<{
   value: VisualElementPaint["mode"];
   label: string;
@@ -99,6 +104,42 @@ const PAINT_OPTIONS: Array<{
 ];
 
 type CommonAttribute = VisualCatalogOdooAttribute;
+
+function getGenderActivationCondition(
+  attributes: CommonAttribute[],
+  silhouette: EditorReferenceSilhouette,
+): VisualActivationCondition | null {
+  const genderAttribute = attributes.find(
+    (attribute) => normalize(attribute.name) === "genero",
+  );
+  const expectedValueName = silhouette === "man" ? "hombre" : "mujer";
+  const genderValue = genderAttribute?.values.find(
+    (value) => normalize(value.name) === expectedValueName,
+  );
+
+  if (!genderAttribute || !genderValue) {
+    return null;
+  }
+
+  return {
+    attributeId: genderAttribute.id,
+    attributeName: genderAttribute.name,
+    sourceValueIds: [genderValue.sourceValueId],
+    valueNames: [genderValue.name],
+  };
+}
+
+function withGenderActivationCondition(
+  conditions: VisualActivationCondition[],
+  genderCondition: VisualActivationCondition,
+) {
+  return [
+    ...conditions.filter(
+      (condition) => condition.attributeId !== genderCondition.attributeId,
+    ),
+    genderCondition,
+  ];
+}
 
 function normalize(value: string) {
   return value
@@ -198,6 +239,18 @@ function getDefinitionStatusLabel(
 
 function getReferenceAsset(slot: VisualSlot) {
   return REFERENCE_ASSET_BY_SLOT[slot];
+}
+
+function getPreviewReferenceAsset(
+  slot: VisualSlot,
+  silhouette: EditorReferenceSilhouette,
+) {
+  // El selector del editor es solo una herramienta de revisión. La referencia
+  // guardada continúa siendo la base canónica del slot para no versionar la
+  // misma definición una vez por cada silueta.
+  return silhouette === "man" && slot !== "boot"
+    ? MEN_CLOSED_NO_COLLAR_REFERENCE_ASSET
+    : getReferenceAsset(slot);
 }
 
 function findSourceValueId(
@@ -493,7 +546,6 @@ function ConditionsEditor({
 
 export function VisualCatalogPage() {
   const sourceCanvasRef = useRef<HTMLDivElement>(null);
-  const [silhouetteElementId, setSilhouetteElementId] = useState<string | null>(null);
   const authQuery = useAuthSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -538,6 +590,11 @@ export function VisualCatalogPage() {
   >({});
   const [placement, setPlacement] =
     useState<VisualPlacement>(DEFAULT_PLACEMENT);
+  // Overlay es el valor seguro: un SVG solo reemplaza la base por decisión
+  // explícita del editor, nunca porque un vector sea el más grande.
+  const [renderMode, setRenderMode] = useState<VisualRenderMode>("overlay");
+  const [referenceSilhouette, setReferenceSilhouette] =
+    useState<EditorReferenceSilhouette>("woman");
   const [editingDefinitionId, setEditingDefinitionId] = useState<string | null>(
     null,
   );
@@ -642,9 +699,16 @@ export function VisualCatalogPage() {
     [commonAttributes, slot],
   );
   const referenceAssetSrc = getReferenceAsset(slot);
-  const uploadedSilhouetteIsActive = Boolean(
-    silhouetteElementId && selectedElementIds.includes(silhouetteElementId),
+  const previewReferenceAssetSrc = getPreviewReferenceAsset(
+    slot,
+    referenceSilhouette,
   );
+  const canReplaceBase = slot === "neck";
+  // La composición completa es una decisión explícita. El mismo SVG Hombre
+  // puede aportar solo cuello, vivos o piezas seleccionadas sobre la base.
+  const effectiveRenderMode: VisualRenderMode =
+    canReplaceBase ? renderMode : "overlay";
+  const uploadedSilhouetteIsActive = effectiveRenderMode === "replace_base";
   const selectableMarkup = useMemo(
     () =>
       indexedSvg
@@ -655,33 +719,6 @@ export function VisualCatalogPage() {
         : "",
     [indexedSvg, selectedElementIds],
   );
-  useLayoutEffect(() => {
-    const svg = sourceCanvasRef.current?.querySelector("svg");
-    if (!svg) {
-      setSilhouetteElementId(null);
-      return;
-    }
-
-    let largestId: string | null = null;
-    let largestArea = 0;
-    const drawables = Array.from(
-      svg.querySelectorAll<SVGGraphicsElement>("[data-vc-id]"),
-    );
-    for (const element of drawables) {
-      try {
-        const bounds = element.getBBox();
-        const area = bounds.width * bounds.height;
-        const id = element.dataset.vcId;
-        if (id && area > largestArea) {
-          largestId = id;
-          largestArea = area;
-        }
-      } catch {
-        // Un nodo sin caja visual no puede representar la silueta principal.
-      }
-    }
-    setSilhouetteElementId(largestId);
-  }, [indexedSvg, selectableMarkup]);
   const runtimePreviewSrc = useMemo(() => {
     if (!indexedSvg || selectedElementIds.length === 0) {
       return "";
@@ -695,13 +732,17 @@ export function VisualCatalogPage() {
           elementPaints,
           placement,
           allowIncompletePaints: true,
-          silhouetteElementId,
+          renderMode: effectiveRenderMode,
         }),
       );
     } catch {
       return "";
     }
-  }, [elementPaints, indexedSvg, placement, selectedElementIds, silhouetteElementId]);
+  }, [effectiveRenderMode, elementPaints, indexedSvg, placement, selectedElementIds]);
+  // Un SVG Hombre completo se previsualiza tal cual fue cargado. No se recorta ni
+  // se combina con una silueta Mujer: esa composición fue la causa de sisas
+  // deformadas y ya no representa el render real del laboratorio.
+  const displayedRuntimePreviewSrc = runtimePreviewSrc;
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -752,6 +793,8 @@ export function VisualCatalogPage() {
     placement,
     selectedElementIds,
   ]);
+  // La capa de selección usa la misma geometría íntegra que el SVG cargado.
+  const displayedRuntimeHighlightSrc = runtimeHighlightSrc;
 
   async function refreshVersions() {
     const [nextDefinitions, nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
@@ -914,6 +957,7 @@ export function VisualCatalogPage() {
       setSelectedElementIds([]);
       setHighlightedElementId(null);
       setElementPaints({});
+      setRenderMode("overlay");
       setMessage(`${indexed.elements.length} elementos disponibles.`);
     } catch (fileError) {
       setError(
@@ -1091,6 +1135,7 @@ export function VisualCatalogPage() {
     setHighlightedElementId(null);
     setElementPaints({});
     setPlacement(DEFAULT_PLACEMENT);
+    setRenderMode("overlay");
     setDisplayName("");
     clearNotices();
   }
@@ -1152,6 +1197,22 @@ export function VisualCatalogPage() {
       return;
     }
 
+    const genderCondition =
+      slot === "neck"
+        ? getGenderActivationCondition(commonAttributes, referenceSilhouette)
+        : null;
+
+    if (slot === "neck" && !genderCondition) {
+      setError(
+        "Un modelo de cuello debe tener Género Hombre o Mujer disponible en todas las plantillas seleccionadas.",
+      );
+      return;
+    }
+
+    const effectiveActivationConditions = genderCondition
+      ? withGenderActivationCondition(activationConditions, genderCondition)
+      : activationConditions;
+
     setIsBusy(true);
     try {
       const runtimeSvg = buildRuntimeVisualSvg({
@@ -1159,7 +1220,7 @@ export function VisualCatalogPage() {
         selectedElementIds,
         elementPaints,
         placement,
-        silhouetteElementId,
+        renderMode: effectiveRenderMode,
       });
       const mutation = {
         displayName: displayName.trim() || selectedValue.name,
@@ -1173,11 +1234,13 @@ export function VisualCatalogPage() {
           attributeName: selectedAttribute.name,
           valueName: selectedValue.name,
         },
-        activationConditions,
+        activationConditions: effectiveActivationConditions,
         selectedElementIds,
         elementPaints,
         placement,
-        referenceAssetSrc,
+        // Esta referencia es parte de la definición: guarda la silueta con
+        // la que se revisó el SVG para que al reabrirlo no vuelva a Mujer.
+        referenceAssetSrc: previewReferenceAssetSrc,
         originalSvg,
         normalizedSvg: indexedSvg.normalizedSvg,
         runtimeSvg,
@@ -1219,6 +1282,25 @@ export function VisualCatalogPage() {
     setHighlightedElementId(null);
     setElementPaints(definition.elementPaints);
     setPlacement(definition.placement);
+    // Una definición de cuello para Hombre debe abrirse contra la misma
+    // silueta de referencia que utilizará el laboratorio. Antes, el editor
+    // conservaba "Mujer" de la sesión anterior y mostraba una base distinta.
+    const definitionUsesMenSilhouette =
+      definition.referenceAssetSrc === MEN_CLOSED_NO_COLLAR_REFERENCE_ASSET;
+    setReferenceSilhouette(
+      definitionUsesMenSilhouette ? "man" : "woman",
+    );
+    // Las versiones históricas con el marcador anterior se abren conservando
+    // su resultado; todas las demás se editan de forma segura como overlay.
+    setRenderMode(
+      definition.slot === "neck" &&
+        (/<svg\b[^>]*\bdata-vc-render-mode=(?:"replace-base"|'replace-base')/i.test(
+          definition.runtimeSvg,
+        ) ||
+          definition.runtimeSvg.includes("data-vc-replaces-base-silhouette"))
+        ? "replace_base"
+        : "overlay",
+    );
     setView("editor");
     setMessage(`Editando ${definition.displayName}.`);
     setError("");
@@ -1357,6 +1439,10 @@ export function VisualCatalogPage() {
                   onChange={(event) => {
                     const nextSlot = event.target.value as VisualSlot;
                     setSlot(nextSlot);
+                    if (nextSlot !== "neck") {
+                      // Un componente parcial nunca puede sustituir la prenda.
+                      setRenderMode("overlay");
+                    }
                     setSelectedProductIds((current) =>
                       current.filter((id) => {
                         const product = products.find(
@@ -1515,6 +1601,54 @@ export function VisualCatalogPage() {
                 <strong>Base automatica</strong>
                 <span>{referenceAssetSrc}</span>
               </div>
+              <label>
+                Vista de silueta
+                <select
+                  value={referenceSilhouette}
+                  disabled={slot === "boot"}
+                  onChange={(event) =>
+                    setReferenceSilhouette(
+                      event.target.value as EditorReferenceSilhouette,
+                    )
+                  }
+                >
+                  <option value="woman">Mujer</option>
+                  <option value="man">Hombre</option>
+                </select>
+                <small>
+                  Solo cambia la base de esta vista; el SVG y la definición
+                  guardada no se modifican.
+                </small>
+              </label>
+              {slot === "neck" ? (
+                <p className="catalog-empty">
+                  Al guardar, este cuello quedará disponible solo para{" "}
+                  <strong>
+                    {referenceSilhouette === "man" ? "Hombre" : "Mujer"}
+                  </strong>
+                  . La regla de género se aplica automáticamente.
+                </p>
+              ) : null}
+              {/* El modo de silueta pertenece al SVG que se está cargando. */}
+              <label className="catalog-render-mode">
+                <input
+                  type="checkbox"
+                  checked={effectiveRenderMode === "replace_base"}
+                  disabled={!canReplaceBase}
+                  onChange={(event) =>
+                    setRenderMode(
+                      event.target.checked ? "replace_base" : "overlay",
+                    )
+                  }
+                />
+                <span>
+                  <strong>El SVG contiene la silueta completa de la blusa</strong>
+                  <small>
+                    Solo para cuellos que sustituyen toda la prenda. Para piezas,
+                    fondos, vivos y bolsillos, déjalo desactivado.
+                  </small>
+                </span>
+              </label>
             </div>
 
             <div className="visual-editor__section">
@@ -1633,16 +1767,16 @@ export function VisualCatalogPage() {
             <div className="visual-preview-panel">
               <h2>Resultado</h2>
               <div className="visual-runtime-preview">
-                {!uploadedSilhouetteIsActive || !runtimePreviewSrc ? (
-                  <img src={referenceAssetSrc} alt="" />
+                {!uploadedSilhouetteIsActive || !displayedRuntimePreviewSrc ? (
+                  <img src={previewReferenceAssetSrc} alt="" />
                 ) : null}
-                {runtimePreviewSrc ? (
-                  <img src={runtimePreviewSrc} alt="" />
+                {displayedRuntimePreviewSrc ? (
+                  <img src={displayedRuntimePreviewSrc} alt="" />
                 ) : null}
-                {runtimeHighlightSrc ? (
+                {displayedRuntimeHighlightSrc ? (
                   <img
                     className="visual-runtime-preview__highlight"
-                    src={runtimeHighlightSrc}
+                    src={displayedRuntimeHighlightSrc}
                     alt=""
                     aria-hidden="true"
                   />

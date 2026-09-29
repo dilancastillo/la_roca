@@ -1,6 +1,7 @@
 import type {
   VisualElementPaint,
   VisualPlacement,
+  VisualRenderMode,
 } from "@repo/shared/schemas/visual-catalog";
 import {
   getVisualElementVisibilityToken,
@@ -37,7 +38,7 @@ type RuntimeSvgInput = {
   elementPaints: Record<string, VisualElementPaint>;
   placement: VisualPlacement;
   allowIncompletePaints?: boolean;
-  silhouetteElementId?: string | null;
+  renderMode?: VisualRenderMode;
 };
 
 function parseSvg(svgText: string) {
@@ -416,7 +417,7 @@ export function buildRuntimeVisualSvg({
   elementPaints,
   placement,
   allowIncompletePaints = false,
-  silhouetteElementId = null,
+  renderMode = "overlay",
 }: RuntimeSvgInput) {
   if (selectedElementIds.length === 0) {
     throw new Error("Selecciona al menos un elemento del SVG.");
@@ -476,9 +477,6 @@ export function buildRuntimeVisualSvg({
         getVisualElementVisibilityToken(selectedElementIds.indexOf(elementId)),
         allowIncompletePaints,
       );
-      if (elementId === silhouetteElementId) {
-        paintedElement.setAttribute("data-vc-replaces-base-silhouette", "true");
-      }
       paintedElement.removeAttribute("data-vc-id");
       paintedElement.removeAttribute("data-vc-selected");
     }
@@ -517,6 +515,12 @@ export function buildRuntimeVisualSvg({
   );
   runtimeRoot.setAttribute("width", String(placement.targetWidth));
   runtimeRoot.setAttribute("height", String(placement.targetHeight));
+  // La decisión se guarda en la raíz del SVG de ejecución, no se infiere de
+  // la geometría. Así un fondo o rectángulo grande no puede ser la base.
+  runtimeRoot.setAttribute(
+    "data-vc-render-mode",
+    renderMode === "replace_base" ? "replace-base" : "overlay",
+  );
 
   const rotationGroup = runtimeDocument.createElementNS(SVG_NAMESPACE, "g");
   const centerX = placement.targetWidth / 2;

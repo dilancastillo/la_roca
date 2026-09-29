@@ -7,6 +7,10 @@ import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 1200;
+// Los cinco cuellos compatibles con Hombre ocupan el centro superior del
+// lienzo. Recortar el SVG histórico a esta zona conserva cuello y cremallera,
+// pero excluye mangas, sisas y torso de la silueta Mujer que trae embebidos.
+const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -14,6 +18,9 @@ const TARGET_RECT = {
   height: 980,
 };
 const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME =
+  "blouse-base-closed-no-collar-men.svg";
+// Coordenada del viewBox común donde la manga histórica ya se une al cuerpo.
 const CLOSED_NO_COLLAR_MASK_CLOSURE = {
   x1: 379,
   x2: 694,
@@ -273,6 +280,51 @@ export const overlayRegionPresets: Record<
 const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
   collar: [{ x: 320, y: 100, width: 270, height: 300 }],
 };
+
+function getMaleNeckDetailRegions(_source: string): OverlayRegion[] {
+  return [MALE_NECK_DETAIL_REGION];
+}
+
+function cleanMaleNeckShoulderArtifacts(
+  context: CanvasRenderingContext2D,
+  source: string,
+  _baseColorHex: string,
+) {
+  const fileName = getFileNameFromSource(source);
+  const segments: Array<readonly [number, number, number, number]> =
+    fileName === "blouse-model-36-v-dividido.svg" ||
+    fileName === "blouse-model-30.svg"
+      ? [
+          [245, 160, 320, 138],
+          [580, 138, 655, 160],
+        ]
+      : fileName === "blouse-model-34-cuello-alto-cremallera.svg"
+        ? [
+            [245, 200, 330, 168],
+            [570, 168, 655, 200],
+          ]
+        : [];
+
+  if (segments.length === 0) return;
+
+  context.save();
+  // En las V los restos quedan fuera del contorno Hombre; en cuello alto son
+  // líneas interiores. Cada familia se restaura contra su fondo real.
+  context.strokeStyle =
+    fileName === "blouse-model-34-cuello-alto-cremallera.svg"
+      ? _baseColorHex
+      : "#ffffff";
+  context.lineWidth = 9;
+  context.lineCap = "round";
+  for (const [x1, y1, x2, y2] of segments) {
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+  }
+  context.restore();
+}
+
 
 const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-14.svg": [1, 2, 3, 4],
@@ -2696,7 +2748,12 @@ async function getInteriorMask(src: string, closeSmallGaps = false) {
       }
     }
 
-    if (getFileNameFromSource(src) === CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+    if (
+      getFileNameFromSource(src) === CLOSED_NO_COLLAR_BASE_FILE_NAME ||
+      getFileNameFromSource(src) === MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME
+    ) {
+      // Las dos bases dejan la abertura del cuello transparente; se cierra
+      // solo en la máscara para que el color de la prenda no se fugue arriba.
       const scaleX = width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
       const scaleY = height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
       const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
@@ -3056,16 +3113,6 @@ async function getDetailOverlay(
 
   detailOverlayCache.set(cacheKey, promise);
   return await promise;
-}
-
-async function drawTintedBaseFromAsset(
-  context: CanvasRenderingContext2D,
-  src: string,
-  fillColor: string,
-  includeOutline = true,
-) {
-  const baseCanvas = await createTintedBaseCanvas(src, fillColor, includeOutline);
-  context.drawImage(baseCanvas, 0, 0);
 }
 
 async function drawOverlayInRegions(
@@ -4831,34 +4878,15 @@ export async function createTintedBaseCanvas(
   fillContext.drawImage(mask, 0, 0);
   fillContext.globalCompositeOperation = "source-over";
 
-  tintContext.drawImage(
-    fillCanvas,
-    bounds.x,
-    bounds.y,
-    bounds.width,
-    bounds.height,
-    drawX,
-    drawY,
-    drawWidth,
-    drawHeight,
-  );
+  tintContext.drawImage(fillCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
 
   if (includeOutline) {
-    tintContext.drawImage(
-      processed.canvas,
-      bounds.x,
-      bounds.y,
-      bounds.width,
-      bounds.height,
-      drawX,
-      drawY,
-      drawWidth,
-      drawHeight,
-    );
+    tintContext.drawImage(processed.canvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
   }
 
   return tintCanvas;
 }
+
 
 export async function createDetailOverlayCanvas(
   sourceSrc: string,
@@ -4885,13 +4913,42 @@ async function composeSingleDesign(
 
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
 
+  if (scene.useMaleBlouseSilhouette) {
+    // Hombre se dibuja como una silueta completa y continua. Así hombros,
+    // mangas, sisas y costados siempre proceden de una única geometría.
+    const maleBodyCanvas = await createTintedBaseCanvas(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+      scene.baseColorHex,
+      !scene.suppressGarmentBaseOutline,
+    );
+    context.drawImage(maleBodyCanvas, 0, 0);
+  }
+
   if (baseAssetSrc) {
-    await drawTintedBaseFromAsset(
-      context,
+    const baseCanvas = await createTintedBaseCanvas(
       baseAssetSrc,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
+    if (scene.useMaleBlouseSilhouette) {
+      // Los modelos históricos son prendas Mujer completas. Sobre la base
+      // Hombre copiamos únicamente el detalle central del cuello; nunca sus
+      // brazos o sisas, que eran las puntas visibles en la unión lateral.
+      drawCanvasInRegions(
+        context,
+        baseCanvas,
+        getMaleNeckDetailRegions(baseAssetSrc),
+      );
+      // Tres SVG históricos guardan pequeños trazos internos de hombro junto
+      // al cuello. Se limpian después del recorte sin tocar el contorno Hombre.
+      cleanMaleNeckShoulderArtifacts(
+        context,
+        baseAssetSrc,
+        scene.baseColorHex,
+      );
+    } else {
+      context.drawImage(baseCanvas, 0, 0);
+    }
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
     drawGarmentBase(context, "transparent");

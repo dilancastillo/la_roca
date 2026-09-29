@@ -123,10 +123,10 @@ describe("catalogo visual en la escena de automatizacion", () => {
     ).not.toBe(true);
   });
 
-  it("usa como base una definicion que contiene una silueta seleccionada", () => {
+  it("usa como base una definición de cuello con reemplazo explícito", () => {
     const markedRuntimeSvg = runtimeSvg.replace(
-      "<path ",
-      '<path data-vc-replaces-base-silhouette="true" ',
+      "<svg",
+      '<svg data-vc-render-mode="replace-base"',
     );
     const scene = deriveAutomationRenderScene(
       {
@@ -146,6 +146,27 @@ describe("catalogo visual en la escena de automatizacion", () => {
         assetPath.startsWith("data:image/svg+xml"),
       ),
     ).toBe(true);
+  });
+
+  it("mantiene la base cuando un bolsillo trae un marcador histórico", () => {
+    const markedRuntimeSvg = runtimeSvg.replace(
+      "<path ",
+      '<path data-vc-replaces-base-silhouette="true" ',
+    );
+    const scene = deriveAutomationRenderScene(
+      {
+        ...session,
+        visualDefinitions: session.visualDefinitions?.map((definition) => ({
+          ...definition,
+          slot: "lower_pocket" as const,
+          runtimeSvg: markedRuntimeSvg,
+        })),
+      },
+      session.selectedValueIds,
+    );
+
+    expect(scene.garmentAssetPath).not.toMatch(/^data:image\/svg\+xml/);
+    expect(scene.suppressGarmentBaseOutline).not.toBe(true);
   });
 
   it("rasteriza el SVG dinamico en la imagen que se guarda en Odoo", async () => {

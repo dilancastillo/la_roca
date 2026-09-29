@@ -18,18 +18,19 @@ export type MaterializedVisualDefinition = {
   replacesBaseSilhouette: boolean;
 };
 
+
 function replacesBaseSilhouette(definition: ActiveVisualDefinition) {
-  if (definition.runtimeSvg.includes("data-vc-replaces-base-silhouette")) {
-    return true;
+  // El reemplazo solo es válido para cuello y debe venir de una decisión
+  // explícita guardada en el SVG. Los modelos históricos con el marcador
+  // antiguo se mantienen; los SVG ambiguos sin marcador pasan a overlay.
+  if (definition.slot !== "neck") {
+    return false;
   }
 
-  // Compatibilidad con versiones creadas antes de guardar el marcador. En esos
-  // SVG de cuello, el primer vector era la silueta completa de la prenda.
   return (
-    definition.slot === "neck" &&
-    definition.selectedElementIds.includes("vc-element-1") &&
-    definition.elementPaints["vc-element-1"]?.mode === "preserve" &&
-    /<path\b[^>]*\bd="[^"]{1000,}"/i.test(definition.runtimeSvg)
+    /<svg\b[^>]*\bdata-vc-render-mode=(?:"replace-base"|'replace-base')/i.test(
+      definition.runtimeSvg,
+    ) || definition.runtimeSvg.includes("data-vc-replaces-base-silhouette")
   );
 }
 

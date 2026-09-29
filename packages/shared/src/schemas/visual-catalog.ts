@@ -20,6 +20,11 @@ const visualCatalogSvgSchema = z
 export const visualSlotSchema = z.enum(["neck", "lower_pocket", "boot"]);
 export type VisualSlot = z.infer<typeof visualSlotSchema>;
 
+// El modo queda serializado en el SVG runtime para que cada versión y release
+// conserve su decisión de composición sin requerir una migración de metadatos.
+export const visualRenderModeSchema = z.enum(["overlay", "replace_base"]);
+export type VisualRenderMode = z.infer<typeof visualRenderModeSchema>;
+
 export const visualDefinitionStatusSchema = z.enum([
   "draft",
   "review",
@@ -214,6 +219,19 @@ export const visualDefinitionMutationSchema = z
     }
 
     const selectedIds = new Set(mutation.selectedElementIds);
+
+    const requestsBaseReplacement =
+      /<svg\b[^>]*\bdata-vc-render-mode=(?:"replace-base"|'replace-base')/i.test(
+        mutation.runtimeSvg,
+      );
+    if (requestsBaseReplacement && mutation.slot !== "neck") {
+      context.addIssue({
+        code: "custom",
+        path: ["runtimeSvg"],
+        message:
+          "Solo un cuello puede reemplazar la silueta base; bolsillos y botas se componen como capas.",
+      });
+    }
 
     if (selectedIds.size !== mutation.selectedElementIds.length) {
       context.addIssue({

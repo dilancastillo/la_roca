@@ -13,7 +13,10 @@ import {
   getTrimSectionKeyBySourceValueId,
   hasSourceValueId,
 } from "@repo/shared/configurator-id-rules";
-import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
+import {
+  getMenBlouseNeckAssetPath,
+  matchesVisualAssetAttributeId,
+} from "@repo/shared/visual-assets";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
 import {
   getLowerPocketAuxiliaryAddon,
@@ -52,6 +55,8 @@ export type AutomationRenderScene = {
   pantsKneePatchLeftModel?: PantsKneePatchModel;
   pantsKneePatchLeftType?: PantsKneePatchType;
   neckAssetPath?: string;
+  /** Compatibilidad temporal para SVG históricos que no tienen arte Hombre completo. */
+  useMaleBlouseSilhouette?: boolean;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
   lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind;
@@ -766,6 +771,8 @@ const BLUSA_PESPUNTE_MODEL_ASSET_PATH =
 // Base temporal para Blusa y Uniforme mientras no exista un modelo de cuello seleccionado.
 const BLUSA_CLOSED_NO_COLLAR_ASSET_PATH =
   "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+const BLUSA_MEN_CLOSED_NO_COLLAR_ASSET_PATH =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_ASSET_PATH =
   "assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -773,6 +780,36 @@ function isYesOption(value: SourceBackedOption | string | undefined) {
   if (hasSourceValueId(typeof value === "string" ? undefined : value, CONFIGURATOR_VALUE_IDS.yes)) return true;
   const valueName = getOptionName(value);
   return valueName ? normalize(valueName) === "si" : false;
+}
+
+function hasManGenderSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const genderAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.gender,
+    (name) => name === "genero",
+  );
+  return getSelectedOptions(
+    genderAttribute,
+    selectedValueIds,
+  ).some((value) => {
+    const gender = normalize(value.name);
+    return gender === "hombre" || gender === "masculino";
+  });
+
+}
+
+function getClosedBlouseBaseAssetPath(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  // Mantiene el render de servidor alineado con el navegador: solo una
+  // selección explícita de Hombre cambia la base y nunca altera pedidos viejos.
+  return hasManGenderSelection(session, selectedValueIds)
+    ? BLUSA_MEN_CLOSED_NO_COLLAR_ASSET_PATH
+    : BLUSA_CLOSED_NO_COLLAR_ASSET_PATH;
 }
 
 function hasUniformPespunteSelection(
@@ -1072,20 +1109,44 @@ function deriveSingleAutomationRenderScene(
   const hasDynamicNeck = dynamicVisualSlots.has("neck");
   const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
   const hasDynamicBoot = dynamicVisualSlots.has("boot");
-  const neckAssetPath = !hasDynamicNeck && selectedNeck
+  const catalogNeckAssetPath = !hasDynamicNeck && selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
     : undefined;
+  const maleNeckAssetPath = selectedNeck && hasManGenderSelection(session, selectedValueIds)
+    ? getMenBlouseNeckAssetPath(
+        session.graphicManifestKey,
+        selectedNeck.sourceValueId,
+        selectedNeck.name,
+      )
+    : undefined;
+  // La API resuelve exactamente el mismo SVG masculino completo que la web.
+  // Así la imagen persistida nunca recompone una base Mujer con un cuello
+  // Hombre ni depende de recortes específicos del navegador.
+  const neckAssetPath = maleNeckAssetPath ?? catalogNeckAssetPath;
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckAssetPath);
+  const closedBlouseBaseAssetPath = getClosedBlouseBaseAssetPath(
+    session,
+    selectedValueIds,
+  );
   const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
     (definition) => definition.replacesBaseSilhouette,
   );
+  const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
+    (definition) => !definition.replacesBaseSilhouette,
+  );
+  const useMaleBlouseSilhouette =
+    hasManGenderSelection(session, selectedValueIds) &&
+    session.graphicManifestKey.includes("blusa") &&
+    // El recorte central solo protege la compatibilidad con cuellos
+    // históricos. Una silueta completa del catálogo se dibuja íntegra.
+    Boolean(catalogNeckAssetPath && !maleNeckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentAssetPath = dynamicBaseSilhouette
     ? dynamicBaseSilhouette.svgDataUri
     : shouldUseClosedBlouseWithoutNeck
-      ? BLUSA_CLOSED_NO_COLLAR_ASSET_PATH
+      ? closedBlouseBaseAssetPath
     : selectedGarment
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
@@ -1120,7 +1181,7 @@ function deriveSingleAutomationRenderScene(
   const garmentDetailAssetPaths = compactUnique([
     garmentModelDetailAssetPath,
     sleeveDetailAssetPath,
-    ...dynamicVisualDefinitions.map(
+    ...dynamicOverlayDefinitions.map(
       (definition) => definition.svgDataUri,
     ),
   ]);
@@ -1173,9 +1234,6 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
-    ...(dynamicBaseSilhouette
-      ? { suppressGarmentBaseOutline: true }
-      : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),
@@ -1194,6 +1252,7 @@ function deriveSingleAutomationRenderScene(
       ? { pantsKneePatchLeftType: leftKneePatchTypeValue }
       : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
+    ...(useMaleBlouseSilhouette ? { useMaleBlouseSilhouette: true } : {}),
     ...(resolvedLowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }
       : {}),

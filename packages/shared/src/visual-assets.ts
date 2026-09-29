@@ -119,6 +119,18 @@ const BLUSA_CUELLO_ALTO_CREMALLERA_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-34-cuello-alto-cremallera-lower-pocket.svg`;
 const BLUSA_V_DIVIDIDO_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-36-v-dividido.svg`;
+// SVG masculinos completos: evitan recomponer o recortar siluetas históricas
+// durante el render. Cada recurso conserva su cuerpo y cuello como una unidad.
+const BLUSA_MEN_NECK_ASSETS_BY_SOURCE_VALUE_ID: Readonly<Record<number, string>> = {
+  554: `${BLUSA_ASSET_BASE}/blouse-men-model-01-cuello-v.svg`,
+  558: `${BLUSA_ASSET_BASE}/blouse-men-model-02-jdc.svg`,
+  562: `${BLUSA_ASSET_BASE}/blouse-men-model-36-v-dividido.svg`,
+  // El catálogo recibido no incluye un SVG Cruzado independiente. Se usa la
+  // variante V dividida completa para conservar una geometría masculina
+  // continua hasta que Diseño entregue el arte final específico.
+  1987: `${BLUSA_ASSET_BASE}/blouse-men-model-36-v-dividido.svg`,
+  1995: `${BLUSA_ASSET_BASE}/blouse-men-model-34-cuello-alto-cremallera.svg`,
+};
 const BLUSA_EL_HATO_ASSET = `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato.svg`;
 const BLUSA_EL_HATO_LOWER_POCKET_ASSET =
   `${BLUSA_ASSET_BASE}/blouse-model-39-el-hato-lower-pocket.svg`;
@@ -925,4 +937,40 @@ export function getDefaultVisualAssetPath(graphicManifestKey: string) {
 
 export function getDefaultChestPocketAssetPath(graphicManifestKey: string) {
   return resolveVisualAssetCatalog(graphicManifestKey)?.defaultChestPocketModelAsset;
+}
+
+/**
+ * Devuelve la ilustración masculina completa del cuello seleccionado. Se
+ * consulta por sourceValueId porque ese identificador sobrevive a versiones y
+ * variantes de Odoo, a diferencia del id temporal de la sesión.
+ */
+export function getMenBlouseNeckAssetPath(
+  graphicManifestKey: string,
+  sourceValueId: number | undefined,
+  valueName?: string,
+) {
+  if (!graphicManifestKey.includes("blusa")) {
+    return undefined;
+  }
+
+  if (sourceValueId !== undefined) {
+    return BLUSA_MEN_NECK_ASSETS_BY_SOURCE_VALUE_ID[sourceValueId];
+  }
+
+  // Los escenarios históricos no siempre incluyen sourceValueId. El nombre
+  // actúa solo como compatibilidad de lectura; Odoo prevalece cuando existe.
+  const normalizedValueName = valueName
+    ?.normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase();
+  const assetsByName: Readonly<Record<string, string>> = {
+    "cuello v": `${BLUSA_ASSET_BASE}/blouse-men-model-01-cuello-v.svg`,
+    jdc: `${BLUSA_ASSET_BASE}/blouse-men-model-02-jdc.svg`,
+    "v dividido": `${BLUSA_ASSET_BASE}/blouse-men-model-36-v-dividido.svg`,
+    cruzado: `${BLUSA_ASSET_BASE}/blouse-men-model-36-v-dividido.svg`,
+    "cuello alto con cremallera":
+      `${BLUSA_ASSET_BASE}/blouse-men-model-34-cuello-alto-cremallera.svg`,
+  };
+  return normalizedValueName ? assetsByName[normalizedValueName] : undefined;
 }

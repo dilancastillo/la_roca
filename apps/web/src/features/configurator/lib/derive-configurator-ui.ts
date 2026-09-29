@@ -13,7 +13,10 @@ import {
   getTrimSectionKeyBySourceValueId,
   hasSourceValueId,
 } from "@repo/shared/configurator-id-rules";
-import { matchesVisualAssetAttributeId } from "@repo/shared/visual-assets";
+import {
+  getMenBlouseNeckAssetPath,
+  matchesVisualAssetAttributeId,
+} from "@repo/shared/visual-assets";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
 import {
   getLowerPocketAuxiliaryAddon,
@@ -70,6 +73,8 @@ export type PreviewScene = {
   pantsKneePatchLeftModel?: PantsKneePatchModel | undefined;
   pantsKneePatchLeftType?: PantsKneePatchType | undefined;
   neckImageSrc?: string | undefined;
+  /** Compatibilidad temporal para SVG históricos que no tienen arte Hombre completo. */
+  useMaleBlouseSilhouette?: boolean | undefined;
   /**
    * El SVG del catálogo ya dibuja el cuello. El canvas no debe superponerle
    * los overlays históricos asociados al nombre del archivo.
@@ -877,6 +882,8 @@ const BLUSA_PESPUNTE_MODEL_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-45-pespunte.svg";
 const BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+const BLUSA_MEN_CLOSED_NO_COLLAR_IMAGE_SRC =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const PANTALON_PESPUNTE_STITCHING_DETAIL_IMAGE_SRC =
   "/assets/catalog/pantalon/detail-overlays/pants-pespunte-stitching.svg";
 
@@ -1641,6 +1648,37 @@ function getHiddenGenderAttributeIds(
   return hiddenAttributeIds;
 }
 
+function hasManGenderSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const genderAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.gender,
+    (name) => name === "genero",
+  );
+  return getSelectedOptions(
+    genderAttribute,
+    selectedValueIds,
+  ).some((value) => {
+    const gender = normalize(value.name);
+    return gender === "hombre" || gender === "masculino";
+  });
+
+}
+
+function getClosedBlouseBaseImageSrc(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  // La forma masculina es una base independiente con el mismo lienzo y
+  // anclajes. Solo se activa ante una selección explícita de Hombre, por lo
+  // que pedidos históricos y sesiones sin Género mantienen la silueta actual.
+  return hasManGenderSelection(session, selectedValueIds)
+    ? BLUSA_MEN_CLOSED_NO_COLLAR_IMAGE_SRC
+    : BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC;
+}
+
 export function sanitizeSelectedValueIdsForHiddenTextAttributes(
   _session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1663,6 +1701,9 @@ function deriveSingleConfiguratorUi(
     session,
     selectedValueIds,
   );
+  const useMaleNeckOptionImages =
+    hasManGenderSelection(session, selectedValueIds) &&
+    session.graphicManifestKey.includes("blusa");
   const visibleAttributes = session.attributes.filter(
     (attribute) =>
       !hiddenConditionalAttributeIds.has(attribute.id) &&
@@ -1681,13 +1722,28 @@ function deriveSingleConfiguratorUi(
       controlType,
       selectionMode: attribute.selectionMode,
       options: attribute.values.map((value) => {
+        // Odoo conserva miniaturas históricas de Mujer. Para los cinco
+        // cuellos disponibles al elegir Hombre, el selector debe mostrar el
+        // mismo SVG masculino que renderiza la previsualización final.
+        const maleNeckImagePath =
+          useMaleNeckOptionImages &&
+          catalog &&
+          matchesVisualAssetAttributeId(catalog, "neckModel", attribute.id)
+            ? getMenBlouseNeckAssetPath(
+                session.graphicManifestKey,
+                value.sourceValueId,
+                value.name,
+              )
+            : undefined;
         const imageSrc =
           controlType === "image"
-            ? getOptionImageSource(
-                session.graphicManifestKey,
-                attribute,
-                value,
-              )
+            ? maleNeckImagePath
+              ? `/${maleNeckImagePath}`
+              : getOptionImageSource(
+                  session.graphicManifestKey,
+                  attribute,
+                  value,
+                )
             : undefined;
 
         return {
@@ -1944,20 +2000,52 @@ function deriveSingleConfiguratorUi(
   const hasDynamicNeck = dynamicVisualSlots.has("neck");
   const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
   const hasDynamicBoot = dynamicVisualSlots.has("boot");
-  const neckImageSrc = !hasDynamicNeck && selectedNeck
+  const catalogNeckImageSrc = !hasDynamicNeck && selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
     : undefined;
+  // Igual que Mujer, una definición dinámica sustituye al recurso estático.
+  // Mantener ambos en Hombre duplicaba el cuello en el canvas.
+  const maleNeckAssetPath =
+    !hasDynamicNeck &&
+    selectedNeck &&
+    hasManGenderSelection(session, selectedValueIds)
+    ? getMenBlouseNeckAssetPath(
+        session.graphicManifestKey,
+        selectedNeck.sourceValueId,
+        selectedNeck.name,
+      )
+    : undefined;
+  // Los SVG masculinos son ilustraciones completas, no overlays. Al elegirlos
+  // se evita recortar una silueta Mujer y se conservan sus propias sisas,
+  // mangas y cuello en una única geometría vectorial.
+  const neckImageSrc = maleNeckAssetPath
+    ? `/${maleNeckAssetPath}`
+    : catalogNeckImageSrc;
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckImageSrc);
+  const closedBlouseBaseImageSrc = getClosedBlouseBaseImageSrc(
+    session,
+    selectedValueIds,
+  );
   const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
     (definition) => definition.replacesBaseSilhouette,
   );
+  const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
+    (definition) => !definition.replacesBaseSilhouette,
+  );
+  const useMaleBlouseSilhouette =
+    hasManGenderSelection(session, selectedValueIds) &&
+    session.graphicManifestKey.includes("blusa") &&
+    // Solo los SVG históricos de cuello se recortan sobre la base Hombre.
+    // Una definición que sustituye la silueta ya contiene toda la prenda y
+    // debe pasar íntegra por el canvas, sin recortes ni una segunda base.
+    Boolean(catalogNeckImageSrc && !maleNeckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentImageSrc = dynamicBaseSilhouette
     ? dynamicBaseSilhouette.svgDataUri
     : shouldUseClosedBlouseWithoutNeck
-      ? BLUSA_CLOSED_NO_COLLAR_IMAGE_SRC
+      ? closedBlouseBaseImageSrc
     : selectedGarment
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
@@ -1992,7 +2080,7 @@ function deriveSingleConfiguratorUi(
   const garmentDetailImageSrcs = compactUnique([
     garmentModelDetailImageSrc,
     sleeveDetailImageSrc,
-    ...dynamicVisualDefinitions.map(
+    ...dynamicOverlayDefinitions.map(
       (definition) => definition.svgDataUri,
     ),
   ]);
@@ -2058,9 +2146,6 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
-      ...(dynamicBaseSilhouette
-        ? { suppressGarmentBaseOutline: true }
-        : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),
@@ -2079,6 +2164,7 @@ function deriveSingleConfiguratorUi(
         ? { pantsKneePatchLeftType: leftKneePatchTypeValue }
         : {}),
       neckImageSrc,
+      ...(useMaleBlouseSilhouette ? { useMaleBlouseSilhouette: true } : {}),
       // Señal explícita para que canvas-renderer evite duplicar el cuello.
       ...(hasDynamicNeck ? { hasDynamicNeckVisual: true } : {}),
       lowerPocketImageSrc,

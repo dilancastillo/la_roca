@@ -51,6 +51,31 @@ function countDifferentPixels(left: Buffer, right: Buffer) {
   return count;
 }
 
+function countDifferentPixelsInRegion(
+  left: Buffer,
+  right: Buffer,
+  imageWidth: number,
+  region: { x: number; y: number; width: number; height: number },
+) {
+  let count = 0;
+
+  for (let y = region.y; y < region.y + region.height; y += 1) {
+    for (let x = region.x; x < region.x + region.width; x += 1) {
+      const offset = (y * imageWidth + x) * 4;
+      if (
+        left[offset] !== right[offset] ||
+        left[offset + 1] !== right[offset + 1] ||
+        left[offset + 2] !== right[offset + 2] ||
+        left[offset + 3] !== right[offset + 3]
+      ) {
+        count += 1;
+      }
+    }
+  }
+
+  return count;
+}
+
 function countNeonGreenPixels(buffer: Buffer) {
   let count = 0;
 
@@ -560,6 +585,139 @@ describe("renderDesignImage", () => {
       countDarkPixelsInRegion(data, info.width, closedChestRegion),
     ).toBe(0);
   });
+
+  it("rellena la base masculina recta sin fugar color por la abertura del cuello", async () => {
+    const rendered = await renderDesignImage({
+      ...baseScene,
+      garmentAssetPath:
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+      lowerPocketLayout: "none",
+    });
+    const { data, info } = await readRawPng(rendered);
+    const closedChestRegion = { x: 420, y: 180, width: 60, height: 150 };
+
+    expect(
+      countWhitePixelsInRegion(data, info.width, closedChestRegion),
+    ).toBe(0);
+    expect(
+      countDarkPixelsInRegion(data, info.width, closedChestRegion),
+    ).toBe(0);
+  });
+
+  // Renderiza PNG completos para validar la composición Hombre; en
+  // equipos locales el render de Sharp puede superar el timeout global de 5 s.
+  it("conserva el cuello y no hereda mangas ni sisas de Mujer al usar Hombre", async () => {
+    const sceneWithCompleteNeck = {
+      ...baseScene,
+      neckAssetPath:
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      lowerPocketLayout: "none" as const,
+    };
+    const man = await readRawPng(
+      await renderDesignImage({
+        ...sceneWithCompleteNeck,
+        useMaleBlouseSilhouette: true,
+      }),
+    );
+    const maleBase = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+        lowerPocketLayout: "none",
+      }),
+    );
+
+    // Fuera de la zona central del cuello, el resultado debe ser exactamente
+    // la base Hombre. Esto impide reintroducir las puntas de las sisas Mujer.
+    expect(
+      countDifferentPixelsInRegion(man.data, maleBase.data, man.info.width, {
+        x: 0,
+        y: 0,
+        width: 250,
+        height: 550,
+      }),
+    ).toBe(0);
+    expect(
+      countDifferentPixelsInRegion(man.data, maleBase.data, man.info.width, {
+        x: 650,
+        y: 0,
+        width: man.info.width - 650,
+        height: 550,
+      }),
+    ).toBe(0);
+    // La franja central sí debe cambiar: allí se incorpora CUELLO V.
+    expect(
+      countDifferentPixelsInRegion(man.data, maleBase.data, man.info.width, {
+        x: 250,
+        y: 0,
+        width: 400,
+        height: 550,
+      }),
+    ).toBeGreaterThan(1_000);
+  }, 15_000);
+
+  it("mantiene continua la geometría masculina con los cinco cuellos permitidos por Odoo", async () => {
+    const maleBase = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath:
+          "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+        lowerPocketLayout: "none",
+      }),
+    );
+    const compatibleMaleNecks = [
+      "blouse-men-model-01-cuello-v.svg", // CUELLO V
+      "blouse-men-model-02-jdc.svg", // JDC
+      "blouse-men-model-36-v-dividido.svg", // V - DIVIDIDO
+      // Odoo ofrece Cruzado, pero aún no existe arte Hombre propio: el
+      // configurador lo resuelve con la variante V dividido.
+      "blouse-men-model-36-v-dividido.svg", // CRUZADO
+      "blouse-men-model-34-cuello-alto-cremallera.svg",
+    ];
+
+    for (const fileName of compatibleMaleNecks) {
+      const rendered = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          neckAssetPath: `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+          useMaleBlouseSilhouette: true,
+          lowerPocketLayout: "none",
+        }),
+      );
+
+      // Las dos franjas laterales incluyen hombros, mangas y sisas. Deben ser
+      // idénticas a la base Hombre para todos los modelos autorizados.
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          maleBase.data,
+          rendered.info.width,
+          { x: 0, y: 0, width: 250, height: 550 },
+        ),
+        fileName,
+      ).toBeLessThanOrEqual(5);
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          maleBase.data,
+          rendered.info.width,
+          { x: 650, y: 0, width: rendered.info.width - 650, height: 550 },
+        ),
+        fileName,
+      ).toBeLessThanOrEqual(5);
+      // También comprobamos que el recorte no haya eliminado el cuello.
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          maleBase.data,
+          rendered.info.width,
+          { x: 250, y: 0, width: 400, height: 550 },
+        ),
+        fileName,
+      ).toBeGreaterThan(100);
+    }
+  }, 45_000);
 
   it("mantiene la cogotera recta justo debajo del contorno en todos los modelos rectos", async () => {
     for (const fileName of straightBackNeckModelFileNames) {

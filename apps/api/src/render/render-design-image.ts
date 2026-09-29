@@ -10,6 +10,9 @@ import type { AutomationRenderScene } from "./derive-render-scene.js";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 1200;
+// Debe coincidir con el canvas web: contiene los cinco cuellos habilitados
+// para Hombre y deja fuera la silueta Mujer incluida en sus SVG históricos.
+const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -17,6 +20,10 @@ const TARGET_RECT = {
   height: 980,
 };
 const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME =
+  "blouse-base-closed-no-collar-men.svg";
+// Contrato de los SVG históricos de blusa: aquí termina la manga y comienza
+// el cuerpo. Los nuevos modelos pueden exponer otra ancla en su metadato.
 const CLOSED_NO_COLLAR_MASK_CLOSURE = {
   x1: 379,
   x2: 694,
@@ -280,6 +287,40 @@ const overlayRegionPresets: Record<
 const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
   collar: [{ x: 320, y: 100, width: 270, height: 300 }],
 };
+
+function getMaleNeckDetailRegions(source: string) {
+  void source;
+  return [MALE_NECK_DETAIL_REGION];
+}
+
+function getMaleNeckShoulderCleanupSvg(source: string, _baseColorHex: string) {
+  const fileName = path.basename(source);
+  const cleanupColor =
+    fileName === "blouse-model-34-cuello-alto-cremallera.svg"
+      ? _baseColorHex
+      : "#ffffff";
+  const segments: Array<readonly [number, number, number, number]> =
+    fileName === "blouse-model-36-v-dividido.svg" ||
+    fileName === "blouse-model-30.svg"
+      ? [
+          [245, 160, 320, 138],
+          [580, 138, 655, 160],
+        ]
+      : fileName === "blouse-model-34-cuello-alto-cremallera.svg"
+        ? [
+            [245, 200, 330, 168],
+            [570, 168, 655, 200],
+          ]
+        : [];
+
+  return segments
+    .map(
+      ([x1, y1, x2, y2]) =>
+        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cleanupColor}" stroke-width="9" stroke-linecap="round" />`,
+    )
+    .join("");
+}
+
 
 const lowerPocketDetailElementIndexesByFileName: Record<string, number[]> = {
   "blouse-model-14.svg": [1, 2, 3, 4],
@@ -1612,6 +1653,7 @@ async function readAssetFile(assetPath: string) {
   }
 }
 
+
 function getAssetFileName(assetPath: string) {
   if (assetPath.startsWith("data:image/svg+xml")) {
     return "visual-catalog-runtime.svg";
@@ -2509,7 +2551,12 @@ function computeInteriorMask(
     }
   }
 
-  if (getAssetFileName(assetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+  if (
+    getAssetFileName(assetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME ||
+    getAssetFileName(assetPath) === MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME
+  ) {
+    // Mantiene en el PNG final el mismo cierre virtual del cuello usado por
+    // el canvas, sin dibujar una línea extra sobre los cuellos dinámicos.
     const scaleX = processed.width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
     const scaleY = processed.height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
     const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
@@ -4776,15 +4823,43 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   ];
   const baseAssetPath = scene.neckAssetPath ?? scene.garmentAssetPath;
 
+  if (scene.useMaleBlouseSilhouette) {
+    // La salida persistida parte de la silueta Hombre completa para que toda
+    // la geometría exterior (mangas, sisas y costados) sea continua.
+    const maleBodyBuffer = await createTintedBaseBuffer(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+      scene.baseColorHex,
+      !scene.suppressGarmentBaseOutline,
+    );
+    layers.push(
+      `<image href="${toDataUri(maleBodyBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+    );
+  }
+
   if (baseAssetPath) {
     const baseBuffer = await createTintedBaseBuffer(
       baseAssetPath,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
-    layers.push(
-      `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-    );
+    if (scene.useMaleBlouseSilhouette) {
+      // Igual que en web, solo se toma el centro del modelo histórico: allí
+      // están cuello y cremallera, pero no las mangas/sisas de Mujer.
+      layers.push(
+        getOverlaySvg("male-neck-detail", toDataUri(baseBuffer), [
+          ...getMaleNeckDetailRegions(baseAssetPath),
+        ]),
+      );
+      // Replica exactamente la limpieza del canvas para que preview y PNG
+      // guardado no diverjan en los tres cuellos históricos afectados.
+      layers.push(
+        getMaleNeckShoulderCleanupSvg(baseAssetPath, scene.baseColorHex),
+      );
+    } else {
+      layers.push(
+        `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
+      );
+    }
   } else {
     layers.push(getFallbackGarmentSvg(scene.baseColorHex));
   }

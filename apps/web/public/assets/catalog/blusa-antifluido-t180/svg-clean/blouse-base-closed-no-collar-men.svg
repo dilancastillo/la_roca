@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Base masculina compatible con la blusa existente: conserva el viewBox, los
+  hombros, mangas y anclajes superiores. El único cambio intencional es el
+  contorno recto desde la cintura al bajo, para que los SVG del catálogo sigan
+  utilizando el mismo sistema de coordenadas.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <g id="fondo_camisa_cerrada_sin_cuello_hombre" fill="none" stroke="#1d1d1b" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+    <!-- Contorno recto: desde la sisa al bajo no conserva curvas de cadera. -->
+    <path d="M379 144 L184 244 L116 531 L262 662 L278 632 L280 1136 C360 1164 446 1178 540 1178 C634 1178 720 1164 800 1136 L802 632 L834 634 L966 513 L895 247 L694 144"/>
+    <!-- Costuras interiores de manga, compartidas con la silueta femenina. -->
+    <path d="M184 244 C228 336 259 410 270 480 C272 528 274 578 278 632"/>
+    <path d="M895 247 C851 336 820 410 810 480 C807 528 805 578 802 632"/>
+  </g>
+</svg>

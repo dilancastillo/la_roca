@@ -477,7 +477,7 @@ describe("svg-editor", () => {
     expect(runtimeSvg).toContain("stroke:__VC_TRIM_STROKE_633__!important");
   });
 
-  it("marca la silueta seleccionada para reemplazar la base del laboratorio", () => {
+  it("guarda el reemplazo de base solo cuando el editor lo solicita explícitamente", () => {
     const indexed = indexVisualSvg(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
         <path d="M10 10 H90 V90 H10 Z" />
@@ -491,7 +491,7 @@ describe("svg-editor", () => {
         "vc-element-1": { mode: "preserve", visibilityConditions: [] },
         "vc-element-2": { mode: "preserve", visibilityConditions: [] },
       },
-      silhouetteElementId: "vc-element-1",
+      renderMode: "replace_base",
       placement: {
         targetWidth: 1080,
         targetHeight: 1350,
@@ -503,7 +503,37 @@ describe("svg-editor", () => {
       },
     });
 
-    expect(runtimeSvg).toContain('data-vc-replaces-base-silhouette="true"');
+    expect(runtimeSvg).toContain('data-vc-render-mode="replace-base"');
+    expect(runtimeSvg).not.toContain("data-vc-replaces-base-silhouette");
+  });
+
+  it("usa overlay por defecto aunque un rectángulo sea el elemento más grande", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect id="fondo" x="0" y="0" width="100" height="100" />
+        <path id="cuello" d="M40 10 L50 30 L60 10" />
+      </svg>
+    `);
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["fondo", "cuello"],
+      elementPaints: {
+        fondo: { mode: "preserve", visibilityConditions: [] },
+        cuello: { mode: "preserve", visibilityConditions: [] },
+      },
+      placement: {
+        targetWidth: 1080,
+        targetHeight: 1350,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+
+    expect(runtimeSvg).toContain('data-vc-render-mode="overlay"');
+    expect(runtimeSvg).not.toContain("data-vc-replaces-base-silhouette");
   });
 
   it("corrige al materializar runtimes historicos con vivos lineales en poligonos", () => {

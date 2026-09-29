@@ -712,6 +712,105 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBeUndefined();
   });
 
+  it("usa la base recta para Hombre también en la imagen final", () => {
+    const sessionWithManGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 531,
+              name: "Hombre",
+              attributeId: 142,
+              attributeName: "Género",
+            },
+            {
+              id: 532,
+              name: "Mujer",
+              attributeId: 142,
+              attributeName: "Género",
+            },
+          ],
+        },
+        ...session.attributes,
+      ],
+    };
+
+    const scene = deriveAutomationRenderScene(sessionWithManGender, {
+      ...session.selectedValueIds,
+      "63": [],
+      "142": [531],
+    });
+
+    expect(scene.garmentAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+    );
+    expect(scene.neckAssetPath).toBeUndefined();
+  });
+
+  it("mantiene el SVG completo del cuello y activa cuerpo recto para Hombre", () => {
+    const sessionWithManGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            { id: 531, name: "Hombre", attributeId: 142, attributeName: "Género" },
+          ],
+        },
+        ...session.attributes,
+      ],
+    };
+
+    const scene = deriveAutomationRenderScene(sessionWithManGender, {
+      ...session.selectedValueIds,
+      "63": [2942],
+      "142": [531],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-26-cuello-redondo.svg",
+    );
+    expect(scene.useMaleBlouseSilhouette).toBe(true);
+  });
+
+  it("usa el SVG masculino completo para un cuello Hombre compatible", () => {
+    const sessionWithManGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [{ id: 531, name: "Hombre", attributeId: 142, attributeName: "Género" }],
+        },
+        ...session.attributes,
+      ],
+    };
+
+    const scene = deriveAutomationRenderScene(sessionWithManGender, {
+      ...session.selectedValueIds,
+      "63": [334],
+      "142": [531],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-01-cuello-v.svg",
+    );
+    expect(scene.useMaleBlouseSilhouette).toBeUndefined();
+  });
+
   it("usa la base cerrada solo en la blusa del Uniforme sin cuello", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,
