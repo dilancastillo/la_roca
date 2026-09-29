@@ -141,11 +141,13 @@ describe("catalogo visual en la escena de automatizacion", () => {
 
     expect(scene.garmentAssetPath).toMatch(/^data:image\/svg\+xml/);
     expect(scene.suppressGarmentBaseOutline).toBe(true);
+    // Una silueta de reemplazo ya es la base de la prenda. Volver a incluirla
+    // como detalle duplicaría su cuello y sus trazos en la imagen final.
     expect(
       scene.garmentDetailAssetPaths?.some((assetPath) =>
         assetPath.startsWith("data:image/svg+xml"),
       ),
-    ).toBe(true);
+    ).not.toBe(true);
   });
 
   it("mantiene la base cuando un bolsillo trae un marcador histórico", () => {

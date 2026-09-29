@@ -2146,6 +2146,7 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
+      ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
       ...(bootImageSrc ? { bootImageSrc } : {}),

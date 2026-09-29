@@ -1234,6 +1234,7 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
+    ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),
     ...(bootAssetPath ? { bootAssetPath } : {}),
