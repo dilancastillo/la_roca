@@ -373,6 +373,40 @@ function getDefinitionOdooIssues(
   return Array.from(new Set(issues));
 }
 
+function getDefinitionRenderingWarnings(definition: VisualDefinitionSummary) {
+  const paints = definition.selectedElementIds.map(
+    (elementId) => definition.elementPaints[elementId],
+  );
+  const conditionalCount = paints.filter(
+    (paint) => (paint?.visibilityConditions.length ?? 0) > 0,
+  ).length;
+  const unconditionalCount = paints.length - conditionalCount;
+  const trimFillCount = paints.filter(
+    (paint) => paint?.mode === "trim_fill",
+  ).length;
+  const warnings: string[] = [];
+
+  if (paints.length > 0 && conditionalCount === paints.length) {
+    warnings.push(
+      "Todos los elementos dependen de condiciones: sin la combinacion exacta el componente desaparece en el laboratorio.",
+    );
+  }
+
+  if (definition.slot === "neck" && unconditionalCount === 0) {
+    warnings.push(
+      "El cuello no tiene una pieza base incondicional; comprueba Sin vivos y cada vivo en el laboratorio.",
+    );
+  }
+
+  if (trimFillCount >= 4) {
+    warnings.push(
+      "Tiene varias piezas de vivo relleno; revisa que ninguna incluya contornos o zonas grandes de la prenda.",
+    );
+  }
+
+  return warnings;
+}
+
 function ConditionsEditor({
   title,
   attributes,
@@ -1888,6 +1922,7 @@ export function VisualCatalogPage() {
           ) : (
             definitions.map((definition) => {
               const issues = getDefinitionOdooIssues(definition, products);
+              const renderingWarnings = getDefinitionRenderingWarnings(definition);
               const genderLabel = getDefinitionGenderLabel(definition);
               const productNames = definition.binding.productTemplateIds.map(
                 (productTemplateId) =>
@@ -1924,6 +1959,14 @@ export function VisualCatalogPage() {
                         <strong>Referencia Odoo desactualizada</strong>
                         {issues.map((issue) => (
                           <p key={issue}>{issue}</p>
+                        ))}
+                      </div>
+                    ) : null}
+                    {renderingWarnings.length > 0 ? (
+                      <div className="catalog-inline-warning">
+                        <strong>Revision visual requerida</strong>
+                        {renderingWarnings.map((warning) => (
+                          <p key={warning}>{warning}</p>
                         ))}
                       </div>
                     ) : null}
@@ -2004,6 +2047,25 @@ export function VisualCatalogPage() {
 
       {view === "audit" ? (
         <section className="visual-audit-workspace">
+          <div>
+            <h2>Riesgos de renderizado</h2>
+            <div className="visual-audit-table">
+              <div className="visual-audit-table__header">
+                <span>Componente</span>
+                <span>Version</span>
+                <span>Hallazgo</span>
+              </div>
+              {definitions.flatMap((definition) =>
+                getDefinitionRenderingWarnings(definition).map((warning) => (
+                  <div className="visual-audit-table__row" key={`${definition.id}-${warning}`}>
+                    <strong>{definition.displayName}</strong>
+                    <span>v{definition.version}</span>
+                    <span>{warning}</span>
+                  </div>
+                )),
+              )}
+            </div>
+          </div>
           <div>
             <h2>Releases</h2>
             <div className="visual-audit-table">
