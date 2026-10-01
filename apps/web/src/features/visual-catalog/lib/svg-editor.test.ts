@@ -109,7 +109,7 @@ describe("svg-editor", () => {
       decodeURIComponent(
         buildRuntimePreviewDataUri(runtimeSvg).split(",")[1] ?? "",
       ),
-    ).toContain("display:none");
+    ).toContain("display:inline");
   });
 
   it("separa piezas cerradas de un path antes de aplicar vivo relleno", () => {

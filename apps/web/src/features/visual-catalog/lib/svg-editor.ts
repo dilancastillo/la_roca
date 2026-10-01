@@ -557,15 +557,10 @@ export function buildRuntimeVisualSvg({
 }
 
 export function buildRuntimePreviewDataUri(runtimeSvg: string) {
-  // El editor no conoce las selecciones reales de la orden (vivos, bolsillos,
-  // etc.). Antes forzaba los tokens de visibilidad a `inline`, con lo cual
-  // mostraba como correctas piezas que el laboratorio ocultaría. Conservamos
-  // una muestra de color para los elementos incondicionales, pero ocultamos
-  // los que dependen de una condición hasta que se prueben en el laboratorio.
   const previewSvg = runtimeSvg
     .replaceAll("__VC_BASE_COLOR__", "#cbd5e1")
     .replaceAll("__VC_OUTLINE_COLOR__", "#111827")
-    .replace(/__VC_VISIBILITY_\d+__/g, "none")
+    .replace(/__VC_VISIBILITY_\d+__/g, "inline")
     .replace(/__VC_TRIM_(?:FILL|STROKE)_\d+__/g, "#007d8a");
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(previewSvg)}`;
