@@ -658,12 +658,18 @@ function offsetOriginalSleevePoint(
 function makeOriginalSleeveTrimShapes(
   leftLower: readonly [OriginalSleevePoint, OriginalSleevePoint],
   rightLower: readonly [OriginalSleevePoint, OriginalSleevePoint],
+  offsets?: {
+    left: OriginalSleevePoint;
+    right: OriginalSleevePoint;
+  },
 ): readonly OriginalSleeveTrimShape[] {
+  const leftOffset = offsets?.left ?? [13.33, -14.94];
+  const rightOffset = offsets?.right ?? [-12.5, -15.6];
   const leftUpper = leftLower.map((point) =>
-    offsetOriginalSleevePoint(point, [13.33, -14.94]),
+    offsetOriginalSleevePoint(point, leftOffset),
   ) as [OriginalSleevePoint, OriginalSleevePoint];
   const rightUpper = rightLower.map((point) =>
-    offsetOriginalSleevePoint(point, [-12.5, -15.6]),
+    offsetOriginalSleevePoint(point, rightOffset),
   ) as [OriginalSleevePoint, OriginalSleevePoint];
 
   return [
@@ -717,6 +723,12 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
 // Los cinco SVG de Hombre no comparten el viewBox de Mujer (1080×1350):
 // usan un arte de 861 unidades. Cada perfil se toma del borde inferior real
 // de la manga de su SVG, no de una silueta Mujer escalada.
+// Su separación interna también es propia: copiar el desplazamiento de 13 px
+// del fallback movía el lineal hacia el torso en las sisas masculinas.
+const MALE_SLEEVE_TRIM_INNER_OFFSETS = {
+  left: [3.88, -14.99] as const,
+  right: [-4.11, -13.44] as const,
+};
 const MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
   string,
   readonly OriginalSleeveTrimShape[]
@@ -724,23 +736,28 @@ const MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
   "blouse-base-closed-no-collar-men.svg": makeOriginalSleeveTrimShapes(
     [[116, 531], [262, 662]],
     [[966, 513], [834, 634]],
+    MALE_SLEEVE_TRIM_INNER_OFFSETS,
   ),
   "blouse-men-model-01-cuello-v.svg": makeOriginalSleeveTrimShapes(
     [[0, 392.74], [151.55, 531.26]],
     [[859.93, 391.36], [725.26, 531.86]],
+    MALE_SLEEVE_TRIM_INNER_OFFSETS,
   ),
   "blouse-men-model-02-jdc.svg": makeOriginalSleeveTrimShapes(
     [[0, 387.13], [153.77, 524.5]],
     [[859.93, 385.78], [728.27, 526.51]],
+    MALE_SLEEVE_TRIM_INNER_OFFSETS,
   ),
   "blouse-men-model-36-v-dividido.svg": makeOriginalSleeveTrimShapes(
     [[0, 387.13], [153.77, 524.5]],
     [[859.93, 385.78], [728.27, 526.51]],
+    MALE_SLEEVE_TRIM_INNER_OFFSETS,
   ),
   "blouse-men-model-34-cuello-alto-cremallera.svg":
     makeOriginalSleeveTrimShapes(
       [[0, 431.37], [153.77, 568.74]],
       [[859.93, 430.01], [724.64, 562.29]],
+      MALE_SLEEVE_TRIM_INNER_OFFSETS,
     ),
 };
 
