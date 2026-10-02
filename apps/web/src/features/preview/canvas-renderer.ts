@@ -11,6 +11,8 @@ const CANVAS_HEIGHT = 1200;
 // lienzo. Recortar el SVG histórico a esta zona conserva cuello y cremallera,
 // pero excluye mangas, sisas y torso de la silueta Mujer que trae embebidos.
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
+const MALE_BLOUSE_SLEEVE_ANCHOR =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -716,6 +718,55 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
+// Los cinco SVG de Hombre no comparten el viewBox de Mujer (1080×1350):
+// usan un arte de 861 unidades. Cada perfil se toma del borde inferior real
+// de la manga de su SVG, no de una silueta Mujer escalada.
+const MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
+  string,
+  readonly OriginalSleeveTrimShape[]
+> = {
+  "blouse-base-closed-no-collar-men.svg": makeOriginalSleeveTrimShapes(
+    [[116, 531], [262, 662]],
+    [[966, 513], [834, 634]],
+  ),
+  "blouse-men-model-01-cuello-v.svg": makeOriginalSleeveTrimShapes(
+    [[0, 392.74], [151.55, 531.26]],
+    [[859.93, 391.36], [725.26, 531.86]],
+  ),
+  "blouse-men-model-02-jdc.svg": makeOriginalSleeveTrimShapes(
+    [[0, 387.13], [153.77, 524.5]],
+    [[859.93, 385.78], [728.27, 526.51]],
+  ),
+  "blouse-men-model-36-v-dividido.svg": makeOriginalSleeveTrimShapes(
+    [[0, 387.13], [153.77, 524.5]],
+    [[859.93, 385.78], [728.27, 526.51]],
+  ),
+  "blouse-men-model-34-cuello-alto-cremallera.svg":
+    makeOriginalSleeveTrimShapes(
+      [[0, 431.37], [153.77, 568.74]],
+      [[859.93, 430.01], [724.64, 562.29]],
+    ),
+};
+
+function getMaleOriginalSleeveTrimShapes(placementSrc: string) {
+  return (
+    MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      getFileNameFromSource(placementSrc)
+    ] ??
+    MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME[
+      "blouse-base-closed-no-collar-men.svg"
+    ]!
+  );
+}
+
+function usesMaleBlouseCoordinateSystem(assetSrc: string) {
+  const fileName = getFileNameFromSource(assetSrc);
+
+  return (
+    fileName === "blouse-base-closed-no-collar-men.svg" ||
+    fileName.startsWith("blouse-men-model-")
+  );
+}
 const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   ORIGINAL_SLEEVE_TRIM_SHAPES[0],
   {
@@ -3871,6 +3922,10 @@ function isPespunteDetailOverlay(overlaySrc: string) {
 }
 
 function getOriginalSleeveTrimShapes(placementSrc: string) {
+  if (usesMaleBlouseCoordinateSystem(placementSrc)) {
+    return getMaleOriginalSleeveTrimShapes(placementSrc);
+  }
+
   const placementFileName = getFileNameFromSource(placementSrc);
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
@@ -3909,6 +3964,10 @@ function getOriginalSleeveTrimShapes(placementSrc: string) {
 }
 
 function getOriginalSleeveFillShapes(placementSrc: string) {
+  if (usesMaleBlouseCoordinateSystem(placementSrc)) {
+    return getMaleOriginalSleeveTrimShapes(placementSrc);
+  }
+
   const placementFileName = getFileNameFromSource(placementSrc);
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
@@ -5388,8 +5447,12 @@ async function composeSingleDesign(
       );
     }
 
-    if (hasOriginalSleevesOverlay && isBlouseScene(scene, baseAssetSrc)) {
-      await drawOriginalSleevesTrim(context, baseAssetSrc, {
+    const sleevePlacementSrc = scene.useMaleBlouseSilhouette
+      ? MALE_BLOUSE_SLEEVE_ANCHOR
+      : baseAssetSrc;
+
+    if (hasOriginalSleevesOverlay && isBlouseScene(scene, sleevePlacementSrc)) {
+      await drawOriginalSleevesTrim(context, sleevePlacementSrc, {
         upper: sleeveUpperTrimColor,
         lower: sleeveLowerTrimColor,
         fill: sleeveFillTrimColor,

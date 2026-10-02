@@ -719,6 +719,73 @@ describe("renderDesignImage", () => {
     }
   }, 45_000);
 
+  it("ancla los vivos de manga al borde real de cada SVG de Hombre", async () => {
+    const maleBlouseAssetPaths = [
+      "blouse-base-closed-no-collar-men.svg",
+      "blouse-men-model-01-cuello-v.svg",
+      "blouse-men-model-02-jdc.svg",
+      "blouse-men-model-36-v-dividido.svg",
+      "blouse-men-model-34-cuello-alto-cremallera.svg",
+    ] as const;
+    const originalSleevesAssetPath =
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-32-original-sleeves.svg";
+
+    for (const fileName of maleBlouseAssetPaths) {
+      const rendered = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          garmentAssetPath: `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+          garmentDetailAssetPaths: [originalSleevesAssetPath],
+          lowerPocketLayout: "none",
+          trimSections: [
+            {
+              valueId: 7401,
+              key: "manga-lineal-superior",
+              label: "Manga lineal superior",
+              colorHex: "#f4c7cc",
+            },
+            {
+              valueId: 7402,
+              key: "manga-lineal-inferior",
+              label: "Manga lineal inferior",
+              colorHex: "#f4c7cc",
+            },
+            {
+              valueId: 7403,
+              key: "manga-rellena",
+              label: "Manga rellena",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        }),
+      );
+
+      const leftSleevePixels = countPastelPinkPixelsInRegion(
+        rendered.data,
+        rendered.info.width,
+        { x: 70, y: 430, width: 180, height: 190 },
+      );
+      const rightSleevePixels = countPastelPinkPixelsInRegion(
+        rendered.data,
+        rendered.info.width,
+        { x: 650, y: 430, width: 180, height: 190 },
+      );
+      // El fallo regresivo usaba las coordenadas 1080×1350 de Mujer y dejaba
+      // los vivos dentro del torso de 861 unidades de Hombre.
+      const torsoStrayPixels = countPastelPinkPixelsInRegion(
+        rendered.data,
+        rendered.info.width,
+        { x: 270, y: 500, width: 360, height: 230 },
+      );
+
+      expect(leftSleevePixels, fileName).toBeGreaterThan(800);
+      expect(rightSleevePixels, fileName).toBeGreaterThan(800);
+      // Se tolera únicamente el antialias del extremo que toca la sisa;
+      // una banda aplicada con coordenadas Mujer produce miles de píxeles.
+      expect(torsoStrayPixels, fileName).toBeLessThan(400);
+    }
+  }, 80_000);
+
   it("mantiene la cogotera recta justo debajo del contorno en todos los modelos rectos", async () => {
     for (const fileName of straightBackNeckModelFileNames) {
       const neckAssetPath = `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`;
