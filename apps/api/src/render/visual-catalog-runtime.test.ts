@@ -571,7 +571,7 @@ describe("runtime del catalogo visual general", () => {
         },
       },
       runtimeSvg: `
-        <svg>
+        <svg data-vc-render-mode="overlay">
           <style>.fil1 { fill:none; stroke:#000; }</style>
           <path class="fil1" d="M0 0 H100 V100 H0 Z"
             style="fill:__VC_TRIM_FILL_635__!important;" />
@@ -587,6 +587,40 @@ describe("runtime del catalogo visual general", () => {
 
     expect(svg).toContain("stroke:#18a9d3!important;");
     expect(svg).not.toContain("fill:#18a9d3!important;");
+  });
+
+  it("conserva el relleno de un SVG legado aunque Corel declare fill:none", () => {
+    // Esta es la forma almacenada por los modelos anteriores al cambio de
+    // rellenos seguros. Antes se renderizaba como relleno; convertirla en
+    // línea pinta solo el borde y cambia el diseño aprobado.
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("relleno-legado", "component", []),
+      slot: "neck",
+      selectedElementIds: ["cuello"],
+      elementPaints: {
+        cuello: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg>
+          <style>.fil1 { fill:none; stroke:#000; }</style>
+          <path class="fil1" d="M0 0 H100 V100 H0 Z"
+            style="fill:__VC_TRIM_FILL_635__!important;" />
+        </svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#aabbcc", [
+        { valueId: 635, sourceValueId: 635, colorHex: "#18a9d3" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("fill:#18a9d3!important;");
+    expect(svg).not.toContain("stroke:#18a9d3!important;");
   });
 
   it("pinta con el color base un área segura de cuello sin vivo seleccionado", () => {

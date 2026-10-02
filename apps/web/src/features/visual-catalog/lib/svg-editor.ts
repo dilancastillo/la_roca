@@ -31,6 +31,7 @@ export type IndexedVisualSvg = {
   };
 };
 
+export type TrimFillCompatibility = "legacy" | "modern";
 
 type RuntimeSvgInput = {
   normalizedSvg: string;
@@ -39,6 +40,7 @@ type RuntimeSvgInput = {
   placement: VisualPlacement;
   allowIncompletePaints?: boolean;
   renderMode?: VisualRenderMode;
+  trimFillCompatibility?: TrimFillCompatibility;
 };
 
 function parseSvg(svgText: string) {
@@ -418,6 +420,7 @@ export function buildRuntimeVisualSvg({
   placement,
   allowIncompletePaints = false,
   renderMode = "overlay",
+  trimFillCompatibility = "modern",
 }: RuntimeSvgInput) {
   if (selectedElementIds.length === 0) {
     throw new Error("Selecciona al menos un elemento del SVG.");
@@ -462,7 +465,7 @@ export function buildRuntimeVisualSvg({
 
     const paint = elementPaints[elementId];
     const paintedElements =
-      paint?.mode === "trim_fill"
+      paint?.mode === "trim_fill" && trimFillCompatibility === "modern"
         ? splitCompoundTrimFillPath(element)
         : [element];
 
@@ -515,12 +518,17 @@ export function buildRuntimeVisualSvg({
   );
   runtimeRoot.setAttribute("width", String(placement.targetWidth));
   runtimeRoot.setAttribute("height", String(placement.targetHeight));
-  // La decisión se guarda en la raíz del SVG de ejecución, no se infiere de
-  // la geometría. Así un fondo o rectángulo grande no puede ser la base.
-  runtimeRoot.setAttribute(
-    "data-vc-render-mode",
-    renderMode === "replace_base" ? "replace-base" : "overlay",
-  );
+  if (trimFillCompatibility === "modern") {
+    // Permite que el runtime distinga sin ambigüedad este formato de los SVG
+    // guardados antes de la separación segura de áreas de vivo.
+    runtimeRoot.setAttribute("data-vc-runtime-format", "2");
+    // La decisión se guarda en la raíz del SVG de ejecución, no se infiere de
+    // la geometría. Así un fondo o rectángulo grande no puede ser la base.
+    runtimeRoot.setAttribute(
+      "data-vc-render-mode",
+      renderMode === "replace_base" ? "replace-base" : "overlay",
+    );
+  }
 
   const rotationGroup = runtimeDocument.createElementNS(SVG_NAMESPACE, "g");
   const centerX = placement.targetWidth / 2;

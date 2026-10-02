@@ -197,6 +197,21 @@ function normalizeImpossibleLinePaints(runtimeSvg: string) {
   );
 }
 
+export function usesModernTrimFillSemantics(runtimeSvg: string) {
+  // Los SVG creados antes de la corrección de rellenos no tienen ninguna de
+  // estas marcas. Aplicarles la normalización moderna transforma áreas que
+  // antes eran rellenos en contornos y altera modelos ya aprobados.
+  //
+  // `data-vc-render-mode` identifica el formato actual completo y la marca
+  // `data-vc-safe-trim-fill` cubre los SVG de transición que ya separaban
+  // subpaths cerrados, aunque aún no serializaban el modo de composición.
+  return (
+    /\bdata-vc-runtime-format=(?:"2"|'2')/i.test(runtimeSvg) ||
+    /\bdata-vc-render-mode=(?:"[^"']*"|'[^"']*')/i.test(runtimeSvg) ||
+    /\bdata-vc-safe-trim-fill=(?:"true"|'true')/i.test(runtimeSvg)
+  );
+}
+
 function normalizeUnfilledTrimAreas(runtimeSvg: string) {
   const unfilledClasses = new Set<string>();
 
@@ -660,19 +675,28 @@ export function materializeVisualDefinitionSvg(
     selectedValueIds: Record<string, number[]>;
   },
 ) {
-  let runtimeSvg = normalizeThinPolygonVisualStrokes(
-    normalizeUnfilledTrimAreas(normalizeImpossibleLinePaints(definition.runtimeSvg)),
+  const usesModernTrimFills = usesModernTrimFillSemantics(
+    definition.runtimeSvg,
   );
+  let runtimeSvg = normalizeImpossibleLinePaints(definition.runtimeSvg);
+
+  if (usesModernTrimFills) {
+    runtimeSvg = normalizeUnfilledTrimAreas(runtimeSvg);
+  }
+
+  runtimeSvg = normalizeThinPolygonVisualStrokes(runtimeSvg);
 
   if (definition.slot === "neck") {
     runtimeSvg = normalizeNeckVectorStrokeWidths(runtimeSvg);
     // Esta regla es exclusiva de cuellos dinámicos: los demás componentes
     // pueden tener áreas vacías intencionales y no deben recibir color base.
-    runtimeSvg = applyBaseColorToUnselectedSafeTrimFills(
-      runtimeSvg,
-      baseColorHex,
-      trimSections,
-    );
+    if (usesModernTrimFills) {
+      runtimeSvg = applyBaseColorToUnselectedSafeTrimFills(
+        runtimeSvg,
+        baseColorHex,
+        trimSections,
+      );
+    }
   }
 
   runtimeSvg = addLinearTrimPolygonTexture(runtimeSvg, trimSections);

@@ -45,6 +45,7 @@ import {
   indexVisualSvg,
   type IndexedVisualSvg,
 } from "../features/visual-catalog/lib/svg-editor";
+import { usesModernTrimFillSemantics } from "@repo/shared/visual-catalog-runtime";
 import {
   getCompatibleVisualCatalogAttributes,
   isBindingAttributeInVisualSlot,
@@ -607,6 +608,9 @@ export function VisualCatalogPage() {
   // Overlay es el valor seguro: un SVG solo reemplaza la base por decisión
   // explícita del editor, nunca porque un vector sea el más grande.
   const [renderMode, setRenderMode] = useState<VisualRenderMode>("overlay");
+  const [trimFillCompatibility, setTrimFillCompatibility] = useState<
+    "legacy" | "modern"
+  >("modern");
   const [referenceSilhouette, setReferenceSilhouette] =
     useState<EditorReferenceSilhouette>("woman");
   const [editingDefinitionId, setEditingDefinitionId] = useState<string | null>(
@@ -747,12 +751,13 @@ export function VisualCatalogPage() {
           placement,
           allowIncompletePaints: true,
           renderMode: effectiveRenderMode,
+          trimFillCompatibility,
         }),
       );
     } catch {
       return "";
     }
-  }, [effectiveRenderMode, elementPaints, indexedSvg, placement, selectedElementIds]);
+  }, [effectiveRenderMode, elementPaints, indexedSvg, placement, selectedElementIds, trimFillCompatibility]);
   // Un SVG Hombre completo se previsualiza tal cual fue cargado. No se recorta ni
   // se combina con una silueta Mujer: esa composición fue la causa de sisas
   // deformadas y ya no representa el render real del laboratorio.
@@ -781,6 +786,7 @@ export function VisualCatalogPage() {
           },
         },
         placement,
+        trimFillCompatibility,
       });
       const highlightChannel =
         activePaint.mode === "base_fill" || activePaint.mode === "trim_fill"
@@ -806,6 +812,7 @@ export function VisualCatalogPage() {
     indexedSvg,
     placement,
     selectedElementIds,
+    trimFillCompatibility,
   ]);
   // La capa de selección usa la misma geometría íntegra que el SVG cargado.
   const displayedRuntimeHighlightSrc = runtimeHighlightSrc;
@@ -972,6 +979,7 @@ export function VisualCatalogPage() {
       setHighlightedElementId(null);
       setElementPaints({});
       setRenderMode("overlay");
+      setTrimFillCompatibility("modern");
       setMessage(`${indexed.elements.length} elementos disponibles.`);
     } catch (fileError) {
       setError(
@@ -1150,6 +1158,7 @@ export function VisualCatalogPage() {
     setElementPaints({});
     setPlacement(DEFAULT_PLACEMENT);
     setRenderMode("overlay");
+    setTrimFillCompatibility("modern");
     setDisplayName("");
     clearNotices();
   }
@@ -1235,6 +1244,7 @@ export function VisualCatalogPage() {
         elementPaints,
         placement,
         renderMode: effectiveRenderMode,
+        trimFillCompatibility,
       });
       const mutation = {
         displayName: displayName.trim() || selectedValue.name,
@@ -1299,6 +1309,9 @@ export function VisualCatalogPage() {
     setHighlightedElementId(null);
     setElementPaints(definition.elementPaints);
     setPlacement(definition.placement);
+    setTrimFillCompatibility(
+      usesModernTrimFillSemantics(definition.runtimeSvg) ? "modern" : "legacy",
+    );
     // Una definición de cuello para Hombre debe abrirse contra la misma
     // silueta de referencia que utilizará el laboratorio. Antes, el editor
     // conservaba "Mujer" de la sesión anterior y mostraba una base distinta.
