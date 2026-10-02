@@ -13,6 +13,8 @@ const CANVAS_HEIGHT = 1200;
 // Debe coincidir con el canvas web: contiene los cinco cuellos habilitados
 // para Hombre y deja fuera la silueta Mujer incluida en sus SVG históricos.
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
+const MALE_BLOUSE_OVERLAY_ANCHOR =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -2752,6 +2754,52 @@ async function createOverlayBufferFromProcessed(
   return await placeProcessedBufferOnCanvas(imageBuffer, placement.bounds);
 }
 
+async function createNormalizedOverlayBufferFromProcessed(
+  processed: ProcessedImage,
+  placement: ProcessedImage,
+) {
+  const imageBuffer = await rgbaToPngBuffer(
+    processed.data,
+    processed.width,
+    processed.height,
+  );
+  const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(
+    placement.bounds,
+  );
+  const normalizedOverlay = await sharp(imageBuffer)
+    .resize(Math.max(1, Math.round(drawWidth)), Math.max(1, Math.round(drawHeight)), {
+      fit: "fill",
+    })
+    .png()
+    .toBuffer();
+
+  return await sharp({
+    create: {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input: normalizedOverlay,
+        left: Math.round(drawX),
+        top: Math.round(drawY),
+      },
+    ])
+    .png()
+    .toBuffer();
+}
+
+function usesMaleBlouseCoordinateSystem(assetPath: string) {
+  const fileName = getAssetFileName(assetPath);
+  return (
+    fileName === "blouse-base-closed-no-collar-men.svg" ||
+    fileName.startsWith("blouse-men-")
+  );
+}
+
 async function createCoordinateAlignedOverlayBufferFromProcessed(
   processed: ProcessedImage,
   placement: ProcessedImage,
@@ -3371,10 +3419,12 @@ async function createChestPocketOverlayBuffer(
     loadProcessedImage(placementAssetPath),
   ]);
 
-  return await createOverlayBufferFromProcessed(
-    overlayProcessed,
-    placementProcessed,
-  );
+  return usesMaleBlouseCoordinateSystem(placementAssetPath)
+    ? await createNormalizedOverlayBufferFromProcessed(
+        overlayProcessed,
+        placementProcessed,
+      )
+    : await createOverlayBufferFromProcessed(overlayProcessed, placementProcessed);
 }
 
 async function createChestPocketTrimOverlayBuffer(
@@ -3393,10 +3443,12 @@ async function createChestPocketTrimOverlayBuffer(
     loadProcessedImage(placementAssetPath),
   ]);
 
-  return await createOverlayBufferFromProcessed(
-    overlayProcessed,
-    placementProcessed,
-  );
+  return usesMaleBlouseCoordinateSystem(placementAssetPath)
+    ? await createNormalizedOverlayBufferFromProcessed(
+        overlayProcessed,
+        placementProcessed,
+      )
+    : await createOverlayBufferFromProcessed(overlayProcessed, placementProcessed);
 }
 
 async function createChestPocketSectionTrimOverlayBuffer(
@@ -3418,10 +3470,12 @@ async function createChestPocketSectionTrimOverlayBuffer(
     loadProcessedImage(placementAssetPath),
   ]);
 
-  return await createOverlayBufferFromProcessed(
-    overlayProcessed,
-    placementProcessed,
-  );
+  return usesMaleBlouseCoordinateSystem(placementAssetPath)
+    ? await createNormalizedOverlayBufferFromProcessed(
+        overlayProcessed,
+        placementProcessed,
+      )
+    : await createOverlayBufferFromProcessed(overlayProcessed, placementProcessed);
 }
 
 async function createGarmentModelDetailOverlayBuffer(
@@ -4243,6 +4297,9 @@ type OriginalSleevesTrimColors = {
   fill?: string | undefined;
 };
 
+type SleeveCoordinateScale = { x: number; y: number };
+const CANONICAL_BLOUSE_SVG_SIZE = { width: 1080, height: 1350 } as const;
+
 function getAssetToCanvasTransformFromProcessed(
   processed: ProcessedImage,
 ): AssetToCanvasTransform {
@@ -4261,10 +4318,15 @@ function getAssetToCanvasTransformFromProcessed(
 function transformOriginalSleevePoint(
   point: OriginalSleevePoint,
   transform: AssetToCanvasTransform,
+  coordinateScale: SleeveCoordinateScale = { x: 1, y: 1 },
 ) {
   return {
-    x: transform.drawX + (point[0] - transform.sourceX) * transform.scaleX,
-    y: transform.drawY + (point[1] - transform.sourceY) * transform.scaleY,
+    x:
+      transform.drawX +
+      (point[0] * coordinateScale.x - transform.sourceX) * transform.scaleX,
+    y:
+      transform.drawY +
+      (point[1] * coordinateScale.y - transform.sourceY) * transform.scaleY,
   };
 }
 
@@ -4275,10 +4337,15 @@ function formatSvgNumber(value: number) {
 function getTransformedPolygonPoints(
   points: readonly OriginalSleevePoint[],
   transform: AssetToCanvasTransform,
+  coordinateScale: SleeveCoordinateScale,
 ) {
   return points
     .map((point) => {
-      const transformed = transformOriginalSleevePoint(point, transform);
+      const transformed = transformOriginalSleevePoint(
+        point,
+        transform,
+        coordinateScale,
+      );
       return `${formatSvgNumber(transformed.x)},${formatSvgNumber(transformed.y)}`;
     })
     .join(" ");
@@ -4288,9 +4355,10 @@ function getOriginalSleeveLineSvg(
   line: readonly [OriginalSleevePoint, OriginalSleevePoint],
   transform: AssetToCanvasTransform,
   trimColor: string,
+  coordinateScale: SleeveCoordinateScale,
 ) {
-  const start = transformOriginalSleevePoint(line[0], transform);
-  const end = transformOriginalSleevePoint(line[1], transform);
+  const start = transformOriginalSleevePoint(line[0], transform, coordinateScale);
+  const end = transformOriginalSleevePoint(line[1], transform, coordinateScale);
   const lineAttrs = `x1="${formatSvgNumber(start.x)}" y1="${formatSvgNumber(start.y)}" x2="${formatSvgNumber(end.x)}" y2="${formatSvgNumber(end.y)}" stroke-linecap="round" stroke-linejoin="round"`;
 
   return `
@@ -4552,9 +4620,14 @@ async function getOriginalSleevesTrimSvg(
     return "";
   }
 
-  const transform = getAssetToCanvasTransformFromProcessed(
-    await loadProcessedImage(placementAssetPath),
-  );
+  const placement = await loadProcessedImage(placementAssetPath);
+  const transform = getAssetToCanvasTransformFromProcessed(placement);
+  const coordinateScale = usesMaleBlouseCoordinateSystem(placementAssetPath)
+    ? {
+        x: placement.width / CANONICAL_BLOUSE_SVG_SIZE.width,
+        y: placement.height / CANONICAL_BLOUSE_SVG_SIZE.height,
+      }
+    : { x: 1, y: 1 };
   const trimShapes = getOriginalSleeveTrimShapes(placementAssetPath);
   const fillShapes = getOriginalSleeveFillShapes(placementAssetPath);
   const layers: string[] = [];
@@ -4565,7 +4638,7 @@ async function getOriginalSleevesTrimSvg(
       ...fillShapes.map(
         (shape) => `
           <polygon
-            points="${getTransformedPolygonPoints(shape.points, transform)}"
+            points="${getTransformedPolygonPoints(shape.points, transform, coordinateScale)}"
             fill="${fillTrimColor}"
           />
         `,
@@ -4577,7 +4650,12 @@ async function getOriginalSleevesTrimSvg(
   if (upperTrimColor) {
     layers.push(
       ...trimShapes.map((shape) =>
-        getOriginalSleeveLineSvg(shape.upper, transform, upperTrimColor),
+        getOriginalSleeveLineSvg(
+          shape.upper,
+          transform,
+          upperTrimColor,
+          coordinateScale,
+        ),
       ),
     );
   }
@@ -4586,7 +4664,12 @@ async function getOriginalSleevesTrimSvg(
   if (lowerTrimColor) {
     layers.push(
       ...trimShapes.map((shape) =>
-        getOriginalSleeveLineSvg(shape.lower, transform, lowerTrimColor),
+        getOriginalSleeveLineSvg(
+          shape.lower,
+          transform,
+          lowerTrimColor,
+          coordinateScale,
+        ),
       ),
     );
   }
@@ -4822,12 +4905,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,
   ];
   const baseAssetPath = scene.neckAssetPath ?? scene.garmentAssetPath;
+  // Las capas de mangas y bolsillos se rasterizan contra la silueta que se
+  // muestra. En Hombre, baseAssetPath puede ser solo el cuello histórico
+  // Mujer, por lo que no sirve como ancla de esas capas.
+  const overlayPlacementAssetPath = scene.useMaleBlouseSilhouette
+    ? MALE_BLOUSE_OVERLAY_ANCHOR
+    : baseAssetPath;
 
   if (scene.useMaleBlouseSilhouette) {
     // La salida persistida parte de la silueta Hombre completa para que toda
     // la geometría exterior (mangas, sisas y costados) sea continua.
     const maleBodyBuffer = await createTintedBaseBuffer(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+      MALE_BLOUSE_OVERLAY_ANCHOR,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
@@ -4865,6 +4954,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   }
 
   if (baseAssetPath) {
+    const alignedOverlayPlacementAssetPath =
+      overlayPlacementAssetPath ?? baseAssetPath;
     const pespunteTrimColor = getTrimSectionColor(scene, isPespunteTrimSection);
 
     const garmentDetailOverlayBuffer =
@@ -5561,7 +5652,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     if (scene.auxiliaryPocketAssetPath) {
       const overlayBuffer = await createDetailOverlayBuffer(
         scene.auxiliaryPocketAssetPath,
-        baseAssetPath,
+        alignedOverlayPlacementAssetPath,
         overlayRegionPresets.auxiliaryPocketPair,
       );
       layers.push(
@@ -5576,7 +5667,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     if (scene.chestPocketAssetPath) {
       const overlayBuffer = await createChestPocketOverlayBuffer(
         scene.chestPocketAssetPath,
-        baseAssetPath,
+        alignedOverlayPlacementAssetPath,
       );
       layers.push(
         getImageSvg(toDataUri(overlayBuffer), CHEST_POCKET_VERTICAL_OFFSET),
@@ -5609,7 +5700,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           const trimOverlayBuffer =
             await createChestPocketSectionTrimOverlayBuffer(
               scene.chestPocketAssetPath,
-              baseAssetPath,
+              alignedOverlayPlacementAssetPath,
               section,
             );
 
@@ -5632,7 +5723,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       } else if (chestPocketTrimColor) {
         const trimOverlayBuffer = await createChestPocketTrimOverlayBuffer(
           scene.chestPocketAssetPath,
-          baseAssetPath,
+          alignedOverlayPlacementAssetPath,
         );
 
         if (trimOverlayBuffer) {
@@ -5665,9 +5756,9 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
     }
 
-    if (hasOriginalSleevesOverlay && isBlouseScene(scene, baseAssetPath)) {
+    if (hasOriginalSleevesOverlay && isBlouseScene(scene, alignedOverlayPlacementAssetPath)) {
       layers.push(
-        await getOriginalSleevesTrimSvg(baseAssetPath, {
+        await getOriginalSleevesTrimSvg(alignedOverlayPlacementAssetPath, {
           upper: sleeveUpperTrimColor,
           lower: sleeveLowerTrimColor,
           fill: sleeveFillTrimColor,
@@ -5675,7 +5766,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
-    if (scene.logoMarker && isBlouseScene(scene, baseAssetPath)) {
+    if (scene.logoMarker && isBlouseScene(scene, alignedOverlayPlacementAssetPath)) {
       layers.push(
         getLogoMarkerSvg(
           scene.logoMarker.placement,
@@ -5684,7 +5775,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       );
     }
 
-    if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetPath)) {
+    if (sleeveTabTrimColor && isBlouseScene(scene, alignedOverlayPlacementAssetPath)) {
       layers.push(getSleeveTabMarkersSvg(sleeveTabTrimColor));
     }
 
