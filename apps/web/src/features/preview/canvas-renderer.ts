@@ -11,8 +11,6 @@ const CANVAS_HEIGHT = 1200;
 // lienzo. Recortar el SVG histórico a esta zona conserva cuello y cremallera,
 // pero excluye mangas, sisas y torso de la silueta Mujer que trae embebidos.
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
-const MALE_BLOUSE_OVERLAY_ANCHOR =
-  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -1593,14 +1591,6 @@ function isBlouseScene(scene: PreviewScene, baseAssetSrc?: string) {
   );
 }
 
-function usesMaleBlouseCoordinateSystem(src: string) {
-  const fileName = getFileNameFromSource(src);
-  return (
-    fileName === "blouse-base-closed-no-collar-men.svg" ||
-    fileName.startsWith("blouse-men-")
-  );
-}
-
 function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {
   const positions: Array<{ x: number; y: number }> = [];
   const sourcePlacements = Object.entries(CONFIGURATOR_VALUE_IDS.logoPlacement);
@@ -2971,63 +2961,6 @@ export async function createRasterCanvas(src: string, placementSrc = src) {
   return await promise;
 }
 
-/**
- * Los overlays históricos ocupan el lienzo completo de Mujer (1080×1350).
- * Los SVG Hombre usan otro viewBox. Recortarlos con los bounds Hombre mezcla
- * coordenadas y desplaza mangas/bosillos. Este camino conserva la posición
- * relativa del overlay dentro de todo su lienzo y lo ajusta a la base destino.
- */
-async function createNormalizedOverlayRasterCanvas(
-  src: string,
-  placementSrc: string,
-) {
-  const cacheKey = `normalized-overlay::${src}::${placementSrc}`;
-  const existing = rasterCache.get(cacheKey);
-  if (existing) return await existing;
-
-  const promise = (async () => {
-    const [processed, placement] = await Promise.all([
-      getProcessedImage(src),
-      getProcessedImage(placementSrc),
-    ]);
-    const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(
-      placement.bounds,
-    );
-    const canvas = document.createElement("canvas");
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("No se pudo alinear el overlay visual.");
-
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = "high";
-    context.drawImage(
-      processed.canvas,
-      0,
-      0,
-      processed.canvas.width,
-      processed.canvas.height,
-      drawX,
-      drawY,
-      drawWidth,
-      drawHeight,
-    );
-    return canvas;
-  })();
-
-  rasterCache.set(cacheKey, promise);
-  return await promise;
-}
-
-async function createChestPocketRasterCanvas(
-  src: string,
-  placementSrc: string,
-) {
-  return usesMaleBlouseCoordinateSystem(placementSrc)
-    ? await createNormalizedOverlayRasterCanvas(src, placementSrc)
-    : await createRasterCanvas(src, placementSrc);
-}
-
 async function createCoordinateAlignedRasterCanvas(
   src: string,
   placementSrc: string,
@@ -3657,10 +3590,7 @@ async function drawChestPocketOverlay(
   placementSrc: string,
   trimColors: ChestPocketTrimColors = {},
 ) {
-  const overlayCanvas = await createChestPocketRasterCanvas(
-    sourceSrc,
-    placementSrc,
-  );
+  const overlayCanvas = await createRasterCanvas(sourceSrc, placementSrc);
   const fileName = getFileNameFromSource(sourceSrc);
   context.save();
   context.translate(0, CHEST_POCKET_VERTICAL_OFFSET);
@@ -3684,10 +3614,7 @@ async function drawChestPocketOverlay(
         continue;
       }
 
-      const trimCanvas = await createChestPocketRasterCanvas(
-        trimSrc,
-        placementSrc,
-      );
+      const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
       context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
     }
 
@@ -3709,7 +3636,7 @@ async function drawChestPocketOverlay(
     return;
   }
 
-  const trimCanvas = await createChestPocketRasterCanvas(trimSrc, placementSrc);
+  const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
 
   if (fullChestPocketTrimOverlayFileNames.has(fileName)) {
     context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
@@ -3856,9 +3783,6 @@ type OriginalSleevesTrimColors = {
   fill?: string | undefined;
 };
 
-type SleeveCoordinateScale = { x: number; y: number };
-const CANONICAL_BLOUSE_SVG_SIZE = { width: 1080, height: 1350 } as const;
-
 async function getAssetToCanvasTransform(
   placementSrc: string,
 ): Promise<AssetToCanvasTransform> {
@@ -3878,15 +3802,10 @@ async function getAssetToCanvasTransform(
 function transformOriginalSleevePoint(
   point: OriginalSleevePoint,
   transform: AssetToCanvasTransform,
-  coordinateScale: SleeveCoordinateScale = { x: 1, y: 1 },
 ) {
   return {
-    x:
-      transform.drawX +
-      (point[0] * coordinateScale.x - transform.sourceX) * transform.scaleX,
-    y:
-      transform.drawY +
-      (point[1] * coordinateScale.y - transform.sourceY) * transform.scaleY,
+    x: transform.drawX + (point[0] - transform.sourceX) * transform.scaleX,
+    y: transform.drawY + (point[1] - transform.sourceY) * transform.scaleY,
   };
 }
 
@@ -3894,7 +3813,6 @@ function traceOriginalSleevePolygon(
   context: CanvasRenderingContext2D,
   points: readonly OriginalSleevePoint[],
   transform: AssetToCanvasTransform,
-  coordinateScale: SleeveCoordinateScale,
 ) {
   const [firstPoint, ...restPoints] = points;
 
@@ -3902,12 +3820,12 @@ function traceOriginalSleevePolygon(
     return;
   }
 
-  const first = transformOriginalSleevePoint(firstPoint, transform, coordinateScale);
+  const first = transformOriginalSleevePoint(firstPoint, transform);
   context.beginPath();
   context.moveTo(first.x, first.y);
 
   for (const point of restPoints) {
-    const transformed = transformOriginalSleevePoint(point, transform, coordinateScale);
+    const transformed = transformOriginalSleevePoint(point, transform);
     context.lineTo(transformed.x, transformed.y);
   }
 
@@ -3919,10 +3837,9 @@ function strokeOriginalSleeveLine(
   line: readonly [OriginalSleevePoint, OriginalSleevePoint],
   transform: AssetToCanvasTransform,
   trimColor: string,
-  coordinateScale: SleeveCoordinateScale,
 ) {
-  const start = transformOriginalSleevePoint(line[0], transform, coordinateScale);
-  const end = transformOriginalSleevePoint(line[1], transform, coordinateScale);
+  const start = transformOriginalSleevePoint(line[0], transform);
+  const end = transformOriginalSleevePoint(line[1], transform);
 
   context.lineCap = "round";
   context.lineJoin = "round";
@@ -4047,15 +3964,7 @@ async function drawOriginalSleevesTrim(
     return;
   }
 
-  const placement = await getProcessedImage(placementSrc);
-  const transform = getAssetToCanvasTransform(placementSrc);
-  const coordinateScale = usesMaleBlouseCoordinateSystem(placementSrc)
-    ? {
-        x: placement.canvas.width / CANONICAL_BLOUSE_SVG_SIZE.width,
-        y: placement.canvas.height / CANONICAL_BLOUSE_SVG_SIZE.height,
-      }
-    : { x: 1, y: 1 };
-  const resolvedTransform = await transform;
+  const transform = await getAssetToCanvasTransform(placementSrc);
   const trimShapes = getOriginalSleeveTrimShapes(placementSrc);
   const fillShapes = getOriginalSleeveFillShapes(placementSrc);
   context.save();
@@ -4065,12 +3974,7 @@ async function drawOriginalSleevesTrim(
     context.lineJoin = "round";
 
     for (const shape of fillShapes) {
-      traceOriginalSleevePolygon(
-        context,
-        shape.points,
-        resolvedTransform,
-        coordinateScale,
-      );
+      traceOriginalSleevePolygon(context, shape.points, transform);
       context.fill();
     }
   }
@@ -4078,26 +3982,14 @@ async function drawOriginalSleevesTrim(
   const upperTrimColor = trimColors.upper;
   if (upperTrimColor) {
     for (const shape of trimShapes) {
-      strokeOriginalSleeveLine(
-        context,
-        shape.upper,
-        resolvedTransform,
-        upperTrimColor,
-        coordinateScale,
-      );
+      strokeOriginalSleeveLine(context, shape.upper, transform, upperTrimColor);
     }
   }
 
   const lowerTrimColor = trimColors.lower;
   if (lowerTrimColor) {
     for (const shape of trimShapes) {
-      strokeOriginalSleeveLine(
-        context,
-        shape.lower,
-        resolvedTransform,
-        lowerTrimColor,
-        coordinateScale,
-      );
+      strokeOriginalSleeveLine(context, shape.lower, transform, lowerTrimColor);
     }
   }
 
@@ -5020,18 +4912,12 @@ async function composeSingleDesign(
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
-  // Los SVG de mangas y bolsillos están dibujados en coordenadas de una
-  // silueta. Para Hombre no deben usar la base Mujer (baseAssetSrc), que solo
-  // se conserva para extraer el detalle central del cuello histórico.
-  const overlayPlacementSrc = scene.useMaleBlouseSilhouette
-    ? MALE_BLOUSE_OVERLAY_ANCHOR
-    : baseAssetSrc;
 
   if (scene.useMaleBlouseSilhouette) {
     // Hombre se dibuja como una silueta completa y continua. Así hombros,
     // mangas, sisas y costados siempre proceden de una única geometría.
     const maleBodyCanvas = await createTintedBaseCanvas(
-      MALE_BLOUSE_OVERLAY_ANCHOR,
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
@@ -5069,7 +4955,6 @@ async function composeSingleDesign(
   }
 
   if (baseAssetSrc) {
-    const alignedOverlayPlacementSrc = overlayPlacementSrc ?? baseAssetSrc;
     const pespunteTrimColor = getTrimSectionColor(scene, isPespunteTrimSection);
 
     await drawGarmentModelDetails(
@@ -5484,7 +5369,7 @@ async function composeSingleDesign(
       await drawDetailOverlayInRegions(
         context,
         scene.auxiliaryPocketImageSrc,
-        alignedOverlayPlacementSrc,
+        baseAssetSrc,
         getOverlayRegionPreset("auxiliaryPocketPair"),
       );
     }
@@ -5493,7 +5378,7 @@ async function composeSingleDesign(
       await drawChestPocketOverlay(
         context,
         scene.chestPocketImageSrc,
-        alignedOverlayPlacementSrc,
+        baseAssetSrc,
         {
           generic: chestPocketTrimColor,
           upper: chestPocketUpperTrimColor,
@@ -5503,15 +5388,15 @@ async function composeSingleDesign(
       );
     }
 
-    if (hasOriginalSleevesOverlay && isBlouseScene(scene, alignedOverlayPlacementSrc)) {
-      await drawOriginalSleevesTrim(context, alignedOverlayPlacementSrc, {
+    if (hasOriginalSleevesOverlay && isBlouseScene(scene, baseAssetSrc)) {
+      await drawOriginalSleevesTrim(context, baseAssetSrc, {
         upper: sleeveUpperTrimColor,
         lower: sleeveLowerTrimColor,
         fill: sleeveFillTrimColor,
       });
     }
 
-    if (scene.logoMarker && isBlouseScene(scene, alignedOverlayPlacementSrc)) {
+    if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {
       drawLogoMarker(
         context,
         scene.logoMarker.placement,
@@ -5519,7 +5404,7 @@ async function composeSingleDesign(
       );
     }
 
-    if (sleeveTabTrimColor && isBlouseScene(scene, alignedOverlayPlacementSrc)) {
+    if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetSrc)) {
       drawSleeveTabMarkers(context, sleeveTabTrimColor);
     }
 
