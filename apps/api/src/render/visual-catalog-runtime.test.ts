@@ -241,7 +241,7 @@ describe("runtime del catalogo visual general", () => {
 
     expect(svg).toContain("display:inline");
     expect(svg).toContain("display:none");
-    expect(svg).toContain("stroke:#0e2943");
+    expect(svg).toContain("stroke:#123456");
     expect(svg).toContain('data-vc-linear-trim-texture="cord"');
     expect(svg).toContain("stroke-width:10px!important");
     // El vivo lineal ya no genera la antigua capa blanca punteada.
@@ -376,7 +376,7 @@ describe("runtime del catalogo visual general", () => {
     );
 
     expect(svg.match(/data-vc-linear-trim-texture="cord"/g)).toHaveLength(1);
-    expect(svg).toContain("stroke:#0e2943!important");
+    expect(svg).toContain("stroke:#123456!important");
     expect(svg).toContain("fill:#654321!important");
     expect(svg).not.toContain("stroke:#654321");
   });
@@ -405,11 +405,10 @@ describe("runtime del catalogo visual general", () => {
     );
 
     expect(svg).toContain('data-vc-linear-trim-texture="woven"');
-    expect(svg).toContain('id="vc-linear-trim-weave"');
-    expect(svg).toContain("fill:#0e2943!important");
-    expect(svg).toContain("stroke:#0e2943!important");
+    expect(svg).toContain("fill:#123456!important");
+    expect(svg).toContain("stroke:#123456!important");
     expect(svg).toContain("stroke-width:7px!important");
-    expect(svg).toContain("stroke:#003f59!important");
+    expect(svg).not.toContain("#003f59");
     // El vivo poligonal aprobado es sólido: sin entramado ni puntada blanca.
     expect(svg).not.toContain("fill:url(#vc-linear-trim-weave)!important");
     expect(svg).not.toContain('data-vc-linear-trim-stitch="true"');
@@ -525,7 +524,7 @@ describe("runtime del catalogo visual general", () => {
     expect(svgWithoutTrim).toContain(".st1{fill:none;stroke:#000}");
     expect(svgWithoutTrim).not.toContain("stroke:none");
     expect(svgWithoutTrim).not.toMatch(/__VC_[A-Z0-9_]+__/);
-    expect(svgWithTrim.match(/stroke:#0e2943/g)).toHaveLength(2);
+    expect(svgWithTrim.match(/stroke:#123456/g)).toHaveLength(2);
     expect(svgWithTrim).toContain("stroke:#654321");
     expect(svgWithTrim).not.toContain("fill:#654321");
   });

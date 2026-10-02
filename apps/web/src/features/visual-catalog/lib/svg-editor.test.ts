@@ -378,7 +378,7 @@ describe("svg-editor", () => {
     expect(runtimeSvg).toContain("__VC_TRIM_STROKE_9001__");
     expect(runtimeSvg).toContain("__VC_TRIM_FILL_9002__");
     expect(materializedSvg).toContain("fill:#aabbcc!important");
-    expect(materializedSvg).toContain("stroke:#0e2943!important");
+    expect(materializedSvg).toContain("stroke:#123456!important");
     expect(materializedSvg).toContain('data-vc-linear-trim-texture="cord"');
     expect(materializedSvg).toContain("fill:#654321!important");
     expect(materializedSvg).toContain("display:inline!important");
@@ -609,8 +609,9 @@ describe("svg-editor", () => {
       ]).split(",")[1] ?? "",
     );
 
-    expect(materializedSvg).toContain("fill:#0081a7!important");
-    expect(materializedSvg).toContain("stroke:#003f59!important");
+    expect(materializedSvg).toContain("fill:#00a6d6!important");
+    expect(materializedSvg).toContain("stroke:#00a6d6!important");
+    expect(materializedSvg).not.toContain("#003f59");
     expect(materializedSvg).toContain('data-vc-linear-trim-texture="woven"');
     expect(materializedSvg).not.toContain("__VC_TRIM_STROKE_1967__");
   });

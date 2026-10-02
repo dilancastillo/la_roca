@@ -416,9 +416,6 @@ function normalizeNeckVectorStrokeWidths(runtimeSvg: string) {
 }
 
 const LINEAR_TRIM_MAIN_WIDTH = 10;
-const LINEAR_TRIM_SHADOW_WIDTH = 15;
-const LINEAR_TRIM_DARK_EDGE = "#003f59";
-const LINEAR_TRIM_COLOR_FACTOR = 0.78;
 
 function appendInlineSvgStyle(markup: string, declarations: string) {
   const styleAttribute = /\sstyle=("([^"]*)"|'([^']*)')/i;
@@ -436,12 +433,6 @@ function appendInlineSvgStyle(markup: string, declarations: string) {
   }
 
   return markup.replace(/\s*\/>$/, ` style="${declarations}" />`);
-}
-
-function removeDuplicateSvgIdentity(markup: string) {
-  return markup
-    .replace(/\s+id=("[^"]*"|'[^']*')/i, "")
-    .replace(/\s+data-vc-id=("[^"]*"|'[^']*')/i, "");
 }
 
 function replaceLinearTrimStrokeToken(markup: string, stroke: string) {
@@ -469,8 +460,6 @@ function addLinearTrimTexture(
       if (!trimColor) {
         return markup;
       }
-      const linearTrimColor = darkenTrimColor(trimColor);
-
       const visibility = markup.match(
         /display:(__VC_VISIBILITY_\d+__)(!important)?;?/,
       );
@@ -481,19 +470,12 @@ function addLinearTrimTexture(
       const commonStyle =
         "fill:none!important;vector-effect:non-scaling-stroke;stroke-linecap:round!important;stroke-linejoin:round!important;";
       const main = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(cleanMarkup, linearTrimColor),
+        replaceLinearTrimStrokeToken(cleanMarkup, trimColor),
         `${commonStyle}stroke-width:${LINEAR_TRIM_MAIN_WIDTH}px!important;`,
       );
-      const shadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        `${commonStyle}stroke-width:${LINEAR_TRIM_SHADOW_WIDTH}px!important;stroke-opacity:0.9!important;`,
-      );
-      // Se eliminó highlight (línea blanca punteada stroke-dasharray:5 5) y weaveShadow (sombra punteada)
-      // para quitar la textura blanca del vivo lineal (cord).
-      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${shadow}${main}</g>`;
+      // El vivo lineal conserva el grosor configurado, pero usa exactamente el
+      // color elegido: no agregamos sombra ni un tono derivado.
+      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${main}</g>`;
     },
   );
 }
@@ -504,16 +486,8 @@ function addLinearTrimPolygonTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
 ) {
-  const viewBox = runtimeSvg.match(
-    /\bviewBox=(?:"[\d.+-]+[ ,]+[\d.+-]+[ ,]+([\d.+-]+)[ ,]+[\d.+-]+"|'[\d.+-]+[ ,]+[\d.+-]+[ ,]+([\d.+-]+)[ ,]+[\d.+-]+')/i,
-  );
-  const sourceWidth = Number(viewBox?.[1] ?? viewBox?.[2] ?? 1080);
-  const patternSize = Math.max(8, sourceWidth / 105);
-  const lightStroke = patternSize * 0.16;
-  const darkStroke = patternSize * 0.11;
   const texturedPolygon =
     /<polygon\b[^>]*data-vc-linear-trim-polygon="true"[^>]*fill:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
-  let hasTexturedPolygon = false;
   const texturedSvg = runtimeSvg.replace(
     texturedPolygon,
     (markup, sourceValueId: string) => {
@@ -521,9 +495,6 @@ function addLinearTrimPolygonTexture(
       if (!trimColor) {
         return markup;
       }
-      const linearTrimColor = darkenTrimColor(trimColor);
-
-      hasTexturedPolygon = true;
       const visibility = markup.match(
         /display:(__VC_VISIBILITY_\d+__)(!important)?;?/,
       );
@@ -531,43 +502,20 @@ function addLinearTrimPolygonTexture(
         ? ` style="display:${visibility[1]}${visibility[2] ?? ""};"`
         : "";
       const cleanMarkup = visibility ? markup.replace(visibility[0], "") : markup;
-      const shadow = appendInlineSvgStyle(
-        replaceLinearTrimStrokeToken(
-          removeDuplicateSvgIdentity(cleanMarkup).replace(
-            /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            "fill:none!important;",
-          ),
-          LINEAR_TRIM_DARK_EDGE,
-        ),
-        "vector-effect:non-scaling-stroke;stroke-width:11px!important;stroke-linejoin:round!important;stroke-opacity:0.82!important;",
-      );
       const main = appendInlineSvgStyle(
         replaceLinearTrimStrokeToken(
           cleanMarkup.replace(
             /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
-            `fill:${linearTrimColor}!important;`,
+            `fill:${trimColor}!important;`,
           ),
-          linearTrimColor,
+          trimColor,
         ),
         "vector-effect:non-scaling-stroke;stroke-width:7px!important;stroke-linejoin:round!important;",
       );
-      // No creamos las capas weave ni stitch: ambas introducían la textura
-      // blanca que se retiró del vivo poligonal. Omitirlas evita variables
-      // sin uso y conserva únicamente sombra + color sólido aprobados.
-      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${shadow}${main}</g>`;
+      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${main}</g>`;
     },
   );
-
-  if (!hasTexturedPolygon) {
-    return texturedSvg;
-  }
-
-  const size = patternSize.toFixed(2);
-  const half = (patternSize / 2).toFixed(2);
-  const textureDefinition =
-    `<defs data-vc-linear-trim-defs="true"><pattern id="vc-linear-trim-weave" width="${size}" height="${size}" patternUnits="userSpaceOnUse"><path d="M0 ${size} L${size} 0" fill="none" stroke="#ffffff" stroke-width="${lightStroke.toFixed(2)}" opacity="0.95"/><path d="M0 0 L${size} ${size}" fill="none" stroke="${LINEAR_TRIM_DARK_EDGE}" stroke-width="${darkStroke.toFixed(2)}" opacity="0.82"/><circle cx="${half}" cy="${half}" r="${(patternSize * 0.08).toFixed(2)}" fill="#ffffff" opacity="0.9"/></pattern></defs>`;
-
-  return texturedSvg.replace(/<svg\b[^>]*>/i, (svgTag) => `${svgTag}${textureDefinition}`);
+  return texturedSvg;
 }
 
 function getTrimColor(
@@ -579,24 +527,6 @@ function getTrimColor(
       section.sourceValueId === sourceValueId ||
       section.valueId === sourceValueId,
   )?.colorHex;
-}
-
-function darkenTrimColor(colorHex: string) {
-  const normalized = colorHex.trim().match(/^#([0-9a-f]{6})$/i);
-  if (!normalized?.[1]) {
-    return colorHex;
-  }
-
-  const channels = normalized[1].match(/.{2}/g) ?? [];
-  const darkened = channels
-    .map((channel) =>
-      Math.round(Number.parseInt(channel, 16) * LINEAR_TRIM_COLOR_FACTOR)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("");
-
-  return `#${darkened}`;
 }
 
 export function getSelectedVisualDefinitions(
