@@ -737,10 +737,10 @@ function getSleeveTrimInset(
   if (length === 0) return [0, 0];
 
   const inset = 20;
-  // The two SVG edges use opposing winding. This orientation points into the
-  // fabric; the previous one visibly placed the band outside the sleeve hem.
+  // The two SVG edges use opposing winding. These normals point from the cuff
+  // towards the garment body; reversing them moves the trim outside the hem.
   const normal: OriginalSleevePoint =
-    side === "left" ? [-deltaY, deltaX] : [deltaY, -deltaX];
+    side === "left" ? [deltaY, -deltaX] : [-deltaY, deltaX];
 
   return [(normal[0] / length) * inset, (normal[1] / length) * inset];
 }
