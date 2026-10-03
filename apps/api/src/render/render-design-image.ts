@@ -723,11 +723,11 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES = [
 // Los cinco SVG de Hombre no comparten el viewBox de Mujer (1080×1350):
 // usan un arte de 861 unidades. Cada perfil se toma del borde inferior real
 // de la manga de su SVG, no de una silueta Mujer escalada.
-// Su separación interna también es propia: copiar el desplazamiento de 13 px
-// del fallback movía el lineal hacia el torso en las sisas masculinas.
+// La banda debe conservar el vector normal de 20 unidades del arte original.
+// Reducir su componente horizontal separaba los lineales del borde en JDC.
 const MALE_SLEEVE_TRIM_INNER_OFFSETS = {
-  left: [3.88, -14.99] as const,
-  right: [-4.11, -13.44] as const,
+  left: [13.33, -14.94] as const,
+  right: [-12.5, -15.6] as const,
 };
 const MALE_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
   string,
