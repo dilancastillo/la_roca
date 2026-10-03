@@ -1648,6 +1648,7 @@ function getLowerPocketOverlayRegions(
 type ProcessedImage = {
   canvas: HTMLCanvasElement;
   bounds: { x: number; y: number; width: number; height: number };
+  sourceViewBox?: { x: number; y: number; width: number; height: number };
 };
 
 const imageCache = new Map<string, Promise<ProcessedImage>>();
@@ -1655,6 +1656,10 @@ const maskCache = new Map<string, Promise<HTMLCanvasElement>>();
 const rasterCache = new Map<string, Promise<HTMLCanvasElement>>();
 const detailOverlayCache = new Map<string, Promise<HTMLCanvasElement>>();
 const svgObjectUrlCache = new Map<string, Promise<string>>();
+const svgViewBoxCache = new Map<
+  string,
+  Promise<{ x: number; y: number; width: number; height: number } | undefined>
+>();
 const lowerPocketDetailObjectUrlCache = new Map<string, Promise<string>>();
 const lowerPocketTrimObjectUrlCache = new Map<string, Promise<string>>();
 const collarTrimObjectUrlCache = new Map<string, Promise<string>>();
@@ -2425,14 +2430,47 @@ function getSvgViewBox(svgText: string) {
     return undefined;
   }
 
+  const x = Number(match[1]);
+  const y = Number(match[2]);
   const width = Number(match[3]);
   const height = Number(match[4]);
 
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return undefined;
   }
 
-  return { width, height };
+  return { x, y, width, height };
+}
+
+async function getSvgViewBoxForSource(src: string) {
+  if (!isSvgSource(src)) {
+    return undefined;
+  }
+
+  const existing = svgViewBoxCache.get(src);
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const response = await fetch(src);
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    return getSvgViewBox(await response.text());
+  })();
+
+  svgViewBoxCache.set(src, promise);
+  return await promise;
 }
 
 function withExplicitSvgDimensions(svgText: string) {
@@ -2639,7 +2677,10 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
   }
 
   const promise = (async () => {
-    const image = await loadImage(src);
+    const [image, sourceViewBox] = await Promise.all([
+      loadImage(src),
+      getSvgViewBoxForSource(src),
+    ]);
     const canvas = document.createElement("canvas");
     canvas.width = image.naturalWidth || image.width;
     canvas.height = image.naturalHeight || image.height;
@@ -2701,6 +2742,7 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
             height: maxY - minY + 1,
           }
         : { x: 0, y: 0, width: canvas.width, height: canvas.height },
+      ...(sourceViewBox ? { sourceViewBox } : {}),
     };
   })();
 
@@ -3863,6 +3905,10 @@ type AssetToCanvasTransform = {
   scaleY: number;
   sourceX: number;
   sourceY: number;
+  sourceCoordinateScaleX: number;
+  sourceCoordinateScaleY: number;
+  sourceCoordinateOriginX: number;
+  sourceCoordinateOriginY: number;
 };
 
 type OriginalSleevesTrimColors = {
@@ -3874,7 +3920,8 @@ type OriginalSleevesTrimColors = {
 async function getAssetToCanvasTransform(
   placementSrc: string,
 ): Promise<AssetToCanvasTransform> {
-  const { bounds } = await getProcessedImage(placementSrc);
+  const processed = await getProcessedImage(placementSrc);
+  const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
 
   return {
@@ -3884,6 +3931,14 @@ async function getAssetToCanvasTransform(
     scaleY: drawHeight / bounds.height,
     sourceX: bounds.x,
     sourceY: bounds.y,
+    sourceCoordinateScaleX: processed.sourceViewBox
+      ? processed.canvas.width / processed.sourceViewBox.width
+      : 1,
+    sourceCoordinateScaleY: processed.sourceViewBox
+      ? processed.canvas.height / processed.sourceViewBox.height
+      : 1,
+    sourceCoordinateOriginX: processed.sourceViewBox?.x ?? 0,
+    sourceCoordinateOriginY: processed.sourceViewBox?.y ?? 0,
   };
 }
 
@@ -3892,8 +3947,18 @@ function transformOriginalSleevePoint(
   transform: AssetToCanvasTransform,
 ) {
   return {
-    x: transform.drawX + (point[0] - transform.sourceX) * transform.scaleX,
-    y: transform.drawY + (point[1] - transform.sourceY) * transform.scaleY,
+    x:
+      transform.drawX +
+      ((point[0] - transform.sourceCoordinateOriginX) *
+        transform.sourceCoordinateScaleX -
+        transform.sourceX) *
+        transform.scaleX,
+    y:
+      transform.drawY +
+      ((point[1] - transform.sourceCoordinateOriginY) *
+        transform.sourceCoordinateScaleY -
+        transform.sourceY) *
+        transform.scaleY,
   };
 }
 

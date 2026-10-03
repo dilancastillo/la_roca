@@ -266,6 +266,7 @@ type ProcessedImage = {
   height: number;
   data: Uint8ClampedArray;
   bounds: { x: number; y: number; width: number; height: number };
+  sourceViewBox?: { x: number; y: number; width: number; height: number };
 };
 
 const overlayRegionPresets: Record<
@@ -2455,14 +2456,23 @@ function getSvgViewBox(svgText: string) {
     return undefined;
   }
 
+  const x = Number(match[1]);
+  const y = Number(match[2]);
   const width = Number(match[3]);
   const height = Number(match[4]);
 
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return undefined;
   }
 
-  return { width, height };
+  return { x, y, width, height };
 }
 
 function withExplicitSvgDimensions(svgText: string) {
@@ -2575,11 +2585,17 @@ async function processImageBuffer(renderBuffer: Buffer): Promise<ProcessedImage>
 
 async function loadProcessedImage(assetPath: string): Promise<ProcessedImage> {
   const fileBuffer = await readAssetFile(assetPath);
-  const renderBuffer = isSvgAsset(assetPath)
-    ? Buffer.from(withExplicitSvgDimensions(fileBuffer.toString("utf8")))
+  const svgText = isSvgAsset(assetPath) ? fileBuffer.toString("utf8") : undefined;
+  const renderBuffer = svgText
+    ? Buffer.from(withExplicitSvgDimensions(svgText))
     : fileBuffer;
+  const processed = await processImageBuffer(renderBuffer);
+  const sourceViewBox = svgText ? getSvgViewBox(svgText) : undefined;
 
-  return await processImageBuffer(renderBuffer);
+  return {
+    ...processed,
+    ...(sourceViewBox ? { sourceViewBox } : {}),
+  };
 }
 
 function getDrawRect(bounds: ProcessedImage["bounds"]) {
@@ -4323,6 +4339,10 @@ type AssetToCanvasTransform = {
   scaleY: number;
   sourceX: number;
   sourceY: number;
+  sourceCoordinateScaleX: number;
+  sourceCoordinateScaleY: number;
+  sourceCoordinateOriginX: number;
+  sourceCoordinateOriginY: number;
 };
 
 type OriginalSleevesTrimColors = {
@@ -4343,6 +4363,14 @@ function getAssetToCanvasTransformFromProcessed(
     scaleY: drawHeight / processed.bounds.height,
     sourceX: processed.bounds.x,
     sourceY: processed.bounds.y,
+    sourceCoordinateScaleX: processed.sourceViewBox
+      ? processed.width / processed.sourceViewBox.width
+      : 1,
+    sourceCoordinateScaleY: processed.sourceViewBox
+      ? processed.height / processed.sourceViewBox.height
+      : 1,
+    sourceCoordinateOriginX: processed.sourceViewBox?.x ?? 0,
+    sourceCoordinateOriginY: processed.sourceViewBox?.y ?? 0,
   };
 }
 
@@ -4351,8 +4379,18 @@ function transformOriginalSleevePoint(
   transform: AssetToCanvasTransform,
 ) {
   return {
-    x: transform.drawX + (point[0] - transform.sourceX) * transform.scaleX,
-    y: transform.drawY + (point[1] - transform.sourceY) * transform.scaleY,
+    x:
+      transform.drawX +
+      ((point[0] - transform.sourceCoordinateOriginX) *
+        transform.sourceCoordinateScaleX -
+        transform.sourceX) *
+        transform.scaleX,
+    y:
+      transform.drawY +
+      ((point[1] - transform.sourceCoordinateOriginY) *
+        transform.sourceCoordinateScaleY -
+        transform.sourceY) *
+        transform.scaleY,
   };
 }
 
