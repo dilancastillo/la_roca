@@ -4353,7 +4353,11 @@ type OriginalSleevesTrimColors = {
 
 function getAssetToCanvasTransformFromProcessed(
   processed: ProcessedImage,
+  assetPath: string,
 ): AssetToCanvasTransform {
+  // Solo los modelos masculinos definen los puntos de manga en el viewBox
+  // fuente. Los SVG históricos de mujer usan coordenadas del raster procesado.
+  const usesSourceViewBoxCoordinates = usesMaleBlouseCoordinateSystem(assetPath);
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(processed.bounds);
 
   return {
@@ -4363,14 +4367,18 @@ function getAssetToCanvasTransformFromProcessed(
     scaleY: drawHeight / processed.bounds.height,
     sourceX: processed.bounds.x,
     sourceY: processed.bounds.y,
-    sourceCoordinateScaleX: processed.sourceViewBox
+    sourceCoordinateScaleX: usesSourceViewBoxCoordinates && processed.sourceViewBox
       ? processed.width / processed.sourceViewBox.width
       : 1,
-    sourceCoordinateScaleY: processed.sourceViewBox
+    sourceCoordinateScaleY: usesSourceViewBoxCoordinates && processed.sourceViewBox
       ? processed.height / processed.sourceViewBox.height
       : 1,
-    sourceCoordinateOriginX: processed.sourceViewBox?.x ?? 0,
-    sourceCoordinateOriginY: processed.sourceViewBox?.y ?? 0,
+    sourceCoordinateOriginX: usesSourceViewBoxCoordinates
+      ? processed.sourceViewBox?.x ?? 0
+      : 0,
+    sourceCoordinateOriginY: usesSourceViewBoxCoordinates
+      ? processed.sourceViewBox?.y ?? 0
+      : 0,
   };
 }
 
@@ -4535,6 +4543,7 @@ async function getLowerPocketAuxiliaryAddonSvg(
 
   const transform = getAssetToCanvasTransformFromProcessed(
     await loadProcessedImage(lowerPocketAssetPath),
+    lowerPocketAssetPath,
   );
   const lineWidth = Math.max(1.5, 3 * (transform.scaleX + transform.scaleY) / 2);
   const addonKind = kind ?? "lizo";
@@ -4688,6 +4697,7 @@ async function getOriginalSleevesTrimSvg(
 
   const transform = getAssetToCanvasTransformFromProcessed(
     await loadProcessedImage(placementAssetPath),
+    placementAssetPath,
   );
   const trimShapes = getOriginalSleeveTrimShapes(placementAssetPath);
   const fillShapes = getOriginalSleeveFillShapes(placementAssetPath);

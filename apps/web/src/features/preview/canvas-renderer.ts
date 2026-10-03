@@ -3921,6 +3921,10 @@ async function getAssetToCanvasTransform(
   placementSrc: string,
 ): Promise<AssetToCanvasTransform> {
   const processed = await getProcessedImage(placementSrc);
+  // Los anclajes de mangas masculinas se guardan en coordenadas del SVG
+  // original. Los modelos históricos de mujer ya usan el lienzo procesado.
+  // No escalar estos últimos evita desplazar EL HATO y demás activos legados.
+  const usesSourceViewBoxCoordinates = usesMaleBlouseCoordinateSystem(placementSrc);
   const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
 
@@ -3931,14 +3935,18 @@ async function getAssetToCanvasTransform(
     scaleY: drawHeight / bounds.height,
     sourceX: bounds.x,
     sourceY: bounds.y,
-    sourceCoordinateScaleX: processed.sourceViewBox
+    sourceCoordinateScaleX: usesSourceViewBoxCoordinates && processed.sourceViewBox
       ? processed.canvas.width / processed.sourceViewBox.width
       : 1,
-    sourceCoordinateScaleY: processed.sourceViewBox
+    sourceCoordinateScaleY: usesSourceViewBoxCoordinates && processed.sourceViewBox
       ? processed.canvas.height / processed.sourceViewBox.height
       : 1,
-    sourceCoordinateOriginX: processed.sourceViewBox?.x ?? 0,
-    sourceCoordinateOriginY: processed.sourceViewBox?.y ?? 0,
+    sourceCoordinateOriginX: usesSourceViewBoxCoordinates
+      ? processed.sourceViewBox?.x ?? 0
+      : 0,
+    sourceCoordinateOriginY: usesSourceViewBoxCoordinates
+      ? processed.sourceViewBox?.y ?? 0
+      : 0,
   };
 }
 
