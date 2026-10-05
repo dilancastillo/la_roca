@@ -460,6 +460,20 @@ export const visualReleaseTransitionResultSchema = z.object({
   release: visualReleaseSchema,
 });
 
+export const visualReleaseOdooSyncResultSchema = z.object({
+  ok: z.literal(true),
+  saleOrderLineId: z.number().int().positive(),
+  releaseId: z.string().uuid(),
+  releaseNumber: z.number().int().positive(),
+  attachmentId: z.number().int().positive(),
+  version: z.number().int().nonnegative(),
+  generatedAt: isoDatetimeSchema,
+  imageSizeBytes: z.number().int().nonnegative(),
+});
+export type VisualReleaseOdooSyncResult = z.infer<
+  typeof visualReleaseOdooSyncResultSchema
+>;
+
 export const visualReleaseScenarioSchema = z.object({
   id: z.string().uuid(),
   releaseId: z.string().uuid(),
@@ -497,6 +511,7 @@ export const visualReleaseAuditEventSchema = z.object({
     "published",
     "restored",
     "scenario_saved",
+    "odoo_synced",
   ]),
   actorEmail: z.string().email(),
   createdAt: isoDatetimeSchema,
