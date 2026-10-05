@@ -223,6 +223,71 @@ describe("runtime del catalogo visual general", () => {
     expect(forWoman.map((definition) => definition.id)).toEqual(["cuello-heredado"]);
   });
 
+  it("aísla un bolsillo específico de Hombre sin duplicar el heredado de Mujer", () => {
+    const legacy = makeDefinition("bolsillo-heredado", "component", []);
+    legacy.slot = "lower_pocket";
+    const man = makeDefinition("bolsillo-hombre", "component", []);
+    man.slot = "lower_pocket";
+    man.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [531],
+        valueNames: ["Hombre"],
+      },
+    ];
+
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: 142,
+          name: "Genero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            { id: 531, sourceValueId: 531, name: "Hombre", attributeId: 142, attributeName: "Genero" },
+            { id: 530, sourceValueId: 530, name: "Mujer", attributeId: 142, attributeName: "Genero" },
+          ],
+        },
+      ],
+    };
+
+    const forMan = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [legacy, man] },
+      { ...session.selectedValueIds, "142": [531] },
+      "uniforme",
+    );
+    const forWoman = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [legacy, man] },
+      { ...session.selectedValueIds, "142": [530] },
+      "uniforme",
+    );
+    const woman = makeDefinition("bolsillo-mujer", "component", []);
+    woman.slot = "lower_pocket";
+    woman.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [530],
+        valueNames: ["Mujer"],
+      },
+    ];
+    const forWomanSpecific = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [legacy, man, woman] },
+      { ...session.selectedValueIds, "142": [530] },
+      "uniforme",
+    );
+
+    expect(forMan.map((definition) => definition.id)).toEqual(["bolsillo-hombre"]);
+    expect(forWoman.map((definition) => definition.id)).toEqual(["bolsillo-heredado"]);
+    expect(forWomanSpecific.map((definition) => definition.id)).toEqual([
+      "bolsillo-mujer",
+    ]);
+  });
+
   it("resuelve visibilidad por elemento y toma colores solo de la orden", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

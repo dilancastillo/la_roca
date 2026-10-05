@@ -138,6 +138,12 @@ function isBindingSelected(
   ).has(definition.binding.sourceValueId);
 }
 
+function hasGenderActivationCondition(definition: ActiveVisualDefinition) {
+  return definition.activationConditions.some(
+    (condition) => normalize(condition.attributeName) === "genero",
+  );
+}
+
 function replaceTrimColorTokens(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
@@ -548,12 +554,14 @@ export function getSelectedVisualDefinitions(
       ),
   );
 
-  // Las versiones antiguas de cuello no tienen condición de género. Se
-  // conservan para que sigan atendiendo Mujer, pero cuando una versión del
-  // mismo cuello coincide explícitamente (por ejemplo, Hombre), esa versión
-  // específica debe reemplazar la heredada en el render actual.
+  // Las versiones antiguas de cuello y bolsillo inferior no tienen condición
+  // de género. Se conservan como respaldo, pero una variante explícita del
+  // mismo componente para el género actual debe reemplazarlas. Sin esto, al
+  // editar un bolsillo para Hombre se componía además el SVG heredado Mujer.
   const definitions = matchingDefinitions.filter((definition) => {
-    if (definition.slot !== "neck" || definition.activationConditions.length > 0) {
+    const isGenderScopedSlot =
+      definition.slot === "neck" || definition.slot === "lower_pocket";
+    if (!isGenderScopedSlot || hasGenderActivationCondition(definition)) {
       return true;
     }
 
@@ -565,8 +573,8 @@ export function getSelectedVisualDefinitions(
 
     return !matchingDefinitions.some((candidate) =>
       candidate.id !== definition.id &&
-      candidate.slot === "neck" &&
-      candidate.activationConditions.length > 0 &&
+      candidate.slot === definition.slot &&
+      hasGenderActivationCondition(candidate) &&
       candidate.layer === definition.layer &&
       candidate.binding.attributeId === definition.binding.attributeId &&
       (candidate.binding.sourceValueId ?? candidate.binding.valueId) === sourceValueId &&

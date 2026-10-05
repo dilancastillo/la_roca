@@ -92,6 +92,13 @@ const MEN_CLOSED_NO_COLLAR_REFERENCE_ASSET =
 
 type EditorReferenceSilhouette = "woman" | "man";
 
+// Cuello y bolsillo inferior se dibujan sobre siluetas con proporciones
+// distintas. Una definición para un género nunca debe reutilizarse al editar
+// el otro: se convierte en una variante independiente del mismo componente.
+function requiresGenderScopedDefinition(slot: VisualSlot) {
+  return slot === "neck" || slot === "lower_pocket";
+}
+
 const PAINT_OPTIONS: Array<{
   value: VisualElementPaint["mode"];
   label: string;
@@ -716,7 +723,6 @@ export function VisualCatalogPage() {
     () => getTrimOptions(commonAttributes, slot),
     [commonAttributes, slot],
   );
-  const referenceAssetSrc = getReferenceAsset(slot);
   const previewReferenceAssetSrc = getPreviewReferenceAsset(
     slot,
     referenceSilhouette,
@@ -1220,14 +1226,13 @@ export function VisualCatalogPage() {
       return;
     }
 
-    const genderCondition =
-      slot === "neck"
-        ? getGenderActivationCondition(commonAttributes, referenceSilhouette)
-        : null;
+    const genderCondition = requiresGenderScopedDefinition(slot)
+      ? getGenderActivationCondition(commonAttributes, referenceSilhouette)
+      : null;
 
-    if (slot === "neck" && !genderCondition) {
+    if (requiresGenderScopedDefinition(slot) && !genderCondition) {
       setError(
-        "Un modelo de cuello debe tener Género Hombre o Mujer disponible en todas las plantillas seleccionadas.",
+        "Un cuello o bolsillo inferior debe tener Género Hombre o Mujer disponible en todas las plantillas seleccionadas.",
       );
       return;
     }
@@ -1269,14 +1274,30 @@ export function VisualCatalogPage() {
         normalizedSvg: indexedSvg.normalizedSvg,
         runtimeSvg,
       };
-      const definition = editingDefinitionId
+      const editedDefinition = editingDefinitionId
+        ? definitions.find((definition) => definition.id === editingDefinitionId)
+        : undefined;
+      const editedDefinitionHasGender = Boolean(
+        editedDefinition?.activationConditions.some(
+          (condition) => normalize(condition.attributeName) === "genero",
+        ),
+      );
+      // Las versiones históricas de bolsillo no tenían género. Al abrirlas
+      // sobre Hombre o Mujer y guardarlas no se sobrescribe el original: se
+      // crea una variante específica, para que el otro género siga intacto.
+      const mustForkLegacyGenderNeutralDefinition = Boolean(
+        editingDefinitionId &&
+          requiresGenderScopedDefinition(slot) &&
+          !editedDefinitionHasGender,
+      );
+      const definition = editingDefinitionId && !mustForkLegacyGenderNeutralDefinition
         ? await updateVisualDefinition(editingDefinitionId, mutation)
         : await createVisualDefinition(mutation);
       const genderLabel = getDefinitionGenderLabel(definition);
       setEditingDefinitionId(definition.id);
       await refreshVersions();
       setMessage(
-        `Borrador guardado: ${definition.displayName}${
+        `${mustForkLegacyGenderNeutralDefinition ? "Variante independiente creada" : "Borrador guardado"}: ${definition.displayName}${
           genderLabel ? ` · ${genderLabel}` : ""
         } v${definition.version}. ` +
           "Las releases ya creadas conservan su fotografia; aprueba esta version y crea una candidata nueva para probarla en el laboratorio.",
@@ -1633,7 +1654,7 @@ export function VisualCatalogPage() {
               </label>
               <div className="catalog-reference-base">
                 <strong>Base automatica</strong>
-                <span>{referenceAssetSrc}</span>
+                <span>{getReferenceAsset(slot)}</span>
               </div>
               <label>
                 Vista de silueta
@@ -1654,9 +1675,10 @@ export function VisualCatalogPage() {
                   guardada no se modifican.
                 </small>
               </label>
-              {slot === "neck" ? (
+              {requiresGenderScopedDefinition(slot) ? (
                 <p className="catalog-empty">
-                  Al guardar, este cuello quedará disponible solo para{" "}
+                  Al guardar, este {slot === "neck" ? "cuello" : "bolsillo"}{" "}
+                  quedará disponible solo para{" "}
                   <strong>
                     {referenceSilhouette === "man" ? "Hombre" : "Mujer"}
                   </strong>
