@@ -19,6 +19,7 @@ import {
   type AppEnv,
 } from "../lib/app-env.js";
 import { normalizePostgresDatetime } from "../lib/postgres-datetime.js";
+import { listVisualDefinitions } from "./visual-catalog-repository.js";
 
 const lineReleasePinSchema = z.object({
   saleOrderLineId: z.number().int().positive(),
@@ -500,6 +501,30 @@ function hasSameTarget(left: VisualDefinitionSummary, right: VisualDefinitionSum
     JSON.stringify(leftProducts) === JSON.stringify(rightProducts);
 }
 
+function findSupersededReleaseDefinitions(
+  release: VisualRelease,
+  definitions: VisualDefinitionSummary[],
+) {
+  const byId = new Map(definitions.map((definition) => [definition.id, definition]));
+
+  return release.definitionIds.flatMap((definitionId) => {
+    const current = byId.get(definitionId);
+    if (!current) {
+      return [];
+    }
+
+    const newer = definitions.find(
+      (candidate) =>
+        candidate.id !== current.id &&
+        candidate.version > current.version &&
+        (candidate.status === "approved" || candidate.status === "published") &&
+        hasSameTarget(candidate, current),
+    );
+
+    return newer ? [{ current, newer }] : [];
+  });
+}
+
 function hasOverlappingProductScope(
   left: VisualDefinitionSummary,
   right: VisualDefinitionSummary,
@@ -665,6 +690,22 @@ async function activateRelease(env: Partial<AppEnv>, releaseId: string, actorEma
 }
 
 export async function publishVisualRelease(env: Partial<AppEnv>, releaseId: string, actorEmail: string) {
+  const release = await getVisualRelease(env, releaseId);
+  const superseded = findSupersededReleaseDefinitions(
+    release,
+    await listVisualDefinitions(env),
+  );
+
+  if (superseded.length > 0) {
+    const summary = superseded
+      .slice(0, 4)
+      .map(({ current, newer }) => `${current.displayName} v${current.version} (existe v${newer.version})`)
+      .join(", ");
+    throw new Error(
+      `La release contiene componentes superados: ${summary}. Crea una candidata nueva con las versiones aprobadas mas recientes.`,
+    );
+  }
+
   return await activateRelease(env, releaseId, actorEmail, "published");
 }
 

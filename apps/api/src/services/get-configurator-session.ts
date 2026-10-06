@@ -437,12 +437,15 @@ export function resolvePinnedVisualDefinitionIds({
   canEdit: boolean;
   visualDefinitionVersionIds: string[] | undefined;
 }) {
-  if (visualDefinitionVersionIds !== undefined) {
+  // An editable quotation must adopt the release currently in production.
+  // The attachment is an historical record, not a permanent override while
+  // the advisor can still change the commercial configuration.
+  if (!canEdit && visualDefinitionVersionIds !== undefined) {
     return visualDefinitionVersionIds;
   }
 
-  // Legacy editable drafts can adopt the current catalog. Locked historical
-  // lines without catalog metadata keep using their previously saved render.
+  // Locked historical lines without catalog metadata must keep their saved
+  // image instead of composing a newer catalog on top of it.
   return hasAttachment && !canEdit ? [] : undefined;
 }
 

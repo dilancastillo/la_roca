@@ -231,6 +231,13 @@ export function VisualReleaseManager({
       await onRefresh();
       onMessage(success);
     } catch (error) {
+      // The database is authoritative for release state. Refresh even after a
+      // failed transition so a stale card cannot invite a second restore.
+      try {
+        await onRefresh();
+      } catch {
+        // Preserve the original action error for the user.
+      }
       onError(
         error instanceof Error
           ? error.message
@@ -416,6 +423,23 @@ export function VisualReleaseManager({
           releases.map((release) => {
             const completedChecks = Object.values(release.checklist).filter(Boolean).length;
             const scenarios = scenariosByRelease[release.id] ?? [];
+            const staleDefinitions = release.definitionIds
+              .map((definitionId) => definitionsById.get(definitionId))
+              .filter(
+                (definition): definition is VisualDefinitionSummary =>
+                  Boolean(definition),
+              )
+              .map((definition) => ({
+                definition,
+                newer: getNewerDefinition(definition, definitions),
+              }))
+              .filter(
+                (candidate): candidate is {
+                  definition: VisualDefinitionSummary;
+                  newer: VisualDefinitionSummary;
+                } => Boolean(candidate.newer),
+              );
+            const publishBlockedByStaleSnapshot = staleDefinitions.length > 0;
 
             return (
               <article className="visual-release-card" key={release.id}>
@@ -588,8 +612,14 @@ export function VisualReleaseManager({
                     <button
                       type="button"
                       className="primary-button"
-                      disabled={isBusy || !canPublish}
-                      title={canPublish ? undefined : "Tu usuario no tiene permiso de publicacion."}
+                      disabled={isBusy || !canPublish || publishBlockedByStaleSnapshot}
+                      title={
+                        !canPublish
+                          ? "Tu usuario no tiene permiso de publicacion."
+                          : publishBlockedByStaleSnapshot
+                            ? "Esta fotografia contiene componentes superados. Crea una candidata nueva con las versiones aprobadas actuales."
+                            : undefined
+                      }
                       onClick={() => {
                         if (
                           window.confirm(

@@ -45,6 +45,7 @@ Ejecutar en orden, tanto en el proyecto Preview como en Production:
 2. `infra/supabase/migrations/002_visual_catalog_general_products.sql`.
 3. `infra/supabase/migrations/003_visual_catalog_releases.sql`.
 4. `infra/supabase/migrations/004_visual_catalog_production_hardening.sql`.
+5. `infra/supabase/migrations/005_visual_catalog_release_restore_idempotency.sql`.
 
 La migracion `004` agrega:
 
@@ -54,6 +55,10 @@ La migracion `004` agrega:
 - Estado productivo inicialmente vacio.
 - Limite privado de 800 KB por SVG.
 - MIME permitido `image/svg+xml`.
+
+La migracion `005` hace idempotente una restauracion repetida de la misma
+release activa, para que un doble clic o una respuesta tardia no deje el panel
+mostrando un estado de error que ya fue aplicado en produccion.
 
 Despues de ejecutar las migraciones, esta consulta debe devolver cero en las
 tres primeras columnas y `null` en la ultima:

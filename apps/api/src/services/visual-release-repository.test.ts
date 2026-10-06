@@ -159,6 +159,10 @@ describe("visual release repository", () => {
     expect(
       releaseState.releases.find((release) => release.id === secondRelease.id)?.status,
     ).toBe("retired");
+
+    // Do not leave a deliberately stale release active for the independent
+    // scenarios that follow in this shared file-backed test catalog.
+    await restoreVisualRelease(env, secondRelease.id, actorEmail);
   });
 
   it("conserva el cuello heredado junto a versiones por genero", async () => {
@@ -217,6 +221,79 @@ describe("visual release repository", () => {
     // El motor de render elige el reemplazo de género que aplica. Mantener la
     // versión histórica evita que Mujer pierda los modelos ya publicados.
     expect(candidate.definitionIds).toContain(legacy.id);
+  });
+
+  it("impide publicar una fotografia que conserva una version superada", async () => {
+    const initial = await approveDefinition({
+      ...mutation,
+      displayName: "Cuello que sera actualizado",
+      binding: {
+        ...mutation.binding,
+        sourceValueId: 9771,
+        valueId: 9771,
+        valueName: "CUELLO SUPERADO",
+      },
+    });
+    const active = await makeActiveRelease("Base a actualizar", [initial.id]);
+    const revision = await cloneVisualDefinition(env, initial.id, actorEmail);
+    const changed = await updateVisualDefinition(
+      env,
+      revision.id,
+      { ...mutation, displayName: "Cuello actualizado", binding: initial.binding },
+      actorEmail,
+    );
+    await submitVisualDefinition(env, changed.id, actorEmail);
+    await approveVisualDefinition(env, changed.id, actorEmail);
+
+    // The active release still contains the old snapshot. Creating an
+    // unrelated candidate must not let that stale component reach production.
+    const unrelated = await approveDefinition({
+      ...mutation,
+      displayName: "Bolsillo independiente",
+      slot: "lower_pocket",
+      binding: {
+        ...mutation.binding,
+        attributeId: 154,
+        sourceValueId: 9772,
+        valueId: 9772,
+        attributeName: "Modelo bolsillo inferior",
+        valueName: "BOLSILLO INDEPENDIENTE",
+      },
+    });
+    const candidate = await createVisualReleaseCandidate(
+      env,
+      {
+        displayName: "No publicar snapshot viejo",
+        notes: "",
+        changedDefinitionIds: [unrelated.id],
+      },
+      await listVisualDefinitions(env),
+      actorEmail,
+    );
+    await updateVisualReleaseChecklist(
+      env,
+      candidate.id,
+      { checklist: completeChecklist },
+      actorEmail,
+    );
+    await saveVisualReleaseScenario(
+      env,
+      candidate.id,
+      {
+        displayName: "Escenario para bloqueo de snapshot",
+        saleOrderLineId: 1999,
+        selectedValueIds: {},
+        customValuesByValueId: {},
+      },
+      actorEmail,
+    );
+    await submitVisualRelease(env, candidate.id, actorEmail);
+    await approveVisualRelease(env, candidate.id, actorEmail);
+
+    expect(active.status).toBe("active");
+    await expect(publishVisualRelease(env, candidate.id, actorEmail)).rejects.toThrow(
+      "componentes superados",
+    );
   });
 
   it("guarda escenarios de laboratorio sin modificar la release", async () => {

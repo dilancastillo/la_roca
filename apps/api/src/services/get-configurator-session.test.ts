@@ -19,7 +19,7 @@ describe("resolvePinnedVisualDefinitionIds", () => {
     ).toBeUndefined();
   });
 
-  it("preserva lineas historicas bloqueadas y fijaciones explicitas", () => {
+  it("preserva las fijaciones visuales solo en lineas historicas bloqueadas", () => {
     expect(
       resolvePinnedVisualDefinitionIds({
         hasAttachment: true,
@@ -33,11 +33,18 @@ describe("resolvePinnedVisualDefinitionIds", () => {
         canEdit: true,
         visualDefinitionVersionIds: [],
       }),
-    ).toEqual([]);
+    ).toBeUndefined();
     expect(
       resolvePinnedVisualDefinitionIds({
         hasAttachment: true,
         canEdit: true,
+        visualDefinitionVersionIds: ["definition-v1"],
+      }),
+    ).toBeUndefined();
+    expect(
+      resolvePinnedVisualDefinitionIds({
+        hasAttachment: true,
+        canEdit: false,
         visualDefinitionVersionIds: ["definition-v1"],
       }),
     ).toEqual(["definition-v1"]);
