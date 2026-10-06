@@ -531,30 +531,6 @@ function mergeChangedDefinitionsIntoSnapshot(
   return Array.from(new Set([...retained, ...changes.map((change) => change.id)]));
 }
 
-function findSupersededDefinitions(
-  definitionIds: string[],
-  definitions: VisualDefinitionSummary[],
-) {
-  const byId = new Map(definitions.map((definition) => [definition.id, definition]));
-
-  return definitionIds.flatMap((definitionId) => {
-    const current = byId.get(definitionId);
-    if (!current) {
-      return [];
-    }
-
-    const newer = definitions.find(
-      (candidate) =>
-        candidate.id !== current.id &&
-        candidate.version > current.version &&
-        (candidate.status === "approved" || candidate.status === "published") &&
-        hasSameTarget(candidate, current),
-    );
-
-    return newer ? [{ current, newer }] : [];
-  });
-}
-
 function hasOverlappingProductScope(
   left: VisualDefinitionSummary,
   right: VisualDefinitionSummary,
@@ -744,20 +720,9 @@ export async function approveVisualRelease(env: Partial<AppEnv>, releaseId: stri
 export async function publishVisualRelease(env: Partial<AppEnv>, releaseId: string, actorEmail: string) {
   const release = await getVisualRelease(env, releaseId);
   const definitions = await listVisualDefinitions(env);
-  // Only explicit changes can be stale. The other IDs are laboratory history
-  // and will be refreshed from production inside the publication transaction.
-  const superseded = findSupersededDefinitions(release.changedDefinitionIds, definitions);
-
-  if (superseded.length > 0) {
-    const summary = superseded
-      .slice(0, 4)
-      .map(({ current, newer }) => `${current.displayName} v${current.version} (existe v${newer.version})`)
-      .join(", ");
-    throw new Error(
-      `La release contiene componentes superados: ${summary}. Crea una candidata nueva con las versiones aprobadas mas recientes.`,
-    );
-  }
-
+  // A release is an explicit business decision. The transaction applies only
+  // its changed targets to the current production snapshot, regardless of
+  // other approved versions that may coexist in the laboratory.
   return await getStore(env).applyReleaseChanges(
     releaseId,
     actorEmail,

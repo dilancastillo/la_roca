@@ -102,57 +102,6 @@ function getDefinitionDisplayLabel(definition: VisualDefinitionSummary) {
   return `${definition.displayName}${genderValue ? ` · ${genderValue.trim()}` : ""}`;
 }
 
-function getDefinitionTargetKey(definition: VisualDefinitionSummary) {
-  const sourceValueId =
-    definition.binding.sourceValueId ?? definition.binding.valueId;
-  const productTemplateIds = [...definition.binding.productTemplateIds]
-    .sort((left, right) => left - right)
-    .join(",");
-  const activationConditions = definition.activationConditions
-    .map((condition) => ({
-      attributeId: condition.attributeId,
-      sourceValueIds: [...condition.sourceValueIds].sort(
-        (left, right) => left - right,
-      ),
-    }))
-    .sort(
-      (left, right) =>
-        left.attributeId - right.attributeId ||
-        left.sourceValueIds.join(",").localeCompare(
-          right.sourceValueIds.join(","),
-        ),
-    );
-
-  return [
-    definition.slot,
-    definition.layer,
-    definition.binding.attributeId,
-    sourceValueId,
-    productTemplateIds,
-    JSON.stringify(activationConditions),
-  ].join(":");
-}
-
-function getNewerDefinition(
-  definition: VisualDefinitionSummary,
-  definitions: VisualDefinitionSummary[],
-) {
-  const targetKey = getDefinitionTargetKey(definition);
-
-  return definitions
-    .filter(
-      (candidate) =>
-        candidate.id !== definition.id &&
-        candidate.status === "approved" &&
-        getDefinitionTargetKey(candidate) === targetKey,
-    )
-    .sort(
-      (left, right) =>
-        right.version - left.version ||
-        right.updatedAt.localeCompare(left.updatedAt),
-    )[0];
-}
-
 type VisualReleaseManagerProps = {
   definitions: VisualDefinitionSummary[];
   releases: VisualRelease[];
@@ -293,40 +242,6 @@ export function VisualReleaseManager({
       return;
     }
 
-    const staleDefinitions = release.definitionIds
-      .map((definitionId) => definitionsById.get(definitionId))
-      .filter(
-        (definition): definition is VisualDefinitionSummary =>
-          Boolean(definition),
-      )
-      .map((definition) => ({
-        definition,
-        newer: getNewerDefinition(definition, definitions),
-      }))
-      .filter(
-        (candidate): candidate is {
-          definition: VisualDefinitionSummary;
-          newer: VisualDefinitionSummary;
-        } => Boolean(candidate.newer));
-
-    if (staleDefinitions.length > 0) {
-      const versions = staleDefinitions
-        .map(
-          ({ definition, newer }) =>
-            `${getDefinitionDisplayLabel(definition)} v${definition.version} (existe v${newer.version})`,
-        )
-        .join(", ");
-
-      if (
-        !window.confirm(
-          `R${release.number} conserva una fotografia anterior: ${versions}. ` +
-            "Abrirla sirve para comparar, pero no probara la configuracion mas reciente. ¿Abrir de todas formas?",
-        )
-      ) {
-        return;
-      }
-    }
-
     onOpenLaboratory(release.id, saleOrderLineId);
   }
 
@@ -423,27 +338,6 @@ export function VisualReleaseManager({
           releases.map((release) => {
             const completedChecks = Object.values(release.checklist).filter(Boolean).length;
             const scenarios = scenariosByRelease[release.id] ?? [];
-            // The snapshot is retained for laboratory comparison. Publishing
-            // changes only the explicit targets, so inherited definitions do
-            // not make this release stale.
-            const staleDefinitions = release.changedDefinitionIds
-              .map((definitionId) => definitionsById.get(definitionId))
-              .filter(
-                (definition): definition is VisualDefinitionSummary =>
-                  Boolean(definition),
-              )
-              .map((definition) => ({
-                definition,
-                newer: getNewerDefinition(definition, definitions),
-              }))
-              .filter(
-                (candidate): candidate is {
-                  definition: VisualDefinitionSummary;
-                  newer: VisualDefinitionSummary;
-                } => Boolean(candidate.newer),
-              );
-            const publishBlockedByStaleChange = staleDefinitions.length > 0;
-
             return (
               <article className="visual-release-card" key={release.id}>
                 <header className="visual-release-card__header">
@@ -487,18 +381,11 @@ export function VisualReleaseManager({
                   <div>
                     {release.definitionIds.map((definitionId) => {
                       const definition = definitionsById.get(definitionId);
-                      const newer = definition
-                        ? getNewerDefinition(definition, definitions)
-                        : undefined;
-
                       return (
                         <span key={definitionId}>
                           {definition
                             ? `${getDefinitionDisplayLabel(definition)} · v${definition.version}`
                             : definitionId.slice(0, 8)}
-                          {newer
-                            ? ` · hay v${newer.version} mas reciente`
-                            : ""}
                         </span>
                       );
                     })}
@@ -615,18 +502,16 @@ export function VisualReleaseManager({
                     <button
                       type="button"
                       className="primary-button"
-                      disabled={isBusy || !canPublish || publishBlockedByStaleChange}
+                      disabled={isBusy || !canPublish}
                       title={
                         !canPublish
                           ? "Tu usuario no tiene permiso de publicacion."
-                          : publishBlockedByStaleChange
-                            ? "El componente que publicas tiene una version aprobada mas reciente. Crea una candidata nueva para ese componente."
-                            : undefined
+                          : undefined
                       }
                       onClick={() => {
                         if (
                           window.confirm(
-                            `Publicar R${release.number} reemplazara la version visual activa para nuevas lineas. ¿Continuar?`,
+                            `Publicar R${release.number} aplicara unicamente sus cambios incluidos a produccion. Los demas modelos publicados se conservan. ¿Continuar?`,
                           )
                         ) {
                           void runAction(

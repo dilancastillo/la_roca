@@ -228,6 +228,16 @@ describe("visual release repository", () => {
     const neckV2 = await approveVisualDefinition(env, neckEdited.id, actorEmail);
     const delayedNeck = await makeApprovedCandidate("Cuello pendiente", [neckV2.id]);
 
+    const neckV3Draft = await cloneVisualDefinition(env, neckV2.id, actorEmail);
+    const neckV3Edited = await updateVisualDefinition(
+      env,
+      neckV3Draft.id,
+      { ...mutation, displayName: "Cuello concurrente v3", binding: neckV2.binding },
+      actorEmail,
+    );
+    await submitVisualDefinition(env, neckV3Edited.id, actorEmail);
+    await approveVisualDefinition(env, neckV3Edited.id, actorEmail);
+
     const pocketDraft = await cloneVisualDefinition(env, pocket.id, actorEmail);
     const pocketEdited = await updateVisualDefinition(
       env,
@@ -249,6 +259,7 @@ describe("visual release repository", () => {
 
     const published = await publishVisualRelease(env, delayedNeck.id, actorEmail);
     expect(published.definitionIds).toContain(neckV2.id);
+    expect(published.definitionIds).not.toContain(neckV3Edited.id);
     expect(published.definitionIds).toContain(pocketV2.id);
     expect(published.definitionIds).not.toContain(pocket.id);
   });
