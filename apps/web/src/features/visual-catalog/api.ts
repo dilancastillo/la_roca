@@ -11,7 +11,6 @@ import {
   visualReleaseScenarioListSchema,
   visualReleaseScenarioMutationSchema,
   visualReleaseScenarioSchema,
-  visualReleaseOdooSyncResultSchema,
   visualReleaseTransitionResultSchema,
   type VisualDefinitionMutation,
   type VisualReleaseChecklist,
@@ -152,17 +151,6 @@ export async function publishVisualRelease(releaseId: string) {
 
 export async function restoreVisualRelease(releaseId: string) {
   return await transitionVisualRelease(releaseId, "restore");
-}
-
-export async function syncVisualReleaseToOdoo(
-  releaseId: string,
-  saleOrderLineId: number,
-) {
-  const data = await requestJson(
-    `${ADMIN_BASE_PATH}/releases/${releaseId}/sync-odoo/${saleOrderLineId}`,
-    { method: "POST" },
-  );
-  return visualReleaseOdooSyncResultSchema.parse(data);
 }
 
 export async function fetchVisualReleaseScenarios(releaseId: string) {

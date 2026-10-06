@@ -20,7 +20,6 @@ import {
   visualReleaseScenarioListSchema,
   visualReleaseScenarioMutationSchema,
   visualReleaseScenarioSchema,
-  visualReleaseOdooSyncResultSchema,
   visualReleaseTransitionResultSchema,
 } from "@repo/shared/schemas/visual-catalog";
 import {
@@ -62,13 +61,11 @@ import {
   listVisualReleaseScenarios,
   listVisualReleases,
   publishVisualRelease,
-  recordVisualReleaseOdooSync,
   restoreVisualRelease,
   saveVisualReleaseScenario,
   submitVisualRelease,
   updateVisualReleaseChecklist,
 } from "./services/visual-release-repository.js";
-import { syncVisualReleaseToOdoo } from "./services/sync-visual-release-to-odoo.js";
 import {
   extractSaleOrderLineIdFromWebhookPayload,
   extractWebhookWriteDate,
@@ -638,41 +635,6 @@ app.post("/admin/visual-catalog/releases/:releaseId/publish", async (c) => {
     return c.json(visualReleaseTransitionResultSchema.parse({ release }));
   } catch (error) {
     return c.json({ error: error instanceof Error ? error.message : "No se pudo publicar la release." }, 400);
-  }
-});
-
-app.post("/admin/visual-catalog/releases/:releaseId/sync-odoo/:saleOrderLineId", async (c) => {
-  try {
-    assertVisualCatalogPublisher(c);
-    const saleOrderLineId = Number(c.req.param("saleOrderLineId"));
-    if (!Number.isInteger(saleOrderLineId) || saleOrderLineId <= 0) {
-      throw new Error("El ID de linea de Odoo no es valido.");
-    }
-    const result = await syncVisualReleaseToOdoo(
-      getAppEnv(c),
-      c.req.param("releaseId"),
-      saleOrderLineId,
-    );
-    try {
-      await recordVisualReleaseOdooSync(
-        getAppEnv(c),
-        result.releaseId,
-        c.get("user").email,
-        {
-          saleOrderLineId: result.saleOrderLineId,
-          attachmentId: result.attachmentId,
-          version: result.version,
-          imageSizeBytes: result.imageSizeBytes,
-        },
-      );
-    } catch (auditError) {
-      // Odoo was already updated. Do not report a false failure that invites a
-      // user to repeat an otherwise successful, non-idempotent write.
-      console.error("No se pudo registrar la auditoria de sincronizacion visual", auditError);
-    }
-    return c.json(visualReleaseOdooSyncResultSchema.parse(result));
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : "No se pudo sincronizar la imagen en Odoo." }, 400);
   }
 });
 

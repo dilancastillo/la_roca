@@ -672,16 +672,6 @@ export async function restoreVisualRelease(env: Partial<AppEnv>, releaseId: stri
   return await activateRelease(env, releaseId, actorEmail, "restored");
 }
 
-export async function recordVisualReleaseOdooSync(
-  env: Partial<AppEnv>,
-  releaseId: string,
-  actorEmail: string,
-  details: Record<string, unknown>,
-) {
-  await getVisualRelease(env, releaseId);
-  await appendAudit(getStore(env), releaseId, "odoo_synced", actorEmail, details);
-}
-
 export async function getActiveVisualRelease(env: Partial<AppEnv>) {
   const store = getStore(env);
   const activeId = await store.getActiveReleaseId();

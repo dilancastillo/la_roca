@@ -11,7 +11,6 @@ import {
   fetchVisualReleaseScenarios,
   publishVisualRelease,
   restoreVisualRelease,
-  syncVisualReleaseToOdoo,
   submitVisualRelease,
   updateVisualReleaseChecklist,
 } from "./api";
@@ -324,27 +323,6 @@ export function VisualReleaseManager({
     onOpenLaboratory(release.id, saleOrderLineId);
   }
 
-  function syncActiveReleaseToOdoo(release: VisualRelease) {
-    const saleOrderLineId = Number(lineIdsByRelease[release.id] ?? "");
-
-    if (!Number.isInteger(saleOrderLineId) || saleOrderLineId <= 0) {
-      onError("Escribe un ID valido de linea de venta antes de sincronizar Odoo.");
-      return;
-    }
-
-    if (!window.confirm(
-      `Actualizar la linea ${saleOrderLineId} con R${release.number} regenerara su PNG y reemplazara la imagen actual en Odoo. ` +
-      "La configuracion comercial no se modifica. ¿Continuar?",
-    )) {
-      return;
-    }
-
-    void runAction(
-      () => syncVisualReleaseToOdoo(release.id, saleOrderLineId),
-      `Linea ${saleOrderLineId} sincronizada en Odoo con R${release.number}.`,
-    );
-  }
-
   return (
     <section className="visual-release-workspace">
       <header className="visual-release-intro">
@@ -353,8 +331,7 @@ export function VisualReleaseManager({
           <h2>Releases visuales</h2>
           <p>
             Una release agrupa componentes aprobados, conserva la version actual y
-            solo llega al configurador del asesor cuando se publica. Las lineas
-            ya guardadas se actualizan desde la sincronizacion explicita en Odoo.
+            solo llega al configurador del asesor cuando se publica.
           </p>
         </div>
         <div className="visual-release-current">
@@ -524,17 +501,6 @@ export function VisualReleaseManager({
                   >
                     Abrir laboratorio
                   </button>
-                  {release.status === "active" ? (
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      disabled={isBusy || !canPublish}
-                      title={canPublish ? undefined : "Tu usuario no tiene permiso para sincronizar Odoo."}
-                      onClick={() => syncActiveReleaseToOdoo(release)}
-                    >
-                      Sincronizar imagen en Odoo
-                    </button>
-                  ) : null}
                 </div>
 
                 {scenarios.length > 0 ? (
@@ -627,7 +593,7 @@ export function VisualReleaseManager({
                       onClick={() => {
                         if (
                           window.confirm(
-                            `Publicar R${release.number} reemplazara la version visual activa para nuevas lineas. Las lineas ya guardadas requieren sincronizacion explicita con Odoo. ¿Continuar?`,
+                            `Publicar R${release.number} reemplazara la version visual activa para nuevas lineas. ¿Continuar?`,
                           )
                         ) {
                           void runAction(
