@@ -14,6 +14,7 @@ import {
 import {
   approveVisualRelease,
   createVisualReleaseCandidate,
+  getVisualReleaseCandidatePreviewDefinitionIds,
   getOrCreateLineVisualRelease,
   listVisualReleaseScenarios,
   listVisualReleases,
@@ -237,6 +238,14 @@ describe("visual release repository", () => {
     await submitVisualDefinition(env, pocketEdited.id, actorEmail);
     const pocketV2 = await approveVisualDefinition(env, pocketEdited.id, actorEmail);
     await makeActiveRelease("Bolsillo publicado", [pocketV2.id]);
+
+    const laboratoryPreview = await getVisualReleaseCandidatePreviewDefinitionIds(
+      env,
+      delayedNeck.id,
+    );
+    expect(laboratoryPreview).toContain(neckV2.id);
+    expect(laboratoryPreview).toContain(pocketV2.id);
+    expect(laboratoryPreview).not.toContain(pocket.id);
 
     const published = await publishVisualRelease(env, delayedNeck.id, actorEmail);
     expect(published.definitionIds).toContain(neckV2.id);

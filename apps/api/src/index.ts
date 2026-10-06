@@ -56,6 +56,7 @@ import {
 import {
   approveVisualRelease,
   createVisualReleaseCandidate,
+  getVisualReleaseCandidatePreviewDefinitionIds,
   getVisualRelease,
   listVisualReleaseAuditEvents,
   listVisualReleaseScenarios,
@@ -686,7 +687,10 @@ app.get(
       }
       const definitionIds = c.req.query("view") === "baseline"
         ? release.baselineDefinitionIds
-        : release.definitionIds;
+        : await getVisualReleaseCandidatePreviewDefinitionIds(
+            getAppEnv(c),
+            release.id,
+          );
       const session = await getConfiguratorSession(getAppEnv(c), saleOrderLineId, {
         visualDefinitionIdsOverride: definitionIds,
         visualReleaseId: release.id,

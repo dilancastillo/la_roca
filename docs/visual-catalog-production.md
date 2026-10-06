@@ -211,5 +211,8 @@ en cada pull request hacia `main`.
 
 Una definicion aprobada es inmutable. Para corregirla se clona, se modifica la
 nueva version, se prueba en una release candidata y solo despues se publica.
+La vista `Candidata` del laboratorio compone la produccion actual con solo los
+cambios incluidos en esa release, de modo que anticipa exactamente el resultado
+de publicarla. La vista `Publicada` conserva la fotografia base para comparar.
 Las lineas guardadas conservan los IDs concretos de sus definiciones y las
 lineas nuevas fijan la release activa al abrirse por primera vez.

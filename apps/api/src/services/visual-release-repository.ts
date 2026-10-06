@@ -606,6 +606,31 @@ export async function getVisualRelease(env: Partial<AppEnv>, releaseId: string) 
   return release;
 }
 
+// Candidate laboratory previews must show the same composition that would be
+// published now: current production plus the candidate's explicit changes.
+// The immutable release snapshot remains available as the baseline view.
+export async function getVisualReleaseCandidatePreviewDefinitionIds(
+  env: Partial<AppEnv>,
+  releaseId: string,
+) {
+  const store = getStore(env);
+  const releases = await store.listReleases();
+  const release = releases.find((candidate) => candidate.id === releaseId);
+  if (!release) throw new Error("La release visual no existe.");
+  const activeId = await store.getActiveReleaseId();
+  const active = releases.find((candidate) => candidate.id === activeId);
+
+  if (!active || active.id === release.id) {
+    return release.definitionIds;
+  }
+
+  return mergeChangedDefinitionsIntoSnapshot(
+    active.definitionIds,
+    release.changedDefinitionIds,
+    await listVisualDefinitions(env),
+  );
+}
+
 export async function createVisualReleaseCandidate(
   env: Partial<AppEnv>,
   rawInput: unknown,
