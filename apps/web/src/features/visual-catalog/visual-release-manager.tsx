@@ -423,7 +423,10 @@ export function VisualReleaseManager({
           releases.map((release) => {
             const completedChecks = Object.values(release.checklist).filter(Boolean).length;
             const scenarios = scenariosByRelease[release.id] ?? [];
-            const staleDefinitions = release.definitionIds
+            // The snapshot is retained for laboratory comparison. Publishing
+            // changes only the explicit targets, so inherited definitions do
+            // not make this release stale.
+            const staleDefinitions = release.changedDefinitionIds
               .map((definitionId) => definitionsById.get(definitionId))
               .filter(
                 (definition): definition is VisualDefinitionSummary =>
@@ -439,7 +442,7 @@ export function VisualReleaseManager({
                   newer: VisualDefinitionSummary;
                 } => Boolean(candidate.newer),
               );
-            const publishBlockedByStaleSnapshot = staleDefinitions.length > 0;
+            const publishBlockedByStaleChange = staleDefinitions.length > 0;
 
             return (
               <article className="visual-release-card" key={release.id}>
@@ -612,12 +615,12 @@ export function VisualReleaseManager({
                     <button
                       type="button"
                       className="primary-button"
-                      disabled={isBusy || !canPublish || publishBlockedByStaleSnapshot}
+                      disabled={isBusy || !canPublish || publishBlockedByStaleChange}
                       title={
                         !canPublish
                           ? "Tu usuario no tiene permiso de publicacion."
-                          : publishBlockedByStaleSnapshot
-                            ? "Esta fotografia contiene componentes superados. Crea una candidata nueva con las versiones aprobadas actuales."
+                          : publishBlockedByStaleChange
+                            ? "El componente que publicas tiene una version aprobada mas reciente. Crea una candidata nueva para ese componente."
                             : undefined
                       }
                       onClick={() => {

@@ -46,6 +46,7 @@ Ejecutar en orden, tanto en el proyecto Preview como en Production:
 3. `infra/supabase/migrations/003_visual_catalog_releases.sql`.
 4. `infra/supabase/migrations/004_visual_catalog_production_hardening.sql`.
 5. `infra/supabase/migrations/005_visual_catalog_release_restore_idempotency.sql`.
+6. `infra/supabase/migrations/006_visual_catalog_publish_component_deltas.sql`.
 
 La migracion `004` agrega:
 
@@ -59,6 +60,11 @@ La migracion `004` agrega:
 La migracion `005` hace idempotente una restauracion repetida de la misma
 release activa, para que un doble clic o una respuesta tardia no deje el panel
 mostrando un estado de error que ya fue aplicado en produccion.
+
+La migracion `006` publica y restaura exclusivamente los componentes incluidos
+en la release. Conserva los demas componentes de la fotografia activa en una
+misma transaccion, por lo que una candidata antigua no puede volver a poner en
+produccion un cuello o bolsillo que fue actualizado despues.
 
 Despues de ejecutar las migraciones, esta consulta debe devolver cero en las
 tres primeras columnas y `null` en la ultima:
@@ -193,9 +199,10 @@ en cada pull request hacia `main`.
 
 ## Recuperacion
 
-- Un error de componente se resuelve restaurando la release anterior desde la
-  pestana `Releases`.
-- La restauracion es atomica y no elimina SVG ni pedidos historicos.
+- Un error de componente se resuelve restaurando su release desde la pestana
+  `Releases`; la restauracion vuelve a aplicar solamente sus cambios incluidos.
+- La restauracion es atomica y no elimina SVG ni pedidos historicos ni revierte
+  componentes ajenos publicados despues.
 - Un error de codigo se revierte desde Vercel al deployment anterior.
 - No eliminar releases, definiciones ni objetos del bucket manualmente.
 - Mantener respaldos de Supabase antes de cada ampliacion del alcance.

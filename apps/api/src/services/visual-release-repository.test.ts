@@ -119,6 +119,37 @@ async function makeActiveRelease(
   return await publishVisualRelease(env, candidate.id, actorEmail);
 }
 
+async function makeApprovedCandidate(
+  displayName: string,
+  changedDefinitionIds: string[],
+) {
+  const candidate = await createVisualReleaseCandidate(
+    env,
+    { displayName, notes: "Prueba", changedDefinitionIds },
+    await listVisualDefinitions(env),
+    actorEmail,
+  );
+  await updateVisualReleaseChecklist(
+    env,
+    candidate.id,
+    { checklist: completeChecklist },
+    actorEmail,
+  );
+  await saveVisualReleaseScenario(
+    env,
+    candidate.id,
+    {
+      displayName: `Escenario ${displayName}`,
+      saleOrderLineId: 1_900 + candidate.number,
+      selectedValueIds: {},
+      customValuesByValueId: {},
+    },
+    actorEmail,
+  );
+  await submitVisualRelease(env, candidate.id, actorEmail);
+  return await approveVisualRelease(env, candidate.id, actorEmail);
+}
+
 afterAll(async () => {
   await rm(dataDirectory, { recursive: true, force: true });
 });
@@ -163,6 +194,54 @@ describe("visual release repository", () => {
     // Do not leave a deliberately stale release active for the independent
     // scenarios that follow in this shared file-backed test catalog.
     await restoreVisualRelease(env, secondRelease.id, actorEmail);
+  });
+
+  it("publica solo el objetivo editado aunque la candidata sea anterior", async () => {
+    const neck = await approveDefinition({
+      ...mutation,
+      displayName: "Cuello concurrente",
+      binding: { ...mutation.binding, sourceValueId: 8_101, valueId: 8_101 },
+    });
+    const pocket = await approveDefinition({
+      ...mutation,
+      displayName: "Bolsillo concurrente",
+      slot: "lower_pocket",
+      binding: {
+        ...mutation.binding,
+        attributeId: 154,
+        sourceValueId: 8_102,
+        valueId: 8_102,
+        attributeName: "Modelo bolsillo inferior",
+      },
+    });
+    await makeActiveRelease("Base concurrente", [neck.id, pocket.id]);
+
+    const neckDraft = await cloneVisualDefinition(env, neck.id, actorEmail);
+    const neckEdited = await updateVisualDefinition(
+      env,
+      neckDraft.id,
+      { ...mutation, displayName: "Cuello concurrente v2", binding: neck.binding },
+      actorEmail,
+    );
+    await submitVisualDefinition(env, neckEdited.id, actorEmail);
+    const neckV2 = await approveVisualDefinition(env, neckEdited.id, actorEmail);
+    const delayedNeck = await makeApprovedCandidate("Cuello pendiente", [neckV2.id]);
+
+    const pocketDraft = await cloneVisualDefinition(env, pocket.id, actorEmail);
+    const pocketEdited = await updateVisualDefinition(
+      env,
+      pocketDraft.id,
+      { ...mutation, displayName: "Bolsillo concurrente v2", slot: "lower_pocket", binding: pocket.binding },
+      actorEmail,
+    );
+    await submitVisualDefinition(env, pocketEdited.id, actorEmail);
+    const pocketV2 = await approveVisualDefinition(env, pocketEdited.id, actorEmail);
+    await makeActiveRelease("Bolsillo publicado", [pocketV2.id]);
+
+    const published = await publishVisualRelease(env, delayedNeck.id, actorEmail);
+    expect(published.definitionIds).toContain(neckV2.id);
+    expect(published.definitionIds).toContain(pocketV2.id);
+    expect(published.definitionIds).not.toContain(pocket.id);
   });
 
   it("conserva el cuello heredado junto a versiones por genero", async () => {
@@ -223,7 +302,7 @@ describe("visual release repository", () => {
     expect(candidate.definitionIds).toContain(legacy.id);
   });
 
-  it("impide publicar una fotografia que conserva una version superada", async () => {
+  it("permite publicar un cambio puntual sin forzar modelos aprobados ajenos", async () => {
     const initial = await approveDefinition({
       ...mutation,
       displayName: "Cuello que sera actualizado",
@@ -245,8 +324,8 @@ describe("visual release repository", () => {
     await submitVisualDefinition(env, changed.id, actorEmail);
     await approveVisualDefinition(env, changed.id, actorEmail);
 
-    // The active release still contains the old snapshot. Creating an
-    // unrelated candidate must not let that stale component reach production.
+    // Hay una revision aprobada del cuello, pero esta release solo cambia un
+    // bolsillo. Publicarla no puede cambiar el cuello por implicacion.
     const unrelated = await approveDefinition({
       ...mutation,
       displayName: "Bolsillo independiente",
@@ -291,9 +370,10 @@ describe("visual release repository", () => {
     await approveVisualRelease(env, candidate.id, actorEmail);
 
     expect(active.status).toBe("active");
-    await expect(publishVisualRelease(env, candidate.id, actorEmail)).rejects.toThrow(
-      "componentes superados",
-    );
+    const published = await publishVisualRelease(env, candidate.id, actorEmail);
+    expect(published.definitionIds).toContain(initial.id);
+    expect(published.definitionIds).toContain(unrelated.id);
+    expect(published.definitionIds).not.toContain(changed.id);
   });
 
   it("guarda escenarios de laboratorio sin modificar la release", async () => {

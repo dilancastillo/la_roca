@@ -41,10 +41,11 @@ interface VisualReleaseStore {
   appendAuditEvent(event: VisualReleaseAuditEvent): Promise<void>;
   getLinePin(saleOrderLineId: number): Promise<LineReleasePin | null>;
   upsertLinePin(pin: LineReleasePin): Promise<void>;
-  activateRelease(
+  applyReleaseChanges(
     releaseId: string,
     actorEmail: string,
     action: "published" | "restored",
+    definitions: VisualDefinitionSummary[],
   ): Promise<VisualRelease>;
 }
 
@@ -183,10 +184,11 @@ class FileVisualReleaseStore implements VisualReleaseStore {
     await this.write(this.pinsPath, next);
   }
 
-  async activateRelease(
+  async applyReleaseChanges(
     releaseId: string,
     actorEmail: string,
     action: "published" | "restored",
+    definitions: VisualDefinitionSummary[],
   ) {
     const releases = await this.listReleases();
     const current = releases.find((release) => release.id === releaseId);
@@ -206,6 +208,12 @@ class FileVisualReleaseStore implements VisualReleaseStore {
     const now = new Date().toISOString();
     const activeId = await this.getActiveReleaseId();
     const previous = releases.find((release) => release.id === activeId);
+    const baselineDefinitionIds = previous?.definitionIds ?? current.baselineDefinitionIds;
+    const nextDefinitionIds = mergeChangedDefinitionsIntoSnapshot(
+      baselineDefinitionIds,
+      current.changedDefinitionIds,
+      definitions,
+    );
 
     if (previous && previous.id !== current.id) {
       await this.upsertRelease(
@@ -219,6 +227,9 @@ class FileVisualReleaseStore implements VisualReleaseStore {
 
     const next = visualReleaseSchema.parse({
       ...current,
+      definitionIds: nextDefinitionIds,
+      baselineDefinitionIds,
+      baseReleaseId: previous?.id ?? current.baseReleaseId,
       status: "active",
       publishedBy: actorEmail,
       publishedAt: current.publishedAt ?? now,
@@ -440,13 +451,14 @@ class SupabaseVisualReleaseStore implements VisualReleaseStore {
     });
   }
 
-  async activateRelease(
+  async applyReleaseChanges(
     releaseId: string,
     actorEmail: string,
     action: "published" | "restored",
+    _definitions: VisualDefinitionSummary[],
   ) {
     const response = await this.request(
-      "rpc/visual_catalog_activate_release",
+      "rpc/visual_catalog_apply_release_changes",
       {
         method: "POST",
         body: JSON.stringify({
@@ -501,13 +513,31 @@ function hasSameTarget(left: VisualDefinitionSummary, right: VisualDefinitionSum
     JSON.stringify(leftProducts) === JSON.stringify(rightProducts);
 }
 
-function findSupersededReleaseDefinitions(
-  release: VisualRelease,
+function mergeChangedDefinitionsIntoSnapshot(
+  snapshotDefinitionIds: string[],
+  changedDefinitionIds: string[],
+  definitions: VisualDefinitionSummary[],
+) {
+  const byId = new Map(definitions.map((definition) => [definition.id, definition]));
+  const selected = changedDefinitionIds.map((id) => byId.get(id));
+  if (selected.some((definition) => !definition)) {
+    throw new Error("Una definicion seleccionada no existe.");
+  }
+  const changes = selected.filter((definition): definition is VisualDefinitionSummary => Boolean(definition));
+  const retained = snapshotDefinitionIds.filter((id) => {
+    const current = byId.get(id);
+    return !current || !changes.some((change) => hasSameTarget(current, change));
+  });
+  return Array.from(new Set([...retained, ...changes.map((change) => change.id)]));
+}
+
+function findSupersededDefinitions(
+  definitionIds: string[],
   definitions: VisualDefinitionSummary[],
 ) {
   const byId = new Map(definitions.map((definition) => [definition.id, definition]));
 
-  return release.definitionIds.flatMap((definitionId) => {
+  return definitionIds.flatMap((definitionId) => {
     const current = byId.get(definitionId);
     if (!current) {
       return [];
@@ -619,9 +649,6 @@ export async function createVisualReleaseCandidate(
       `La version ${unsafeScopeChange.displayName} cambia parcialmente las plantillas del componente anterior. Conserva exactamente el mismo alcance o crea versiones separadas antes de publicar.`,
     );
   }
-  const retained = baselineDefinitions.filter(
-    (baseline) => !selected.some((candidate) => hasSameTarget(baseline, candidate)),
-  );
   const now = new Date().toISOString();
   const release = visualReleaseSchema.parse({
     id: randomUUID(),
@@ -629,7 +656,11 @@ export async function createVisualReleaseCandidate(
     displayName: input.displayName,
     notes: input.notes,
     status: "candidate",
-    definitionIds: Array.from(new Set([...retained.map((definition) => definition.id), ...selected.map((definition) => definition.id)])),
+    definitionIds: mergeChangedDefinitionsIntoSnapshot(
+      baselineDefinitionIds,
+      input.changedDefinitionIds,
+      definitions,
+    ),
     changedDefinitionIds: input.changedDefinitionIds,
     baselineDefinitionIds,
     baseReleaseId: activeRelease?.id ?? null,
@@ -685,16 +716,12 @@ export async function approveVisualRelease(env: Partial<AppEnv>, releaseId: stri
   return next;
 }
 
-async function activateRelease(env: Partial<AppEnv>, releaseId: string, actorEmail: string, action: "published" | "restored") {
-  return await getStore(env).activateRelease(releaseId, actorEmail, action);
-}
-
 export async function publishVisualRelease(env: Partial<AppEnv>, releaseId: string, actorEmail: string) {
   const release = await getVisualRelease(env, releaseId);
-  const superseded = findSupersededReleaseDefinitions(
-    release,
-    await listVisualDefinitions(env),
-  );
+  const definitions = await listVisualDefinitions(env);
+  // Only explicit changes can be stale. The other IDs are laboratory history
+  // and will be refreshed from production inside the publication transaction.
+  const superseded = findSupersededDefinitions(release.changedDefinitionIds, definitions);
 
   if (superseded.length > 0) {
     const summary = superseded
@@ -706,11 +733,21 @@ export async function publishVisualRelease(env: Partial<AppEnv>, releaseId: stri
     );
   }
 
-  return await activateRelease(env, releaseId, actorEmail, "published");
+  return await getStore(env).applyReleaseChanges(
+    releaseId,
+    actorEmail,
+    "published",
+    definitions,
+  );
 }
 
 export async function restoreVisualRelease(env: Partial<AppEnv>, releaseId: string, actorEmail: string) {
-  return await activateRelease(env, releaseId, actorEmail, "restored");
+  return await getStore(env).applyReleaseChanges(
+    releaseId,
+    actorEmail,
+    "restored",
+    await listVisualDefinitions(env),
+  );
 }
 
 export async function getActiveVisualRelease(env: Partial<AppEnv>) {
