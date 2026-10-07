@@ -17,8 +17,10 @@ function normalizeEmail(value: string) {
 }
 
 export function isAdminEmail(env: AuthEnv, email: string) {
-  const configuredEmails = (env.APP_ADMIN_EMAILS ?? "demo@la-roca.local")
-    .split(",")
+  const configuredEmails = [
+    ...(env.APP_ADMIN_EMAILS ?? "demo@la-roca.local").split(","),
+    ...(env.APP_ADDITIONAL_ADMIN_EMAILS ?? "").split(","),
+  ]
     .map(normalizeEmail)
     .filter(Boolean);
 
@@ -30,12 +32,16 @@ export function withAdminFlag(
   user: z.infer<typeof appUserSchema>,
 ) {
   const isAdmin = isAdminEmail(env, user.email);
-  const publishers = (
-    env.APP_VISUAL_CATALOG_PUBLISHER_EMAILS ??
-    env.APP_ADMIN_EMAILS ??
-    "demo@la-roca.local"
-  )
-    .split(",")
+  const publishers = [
+    ...(
+      env.APP_VISUAL_CATALOG_PUBLISHER_EMAILS ??
+      env.APP_ADMIN_EMAILS ??
+      "demo@la-roca.local"
+    ).split(","),
+    ...(env.APP_ADDITIONAL_VISUAL_CATALOG_PUBLISHER_EMAILS ?? "").split(
+      ",",
+    ),
+  ]
     .map(normalizeEmail)
     .filter(Boolean);
 
@@ -53,17 +59,35 @@ function getJwtSecret(env: AuthEnv): Uint8Array {
 }
 
 function getConfiguredUsers(env: AuthEnv): AppUserRecord[] {
-  if (!env.APP_USERS_JSON) {
-    return fallbackDevUsers.map((user) => appUserRecordSchema.parse(user));
+  const baseUsers = env.APP_USERS_JSON
+    ? parseUsersJson(env.APP_USERS_JSON, "APP_USERS_JSON")
+    : fallbackDevUsers.map((user) => appUserRecordSchema.parse(user));
+  const additionalUsers = env.APP_ADDITIONAL_USERS_JSON
+    ? parseUsersJson(env.APP_ADDITIONAL_USERS_JSON, "APP_ADDITIONAL_USERS_JSON")
+    : [];
+  const seenEmails = new Set<string>();
+
+  return [...baseUsers, ...additionalUsers].map((user) => {
+    const email = normalizeEmail(user.email);
+    if (seenEmails.has(email)) {
+      throw new Error(`El usuario ${email} esta configurado mas de una vez`);
+    }
+    seenEmails.add(email);
+    return user;
+  });
+}
+
+function parseUsersJson(value: string, variableName: string): AppUserRecord[] {
+  try {
+    const parsed = z.array(appUserRecordSchema).safeParse(JSON.parse(value));
+    if (parsed.success) {
+      return parsed.data;
+    }
+  } catch {
+    // The unified error below deliberately does not expose secret contents.
   }
 
-  const parsed = z.array(appUserRecordSchema).safeParse(JSON.parse(env.APP_USERS_JSON));
-
-  if (!parsed.success) {
-    throw new Error("APP_USERS_JSON no tiene un formato valido");
-  }
-
-  return parsed.data;
+  throw new Error(`${variableName} no tiene un formato valido`);
 }
 
 async function derivePasswordHash(
