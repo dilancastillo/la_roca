@@ -36,6 +36,8 @@ import {
 } from "./lib/app-env.js";
 import { requireAppSession } from "./middleware/require-app-session.js";
 import { requireAppAdmin } from "./middleware/require-app-admin.js";
+import { requireFullAppAccess } from "./middleware/require-full-app-access.js";
+import { requireVisualCatalogEditor } from "./middleware/require-visual-catalog-editor.js";
 import { getConfiguratorSession } from "./services/get-configurator-session.js";
 import { saveConfiguratorDesign } from "./services/save-configurator-design.js";
 import {
@@ -210,9 +212,18 @@ app.post("/automation/render-line", async (c) => {
 
 app.use("/auth/me", requireAppSession());
 app.use("/session/*", requireAppSession());
+app.use("/session/*", requireFullAppAccess());
 app.use("/design/*", requireAppSession());
+app.use("/design/*", requireFullAppAccess());
 app.use("/admin/*", requireAppSession());
-app.use("/admin/*", requireAppAdmin());
+app.use("/admin/visual-catalog/readiness", requireVisualCatalogEditor());
+app.use("/admin/visual-catalog/products", requireVisualCatalogEditor());
+app.use("/admin/visual-catalog/definitions", requireVisualCatalogEditor());
+app.use("/admin/visual-catalog/definitions/*", requireVisualCatalogEditor());
+app.use("/admin/visual-catalog/definitions/:definitionId/approve", requireAppAdmin());
+app.use("/admin/visual-catalog/audit", requireAppAdmin());
+app.use("/admin/visual-catalog/releases", requireAppAdmin());
+app.use("/admin/visual-catalog/releases/*", requireAppAdmin());
 
 app.get("/auth/me", (c) => {
   return c.json(authSessionSchema.parse({ user: c.get("user") }));

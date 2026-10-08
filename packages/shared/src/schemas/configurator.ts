@@ -95,6 +95,8 @@ export const appUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
   isAdmin: z.boolean().optional(),
+  canEditVisualCatalog: z.boolean().optional(),
+  isVisualCatalogEditorOnly: z.boolean().optional(),
   canPublishVisualCatalog: z.boolean().optional(),
 });
 

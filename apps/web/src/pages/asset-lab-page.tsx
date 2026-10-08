@@ -228,6 +228,10 @@ export function AssetLabPage() {
     return <Navigate to={nextUrl} replace />;
   }
 
+  if (authQuery.data.user.isVisualCatalogEditorOnly) {
+    return <Navigate to="/tools/visual-catalog" replace />;
+  }
+
   if (!catalog) {
     return (
       <main className="page-state">

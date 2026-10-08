@@ -588,6 +588,15 @@ export function VisualCatalogPage() {
   const [releaseAuditEvents, setReleaseAuditEvents] = useState<
     Awaited<ReturnType<typeof fetchVisualReleaseAudit>>
   >([]);
+  const currentUser = authQuery.data?.user;
+  const canEditCatalog = Boolean(currentUser?.canEditVisualCatalog);
+  const isCatalogAdmin = Boolean(currentUser?.isAdmin);
+
+  useEffect(() => {
+    if (!isCatalogAdmin) {
+      setView("editor");
+    }
+  }, [isCatalogAdmin]);
   const [products, setProducts] = useState<VisualCatalogProduct[]>([]);
   const [productsRefreshedAt, setProductsRefreshedAt] = useState("");
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
@@ -824,17 +833,20 @@ export function VisualCatalogPage() {
   const displayedRuntimeHighlightSrc = runtimeHighlightSrc;
 
   async function refreshVersions() {
-    const [nextDefinitions, nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
-      fetchVisualDefinitions(),
-      fetchVisualCatalogAudit(),
-      fetchVisualReleases(),
-      fetchVisualReleaseAudit(),
-    ]);
+    const nextDefinitions = await fetchVisualDefinitions();
     setDefinitions(nextDefinitions);
-    setAuditEvents(nextAudit);
-    setReleases(nextReleases.releases);
-    setActiveReleaseId(nextReleases.activeReleaseId);
-    setReleaseAuditEvents(nextReleaseAudit);
+
+    if (isCatalogAdmin) {
+      const [nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
+        fetchVisualCatalogAudit(),
+        fetchVisualReleases(),
+        fetchVisualReleaseAudit(),
+      ]);
+      setAuditEvents(nextAudit);
+      setReleases(nextReleases.releases);
+      setActiveReleaseId(nextReleases.activeReleaseId);
+      setReleaseAuditEvents(nextReleaseAudit);
+    }
   }
 
   async function refreshProducts(forceRefresh = false) {
@@ -859,7 +871,7 @@ export function VisualCatalogPage() {
   }
 
   useEffect(() => {
-    if (!authQuery.data?.user.isAdmin) {
+    if (!canEditCatalog) {
       return;
     }
 
@@ -870,7 +882,7 @@ export function VisualCatalogPage() {
           : "No se pudo cargar el catalogo visual.",
       );
     });
-  }, [authQuery.data?.user.isAdmin]);
+  }, [canEditCatalog, isCatalogAdmin]);
 
   useEffect(() => {
     if (
@@ -915,7 +927,7 @@ export function VisualCatalogPage() {
     );
   }
 
-  if (!authQuery.data?.user.isAdmin) {
+  if (!currentUser?.canEditVisualCatalog) {
     return (
       <main className="state-page">
         <h1>Acceso restringido</h1>
@@ -1409,11 +1421,11 @@ export function VisualCatalogPage() {
     <main className="visual-catalog-page">
       <header className="visual-catalog-header">
         <div>
-          <p className="eyebrow">Administracion visual general</p>
+          <p className="eyebrow">{isCatalogAdmin ? "Administracion visual general" : "Edicion visual"}</p>
           <h1>Catalogo de componentes</h1>
         </div>
         <nav className="visual-catalog-header__actions">
-          <span>{authQuery.data.user.name}</span>
+          <span>{currentUser.name}</span>
           <button
             type="button"
             className="secondary-button secondary-button--compact"
@@ -1439,27 +1451,31 @@ export function VisualCatalogPage() {
         >
           Editor
         </button>
-        <button
-          type="button"
-          className={view === "catalog" ? "is-active" : ""}
-          onClick={() => setView("catalog")}
-        >
-          Versiones
-        </button>
-        <button
-          type="button"
-          className={view === "releases" ? "is-active" : ""}
-          onClick={() => setView("releases")}
-        >
-          Releases
-        </button>
-        <button
-          type="button"
-          className={view === "audit" ? "is-active" : ""}
-          onClick={() => setView("audit")}
-        >
-          Auditoria
-        </button>
+        {isCatalogAdmin ? (
+          <>
+            <button
+              type="button"
+              className={view === "catalog" ? "is-active" : ""}
+              onClick={() => setView("catalog")}
+            >
+              Versiones
+            </button>
+            <button
+              type="button"
+              className={view === "releases" ? "is-active" : ""}
+              onClick={() => setView("releases")}
+            >
+              Releases
+            </button>
+            <button
+              type="button"
+              className={view === "audit" ? "is-active" : ""}
+              onClick={() => setView("audit")}
+            >
+              Auditoria
+            </button>
+          </>
+        ) : null}
       </div>
 
       {error ? (
@@ -2023,7 +2039,7 @@ export function VisualCatalogPage() {
           definitions={definitions}
           releases={releases}
           activeReleaseId={activeReleaseId}
-          canPublish={Boolean(authQuery.data.user.canPublishVisualCatalog)}
+          canPublish={Boolean(currentUser.canPublishVisualCatalog)}
           onRefresh={refreshVersions}
           onMessage={setMessage}
           onError={setError}

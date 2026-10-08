@@ -16,6 +16,8 @@ export type AppEnv = {
   APP_AUTOMATION_TOKEN?: string;
   APP_ADMIN_EMAILS?: string;
   APP_ADDITIONAL_ADMIN_EMAILS?: string;
+  APP_VISUAL_CATALOG_EDITOR_EMAILS?: string;
+  APP_ADDITIONAL_VISUAL_CATALOG_EDITOR_EMAILS?: string;
   APP_VISUAL_CATALOG_PUBLISHER_EMAILS?: string;
   APP_ADDITIONAL_VISUAL_CATALOG_PUBLISHER_EMAILS?: string;
   ALLOW_DEV_BYPASS_ACCESS?: string;
@@ -40,6 +42,8 @@ export type AuthEnv = Pick<
   | "APP_ADDITIONAL_USERS_JSON"
   | "APP_ADMIN_EMAILS"
   | "APP_ADDITIONAL_ADMIN_EMAILS"
+  | "APP_VISUAL_CATALOG_EDITOR_EMAILS"
+  | "APP_ADDITIONAL_VISUAL_CATALOG_EDITOR_EMAILS"
   | "APP_VISUAL_CATALOG_PUBLISHER_EMAILS"
   | "APP_ADDITIONAL_VISUAL_CATALOG_PUBLISHER_EMAILS"
 >;
@@ -49,6 +53,8 @@ export type AppVariables = {
     email: string;
     name: string;
     isAdmin?: boolean | undefined;
+    canEditVisualCatalog?: boolean | undefined;
+    isVisualCatalogEditorOnly?: boolean | undefined;
     canPublishVisualCatalog?: boolean | undefined;
   };
 };

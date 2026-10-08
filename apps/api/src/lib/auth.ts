@@ -27,11 +27,28 @@ export function isAdminEmail(env: AuthEnv, email: string) {
   return configuredEmails.includes(normalizeEmail(email));
 }
 
+function isVisualCatalogEditorEmail(env: AuthEnv, email: string) {
+  const editors = [
+    ...(env.APP_VISUAL_CATALOG_EDITOR_EMAILS ?? "").split(","),
+    ...(env.APP_ADDITIONAL_VISUAL_CATALOG_EDITOR_EMAILS ?? "").split(","),
+  ]
+    .map(normalizeEmail)
+    .filter(Boolean);
+
+  return editors.includes(normalizeEmail(email));
+}
+
+export function canEditVisualCatalog(env: AuthEnv, email: string) {
+  return isAdminEmail(env, email) || isVisualCatalogEditorEmail(env, email);
+}
+
 export function withAdminFlag(
   env: AuthEnv,
   user: z.infer<typeof appUserSchema>,
 ) {
   const isAdmin = isAdminEmail(env, user.email);
+  const canEdit = canEditVisualCatalog(env, user.email);
+  const isEditorOnly = !isAdmin && isVisualCatalogEditorEmail(env, user.email);
   const publishers = [
     ...(
       env.APP_VISUAL_CATALOG_PUBLISHER_EMAILS ??
@@ -48,6 +65,8 @@ export function withAdminFlag(
   return appUserSchema.parse({
     ...user,
     isAdmin,
+    canEditVisualCatalog: canEdit,
+    isVisualCatalogEditorOnly: isEditorOnly,
     canPublishVisualCatalog:
       isAdmin && publishers.includes(normalizeEmail(user.email)),
   });

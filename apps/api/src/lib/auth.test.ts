@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authenticateUser } from "./auth.js";
+import { authenticateUser, withAdminFlag } from "./auth.js";
 
 describe("authenticateUser", () => {
   it("acepta las credenciales locales de desarrollo", async () => {
@@ -57,5 +57,32 @@ describe("authenticateUser", () => {
 
     expect(await authenticateUser(env, "existente@example.com", password)).not.toBeNull();
     expect(await authenticateUser(env, "nuevo@example.com", password)).not.toBeNull();
+  });
+
+  it("distingue un editor exclusivo de un administrador del catalogo", () => {
+    const env = {
+      APP_ADMIN_EMAILS: "facturas@example.com",
+      APP_ADDITIONAL_VISUAL_CATALOG_EDITOR_EMAILS: "ventas@example.com",
+      APP_VISUAL_CATALOG_PUBLISHER_EMAILS: "facturas@example.com",
+    };
+
+    expect(withAdminFlag(env, {
+      email: "ventas@example.com",
+      name: "Ventas",
+    })).toMatchObject({
+      isAdmin: false,
+      canEditVisualCatalog: true,
+      isVisualCatalogEditorOnly: true,
+      canPublishVisualCatalog: false,
+    });
+    expect(withAdminFlag(env, {
+      email: "facturas@example.com",
+      name: "Facturas",
+    })).toMatchObject({
+      isAdmin: true,
+      canEditVisualCatalog: true,
+      isVisualCatalogEditorOnly: false,
+      canPublishVisualCatalog: true,
+    });
   });
 });
