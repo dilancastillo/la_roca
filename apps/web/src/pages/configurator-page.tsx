@@ -82,6 +82,26 @@ function isNoTrimValueName(value: string) {
   return normalizeText(value) === "sin vivos";
 }
 
+function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
+  if (group.selectionMode !== "multiple") {
+    return false;
+  }
+
+  const label = normalizeText(group.label);
+
+  return label === "logo" || (label.includes("seccion") && label.includes("vivo"));
+}
+
+function isGroupComplete(
+  group: UiAttributeGroup,
+  selectedValueIds: Record<string, number[]>,
+) {
+  return (
+    isOptionalMultipleSelectionGroup(group) ||
+    (selectedValueIds[String(group.attributeId)] ?? []).length > 0
+  );
+}
+
 function shouldKeepSectionOpenAfterSelection(
   group: UiAttributeGroup,
   selectedValueId?: number,
@@ -537,7 +557,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     ? false
     : !session.status.canEdit || session.status.isLocked;
   const completedGroups = ui.groups.filter(
-    (group) => (state.selectedValueIds[String(group.attributeId)] ?? []).length > 0,
+    (group) => isGroupComplete(group, state.selectedValueIds),
   ).length;
   const hasLogoUploadStep = Boolean(ui.logoSelection);
   const totalSteps = ui.groups.length + (hasLogoUploadStep ? 1 : 0);
@@ -545,8 +565,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     completedGroups + (hasLogoUploadStep && logoAttachment ? 1 : 0);
   const firstIncompleteGroup =
     ui.groups.find(
-      (group) =>
-        (state.selectedValueIds[String(group.attributeId)] ?? []).length === 0,
+      (group) => !isGroupComplete(group, state.selectedValueIds),
     ) ?? null;
   const activeAttributeId =
     expandedAttributeId ??

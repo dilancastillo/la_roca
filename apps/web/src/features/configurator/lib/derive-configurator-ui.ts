@@ -1427,6 +1427,82 @@ function getHiddenLowerPocketDependentAttributeIds(
   return hiddenAttributeIds;
 }
 
+function isNoApplyDependentModelValue(
+  value: KneePatchOption | string | undefined,
+) {
+  const valueName = getOptionName(value);
+
+  if (!valueName) {
+    return true;
+  }
+
+  const normalizedName = normalize(valueName);
+
+  return (
+    normalizedName === "no" ||
+    normalizedName.includes("ninguno") ||
+    normalizedName.includes("no aplica") ||
+    normalizedName.includes("sin parche")
+  );
+}
+
+function getHiddenKneePatchTypeAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const knees: Array<{
+    modelId: number;
+    typeId: number;
+    side: "derecha" | "izquierda";
+  }> = [
+    {
+      modelId: CONFIGURATOR_ATTRIBUTE_IDS.rightKneePatchModel,
+      typeId: CONFIGURATOR_ATTRIBUTE_IDS.rightKneePatchType,
+      side: "derecha",
+    },
+    {
+      modelId: CONFIGURATOR_ATTRIBUTE_IDS.leftKneePatchModel,
+      typeId: CONFIGURATOR_ATTRIBUTE_IDS.leftKneePatchType,
+      side: "izquierda",
+    },
+  ];
+
+  for (const knee of knees) {
+    const modelAttribute = findAttributeByIdOrName(
+      session,
+      knee.modelId,
+      (name) => isKneePatchModelAttributeName(name, knee.side),
+    );
+    const typeAttribute = findAttributeByIdOrName(
+      session,
+      knee.typeId,
+      (name) => isKneePatchTypeAttributeName(name, knee.side),
+    );
+
+    if (!modelAttribute || !typeAttribute) {
+      continue;
+    }
+
+    const selectedModels = getSelectedOptions(
+      modelAttribute,
+      selectedValueIds,
+    );
+    const hasApplicableModel = selectedModels.some(
+      (value) => !isNoApplyDependentModelValue(value),
+    );
+
+    // Mientras el modelo aun no se haya elegido, dejamos visible el tipo para
+    // conservar el flujo normal de campos obligatorios. Solo se oculta cuando
+    // Odoo ya tiene una seleccion explicita de "No aplica"/"Ninguno".
+    if (selectedModels.length > 0 && !hasApplicableModel) {
+      hiddenAttributeIds.add(typeAttribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenAdditionalEmbroideryAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1594,6 +1670,7 @@ function getHiddenConditionalAttributeIds(
       selectedValueIds,
     ),
     ...getHiddenLowerPocketDependentAttributeIds(session, selectedValueIds),
+    ...getHiddenKneePatchTypeAttributeIds(session, selectedValueIds),
     ...getHiddenAdditionalEmbroideryAttributeIds(session, selectedValueIds),
     ...getHiddenAdditionalPantsPocketAttributeIds(
       session,

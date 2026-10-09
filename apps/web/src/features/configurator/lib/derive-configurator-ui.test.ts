@@ -5369,6 +5369,78 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("oculta el tipo de rodilla cuando su modelo es No aplica", () => {
+    const rightKneeModelAttributeId = 169;
+    const rightKneeTypeAttributeId = 170;
+    const sessionWithKneeDependency: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes.filter(
+          (attribute) =>
+            attribute.id !== rightKneeModelAttributeId &&
+            attribute.id !== rightKneeTypeAttributeId,
+        ),
+        {
+          id: rightKneeModelAttributeId,
+          name: "Modelo bolsillo de parche rodilla derecha",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12410,
+              name: "No aplica",
+              attributeId: rightKneeModelAttributeId,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+            {
+              id: 12411,
+              name: "Cuadrado",
+              attributeId: rightKneeModelAttributeId,
+              attributeName: "Modelo bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+        {
+          id: rightKneeTypeAttributeId,
+          name: "Tipo de bolsillo de parche rodilla derecha",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12412,
+              name: "Velcro",
+              attributeId: rightKneeTypeAttributeId,
+              attributeName: "Tipo de bolsillo de parche rodilla derecha",
+            },
+          ],
+        },
+      ],
+    };
+
+    const typeLabelsWithNoApply = deriveConfiguratorUi(
+      sessionWithKneeDependency,
+      {
+        ...pantalonSession.selectedValueIds,
+        [String(rightKneeModelAttributeId)]: [12410],
+        [String(rightKneeTypeAttributeId)]: [12412],
+      },
+    ).groups.map((group) => group.label);
+    const typeLabelsWithModel = deriveConfiguratorUi(sessionWithKneeDependency, {
+      ...pantalonSession.selectedValueIds,
+      [String(rightKneeModelAttributeId)]: [12411],
+      [String(rightKneeTypeAttributeId)]: [12412],
+    }).groups.map((group) => group.label);
+
+    expect(typeLabelsWithNoApply).not.toContain(
+      "Tipo de bolsillo de parche rodilla derecha",
+    );
+    expect(typeLabelsWithModel).toContain(
+      "Tipo de bolsillo de parche rodilla derecha",
+    );
+  });
+
   it("solo muestra bolsillos adicionales de pantalon cuando estan en Si", () => {
     const additionalPocketsAttributeId = 12300;
     const additionalPocketsNoValueId = 12301;
