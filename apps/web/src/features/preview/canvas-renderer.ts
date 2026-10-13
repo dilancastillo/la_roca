@@ -444,6 +444,16 @@ const chestPocketSectionTrimOverlayByFileName: Record<
   string,
   { upper?: string; zipper?: string; lower?: string }
 > = {
+  // El modelo rectangular v2 comparte la misma geometría de vivo que el
+  // rectangular histórico. Sin esta entrada el bolsillo se dibujaba, pero
+  // las secciones "Bolsillo pecho superior/inferior" no tenían capa que
+  // recolorear con el vivo elegido en Odoo.
+  "chest-pocket-rectangular-v2.svg": {
+    upper:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
+    lower:
+      "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
   "chest-pocket-point-zipper.svg": {
     upper:
       "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-upper-trim.svg",
@@ -501,6 +511,12 @@ function getChestPocketSectionTrimOrder(
   return fileName === "chest-pocket-zipper-external.svg"
     ? upperRaisedChestPocketSectionTrimOrder
     : defaultChestPocketSectionTrimOrder;
+}
+
+export function getChestPocketSectionTrimOverlays(sourceSrc: string) {
+  return chestPocketSectionTrimOverlayByFileName[
+    getFileNameFromSource(sourceSrc)
+  ];
 }
 
 const CHEST_POCKET_VERTICAL_OFFSET = 28;
@@ -3726,8 +3742,7 @@ async function drawChestPocketOverlay(
   context.translate(0, CHEST_POCKET_VERTICAL_OFFSET);
   context.drawImage(overlayCanvas, 0, 0);
 
-  const sectionTrimOverlays =
-    chestPocketSectionTrimOverlayByFileName[fileName];
+  const sectionTrimOverlays = getChestPocketSectionTrimOverlays(sourceSrc);
 
   if (sectionTrimOverlays) {
     const trimColorBySection = {
