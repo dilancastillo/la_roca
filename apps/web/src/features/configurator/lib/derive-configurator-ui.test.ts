@@ -5552,6 +5552,10 @@ describe("deriveConfiguratorUi", () => {
   it("selecciona Color y fuente al activar cualquiera de los textos dependientes", () => {
     const textDependencies: Array<readonly [string, string]> = [
       [
+        "¿Texto en pecho izquierdo?",
+        "Color y fuente de Texto de pecho izquierdo",
+      ],
+      [
         "¿Texto en pecho encima del bolsillo?",
         "Color y fuente de texto en pecho encima del bolsillo",
       ],
@@ -5752,6 +5756,10 @@ describe("deriveConfiguratorUi", () => {
     const additionalEmbroideryNoValueId = 15001;
     const additionalEmbroideryYesValueId = 15002;
     const textDependencies: Array<readonly [string, string]> = [
+      [
+        "Texto en pecho izquierdo?",
+        "Color y fuente de Texto de pecho izquierdo",
+      ],
       [
         "Texto en pecho encima del bolsillo?",
         "Color y fuente de texto en pecho encima del bolsillo",

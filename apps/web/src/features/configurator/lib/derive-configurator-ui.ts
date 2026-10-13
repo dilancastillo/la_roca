@@ -944,13 +944,21 @@ function withUniformPantsPespunte(scene: PreviewScene) {
 }
 
 type TextStyleAttributeDependency = {
-  toggleAttributeId: number;
-  styleAttributeId: number;
+  // Algunos atributos son heredados de Odoo sin un ID estable compartido.
+  // En esos casos los resolvemos exclusivamente por su nombre semántico.
+  toggleAttributeId?: number;
+  styleAttributeId?: number;
   toggleTerms: string[];
   styleTerms: string[];
 };
 
 const textStyleAttributeDependencies: TextStyleAttributeDependency[] = [
+  {
+    // Este par no tiene un ID estable en los catálogos históricos. Debe
+    // mantenerse junto a los demás textos opcionales de bordado.
+    toggleTerms: ["texto", "pecho", "izquierdo"],
+    styleTerms: ["color", "fuente", "texto", "pecho", "izquierdo"],
+  },
   {
     toggleAttributeId: CONFIGURATOR_ATTRIBUTE_IDS.textRightChest,
     styleAttributeId: CONFIGURATOR_ATTRIBUTE_IDS.textRightChestStyle,
@@ -1018,10 +1026,16 @@ function findTextToggleAttribute(
   session: ConfiguratorSession,
   dependency: TextStyleAttributeDependency,
 ) {
-  return findAttributeByIdOrName(session, dependency.toggleAttributeId, (name) =>
-    normalizedIncludesAll(name, dependency.toggleTerms) &&
-    !name.includes("color") &&
-    !name.includes("fuente"),
+  return session.attributes.find(
+    (attribute) =>
+      (dependency.toggleAttributeId !== undefined &&
+        attribute.id === dependency.toggleAttributeId) ||
+      (normalizedIncludesAll(
+        normalize(attribute.name),
+        dependency.toggleTerms,
+      ) &&
+        !normalize(attribute.name).includes("color") &&
+        !normalize(attribute.name).includes("fuente")),
   );
 }
 
@@ -1029,7 +1043,9 @@ function getTextStyleDependencyForAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
   const dependencyById = textStyleAttributeDependencies.find(
-    (dependency) => dependency.styleAttributeId === attribute.id,
+    (dependency) =>
+      dependency.styleAttributeId !== undefined &&
+      dependency.styleAttributeId === attribute.id,
   );
 
   if (dependencyById) {
@@ -1052,7 +1068,8 @@ function findTextStyleAttributes(
   return session.attributes.filter(
     (attribute) =>
       attribute.id !== toggleAttributeId &&
-      (attribute.id === dependency.styleAttributeId ||
+      ((dependency.styleAttributeId !== undefined &&
+        attribute.id === dependency.styleAttributeId) ||
         normalizedIncludesAll(normalize(attribute.name), dependency.styleTerms)),
   );
 }
@@ -1062,7 +1079,9 @@ function isTextToggleAttributeForAdditionalEmbroidery(
 ) {
   if (
     textStyleAttributeDependencies.some(
-      (dependency) => dependency.toggleAttributeId === attribute.id,
+      (dependency) =>
+        dependency.toggleAttributeId !== undefined &&
+        dependency.toggleAttributeId === attribute.id,
     )
   ) {
     return true;
