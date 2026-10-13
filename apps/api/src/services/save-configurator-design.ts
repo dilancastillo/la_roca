@@ -109,6 +109,21 @@ function isNoLogoValueName(name: string) {
   );
 }
 
+function isOptionalUnselectedAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  if (attribute.selectionMode !== "multiple") {
+    return false;
+  }
+
+  const normalized = normalizeText(attribute.name);
+
+  return (
+    normalized.includes("logo") ||
+    (normalized.includes("seccion") && normalized.includes("vivo"))
+  );
+}
+
 function hasSelectedLogo(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -146,7 +161,7 @@ function validateSelections(
     const selected = selectedValueIds[String(attribute.id)] ?? [];
     const selectedSet = new Set(selected);
 
-    if (attribute.variantMode === "variant" && selected.length === 0) {
+    if (!isOptionalUnselectedAttribute(attribute) && selected.length === 0) {
       errors.push(
         `Falta seleccionar "${attribute.name}". No se guardo para evitar una variante incompleta.`,
       );

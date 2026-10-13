@@ -574,6 +574,80 @@ describe("saveConfiguratorDesign", () => {
     expect(mocks.odooCreate).not.toHaveBeenCalled();
   });
 
+  it("rechaza guardar si falta una seleccion unica aunque no cree variante", async () => {
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: {
+          "90": [9001],
+        },
+      }),
+    ).rejects.toThrow(/falta seleccionar "color de vivo"/i);
+
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
+  });
+
+  it("permite Logo y Seccion de vivos sin seleccion", async () => {
+    const sessionWithOptionalMultipleSelections: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: 92,
+          name: "Logo",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9201,
+              name: "Pecho derecho",
+              attributeId: 92,
+              attributeName: "Logo",
+            },
+          ],
+        },
+        {
+          id: 93,
+          name: "Seccion de vivos",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9301,
+              name: "Cuello",
+              attributeId: 93,
+              attributeName: "Seccion de vivos",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        "92": [],
+        "93": [],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(
+      sessionWithOptionalMultipleSelections,
+    );
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithOptionalMultipleSelections.selectedValueIds,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
+  });
+
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {
     mocks.odooSearchRead.mockResolvedValue([]);
     mocks.odooCreate.mockRejectedValue(

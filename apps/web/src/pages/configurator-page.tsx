@@ -89,7 +89,7 @@ function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
 
   const label = normalizeText(group.label);
 
-  return label === "logo" || (label.includes("seccion") && label.includes("vivo"));
+  return label.includes("logo") || (label.includes("seccion") && label.includes("vivo"));
 }
 
 function isGroupComplete(
@@ -100,6 +100,13 @@ function isGroupComplete(
     isOptionalMultipleSelectionGroup(group) ||
     (selectedValueIds[String(group.attributeId)] ?? []).length > 0
   );
+}
+
+function getMissingRequiredSelectionGroups(
+  groups: UiAttributeGroup[],
+  selectedValueIds: Record<string, number[]>,
+) {
+  return groups.filter((group) => !isGroupComplete(group, selectedValueIds));
 }
 
 function shouldKeepSectionOpenAfterSelection(
@@ -430,8 +437,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     const firstIncompleteGroup =
       uiModel.groups.find(
-        (group) =>
-          (state.selectedValueIds[String(group.attributeId)] ?? []).length === 0,
+        (group) => !isGroupComplete(group, state.selectedValueIds),
       ) ?? uiModel.groups[0];
 
     const expandedStillExists = uiModel.groups.some(
@@ -849,6 +855,30 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
       session,
       state.selectedValueIds,
     );
+    const missingRequiredSelectionGroups = getMissingRequiredSelectionGroups(
+      ui.groups,
+      selectedValueIdsForSave,
+    );
+
+    if (missingRequiredSelectionGroups.length > 0) {
+      const [firstMissingGroup] = missingRequiredSelectionGroups;
+
+      if (!firstMissingGroup) {
+        return;
+      }
+
+      setExpandedAttributeId(firstMissingGroup.attributeId);
+      setLastEditedAttributeId(firstMissingGroup.attributeId);
+      window.setTimeout(() => {
+        attributeSectionRefs.current
+          .get(firstMissingGroup.attributeId)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      setSaveError(
+        `Selecciona un valor para "${firstMissingGroup.label}" o elige "Ninguno" antes de guardar.`,
+      );
+      return;
+    }
     const missingCustomValues = getMissingCustomValues(
       session,
       ui.groups,
