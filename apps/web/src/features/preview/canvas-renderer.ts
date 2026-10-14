@@ -841,16 +841,17 @@ const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
 ] as const;
 // El vivo de cada manga parte del segmento de puño del SVG base, no de la
-// sisa (la línea que conecta manga y torso). Estas cuatro coordenadas se
-// extraen directamente del contorno de blouse-model-01.svg.
+// sisa ni del contorno exterior de la manga. En Cuello V el borde real está
+// en la subtraza que une 116.28,531.63 con 262.51,662.26. El contorno externo
+// queda unos píxeles por fuera y producía el desfase visual de la banda.
 const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
   [
-    [110.72, 533.35],
-    [264.49, 670.72],
+    [116.28, 531.63],
+    [262.51, 662.26],
   ],
   [
-    [970.21, 515.32],
-    [834.2, 642.19],
+    [965.71, 512.68],
+    [834.8, 634.8],
   ],
 );
 const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
@@ -4043,7 +4044,7 @@ function isPespunteDetailOverlay(overlaySrc: string) {
   );
 }
 
-function getOriginalSleeveTrimShapes(placementSrc: string) {
+export function getOriginalSleeveTrimShapes(placementSrc: string) {
   if (usesMaleBlouseCoordinateSystem(placementSrc)) {
     return getMaleOriginalSleeveTrimShapes(placementSrc);
   }
