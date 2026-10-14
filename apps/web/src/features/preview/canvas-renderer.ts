@@ -840,40 +840,19 @@ const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
-const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = [
-  {
-    points: [
-      [262.51, 662.26],
-      [116.28, 531.63],
-      [120.16, 516.64],
-      [267.55, 647.97],
-    ],
-    upper: [
-      [120.16, 516.64],
-      [267.55, 647.97],
-    ],
-    lower: [
-      [116.28, 531.63],
-      [262.51, 662.26],
-    ],
-  },
-  {
-    points: [
-      [965.71, 512.68],
-      [834.8, 634.8],
-      [825.55, 623.31],
-      [961.6, 499.2],
-    ],
-    upper: [
-      [961.6, 499.2],
-      [825.55, 623.31],
-    ],
-    lower: [
-      [965.71, 512.68],
-      [834.8, 634.8],
-    ],
-  },
-] as const;
+// El vivo de cada manga parte del segmento de puño del SVG base, no de la
+// sisa (la línea que conecta manga y torso). Estas cuatro coordenadas se
+// extraen directamente del contorno de blouse-model-01.svg.
+const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
+  [
+    [110.72, 533.35],
+    [264.49, 670.72],
+  ],
+  [
+    [970.21, 515.32],
+    [834.2, 642.19],
+  ],
+);
 const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
