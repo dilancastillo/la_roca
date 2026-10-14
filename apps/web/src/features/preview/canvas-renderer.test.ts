@@ -35,6 +35,22 @@ describe("vivos de mangas originales", () => {
     ]);
   });
 
+  it("conserva el ancla de Cuello V cuando el laboratorio materializa el SVG", () => {
+    const [left, right] = getOriginalSleeveTrimShapes(
+      "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+
+    expect(left?.lower).toEqual([
+      [110.72, 533.35],
+      [264.49, 670.72],
+    ]);
+    expect(right?.lower).toEqual([
+      [970.21, 515.32],
+      [834.2, 642.19],
+    ]);
+  });
+
   it.each([
     [
       "Mariposa cruzado",

@@ -62,6 +62,12 @@ export type PreviewScene = {
     pants: PreviewScene;
   };
   garmentImageSrc?: string | undefined;
+  /**
+   * Identidad del SVG base cuando el laboratorio lo materializa como data URI.
+   * Conserva el archivo para los anclajes geométricos sin reemplazar el arte
+   * dinámico que se dibuja en pantalla.
+   */
+  sleeveAnchorSrc?: string | undefined;
   suppressGarmentBaseOutline?: boolean | undefined;
   garmentDetailImageSrc?: string | undefined;
   garmentDetailImageSrcs?: string[] | undefined;
@@ -2096,8 +2102,11 @@ function deriveSingleConfiguratorUi(
   const hasDynamicNeck = dynamicVisualSlots.has("neck");
   const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
   const hasDynamicBoot = dynamicVisualSlots.has("boot");
-  const catalogNeckImageSrc = !hasDynamicNeck && selectedNeck
+  const selectedNeckAssetSrc = selectedNeck
     ? getImageSource(session.graphicManifestKey, neckAttribute!, selectedNeck)
+    : undefined;
+  const catalogNeckImageSrc = !hasDynamicNeck
+    ? selectedNeckAssetSrc
     : undefined;
   // Igual que Mujer, una definición dinámica sustituye al recurso estático.
   // Mantener ambos en Hombre duplicaba el cuello en el canvas.
@@ -2242,6 +2251,9 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
+      ...(dynamicBaseSilhouette && selectedNeckAssetSrc
+        ? { sleeveAnchorSrc: selectedNeckAssetSrc }
+        : {}),
       ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),
       ...(garmentDetailImageSrcs.length > 0 ? { garmentDetailImageSrcs } : {}),
