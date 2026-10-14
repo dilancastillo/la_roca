@@ -81,6 +81,8 @@ export type PreviewScene = {
   neckImageSrc?: string | undefined;
   /** Compatibilidad temporal para SVG históricos que no tienen arte Hombre completo. */
   useMaleBlouseSilhouette?: boolean | undefined;
+  /** Base femenina estable con detalle de cuello dinámico recortado. */
+  useStableFemaleBlouseSilhouette?: boolean | undefined;
   /**
    * El SVG del catálogo ya dibuja el cuello. El canvas no debe superponerle
    * los overlays históricos asociados al nombre del archivo.
@@ -2120,15 +2122,6 @@ function deriveSingleConfiguratorUi(
         selectedNeck.name,
       )
     : undefined;
-  // Los SVG masculinos son ilustraciones completas, no overlays. Al elegirlos
-  // se evita recortar una silueta Mujer y se conservan sus propias sisas,
-  // mangas y cuello en una única geometría vectorial.
-  const neckImageSrc = maleNeckAssetPath
-    ? `/${maleNeckAssetPath}`
-    : catalogNeckImageSrc;
-  const shouldUseClosedBlouseWithoutNeck =
-    session.graphicManifestKey.includes("blusa") &&
-    (hasDynamicNeck || !neckImageSrc);
   const closedBlouseBaseImageSrc = getClosedBlouseBaseImageSrc(
     session,
     selectedValueIds,
@@ -2139,6 +2132,24 @@ function deriveSingleConfiguratorUi(
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
+  const usesStableFemaleBlouseSilhouette =
+    Boolean(dynamicBaseSilhouette) &&
+    !hasManGenderSelection(session, selectedValueIds) &&
+    session.graphicManifestKey.includes("blusa") &&
+    ["cuello v", "mariposa cruzado", "el hato"].includes(
+      normalize(selectedNeck?.name ?? ""),
+    );
+  // Igual que Hombre, estas tres siluetas especiales conservan una base de
+  // blusa estable y aplican solamente su cuello dinámico. Así sus vivos no
+  // heredan los polígonos de manga desplazados que vienen en el SVG completo.
+  const neckImageSrc = maleNeckAssetPath
+    ? `/${maleNeckAssetPath}`
+    : usesStableFemaleBlouseSilhouette
+      ? dynamicBaseSilhouette?.svgDataUri
+      : catalogNeckImageSrc;
+  const shouldUseClosedBlouseWithoutNeck =
+    session.graphicManifestKey.includes("blusa") &&
+    (hasDynamicNeck || !neckImageSrc);
   const useMaleBlouseSilhouette =
     hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
@@ -2147,7 +2158,7 @@ function deriveSingleConfiguratorUi(
     // debe pasar íntegra por el canvas, sin recortes ni una segunda base.
     Boolean(catalogNeckImageSrc && !maleNeckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentImageSrc = dynamicBaseSilhouette
+  const garmentImageSrc = dynamicBaseSilhouette && !usesStableFemaleBlouseSilhouette
     ? dynamicBaseSilhouette.svgDataUri
     : shouldUseClosedBlouseWithoutNeck
       ? closedBlouseBaseImageSrc
@@ -2274,6 +2285,9 @@ function deriveSingleConfiguratorUi(
         : {}),
       neckImageSrc,
       ...(useMaleBlouseSilhouette ? { useMaleBlouseSilhouette: true } : {}),
+      ...(usesStableFemaleBlouseSilhouette
+        ? { useStableFemaleBlouseSilhouette: true }
+        : {}),
       // Señal explícita para que canvas-renderer evite duplicar el cuello.
       ...(hasDynamicNeck ? { hasDynamicNeckVisual: true } : {}),
       lowerPocketImageSrc,

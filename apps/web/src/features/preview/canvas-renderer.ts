@@ -13,6 +13,8 @@ const CANVAS_HEIGHT = 1200;
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
 const MALE_BLOUSE_SLEEVE_ANCHOR =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
+const FEMALE_BLOUSE_SLEEVE_ANCHOR =
+  "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -5237,15 +5239,17 @@ async function composeSingleDesign(
 
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
 
-  if (scene.useMaleBlouseSilhouette) {
-    // Hombre se dibuja como una silueta completa y continua. Así hombros,
-    // mangas, sisas y costados siempre proceden de una única geometría.
-    const maleBodyCanvas = await createTintedBaseCanvas(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+  if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
+    // La base estable mantiene hombros, mangas, sisas y costados en una única
+    // geometría; el SVG dinámico aporta únicamente el detalle central del cuello.
+    const bodyCanvas = await createTintedBaseCanvas(
+      scene.useMaleBlouseSilhouette
+        ? MALE_BLOUSE_SLEEVE_ANCHOR
+        : FEMALE_BLOUSE_SLEEVE_ANCHOR,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
-    context.drawImage(maleBodyCanvas, 0, 0);
+    context.drawImage(bodyCanvas, 0, 0);
   }
 
   if (baseAssetSrc) {
@@ -5254,10 +5258,9 @@ async function composeSingleDesign(
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
-    if (scene.useMaleBlouseSilhouette) {
-      // Los modelos históricos son prendas Mujer completas. Sobre la base
-      // Hombre copiamos únicamente el detalle central del cuello; nunca sus
-      // brazos o sisas, que eran las puntas visibles en la unión lateral.
+    if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
+      // Los modelos dinámicos son prendas completas. Sobre la base estable
+      // copiamos únicamente el detalle central; nunca brazos ni sisas.
       drawCanvasInRegions(
         context,
         baseCanvas,
@@ -5265,11 +5268,13 @@ async function composeSingleDesign(
       );
       // Tres SVG históricos guardan pequeños trazos internos de hombro junto
       // al cuello. Se limpian después del recorte sin tocar el contorno Hombre.
-      cleanMaleNeckShoulderArtifacts(
-        context,
-        baseAssetSrc,
-        scene.baseColorHex,
-      );
+      if (scene.useMaleBlouseSilhouette) {
+        cleanMaleNeckShoulderArtifacts(
+          context,
+          baseAssetSrc,
+          scene.baseColorHex,
+        );
+      }
     } else {
       context.drawImage(baseCanvas, 0, 0);
     }
@@ -5714,10 +5719,14 @@ async function composeSingleDesign(
 
     const sleevePlacementSrc = scene.useMaleBlouseSilhouette
       ? MALE_BLOUSE_SLEEVE_ANCHOR
-      : baseAssetSrc;
+      : scene.useStableFemaleBlouseSilhouette
+        ? FEMALE_BLOUSE_SLEEVE_ANCHOR
+        : baseAssetSrc;
     const sleeveAnchorSrc = scene.useMaleBlouseSilhouette
       ? MALE_BLOUSE_SLEEVE_ANCHOR
-      : scene.sleeveAnchorSrc ?? sleevePlacementSrc;
+      : scene.useStableFemaleBlouseSilhouette
+        ? FEMALE_BLOUSE_SLEEVE_ANCHOR
+        : scene.sleeveAnchorSrc ?? sleevePlacementSrc;
 
     if (hasOriginalSleevesOverlay && isBlouseScene(scene, sleevePlacementSrc)) {
       await drawOriginalSleevesTrim(context, sleevePlacementSrc, {
