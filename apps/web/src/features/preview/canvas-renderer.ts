@@ -821,16 +821,6 @@ function usesMaleBlouseCoordinateSystem(assetSrc: string) {
   );
 }
 
-// Estos tres modelos femeninos tienen una geometría de manga propia. Las
-// coordenadas de sus bandas se guardan en el sistema del SVG fuente. EL HATO
-// usa un viewBox distinto (861×1095), por lo que tratarlas como coordenadas
-// ya rasterizadas desplazaba las mangas; en los otros dos modelos la escala
-// resultante es 1:1 y se conserva su posición actual.
-const WOMEN_SOURCE_COORDINATE_SLEEVE_BASE_FILE_NAMES = new Set([
-  "blouse-model-01.svg", // Cuello V
-  "blouse-model-40-mariposa.svg", // Mariposa Cruzado
-  "blouse-model-39-el-hato.svg", // El Hato
-]);
 const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   ORIGINAL_SLEEVE_TRIM_SHAPES[0],
   {
@@ -3947,14 +3937,10 @@ async function getAssetToCanvasTransform(
   placementSrc: string,
 ): Promise<AssetToCanvasTransform> {
   const processed = await getProcessedImage(placementSrc);
-  const placementFileName = getFileNameFromSource(placementSrc);
-  // Los anclajes de mangas masculinas y los tres modelos femeninos que usan
-  // arte propio se guardan en coordenadas del SVG original. Los demás modelos
-  // históricos de Mujer conservan el lienzo procesado para no alterar sus
-  // bandas ya calibradas.
-  const usesSourceViewBoxCoordinates =
-    usesMaleBlouseCoordinateSystem(placementSrc) ||
-    WOMEN_SOURCE_COORDINATE_SLEEVE_BASE_FILE_NAMES.has(placementFileName);
+  // Los anclajes de mangas masculinas se guardan en coordenadas del SVG
+  // original. Los modelos históricos de mujer ya usan el lienzo procesado.
+  // No escalar estos últimos evita desplazar EL HATO y demás activos legados.
+  const usesSourceViewBoxCoordinates = usesMaleBlouseCoordinateSystem(placementSrc);
   const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
 
