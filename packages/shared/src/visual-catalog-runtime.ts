@@ -524,6 +524,35 @@ function addLinearTrimPolygonTexture(
   return texturedSvg;
 }
 
+// Estos tres modelos de blusa se renderizan como siluetas completas desde el
+// catálogo. Sus polígonos históricos de manga lineal quedaron trazados hacia
+// el interior del puño. El renderer de la app conoce el borde real de cada
+// manga y los vuelve a dibujar allí; por eso ocultamos únicamente las tres
+// capas duplicadas del SVG dinámico antes de materializarlo.
+function suppressMisalignedFemaleSleeveLinearTrims(
+  definition: ActiveVisualDefinition,
+  runtimeSvg: string,
+) {
+  if (definition.slot !== "neck") {
+    return runtimeSvg;
+  }
+
+  const displayName = normalize(definition.displayName);
+  const isAffectedNeck =
+    displayName.includes("cuello v") ||
+    displayName.includes("mariposa cruzado") ||
+    displayName.includes("el hato");
+
+  if (!isAffectedNeck) {
+    return runtimeSvg;
+  }
+
+  return runtimeSvg.replace(
+    /<(path|line|polyline|polygon|rect|circle|ellipse)\b[^>]*__VC_TRIM_(?:STROKE|FILL)_(?:1972|1973|1974)__[^>]*>/gi,
+    (markup) => appendInlineSvgStyle(markup, "display:none!important;"),
+  );
+}
+
 function getTrimColor(
   trimSections: VisualRuntimeTrimSection[],
   sourceValueId: number,
@@ -637,6 +666,10 @@ export function materializeVisualDefinitionSvg(
     }
   }
 
+  runtimeSvg = suppressMisalignedFemaleSleeveLinearTrims(
+    definition,
+    runtimeSvg,
+  );
   runtimeSvg = addLinearTrimPolygonTexture(runtimeSvg, trimSections);
   runtimeSvg = addLinearTrimTexture(runtimeSvg, trimSections);
 
