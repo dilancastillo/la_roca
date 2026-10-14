@@ -859,18 +859,20 @@ const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
   {
     points: [
-      [970.21, 515.32],
-      [834.2, 642.19],
-      [824.95, 630.7],
-      [966.1, 501.88],
+      // Espejo exacto de la manga izquierda. El arte histórico derecho
+      // venía 16 px más alto y dejaba los vivos de CUELLO V desfasados.
+      [817.49, 662.26],
+      [963.72, 531.63],
+      [959.84, 516.64],
+      [812.45, 647.97],
     ],
     upper: [
-      [966.1, 501.88],
-      [824.95, 630.7],
+      [959.84, 516.64],
+      [812.45, 647.97],
     ],
     lower: [
-      [970.21, 515.32],
-      [834.2, 642.19],
+      [817.49, 662.26],
+      [963.72, 531.63],
     ],
   },
 ] as const;
@@ -1031,6 +1033,21 @@ const ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES =
       [833.3, 643.88],
     ],
   );
+const MARIPOSA_CRUZADO_ORIGINAL_SLEEVE_TRIM_SHAPES =
+  makeOriginalSleeveTrimShapes(
+    [
+      [109.82, 535.05],
+      [263.59, 672.42],
+    ],
+    [
+      [972.18, 535.05],
+      [818.41, 672.42],
+    ],
+    {
+      left: [13.33, -14.94],
+      right: [-13.33, -14.94],
+    },
+  );
 const PICOS_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
   [
     [109.49, 538.77],
@@ -1106,7 +1123,7 @@ const REQUESTED_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME: Record<
   "blouse-model-12-cherokee.svg": PICOS_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-41-matrioska.svg":
     ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
-  "blouse-model-40-mariposa.svg": ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
+  "blouse-model-40-mariposa.svg": MARIPOSA_CRUZADO_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-50-20-20.svg": CUCUTA_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-21-deportivo.svg": DEPORTIVO_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
   "blouse-model-23-polo.svg": DEPORTIVO_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES,
@@ -1323,18 +1340,19 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
     },
     {
       points: [
-        [936.89, 459.48],
-        [793.03, 574.98],
-        [780.9, 562.4],
-        [924.37, 446.94],
+        // Espejo de la manga izquierda sobre el lienzo procesado de EL HATO.
+        [776.76, 605.07],
+        [936.91, 461.97],
+        [927.12, 449.35],
+        [767.22, 592.42],
       ],
       upper: [
-        [924.37, 446.94],
-        [780.9, 562.4],
+        [927.12, 449.35],
+        [767.22, 592.42],
       ],
       lower: [
-        [936.89, 459.48],
-        [793.03, 574.98],
+        [776.76, 605.07],
+        [936.91, 461.97],
       ],
     },
   ],
@@ -1356,6 +1374,8 @@ const ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME: Record<string, string> 
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-22-estrella-original-sleeves.svg",
   "blouse-model-39-el-hato.svg":
     "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-39-el-hato-original-sleeves.svg",
+  "blouse-model-40-mariposa.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/blouse-model-40-mariposa-original-sleeves.svg",
 };
 
 const collarTrimElementIndexesByFileName: Record<string, number[]> = {
@@ -4130,13 +4150,11 @@ function resolveGarmentDetailOverlaySrc(overlaySrc: string, placementSrc: string
 
   const placementFileName = getFileNameFromSource(placementSrc);
 
-  if (PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES.has(placementFileName)) {
-    return PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY;
-  }
-
   return (
     ORIGINAL_SLEEVES_DETAIL_OVERLAY_BY_BASE_FILE_NAME[placementFileName] ??
-    overlaySrc
+    (PUNTADAS_ALIGNED_ORIGINAL_SLEEVE_BASE_FILE_NAMES.has(placementFileName)
+      ? PUNTADAS_ORIGINAL_SLEEVES_DETAIL_OVERLAY
+      : overlaySrc)
   );
 }
 
