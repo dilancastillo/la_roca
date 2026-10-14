@@ -840,18 +840,17 @@ const PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
     ],
   },
 ] as const;
-// El vivo de cada manga parte del segmento de puño del SVG base, no de la
-// sisa ni del contorno exterior de la manga. En Cuello V el borde real está
-// en la subtraza que une 116.28,531.63 con 262.51,662.26. El contorno externo
-// queda unos píxeles por fuera y producía el desfase visual de la banda.
+// El vivo de cada manga se ancla al borde exterior del puño, no a la sisa.
+// Cada SVG contiene también una línea interior casi paralela; usarla desplaza
+// la banda hacia el torso y deja un borde visible por debajo del vivo.
 const CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES = makeOriginalSleeveTrimShapes(
   [
-    [116.28, 531.63],
-    [262.51, 662.26],
+    [110.72, 533.35],
+    [264.49, 670.72],
   ],
   [
-    [965.71, 512.68],
-    [834.8, 634.8],
+    [970.21, 515.32],
+    [834.2, 642.19],
   ],
 );
 const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
@@ -1014,12 +1013,12 @@ const ENFERMERA_STYLE_ORIGINAL_SLEEVE_TRIM_SHAPES =
 const MARIPOSA_CRUZADO_ORIGINAL_SLEEVE_TRIM_SHAPES =
   makeOriginalSleeveTrimShapes(
     [
-      [261.611, 663.952],
-      [115.381, 533.322],
+      [109.82, 535.05],
+      [263.59, 672.42],
     ],
     [
-      [969.751, 533.692],
-      [833.301, 643.882],
+      [965.25, 531.05],
+      [833.9, 636.48],
     ],
     {
       left: [13.33, -14.94],
@@ -1302,18 +1301,18 @@ const ORIGINAL_SLEEVE_TRIM_SHAPES_BY_BASE_FILE_NAME = {
   "blouse-model-39-el-hato.svg": [
     {
       points: [
-        [166.24, 605.07],
-        [6.09, 461.97],
-        [15.88, 449.35],
-        [175.78, 592.42],
+        [0, 463.86],
+        [168.42, 614.36],
+        [181.75, 599.42],
+        [13.33, 448.92],
       ],
       upper: [
-        [15.88, 449.35],
-        [175.78, 592.42],
+        [13.33, 448.92],
+        [181.75, 599.42],
       ],
       lower: [
-        [6.09, 461.97],
-        [166.24, 605.07],
+        [0, 463.86],
+        [168.42, 614.36],
       ],
     },
     {

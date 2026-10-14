@@ -20,18 +20,18 @@ describe("vivos de bolsillo de pecho", () => {
 });
 
 describe("vivos de mangas originales", () => {
-  it("ancla Cuello V al borde de puño del SVG y no al contorno exterior", () => {
+  it("ancla Cuello V al borde exterior del puño y no a la sisa", () => {
     const [left, right] = getOriginalSleeveTrimShapes(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
 
     expect(left?.lower).toEqual([
-      [116.28, 531.63],
-      [262.51, 662.26],
+      [110.72, 533.35],
+      [264.49, 670.72],
     ]);
     expect(right?.lower).toEqual([
-      [965.71, 512.68],
-      [834.8, 634.8],
+      [970.21, 515.32],
+      [834.2, 642.19],
     ]);
   });
 
@@ -39,13 +39,13 @@ describe("vivos de mangas originales", () => {
     [
       "Mariposa cruzado",
       "blouse-model-40-mariposa.svg",
-      [[261.611, 663.952], [115.381, 533.322]],
-      [[969.751, 533.692], [833.301, 643.882]],
+      [[109.82, 535.05], [263.59, 672.42]],
+      [[965.25, 531.05], [833.9, 636.48]],
     ],
     [
       "El Hato",
       "blouse-model-39-el-hato.svg",
-      [[6.09, 461.97], [166.24, 605.07]],
+      [[0, 463.86], [168.42, 614.36]],
       [[941.85, 462.31], [792.42, 582.99]],
     ],
   ])("preserva el borde de puño real en %s", (_model, fileName, leftLower, rightLower) => {
