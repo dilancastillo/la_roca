@@ -3929,6 +3929,134 @@ type OriginalSleevesTrimColors = {
   fill?: string | undefined;
 };
 
+// Estos tres cuellos femeninos tienen una silueta propia. En el laboratorio
+// visual el SVG se materializa como data URI y el borde final puede diferir
+// unos píxeles de las coordenadas históricas. Los demás modelos no necesitan
+// este ajuste: sus anclajes ya coinciden con el lienzo publicado.
+const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
+  "blouse-model-01.svg",
+  "blouse-model-39-el-hato.svg",
+  "blouse-model-40-mariposa.svg",
+]);
+
+function getPixelAlpha(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+) {
+  const roundedX = Math.round(x);
+  const roundedY = Math.round(y);
+
+  if (roundedX < 0 || roundedY < 0 || roundedX >= width || roundedY >= height) {
+    return 0;
+  }
+
+  return data[(roundedY * width + roundedX) * 4 + 3] ?? 0;
+}
+
+function offsetOriginalSleeveTrimShape(
+  shape: OriginalSleeveTrimShape,
+  offset: OriginalSleevePoint,
+): OriginalSleeveTrimShape {
+  const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
+    point[0] + offset[0],
+    point[1] + offset[1],
+  ];
+
+  return {
+    points: shape.points.map(move),
+    upper: [move(shape.upper[0]), move(shape.upper[1])],
+    lower: [move(shape.lower[0]), move(shape.lower[1])],
+  };
+}
+
+async function alignSpecialSleeveTrimsToVisibleEdge(
+  placementSrc: string,
+  anchorSrc: string,
+  shapes: readonly OriginalSleeveTrimShape[],
+) {
+  if (!DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(getFileNameFromSource(anchorSrc))) {
+    return shapes;
+  }
+
+  const processed = await getProcessedImage(placementSrc);
+  const context = processed.canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!context) {
+    return shapes;
+  }
+
+  const { width, height } = processed.canvas;
+  const pixels = context.getImageData(0, 0, width, height).data;
+
+  return shapes.map((shape) => {
+    const [lowerStart, lowerEnd] = shape.lower;
+    const [upperStart, upperEnd] = shape.upper;
+    const middleLower: OriginalSleevePoint = [
+      (lowerStart[0] + lowerEnd[0]) / 2,
+      (lowerStart[1] + lowerEnd[1]) / 2,
+    ];
+    const middleUpper: OriginalSleevePoint = [
+      (upperStart[0] + upperEnd[0]) / 2,
+      (upperStart[1] + upperEnd[1]) / 2,
+    ];
+    // "upper" apunta hacia el cuerpo; buscamos el borde exterior de la manga.
+    const outwardX = middleLower[0] - middleUpper[0];
+    const outwardY = middleLower[1] - middleUpper[1];
+    const outwardLength = Math.hypot(outwardX, outwardY);
+
+    if (outwardLength < 0.01) {
+      return shape;
+    }
+
+    const normal: OriginalSleevePoint = [
+      outwardX / outwardLength,
+      outwardY / outwardLength,
+    ];
+    let bestOffset = 0;
+    let bestScore = -1;
+
+    // La condición alfa localiza únicamente el contorno exterior: dentro de la
+    // prenda hay tinta a ambos lados, mientras que tras el puño está el fondo.
+    for (let offset = -8; offset <= 32; offset += 1) {
+      let score = 0;
+      const sampleCount = 28;
+
+      for (let index = 0; index <= sampleCount; index += 1) {
+        const ratio = index / sampleCount;
+        const x = lowerStart[0] + (lowerEnd[0] - lowerStart[0]) * ratio + normal[0] * offset;
+        const y = lowerStart[1] + (lowerEnd[1] - lowerStart[1]) * ratio + normal[1] * offset;
+        const edgeAlpha = getPixelAlpha(pixels, width, height, x, y);
+        const outsideAlpha = getPixelAlpha(
+          pixels,
+          width,
+          height,
+          x + normal[0] * 4,
+          y + normal[1] * 4,
+        );
+
+        if (edgeAlpha > 96 && outsideAlpha < 48) {
+          score += 1;
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestOffset = offset;
+      }
+    }
+
+    return bestScore > 4
+      ? offsetOriginalSleeveTrimShape(shape, [
+          normal[0] * bestOffset,
+          normal[1] * bestOffset,
+        ])
+      : shape;
+  });
+}
+
 async function getAssetToCanvasTransform(
   placementSrc: string,
 ): Promise<AssetToCanvasTransform> {
@@ -4151,8 +4279,18 @@ async function drawOriginalSleevesTrim(
   }
 
   const transform = await getAssetToCanvasTransform(placementSrc);
-  const trimShapes = getOriginalSleeveTrimShapes(placementSrc, anchorSrc);
-  const fillShapes = getOriginalSleeveFillShapes(placementSrc, anchorSrc);
+  const trimShapes = await alignSpecialSleeveTrimsToVisibleEdge(
+    placementSrc,
+    anchorSrc,
+    getOriginalSleeveTrimShapes(placementSrc, anchorSrc),
+  );
+  const fillShapes = trimColors.fill
+    ? await alignSpecialSleeveTrimsToVisibleEdge(
+        placementSrc,
+        anchorSrc,
+        getOriginalSleeveFillShapes(placementSrc, anchorSrc),
+      )
+    : trimShapes;
   context.save();
 
   if (trimColors.fill) {
