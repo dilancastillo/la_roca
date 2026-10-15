@@ -719,6 +719,68 @@ describe("renderDesignImage", () => {
     }
   }, 45_000);
 
+  it("conserva los puños femeninos al aplicar Cuello V, Mariposa Cruzado y El Hato", async () => {
+    const femaleBasePath =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+    const femaleBase = await readRawPng(
+      await renderDesignImage({
+        ...baseScene,
+        garmentAssetPath: femaleBasePath,
+        suppressGarmentBaseOutline: true,
+        lowerPocketLayout: "none",
+      }),
+    );
+    const specialFemaleNecks = [
+      "blouse-model-01.svg",
+      "blouse-model-40-mariposa.svg",
+      "blouse-model-39-el-hato.svg",
+    ] as const;
+
+    for (const fileName of specialFemaleNecks) {
+      const rendered = await readRawPng(
+        await renderDesignImage({
+          ...baseScene,
+          garmentAssetPath: femaleBasePath,
+          neckAssetPath: `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+          useStableFemaleBlouseSilhouette: true,
+          suppressGarmentBaseOutline: true,
+          lowerPocketLayout: "none",
+        }),
+      );
+
+      // Los puños viven en estas bandas laterales. Si un SVG de cuello
+      // completo se vuelve a pintar aquí, los vivos quedan desplazados hacia
+      // adentro en vez de mantenerse exactamente en el borde exterior.
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          femaleBase.data,
+          rendered.info.width,
+          { x: 0, y: 0, width: 260, height: 465 },
+        ),
+        `${fileName} left cuff`,
+      ).toBe(0);
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          femaleBase.data,
+          rendered.info.width,
+          { x: 640, y: 0, width: 260, height: 465 },
+        ),
+        `${fileName} right cuff`,
+      ).toBe(0);
+      expect(
+        countDifferentPixelsInRegion(
+          rendered.data,
+          femaleBase.data,
+          rendered.info.width,
+          { x: 300, y: 55, width: 300, height: 410 },
+        ),
+        `${fileName} neck detail`,
+      ).toBeGreaterThan(100);
+    }
+  }, 45_000);
+
   it("ancla los vivos de manga al borde real de cada SVG de Hombre", async () => {
     const maleBlouseAssetPaths = [
       "blouse-base-closed-no-collar-men.svg",

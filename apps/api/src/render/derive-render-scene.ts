@@ -57,6 +57,8 @@ export type AutomationRenderScene = {
   neckAssetPath?: string;
   /** Compatibilidad temporal para SVG históricos que no tienen arte Hombre completo. */
   useMaleBlouseSilhouette?: boolean;
+  /** Los tres cuellos dinámicos femeninos se aplican sobre la base estable. */
+  useStableFemaleBlouseSilhouette?: boolean;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
   lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind;
@@ -1119,22 +1121,32 @@ function deriveSingleAutomationRenderScene(
         selectedNeck.name,
       )
     : undefined;
-  // La API resuelve exactamente el mismo SVG masculino completo que la web.
-  // Así la imagen persistida nunca recompone una base Mujer con un cuello
-  // Hombre ni depende de recortes específicos del navegador.
-  const neckAssetPath = maleNeckAssetPath ?? catalogNeckAssetPath;
+  const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
+    (definition) => definition.replacesBaseSilhouette,
+  );
+  const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
+    (definition) => !definition.replacesBaseSilhouette,
+  );
+  const useStableFemaleBlouseSilhouette =
+    Boolean(dynamicBaseSilhouette) &&
+    !hasManGenderSelection(session, selectedValueIds) &&
+    session.graphicManifestKey.includes("blusa") &&
+    ["cuello v", "mariposa cruzado", "el hato"].includes(
+      normalize(selectedNeck?.name ?? ""),
+    );
+  // La API debe seguir exactamente la misma composición que el navegador:
+  // estos SVG femeninos son prendas completas, pero sólo su cuello central se
+  // puede superponer a la base estable. Sus mangas no entran al render final.
+  const neckAssetPath = maleNeckAssetPath ??
+    (useStableFemaleBlouseSilhouette
+      ? dynamicBaseSilhouette?.svgDataUri
+      : catalogNeckAssetPath);
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&
     (hasDynamicNeck || !neckAssetPath);
   const closedBlouseBaseAssetPath = getClosedBlouseBaseAssetPath(
     session,
     selectedValueIds,
-  );
-  const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
-    (definition) => definition.replacesBaseSilhouette,
-  );
-  const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
-    (definition) => !definition.replacesBaseSilhouette,
   );
   const useMaleBlouseSilhouette =
     hasManGenderSelection(session, selectedValueIds) &&
@@ -1143,7 +1155,7 @@ function deriveSingleAutomationRenderScene(
     // históricos. Una silueta completa del catálogo se dibuja íntegra.
     Boolean(catalogNeckAssetPath && !maleNeckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
-  const garmentAssetPath = dynamicBaseSilhouette
+  const garmentAssetPath = dynamicBaseSilhouette && !useStableFemaleBlouseSilhouette
     ? dynamicBaseSilhouette.svgDataUri
     : shouldUseClosedBlouseWithoutNeck
       ? closedBlouseBaseAssetPath
@@ -1254,6 +1266,9 @@ function deriveSingleAutomationRenderScene(
       : {}),
     ...(neckAssetPath ? { neckAssetPath } : {}),
     ...(useMaleBlouseSilhouette ? { useMaleBlouseSilhouette: true } : {}),
+    ...(useStableFemaleBlouseSilhouette
+      ? { useStableFemaleBlouseSilhouette: true }
+      : {}),
     ...(resolvedLowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }
       : {}),

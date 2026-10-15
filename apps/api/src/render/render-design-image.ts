@@ -13,8 +13,19 @@ const CANVAS_HEIGHT = 1200;
 // Debe coincidir con el canvas web: contiene los cinco cuellos habilitados
 // para Hombre y deja fuera la silueta Mujer incluida en sus SVG históricos.
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
+// Los tres modelos femeninos dinámicos incluyen prenda completa. Su ventana
+// no puede reutilizar la de Hombre porque alcanza los puños y los vuelve a
+// pintar encima de los vivos anclados al borde exterior.
+const FEMALE_DYNAMIC_NECK_DETAIL_REGION = {
+  x: 300,
+  y: 55,
+  width: 300,
+  height: 410,
+};
 const MALE_BLOUSE_SLEEVE_ANCHOR =
   "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
+const FEMALE_BLOUSE_SLEEVE_ANCHOR =
+  "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
 const TARGET_RECT = {
   x: 88,
   y: 86,
@@ -294,6 +305,10 @@ const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
 function getMaleNeckDetailRegions(source: string) {
   void source;
   return [MALE_NECK_DETAIL_REGION];
+}
+
+function getStableFemaleNeckDetailRegions() {
+  return [FEMALE_DYNAMIC_NECK_DETAIL_REGION];
 }
 
 function getMaleNeckShoulderCleanupSvg(source: string, _baseColorHex: string) {
@@ -4967,11 +4982,13 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   ];
   const baseAssetPath = scene.neckAssetPath ?? scene.garmentAssetPath;
 
-  if (scene.useMaleBlouseSilhouette) {
+  if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
     // La salida persistida parte de la silueta Hombre completa para que toda
     // la geometría exterior (mangas, sisas y costados) sea continua.
     const maleBodyBuffer = await createTintedBaseBuffer(
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg",
+      scene.useMaleBlouseSilhouette
+        ? MALE_BLOUSE_SLEEVE_ANCHOR
+        : FEMALE_BLOUSE_SLEEVE_ANCHOR,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
@@ -4986,19 +5003,27 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
     );
-    if (scene.useMaleBlouseSilhouette) {
+    if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
       // Igual que en web, solo se toma el centro del modelo histórico: allí
       // están cuello y cremallera, pero no las mangas/sisas de Mujer.
       layers.push(
-        getOverlaySvg("male-neck-detail", toDataUri(baseBuffer), [
-          ...getMaleNeckDetailRegions(baseAssetPath),
-        ]),
+        getOverlaySvg(
+          scene.useMaleBlouseSilhouette
+            ? "male-neck-detail"
+            : "female-neck-detail",
+          toDataUri(baseBuffer),
+          scene.useMaleBlouseSilhouette
+            ? getMaleNeckDetailRegions(baseAssetPath)
+            : getStableFemaleNeckDetailRegions(),
+        ),
       );
       // Replica exactamente la limpieza del canvas para que preview y PNG
       // guardado no diverjan en los tres cuellos históricos afectados.
-      layers.push(
-        getMaleNeckShoulderCleanupSvg(baseAssetPath, scene.baseColorHex),
-      );
+      if (scene.useMaleBlouseSilhouette) {
+        layers.push(
+          getMaleNeckShoulderCleanupSvg(baseAssetPath, scene.baseColorHex),
+        );
+      }
     } else {
       layers.push(
         `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
@@ -5811,6 +5836,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
 
     const sleevePlacementAssetPath = scene.useMaleBlouseSilhouette
       ? MALE_BLOUSE_SLEEVE_ANCHOR
+      : scene.useStableFemaleBlouseSilhouette
+        ? FEMALE_BLOUSE_SLEEVE_ANCHOR
       : baseAssetPath;
 
     if (hasOriginalSleevesOverlay && isBlouseScene(scene, sleevePlacementAssetPath)) {
