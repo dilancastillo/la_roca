@@ -3969,6 +3969,7 @@ const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
   "blouse-model-39-el-hato.svg",
   "blouse-model-40-mariposa.svg",
 ]);
+const EL_HATO_SLEEVE_ANCHOR_FILE_NAME = "blouse-model-39-el-hato.svg";
 
 function getPixelAlpha(
   data: Uint8ClampedArray,
@@ -4212,6 +4213,13 @@ export function getOriginalSleeveTrimShapes(
 
   const placementFileName = getFileNameFromSource(anchorSrc);
 
+  if (
+    getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
+    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+  ) {
+    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
@@ -4256,6 +4264,13 @@ function getOriginalSleeveFillShapes(
   }
 
   const placementFileName = getFileNameFromSource(anchorSrc);
+
+  if (
+    getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
+    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+  ) {
+    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;

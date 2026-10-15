@@ -33,6 +33,7 @@ const TARGET_RECT = {
   height: 980,
 };
 const CLOSED_NO_COLLAR_BASE_FILE_NAME = "blouse-base-closed-no-collar.svg";
+const EL_HATO_SLEEVE_ANCHOR_FILE_NAME = "blouse-model-39-el-hato.svg";
 const MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME =
   "blouse-base-closed-no-collar-men.svg";
 // Contrato de los SVG históricos de blusa: aquí termina la manga y comienza
@@ -4616,6 +4617,13 @@ function getOriginalSleeveTrimShapes(
 
   const placementFileName = getAssetFileName(anchorAssetPath);
 
+  if (
+    getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
+    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+  ) {
+    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
+
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
@@ -4660,6 +4668,13 @@ function getOriginalSleeveFillShapes(
   }
 
   const placementFileName = getAssetFileName(anchorAssetPath);
+
+  if (
+    getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
+    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+  ) {
+    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+  }
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;

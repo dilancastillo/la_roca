@@ -102,6 +102,22 @@ describe("vivos de mangas originales", () => {
     ]);
   });
 
+  it("usa el borde común de la base para El Hato, sin proyectar el vivo fuera del puño", () => {
+    const [left, right] = getOriginalSleeveTrimShapes(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
+    );
+
+    expect(left?.lower).toEqual([
+      [118.39, 515.53],
+      [269.91, 653.14],
+    ]);
+    expect(right?.lower).toEqual([
+      [966.37, 514.83],
+      [825.74, 624.56],
+    ]);
+  });
+
   it.each([
     [
       "Mariposa cruzado",
