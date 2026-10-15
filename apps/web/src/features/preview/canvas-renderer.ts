@@ -3966,7 +3966,6 @@ type OriginalSleevesTrimColors = {
 // este ajuste: sus anclajes ya coinciden con el lienzo publicado.
 const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
   "blouse-model-01.svg",
-  "blouse-model-39-el-hato.svg",
   "blouse-model-40-mariposa.svg",
 ]);
 const EL_HATO_SLEEVE_ANCHOR_FILE_NAME = "blouse-model-39-el-hato.svg";
