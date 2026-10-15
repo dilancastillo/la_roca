@@ -11,6 +11,7 @@ import { AttributeSection } from "../features/configurator/components/attribute-
 import { LogoUploadSection } from "../features/configurator/components/logo-upload-section";
 import { useConfiguratorSession } from "../features/configurator/hooks/use-configurator-session";
 import {
+  applyLowerPocketZipperDefaultSelection,
   applyBootMeasurementSelections,
   applyDefaultTextStyleSelections,
   computeDisabledValueIds,
@@ -92,17 +93,44 @@ function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
   return label.includes("logo") || (label.includes("seccion") && label.includes("vivo"));
 }
 
+function isNeckModelGroup(group: UiAttributeGroup) {
+  return normalizeText(group.label).includes("modelo de cuello");
+}
+
+function isLowerPocketModelGroup(group: UiAttributeGroup) {
+  return normalizeText(group.label).includes("modelo bolsillo inferior");
+}
+
 function isGroupComplete(
   group: UiAttributeGroup,
   selectedValueIds: Record<string, number[]>,
 ) {
+  const selectedIds = selectedValueIds[String(group.attributeId)] ?? [];
+
+  if (isNeckModelGroup(group)) {
+    return selectedIds.some((id) => {
+      const selectedOption = group.options.find((option) => option.id === id);
+      return selectedOption && normalizeText(selectedOption.name) !== "ninguno";
+    });
+  }
+
+  if (isLowerPocketModelGroup(group)) {
+    return selectedIds.some((id) => {
+      const selectedOption = group.options.find((option) => option.id === id);
+      return (
+        selectedOption &&
+        normalizeText(selectedOption.name) !== "sin seleccion"
+      );
+    });
+  }
+
   return (
     isOptionalMultipleSelectionGroup(group) ||
-    (selectedValueIds[String(group.attributeId)] ?? []).length > 0
+    selectedIds.length > 0
   );
 }
 
-function getMissingRequiredSelectionGroups(
+export function getMissingRequiredSelectionGroups(
   groups: UiAttributeGroup[],
   selectedValueIds: Record<string, number[]>,
 ) {
@@ -727,15 +755,24 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
   }
 
   function handleSingleSelect(attributeId: number, valueId: number) {
+    // A validation message can refer to a field that becomes hidden by this
+    // selection (for example, zipper options after choosing "No"). Do not
+    // leave that stale message on screen while the new state is being used.
+    setSaveError(null);
     setLastEditedAttributeId(attributeId);
     setIsLogoUploadActive(false);
     const nextSelectedValueIds = {
       ...state.selectedValueIds,
       [String(attributeId)]: [valueId],
     };
-    const sanitizedSelectedValueIds = synchronizeTextAttributeSelections(
+    const selectedWithZipperDefault = applyLowerPocketZipperDefaultSelection(
       session,
       nextSelectedValueIds,
+      attributeId,
+    );
+    const sanitizedSelectedValueIds = synchronizeTextAttributeSelections(
+      session,
+      selectedWithZipperDefault,
       valueId,
     );
 
@@ -747,6 +784,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
   }
 
   function handleMultiToggle(attributeId: number, valueId: number) {
+    setSaveError(null);
     setLastEditedAttributeId(attributeId);
     setIsLogoUploadActive(false);
     const key = String(attributeId);
@@ -875,7 +913,9 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 0);
       setSaveError(
-        `Selecciona un valor para "${firstMissingGroup.label}" o elige "Ninguno" antes de guardar.`,
+        isNeckModelGroup(firstMissingGroup)
+          ? "Selecciona un modelo de cuello antes de guardar."
+          : `Selecciona un valor para "${firstMissingGroup.label}" o elige "Ninguno" antes de guardar.`,
       );
       return;
     }

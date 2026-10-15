@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyBootMeasurementSelections,
   applyDefaultTextStyleSelections,
+  applyLowerPocketZipperDefaultSelection,
   deriveConfiguratorUi,
   sanitizeSelectedValueIdsForHiddenTextAttributes,
 } from "./derive-configurator-ui";
@@ -5347,6 +5348,16 @@ describe("deriveConfiguratorUi", () => {
       "Opciones de cremallera",
     );
     expect(
+      applyLowerPocketZipperDefaultSelection(
+        sessionWithZipperOptions,
+        {
+          ...session.selectedValueIds,
+          [String(toggleAttributeId)]: [12202],
+        },
+        toggleAttributeId,
+      )[String(optionsAttributeId)],
+    ).toEqual([12204]);
+    expect(
       sanitizeSelectedValueIdsForHiddenTextAttributes(
         sessionWithZipperOptions,
         selectedWithNo,
@@ -6302,5 +6313,41 @@ describe("deriveConfiguratorUi", () => {
         renamedTrimSession.selectedValueIds,
       ).previewScene.trimSections[0]?.key,
     ).toBe("bolsillo lateral de pantalon");
+  });
+
+  it("oculta la cremallera lateral invisible fijada en No por Odoo", () => {
+    const invisibleZipperAttributeId = 99001;
+    const sessionWithFixedInvisibleZipper: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: invisibleZipperAttributeId,
+          name: "Cremallera lateral invisible",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 99002,
+              name: "No",
+              attributeId: invisibleZipperAttributeId,
+              attributeName: "Cremallera lateral invisible",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        [String(invisibleZipperAttributeId)]: [99002],
+      },
+    };
+
+    expect(
+      deriveConfiguratorUi(
+        sessionWithFixedInvisibleZipper,
+        sessionWithFixedInvisibleZipper.selectedValueIds,
+      ).groups.map((group) => group.attributeId),
+    ).not.toContain(invisibleZipperAttributeId);
   });
 });

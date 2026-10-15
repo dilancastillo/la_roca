@@ -1392,6 +1392,54 @@ function getHiddenLowerPocketZipperOptionAttributeIds(
   return hiddenAttributeIds;
 }
 
+export function applyLowerPocketZipperDefaultSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+  changedAttributeId: number,
+) {
+  const toggleAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketZipper,
+    (name) =>
+      normalizedIncludesAll(name, [
+        "bolsillos",
+        "inferiores",
+        "cremallera",
+      ]) && !name.includes("opciones"),
+  );
+
+  if (toggleAttribute?.id !== changedAttributeId) {
+    return selectedValueIds;
+  }
+
+  const zipperIsEnabled = getSelectedOptions(
+    toggleAttribute,
+    selectedValueIds,
+  ).some((value) => isYesTextToggleValue(value));
+
+  if (!zipperIsEnabled) {
+    return selectedValueIds;
+  }
+
+  const optionsAttribute = session.attributes.find(
+    (attribute) => normalize(attribute.name) === "opciones de cremallera",
+  );
+  const firstOption = optionsAttribute?.values[0];
+
+  if (
+    !optionsAttribute ||
+    !firstOption ||
+    (selectedValueIds[String(optionsAttribute.id)] ?? []).length > 0
+  ) {
+    return selectedValueIds;
+  }
+
+  return {
+    ...selectedValueIds,
+    [String(optionsAttribute.id)]: [firstOption.id],
+  };
+}
+
 function getHiddenLowerPocketDependentAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1686,6 +1734,40 @@ function getHiddenBootZipperAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenFixedInvisibleSideZipperAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+
+  for (const attribute of session.attributes) {
+    const normalizedName = normalize(attribute.name);
+    const isInvisibleSideZipper =
+      normalizedName.includes("cremallera") &&
+      normalizedName.includes("lateral") &&
+      normalizedName.includes("invisible");
+
+    if (!isInvisibleSideZipper) {
+      continue;
+    }
+
+    const selectedOptions = getSelectedOptions(attribute, selectedValueIds);
+    const isFixedToNo =
+      selectedOptions.length > 0 &&
+      selectedOptions.every((value) => normalize(value.name) === "no") &&
+      !attribute.values.some((value) => isYesTextToggleValue(value));
+
+    // Odoo entrega algunos pedidos con este valor fijo en "No" y sin una
+    // alternativa seleccionable. No representa una decisión de diseño, por
+    // lo que no debe ocupar un paso del configurador.
+    if (isFixedToNo) {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenConditionalAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1704,6 +1786,10 @@ function getHiddenConditionalAttributeIds(
       selectedValueIds,
     ),
     ...getHiddenBootZipperAttributeIds(session, selectedValueIds),
+    ...getHiddenFixedInvisibleSideZipperAttributeIds(
+      session,
+      selectedValueIds,
+    ),
   ]);
 }
 
