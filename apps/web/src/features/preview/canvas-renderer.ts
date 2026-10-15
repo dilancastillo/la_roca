@@ -305,7 +305,12 @@ export function getStableFemaleNeckDetailRegions(): OverlayRegion[] {
 }
 
 export function getSleeveAnchorSrc(
-  scene: Pick<PreviewScene, "useMaleBlouseSilhouette" | "sleeveAnchorSrc">,
+  scene: Pick<
+    PreviewScene,
+    | "useMaleBlouseSilhouette"
+    | "useStableFemaleBlouseSilhouette"
+    | "sleeveAnchorSrc"
+  >,
   sleevePlacementSrc: string,
 ) {
   return scene.useMaleBlouseSilhouette
