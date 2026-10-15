@@ -3960,12 +3960,13 @@ type OriginalSleevesTrimColors = {
   fill?: string | undefined;
 };
 
-// Estos tres cuellos femeninos tienen una silueta propia. En el laboratorio
+// Estos cuellos femeninos tienen una silueta propia. En el laboratorio
 // visual el SVG se materializa como data URI y el borde final puede diferir
 // unos píxeles de las coordenadas históricas. Los demás modelos no necesitan
 // este ajuste: sus anclajes ya coinciden con el lienzo publicado.
 const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
   "blouse-model-01.svg",
+  "blouse-model-04.svg",
   "blouse-model-40-mariposa.svg",
 ]);
 const EL_HATO_SLEEVE_ANCHOR_FILE_NAME = "blouse-model-39-el-hato.svg";

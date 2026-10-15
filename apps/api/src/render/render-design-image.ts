@@ -4367,6 +4367,136 @@ type OriginalSleevesTrimColors = {
   fill?: string | undefined;
 };
 
+// Estas bases femeninas se componen sobre la silueta estable. Sus puntos
+// históricos necesitan ajustarse al borde con tinta realmente visible antes
+// de dibujar los vivos de los puños.
+const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
+  "blouse-model-01.svg",
+  "blouse-model-04.svg",
+  "blouse-model-40-mariposa.svg",
+]);
+
+function getPixelAlpha(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+) {
+  const roundedX = Math.round(x);
+  const roundedY = Math.round(y);
+
+  if (
+    roundedX < 0 ||
+    roundedY < 0 ||
+    roundedX >= width ||
+    roundedY >= height
+  ) {
+    return 0;
+  }
+
+  return data[(roundedY * width + roundedX) * 4 + 3] ?? 0;
+}
+
+function offsetOriginalSleeveTrimShape(
+  shape: OriginalSleeveTrimShape,
+  offset: OriginalSleevePoint,
+): OriginalSleeveTrimShape {
+  const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
+    point[0] + offset[0],
+    point[1] + offset[1],
+  ];
+
+  return {
+    points: shape.points.map(move),
+    upper: [move(shape.upper[0]), move(shape.upper[1])],
+    lower: [move(shape.lower[0]), move(shape.lower[1])],
+  };
+}
+
+function alignSpecialSleeveTrimsToVisibleEdge(
+  processed: ProcessedImage,
+  anchorAssetPath: string,
+  shapes: readonly OriginalSleeveTrimShape[],
+) {
+  if (
+    !DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(
+      getAssetFileName(anchorAssetPath),
+    )
+  ) {
+    return shapes;
+  }
+
+  const { width, height, data } = processed;
+
+  return shapes.map((shape) => {
+    const [lowerStart, lowerEnd] = shape.lower;
+    const [upperStart, upperEnd] = shape.upper;
+    const middleLower: OriginalSleevePoint = [
+      (lowerStart[0] + lowerEnd[0]) / 2,
+      (lowerStart[1] + lowerEnd[1]) / 2,
+    ];
+    const middleUpper: OriginalSleevePoint = [
+      (upperStart[0] + upperEnd[0]) / 2,
+      (upperStart[1] + upperEnd[1]) / 2,
+    ];
+    const outwardX = middleLower[0] - middleUpper[0];
+    const outwardY = middleLower[1] - middleUpper[1];
+    const outwardLength = Math.hypot(outwardX, outwardY);
+
+    if (outwardLength < 0.01) {
+      return shape;
+    }
+
+    const normal: OriginalSleevePoint = [
+      outwardX / outwardLength,
+      outwardY / outwardLength,
+    ];
+    let bestOffset = 0;
+    let bestScore = -1;
+
+    for (let offset = -8; offset <= 32; offset += 1) {
+      let score = 0;
+
+      for (let index = 0; index <= 28; index += 1) {
+        const ratio = index / 28;
+        const x =
+          lowerStart[0] +
+          (lowerEnd[0] - lowerStart[0]) * ratio +
+          normal[0] * offset;
+        const y =
+          lowerStart[1] +
+          (lowerEnd[1] - lowerStart[1]) * ratio +
+          normal[1] * offset;
+        const edgeAlpha = getPixelAlpha(data, width, height, x, y);
+        const outsideAlpha = getPixelAlpha(
+          data,
+          width,
+          height,
+          x + normal[0] * 4,
+          y + normal[1] * 4,
+        );
+
+        if (edgeAlpha > 96 && outsideAlpha < 48) {
+          score += 1;
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestOffset = offset;
+      }
+    }
+
+    return bestScore > 4
+      ? offsetOriginalSleeveTrimShape(shape, [
+          normal[0] * bestOffset,
+          normal[1] * bestOffset,
+        ])
+      : shape;
+  });
+}
+
 function getAssetToCanvasTransformFromProcessed(
   processed: ProcessedImage,
   assetPath: string,
@@ -4732,17 +4862,20 @@ async function getOriginalSleevesTrimSvg(
     return "";
   }
 
+  const processed = await loadProcessedImage(placementAssetPath);
   const transform = getAssetToCanvasTransformFromProcessed(
-    await loadProcessedImage(placementAssetPath),
+    processed,
     placementAssetPath,
   );
-  const trimShapes = getOriginalSleeveTrimShapes(
-    placementAssetPath,
+  const trimShapes = alignSpecialSleeveTrimsToVisibleEdge(
+    processed,
     anchorAssetPath,
+    getOriginalSleeveTrimShapes(placementAssetPath, anchorAssetPath),
   );
-  const fillShapes = getOriginalSleeveFillShapes(
-    placementAssetPath,
+  const fillShapes = alignSpecialSleeveTrimsToVisibleEdge(
+    processed,
     anchorAssetPath,
+    getOriginalSleeveFillShapes(placementAssetPath, anchorAssetPath),
   );
   const layers: string[] = [];
 

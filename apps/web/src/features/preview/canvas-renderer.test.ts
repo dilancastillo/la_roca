@@ -48,6 +48,7 @@ describe("vivos de mangas originales", () => {
 
   it.each([
     "blouse-model-01.svg",
+    "blouse-model-04.svg",
     "blouse-model-40-mariposa.svg",
     "blouse-model-39-el-hato.svg",
   ])("deja ambos vivos de %s sobre el extremo exterior de cada puño", (fileName) => {
