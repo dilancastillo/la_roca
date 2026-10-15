@@ -4606,12 +4606,15 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
   return assetPaths.some(isOriginalSleevesDetailAsset);
 }
 
-function getOriginalSleeveTrimShapes(placementAssetPath: string) {
-  if (usesMaleBlouseCoordinateSystem(placementAssetPath)) {
-    return getMaleOriginalSleeveTrimShapes(placementAssetPath);
+function getOriginalSleeveTrimShapes(
+  placementAssetPath: string,
+  anchorAssetPath = placementAssetPath,
+) {
+  if (usesMaleBlouseCoordinateSystem(anchorAssetPath)) {
+    return getMaleOriginalSleeveTrimShapes(anchorAssetPath);
   }
 
-  const placementFileName = getAssetFileName(placementAssetPath);
+  const placementFileName = getAssetFileName(anchorAssetPath);
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;
@@ -4648,12 +4651,15 @@ function getOriginalSleeveTrimShapes(placementAssetPath: string) {
   );
 }
 
-function getOriginalSleeveFillShapes(placementAssetPath: string) {
-  if (usesMaleBlouseCoordinateSystem(placementAssetPath)) {
-    return getMaleOriginalSleeveTrimShapes(placementAssetPath);
+function getOriginalSleeveFillShapes(
+  placementAssetPath: string,
+  anchorAssetPath = placementAssetPath,
+) {
+  if (usesMaleBlouseCoordinateSystem(anchorAssetPath)) {
+    return getMaleOriginalSleeveTrimShapes(anchorAssetPath);
   }
 
-  const placementFileName = getAssetFileName(placementAssetPath);
+  const placementFileName = getAssetFileName(anchorAssetPath);
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
     return PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES;
@@ -4679,7 +4685,7 @@ function getOriginalSleeveFillShapes(placementAssetPath: string) {
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  return getOriginalSleeveTrimShapes(placementAssetPath);
+  return getOriginalSleeveTrimShapes(placementAssetPath, anchorAssetPath);
 }
 
 function resolveGarmentDetailOverlayAssetPath(
@@ -4705,6 +4711,7 @@ function resolveGarmentDetailOverlayAssetPath(
 async function getOriginalSleevesTrimSvg(
   placementAssetPath: string,
   trimColors: OriginalSleevesTrimColors,
+  anchorAssetPath = placementAssetPath,
 ) {
   if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
     return "";
@@ -4714,8 +4721,14 @@ async function getOriginalSleevesTrimSvg(
     await loadProcessedImage(placementAssetPath),
     placementAssetPath,
   );
-  const trimShapes = getOriginalSleeveTrimShapes(placementAssetPath);
-  const fillShapes = getOriginalSleeveFillShapes(placementAssetPath);
+  const trimShapes = getOriginalSleeveTrimShapes(
+    placementAssetPath,
+    anchorAssetPath,
+  );
+  const fillShapes = getOriginalSleeveFillShapes(
+    placementAssetPath,
+    anchorAssetPath,
+  );
   const layers: string[] = [];
 
   const fillTrimColor = trimColors.fill;
@@ -5839,14 +5852,21 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       : scene.useStableFemaleBlouseSilhouette
         ? FEMALE_BLOUSE_SLEEVE_ANCHOR
       : baseAssetPath;
+    const sleeveAnchorAssetPath = scene.useMaleBlouseSilhouette
+      ? MALE_BLOUSE_SLEEVE_ANCHOR
+      : scene.sleeveAnchorAssetPath ?? sleevePlacementAssetPath;
 
     if (hasOriginalSleevesOverlay && isBlouseScene(scene, sleevePlacementAssetPath)) {
       layers.push(
-        await getOriginalSleevesTrimSvg(sleevePlacementAssetPath, {
-          upper: sleeveUpperTrimColor,
-          lower: sleeveLowerTrimColor,
-          fill: sleeveFillTrimColor,
-        }),
+        await getOriginalSleevesTrimSvg(
+          sleevePlacementAssetPath,
+          {
+            upper: sleeveUpperTrimColor,
+            lower: sleeveLowerTrimColor,
+            fill: sleeveFillTrimColor,
+          },
+          sleeveAnchorAssetPath,
+        ),
       );
     }
 

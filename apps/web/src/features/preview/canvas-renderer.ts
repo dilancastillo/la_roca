@@ -304,6 +304,15 @@ export function getStableFemaleNeckDetailRegions(): OverlayRegion[] {
   return [FEMALE_DYNAMIC_NECK_DETAIL_REGION];
 }
 
+export function getSleeveAnchorSrc(
+  scene: Pick<PreviewScene, "useMaleBlouseSilhouette" | "sleeveAnchorSrc">,
+  sleevePlacementSrc: string,
+) {
+  return scene.useMaleBlouseSilhouette
+    ? MALE_BLOUSE_SLEEVE_ANCHOR
+    : scene.sleeveAnchorSrc ?? sleevePlacementSrc;
+}
+
 function cleanMaleNeckShoulderArtifacts(
   context: CanvasRenderingContext2D,
   source: string,
@@ -5739,11 +5748,7 @@ async function composeSingleDesign(
       : scene.useStableFemaleBlouseSilhouette
         ? FEMALE_BLOUSE_SLEEVE_ANCHOR
         : baseAssetSrc;
-    const sleeveAnchorSrc = scene.useMaleBlouseSilhouette
-      ? MALE_BLOUSE_SLEEVE_ANCHOR
-      : scene.useStableFemaleBlouseSilhouette
-        ? FEMALE_BLOUSE_SLEEVE_ANCHOR
-        : scene.sleeveAnchorSrc ?? sleevePlacementSrc;
+    const sleeveAnchorSrc = getSleeveAnchorSrc(scene, sleevePlacementSrc);
 
     if (hasOriginalSleevesOverlay && isBlouseScene(scene, sleevePlacementSrc)) {
       await drawOriginalSleevesTrim(context, sleevePlacementSrc, {

@@ -44,6 +44,11 @@ export type AutomationRenderScene = {
     pants: AutomationRenderScene;
   };
   garmentAssetPath?: string;
+  /**
+   * Identidad del cuello elegida para resolver la geometría de los puños
+   * cuando la prenda se dibuja sobre una silueta base estable.
+   */
+  sleeveAnchorAssetPath?: string;
   suppressGarmentBaseOutline?: boolean;
   garmentDetailAssetPath?: string;
   garmentDetailAssetPaths?: string[];
@@ -1111,8 +1116,11 @@ function deriveSingleAutomationRenderScene(
   const hasDynamicNeck = dynamicVisualSlots.has("neck");
   const hasDynamicLowerPocket = dynamicVisualSlots.has("lower_pocket");
   const hasDynamicBoot = dynamicVisualSlots.has("boot");
-  const catalogNeckAssetPath = !hasDynamicNeck && selectedNeck
+  const selectedNeckAssetPath = selectedNeck
     ? getAssetPath(session, neckAttribute!, selectedNeck)
+    : undefined;
+  const catalogNeckAssetPath = !hasDynamicNeck
+    ? selectedNeckAssetPath
     : undefined;
   const maleNeckAssetPath = selectedNeck && hasManGenderSelection(session, selectedValueIds)
     ? getMenBlouseNeckAssetPath(
@@ -1127,13 +1135,14 @@ function deriveSingleAutomationRenderScene(
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
-  const useStableFemaleBlouseSilhouette =
-    Boolean(dynamicBaseSilhouette) &&
+  const isSpecialFemaleSleeveAnchor =
     !hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
     ["cuello v", "mariposa cruzado", "el hato"].includes(
       normalize(selectedNeck?.name ?? ""),
     );
+  const useStableFemaleBlouseSilhouette =
+    Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
   // La API debe seguir exactamente la misma composición que el navegador:
   // estos SVG femeninos son prendas completas, pero sólo su cuello central se
   // puede superponer a la base estable. Sus mangas no entran al render final.
@@ -1246,6 +1255,9 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
+    ...((dynamicBaseSilhouette || isSpecialFemaleSleeveAnchor) && selectedNeckAssetPath
+      ? { sleeveAnchorAssetPath: selectedNeckAssetPath }
+      : {}),
     ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
     ...(garmentDetailAssetPaths.length > 0 ? { garmentDetailAssetPaths } : {}),

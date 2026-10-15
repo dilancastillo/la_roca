@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getStableFemaleNeckDetailRegions,
+  getSleeveAnchorSrc,
   getChestPocketSectionTrimOverlays,
   getOriginalSleeveTrimShapes,
 } from "./canvas-renderer";
@@ -21,6 +22,21 @@ describe("vivos de bolsillo de pecho", () => {
 });
 
 describe("vivos de mangas originales", () => {
+  it("conserva el ancla de cuello femenino al componer sobre la base estable", () => {
+    const cuelloV =
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+
+    expect(
+      getSleeveAnchorSrc(
+        {
+          useStableFemaleBlouseSilhouette: true,
+          sleeveAnchorSrc: cuelloV,
+        },
+        "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+      ),
+    ).toBe(cuelloV);
+  });
+
   it("recorta los tres cuellos dinámicos femeninos sin alcanzar sus puños", () => {
     // Los extremos interiores de los puños llegan aproximadamente a x=265 y
     // x=635 en el lienzo. La región exclusiva de cuello deja margen a ambos

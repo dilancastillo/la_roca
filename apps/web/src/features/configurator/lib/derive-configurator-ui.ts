@@ -2132,13 +2132,14 @@ function deriveSingleConfiguratorUi(
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
-  const usesStableFemaleBlouseSilhouette =
-    Boolean(dynamicBaseSilhouette) &&
+  const isSpecialFemaleSleeveAnchor =
     !hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
     ["cuello v", "mariposa cruzado", "el hato"].includes(
       normalize(selectedNeck?.name ?? ""),
     );
+  const usesStableFemaleBlouseSilhouette =
+    Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
   // Igual que Hombre, estas tres siluetas especiales conservan una base de
   // blusa estable y aplican solamente su cuello dinámico. Así sus vivos no
   // heredan los polígonos de manga desplazados que vienen en el SVG completo.
@@ -2262,7 +2263,7 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
-      ...(dynamicBaseSilhouette && selectedNeckAssetSrc
+      ...((dynamicBaseSilhouette || isSpecialFemaleSleeveAnchor) && selectedNeckAssetSrc
         ? { sleeveAnchorSrc: selectedNeckAssetSrc }
         : {}),
       ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),

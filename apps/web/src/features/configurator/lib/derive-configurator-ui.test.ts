@@ -4237,6 +4237,55 @@ describe("deriveConfiguratorUi", () => {
     ]);
   });
 
+  it("conserva el activo de CUELLO V como ancla de puños aunque el catálogo lo entregue como overlay", () => {
+    const dynamicCuelloVSession: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 63
+          ? {
+              ...attribute,
+              values: attribute.values.map((value) =>
+                value.id === 2590 ? { ...value, name: "CUELLO V" } : value,
+              ),
+            }
+          : attribute,
+      ),
+      visualDefinitions: [
+        {
+          id: "f1495e0b-40b2-45f8-8c0e-56e46870e3cd",
+          seriesId: "b8b04e1e-3a4f-466c-a899-3d6cfb31c9f7",
+          version: 19,
+          displayName: "CUELLO V",
+          slot: "neck",
+          layer: "component",
+          binding: {
+            productTemplateIds: [6],
+            attributeId: 63,
+            valueId: 2590,
+            attributeName: "Modelo de cuello",
+            valueName: "CUELLO V",
+          },
+          activationConditions: [],
+          selectedElementIds: [],
+          elementPaints: {},
+          // Sin replace-base: reproduce exactamente el caso del laboratorio
+          // donde el cuello llega como componente y no como silueta completa.
+          runtimeSvg:
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
+        },
+      ],
+    };
+
+    const ui = deriveConfiguratorUi(dynamicCuelloVSession, {
+      ...dynamicCuelloVSession.selectedValueIds,
+      "63": [2590],
+    });
+
+    expect(ui.previewScene.sleeveAnchorSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+  });
+
   it("carga JDC con vivos lineales, completos interiores y cogotera recta", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,
