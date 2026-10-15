@@ -6,7 +6,7 @@ import { LogoUploadSection } from "./logo-upload-section";
 
 function createProps() {
   return {
-    placementLabel: "Pecho izquierdo",
+    placements: [{ valueId: 572, label: "Pecho izquierdo" }],
     accept: "image/png,image/jpeg",
     expanded: true,
     onExpandToggle: vi.fn(),
@@ -24,12 +24,12 @@ describe("LogoUploadSection", () => {
     const props = createProps();
     render(<LogoUploadSection {...props} isActive />);
 
-    expect(screen.getByText("Imagen de logo")).toBeTruthy();
-    expect(screen.getByText("Pendiente de cargar")).toBeTruthy();
+    expect(screen.getByText("Imágenes de logo")).toBeTruthy();
+    expect(screen.getByText("0/1 imágenes cargadas")).toBeTruthy();
     expect(screen.getByText(/pecho izquierdo/i)).toBeTruthy();
     expect(screen.getByText("Editando")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /imagen de logo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /imágenes de logo/i }));
     expect(props.onExpandToggle).toHaveBeenCalledOnce();
   });
 
@@ -38,19 +38,25 @@ describe("LogoUploadSection", () => {
     render(
       <LogoUploadSection
         {...props}
-        attachmentFilename="logo-cliente.png"
+        placements={[
+          {
+            valueId: 572,
+            label: "Pecho izquierdo",
+            attachmentFilename: "logo-cliente.png",
+          },
+        ]}
       />,
     );
 
     expect(screen.getAllByText("logo-cliente.png").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
-    expect(props.onRemove).toHaveBeenCalledOnce();
+    expect(props.onRemove).toHaveBeenCalledWith(572);
   });
 
   it("oculta el cuerpo al contraerse", () => {
     render(<LogoUploadSection {...createProps()} expanded={false} />);
 
-    expect(screen.queryByText(/adjunta la imagen/i)).toBeNull();
+    expect(screen.queryByText(/carga una imagen independiente/i)).toBeNull();
     expect(screen.queryByText(/obligatorio para poder guardar/i)).toBeNull();
   });
 });
