@@ -11,6 +11,17 @@ const CANVAS_HEIGHT = 1200;
 // lienzo. Recortar el SVG histórico a esta zona conserva cuello y cremallera,
 // pero excluye mangas, sisas y torso de la silueta Mujer que trae embebidos.
 const MALE_NECK_DETAIL_REGION = { x: 250, y: 0, width: 400, height: 550 };
+// Los tres cuellos femeninos dinámicos son SVG de prenda completa. A
+// diferencia de Hombre, sus puños están dentro de la ventana superior amplia
+// (x:250–650) y por eso esa región volvía a pintar vivos de manga propios.
+// Esta ventana contiene sólo cuello y pechera central; los puños quedan a
+// cargo de la silueta femenina estable y de drawOriginalSleevesTrim.
+const FEMALE_DYNAMIC_NECK_DETAIL_REGION = {
+  x: 300,
+  y: 55,
+  width: 300,
+  height: 410,
+};
 const MALE_BLOUSE_SLEEVE_ANCHOR =
   "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar-men.svg";
 const FEMALE_BLOUSE_SLEEVE_ANCHOR =
@@ -287,6 +298,10 @@ const trimRegionPresets: Record<"collar", OverlayRegion[]> = {
 
 function getMaleNeckDetailRegions(_source: string): OverlayRegion[] {
   return [MALE_NECK_DETAIL_REGION];
+}
+
+export function getStableFemaleNeckDetailRegions(): OverlayRegion[] {
+  return [FEMALE_DYNAMIC_NECK_DETAIL_REGION];
 }
 
 function cleanMaleNeckShoulderArtifacts(
@@ -5264,7 +5279,9 @@ async function composeSingleDesign(
       drawCanvasInRegions(
         context,
         baseCanvas,
-        getMaleNeckDetailRegions(baseAssetSrc),
+        scene.useMaleBlouseSilhouette
+          ? getMaleNeckDetailRegions(baseAssetSrc)
+          : getStableFemaleNeckDetailRegions(),
       );
       // Tres SVG históricos guardan pequeños trazos internos de hombro junto
       // al cuello. Se limpian después del recorte sin tocar el contorno Hombre.

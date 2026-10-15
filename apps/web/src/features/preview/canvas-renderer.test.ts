@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getStableFemaleNeckDetailRegions,
   getChestPocketSectionTrimOverlays,
   getOriginalSleeveTrimShapes,
 } from "./canvas-renderer";
@@ -20,6 +21,40 @@ describe("vivos de bolsillo de pecho", () => {
 });
 
 describe("vivos de mangas originales", () => {
+  it("recorta los tres cuellos dinámicos femeninos sin alcanzar sus puños", () => {
+    // Los extremos interiores de los puños llegan aproximadamente a x=265 y
+    // x=635 en el lienzo. La región exclusiva de cuello deja margen a ambos
+    // lados y evita que el SVG completo vuelva a sobrepintarlos.
+    expect(getStableFemaleNeckDetailRegions()).toEqual([
+      { x: 300, y: 55, width: 300, height: 410 },
+    ]);
+  });
+
+  it.each([
+    "blouse-model-01.svg",
+    "blouse-model-40-mariposa.svg",
+    "blouse-model-39-el-hato.svg",
+  ])("deja ambos vivos de %s sobre el extremo exterior de cada puño", (fileName) => {
+    const [left, right] = getOriginalSleeveTrimShapes(
+      `/assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+    );
+
+    expect(left).toBeDefined();
+    expect(right).toBeDefined();
+
+    // El borde lower es el que se pinta en el extremo del puño. En la manga
+    // izquierda debe quedar hacia fuera (menor X); en la derecha, hacia fuera
+    // (mayor X). En ambas baja respecto a la arista interior del cuerpo.
+    expect(left!.lower[0][0]).toBeLessThan(left!.upper[0][0]);
+    expect(left!.lower[1][0]).toBeLessThan(left!.upper[1][0]);
+    expect(right!.lower[0][0]).toBeGreaterThan(right!.upper[0][0]);
+    expect(right!.lower[1][0]).toBeGreaterThan(right!.upper[1][0]);
+    expect(left!.lower[0][1]).toBeGreaterThan(left!.upper[0][1]);
+    expect(left!.lower[1][1]).toBeGreaterThan(left!.upper[1][1]);
+    expect(right!.lower[0][1]).toBeGreaterThan(right!.upper[0][1]);
+    expect(right!.lower[1][1]).toBeGreaterThan(right!.upper[1][1]);
+  });
+
   it("ancla Cuello V al borde exterior del puño y no a la sisa", () => {
     const [left, right] = getOriginalSleeveTrimShapes(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
