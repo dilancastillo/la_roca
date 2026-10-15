@@ -5068,6 +5068,7 @@ describe("deriveConfiguratorUi", () => {
       attributeId: 120,
       valueIds: [7001],
       label: "Bolsillo de pecho izquierdo",
+      placements: [{ valueId: 7001, label: "Bolsillo de pecho izquierdo" }],
     });
     expect(ui.previewScene.logoMarker).toEqual({
       placement: "Bolsillo de pecho izquierdo",

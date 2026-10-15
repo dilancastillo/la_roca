@@ -124,21 +124,18 @@ function isOptionalUnselectedAttribute(
   );
 }
 
-function hasSelectedLogo(
+function getSelectedLogoValueIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
-  const logoAttributes = session.attributes.filter((attribute) =>
-    isLogoAttributeName(attribute.name),
-  );
-
-  return logoAttributes.some((attribute) => {
-    const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
-
-    return attribute.values.some(
-      (value) => selected.has(value.id) && !isNoLogoValueName(value.name),
-    );
-  });
+  return session.attributes
+    .filter((attribute) => isLogoAttributeName(attribute.name))
+    .flatMap((attribute) => {
+      const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
+      return attribute.values
+        .filter((value) => selected.has(value.id) && !isNoLogoValueName(value.name))
+        .map((value) => value.id);
+    });
 }
 
 function validateSelections(
@@ -315,7 +312,11 @@ export async function saveConfiguratorDesign(
     throw new Error(validationErrors[0]);
   }
 
-  if (hasSelectedLogo(session, selectedValueIds) && !payload.logoAttachment) {
+  const selectedLogoValueIds = getSelectedLogoValueIds(session, selectedValueIds);
+  const uploadedLogoValueIds = new Set(
+    (payload.logoAttachments ?? []).map((attachment) => attachment.placementValueId),
+  );
+  if (selectedLogoValueIds.some((valueId) => !uploadedLogoValueIds.has(valueId))) {
     throw new Error(
       "La prenda tiene logo seleccionado. Carga la imagen del logo antes de guardar.",
     );
@@ -371,12 +372,13 @@ export async function saveConfiguratorDesign(
     }),
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
-  const logoImageLineValues = payload.logoAttachment
+  const primaryLogoLineValues = payload.logoAttachments?.[0]
     ? {
-        [LOGO_IMAGE_FIELD]: stripDataUrlPrefix(payload.logoAttachment.dataBase64),
+        [LOGO_IMAGE_FIELD]: stripDataUrlPrefix(
+          payload.logoAttachments[0].dataBase64,
+        ),
       }
     : {};
-
   const attachmentId = await createDesignImageAttachment(
     env,
     designImageInput,
@@ -403,13 +405,28 @@ export async function saveConfiguratorDesign(
     ),
   );
 
+  const logoAttachmentIds = await Promise.all(
+    (payload.logoAttachments ?? []).map((attachment) =>
+      odooCreate<number>(env, "ir.attachment", [
+        {
+          name: `logo-${attachment.placementValueId}-${attachment.filename}`,
+          datas: stripDataUrlPrefix(attachment.dataBase64),
+          res_model: "sale.order.line",
+          res_id: payload.saleOrderLineId,
+          mimetype: attachment.mimeType,
+          description: `Logo: ${attachment.placementLabel}`,
+        },
+      ]),
+    ),
+  );
+
   await odooWrite(env, "sale.order.line", [payload.saleOrderLineId], {
     product_id: productId,
     product_template_attribute_value_ids: [[6, 0, variantValueIds]],
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     product_custom_attribute_value_ids: customValueCommands,
     ...designImageStorage.lineValues,
-    ...logoImageLineValues,
+    ...primaryLogoLineValues,
   });
 
   return {
@@ -418,7 +435,7 @@ export async function saveConfiguratorDesign(
     ...(additionalAttachmentIds.length > 0
       ? { additionalAttachmentIds }
       : {}),
-    ...(payload.logoAttachment ? { logoImageUpdated: true } : {}),
+    ...(logoAttachmentIds.length > 0 ? { logoImageUpdated: true, logoAttachmentIds } : {}),
     version: designImageStorage.version,
     generatedAt: designImageStorage.generatedAtIso,
     productId,

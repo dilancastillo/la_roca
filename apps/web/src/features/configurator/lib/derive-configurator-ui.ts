@@ -124,6 +124,7 @@ export type ConfiguratorUiModel = {
     attributeId: number;
     valueIds: number[];
     label: string;
+    placements: Array<{ valueId: number; label: string }>;
   } | undefined;
 };
 
@@ -2423,6 +2424,10 @@ function deriveSingleConfiguratorUi(
             attributeId: logoAttribute.id,
             valueIds: activeLogoOptions.map((option) => option.id),
             label: activeLogoOptions.map((option) => option.name).join(", "),
+            placements: activeLogoOptions.map((option) => ({
+              valueId: option.id,
+              label: option.name,
+            })),
           }
         : undefined,
   };

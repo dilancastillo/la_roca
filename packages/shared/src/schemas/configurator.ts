@@ -70,6 +70,11 @@ export const uploadedAttachmentSchema = z.object({
   dataBase64: z.string().min(1),
 });
 
+export const logoAttachmentSchema = uploadedAttachmentSchema.extend({
+  placementValueId: z.number().int().positive(),
+  placementLabel: z.string().min(1).max(140),
+});
+
 export type UploadedAttachment = z.infer<typeof uploadedAttachmentSchema>;
 
 export const saveDesignRequestSchema = z.object({
@@ -86,7 +91,7 @@ export const saveDesignRequestSchema = z.object({
     .optional(),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
   customValuesByValueId: z.record(z.string(), z.string()).optional(),
-  logoAttachment: uploadedAttachmentSchema.optional(),
+  logoAttachments: z.array(logoAttachmentSchema).optional(),
 });
 
 export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;

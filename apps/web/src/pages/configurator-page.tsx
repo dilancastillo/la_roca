@@ -305,8 +305,8 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
   const [scenarioName, setScenarioName] = useState(
     scenarioId ? "Escenario recuperado" : `Prueba linea ${saleOrderLineId ?? ""}`,
   );
-  const [logoAttachment, setLogoAttachment] =
-    useState<UploadedAttachment | null>(null);
+  const [logoAttachments, setLogoAttachments] =
+    useState<Record<number, UploadedAttachment>>({});
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [isLogoUploadExpanded, setIsLogoUploadExpanded] = useState(true);
   const [isLogoUploadActive, setIsLogoUploadActive] = useState(false);
@@ -383,7 +383,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
       return;
     }
 
-    setLogoAttachment(null);
+    setLogoAttachments({});
     setLogoUploadError(null);
     setIsLogoUploadActive(false);
     setIsLogoUploadExpanded(true);
@@ -596,7 +596,11 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
   const hasLogoUploadStep = Boolean(ui.logoSelection);
   const totalSteps = ui.groups.length + (hasLogoUploadStep ? 1 : 0);
   const completedSteps =
-    completedGroups + (hasLogoUploadStep && logoAttachment ? 1 : 0);
+    completedGroups +
+    (hasLogoUploadStep && ui.logoSelection &&
+    ui.logoSelection.valueIds.every((valueId) => logoAttachments[valueId])
+      ? 1
+      : 0);
   const firstIncompleteGroup =
     ui.groups.find(
       (group) => !isGroupComplete(group, state.selectedValueIds),
@@ -629,7 +633,9 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     ? "Imagen de logo"
     : activeGroup?.label;
   const activeStepSelection = isLogoUploadActive
-    ? logoAttachment?.filename ?? "Pendiente de cargar"
+    ? ui.logoSelection
+      ? `${Object.keys(logoAttachments).length}/${ui.logoSelection.valueIds.length} imágenes cargadas`
+      : "Pendiente de cargar"
     : activeGroup
       ? getSelectionLabel(activeGroup.attributeId)
       : "";
@@ -842,7 +848,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     });
   }
 
-  async function handleLogoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleLogoFileChange(placementValueId: number, event: React.ChangeEvent<HTMLInputElement>) {
     const [file] = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
     setLogoUploadError(null);
@@ -865,11 +871,14 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     try {
       const dataBase64 = await readFileAsBase64(file);
-      setLogoAttachment({
+      setLogoAttachments((current) => ({
+        ...current,
+        [placementValueId]: {
         filename: file.name,
         mimeType: file.type || "application/octet-stream",
         dataBase64,
-      });
+        },
+      }));
     } catch (error) {
       setLogoUploadError(
         error instanceof Error
@@ -953,9 +962,12 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     setInvalidCustomValueIds(new Set());
 
-    if (ui.logoSelection && !logoAttachment) {
+    const missingLogoPlacements = ui.logoSelection?.placements.filter(
+      (placement) => !logoAttachments[placement.valueId],
+    ) ?? [];
+    if (missingLogoPlacements.length > 0) {
       setLogoUploadError(
-        `Carga la imagen del logo para "${ui.logoSelection.label}" antes de guardar.`,
+        `Carga la imagen del logo para "${missingLogoPlacements[0]?.label}" antes de guardar.`,
       );
       setSaveError("Falta cargar la imagen obligatoria del logo.");
       setExpandedAttributeId(null);
@@ -1017,7 +1029,14 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
         ui.previewScene,
         selectedValueIdsForSave,
         state.customValuesByValueId,
-        ui.logoSelection ? logoAttachment : null,
+        ui.logoSelection
+          ? ui.logoSelection.placements.flatMap((placement) => {
+              const attachment = logoAttachments[placement.valueId];
+              return attachment
+                ? [{ ...attachment, placementValueId: placement.valueId, placementLabel: placement.label }]
+                : [];
+            })
+          : undefined,
       );
       queryClient.setQueryData<ConfiguratorSession>(
         ["configurator-session", lineId],
@@ -1282,8 +1301,10 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
                       {ui.logoSelection?.attributeId === group.attributeId ? (
                         <div ref={logoUploadSectionRef}>
                           <LogoUploadSection
-                            placementLabel={ui.logoSelection.label}
-                            attachmentFilename={logoAttachment?.filename}
+                            placements={ui.logoSelection.placements.map((placement) => ({
+                              ...placement,
+                              attachmentFilename: logoAttachments[placement.valueId]?.filename,
+                            }))}
                             error={logoUploadError}
                             accept={LOGO_ATTACHMENT_ACCEPT}
                             disabled={isReadOnly || isSaving}
@@ -1296,8 +1317,12 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
                               scheduleLogoUploadScroll();
                             }}
                             onFileChange={handleLogoFileChange}
-                            onRemove={() => {
-                              setLogoAttachment(null);
+                            onRemove={(placementValueId) => {
+                              setLogoAttachments((current) => {
+                                const next = { ...current };
+                                delete next[placementValueId];
+                                return next;
+                              });
                               setLogoUploadError(null);
                               setIsLogoUploadActive(true);
                               setIsLogoUploadExpanded(true);

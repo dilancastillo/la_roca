@@ -1,21 +1,23 @@
 import type { ChangeEvent } from "react";
 
 type Props = {
-  placementLabel: string;
-  attachmentFilename?: string | undefined;
+  placements: Array<{
+    valueId: number;
+    label: string;
+    attachmentFilename?: string | undefined;
+  }>;
   error?: string | null | undefined;
   accept: string;
   disabled?: boolean;
   expanded: boolean;
   isActive?: boolean;
   onExpandToggle: () => void;
-  onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onRemove: () => void;
+  onFileChange: (placementValueId: number, event: ChangeEvent<HTMLInputElement>) => void;
+  onRemove: (placementValueId: number) => void;
 };
 
 export function LogoUploadSection({
-  placementLabel,
-  attachmentFilename,
+  placements,
   error,
   accept,
   disabled = false,
@@ -25,7 +27,8 @@ export function LogoUploadSection({
   onFileChange,
   onRemove,
 }: Props) {
-  const selectionLabel = attachmentFilename ?? "Pendiente de cargar";
+  const uploadedCount = placements.filter((placement) => placement.attachmentFilename).length;
+  const selectionLabel = `${uploadedCount}/${placements.length} imágenes cargadas`;
 
   return (
     <section
@@ -49,7 +52,7 @@ export function LogoUploadSection({
         >
           <span className="config-section__header-main">
             <span className="config-section__title-row">
-              <span className="config-section__legend">Imagen de logo</span>
+              <span className="config-section__legend">Imágenes de logo</span>
               {isActive ? (
                 <span className="config-section__active-chip">
                   {expanded ? "Editando" : "Paso actual"}
@@ -74,28 +77,28 @@ export function LogoUploadSection({
 
       {expanded ? (
         <div id="logo-upload-section" className="config-section__body">
-          <p className="config-section__help">
-            Adjunta la imagen que se usara en: {placementLabel}.
-          </p>
+          <p className="config-section__help">Carga una imagen independiente para cada ubicación seleccionada.</p>
 
-          <div className="logo-upload-field">
+          {placements.map((placement) => (
+          <div className="logo-upload-field" key={placement.valueId}>
+            <strong>{placement.label}</strong>
             <label className="logo-upload-panel__action">
               <input
                 type="file"
                 accept={accept}
                 disabled={disabled}
-                onChange={onFileChange}
+                onChange={(event) => onFileChange(placement.valueId, event)}
               />
-              {attachmentFilename ? "Cambiar imagen" : "Cargar imagen"}
+              {placement.attachmentFilename ? "Cambiar imagen" : "Cargar imagen"}
             </label>
 
-            {attachmentFilename ? (
+            {placement.attachmentFilename ? (
               <div className="logo-upload-panel__file">
-                <span>{attachmentFilename}</span>
+                <span>{placement.attachmentFilename}</span>
                 <button
                   type="button"
                   className="logo-upload-panel__remove"
-                  onClick={onRemove}
+                  onClick={() => onRemove(placement.valueId)}
                   disabled={disabled}
                 >
                   Quitar
@@ -107,6 +110,7 @@ export function LogoUploadSection({
               </p>
             )}
           </div>
+          ))}
 
           {error ? (
             <p className="error-banner" role="alert">

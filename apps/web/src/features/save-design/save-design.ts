@@ -18,7 +18,7 @@ export async function saveDesign(
   scene: PreviewScene,
   selectedValueIds: Record<string, number[]>,
   customValuesByValueId: Record<string, string>,
-  logoAttachment?: UploadedAttachment | null,
+  logoAttachments?: Array<UploadedAttachment & { placementValueId: number; placementLabel: string }>,
 ): Promise<{
   ok?: boolean;
   attachmentId?: number;
@@ -62,7 +62,7 @@ export async function saveDesign(
       additionalImages,
       selectedValueIds,
       customValuesByValueId,
-      logoAttachment: logoAttachment ?? undefined,
+      logoAttachments,
     }),
   });
 

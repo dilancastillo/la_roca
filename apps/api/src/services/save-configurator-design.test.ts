@@ -200,7 +200,7 @@ describe("saveConfiguratorDesign", () => {
     );
   });
 
-  it("guarda la imagen del logo en el campo Studio de la linea cuando llega desde la app", async () => {
+  it("guarda una imagen adjunta por cada ubicación de logo", async () => {
     mocks.odooSearchRead.mockResolvedValue([
       {
         id: 777,
@@ -215,11 +215,13 @@ describe("saveConfiguratorDesign", () => {
       filename: "sale-line-290-design.png",
       imageBase64: "png-base64",
       selectedValueIds: editableSession.selectedValueIds,
-      logoAttachment: {
+      logoAttachments: [{
+        placementValueId: 572,
+        placementLabel: "Bolsillo de pecho izquierdo",
         filename: "logo cliente.png",
         mimeType: "image/png",
         dataBase64: "data:image/png;base64,logo-base64",
-      },
+      }],
     });
 
     expect(mocks.odooWrite).toHaveBeenCalledWith(
@@ -227,10 +229,11 @@ describe("saveConfiguratorDesign", () => {
       "sale.order.line",
       [290],
       expect.objectContaining({
+        x_product_design_image: "png-base64",
         x_studio_imagen_adjunta: "logo-base64",
       }),
     );
-    expect(mocks.odooCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.odooCreate).toHaveBeenCalledTimes(2);
     expect(mocks.odooCreate).toHaveBeenCalledWith(
       env,
       "ir.attachment",
@@ -241,6 +244,17 @@ describe("saveConfiguratorDesign", () => {
           res_model: "sale.order.line",
           res_id: 290,
           mimetype: "image/png",
+        }),
+      ],
+    );
+    expect(mocks.odooCreate).toHaveBeenCalledWith(
+      env,
+      "ir.attachment",
+      [
+        expect.objectContaining({
+          name: "logo-572-logo cliente.png",
+          datas: "logo-base64",
+          description: "Logo: Bolsillo de pecho izquierdo",
         }),
       ],
     );
