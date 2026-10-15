@@ -23,6 +23,9 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Pin npm for workspace lockfile
+        run: npm install --global npm@11.12.1
+
       - name: Install exact dependencies
         run: npm ci
 
