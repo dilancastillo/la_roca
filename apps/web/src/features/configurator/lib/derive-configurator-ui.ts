@@ -2135,7 +2135,7 @@ function deriveSingleConfiguratorUi(
   const isSpecialFemaleSleeveAnchor =
     !hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
-    ["cuello v", "mariposa cruzado", "el hato"].includes(
+    ["cuello v", "mariposa cruzado", "mariposa dividido", "el hato"].includes(
       normalize(selectedNeck?.name ?? ""),
     );
   const usesStableFemaleBlouseSilhouette =

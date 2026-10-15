@@ -4286,6 +4286,44 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("usa la base estable y el activo correcto para los puños de MARIPOSA DIVIDIDO", () => {
+    const dynamicMariposaDivididoSession: ConfiguratorSession = {
+      ...session,
+      visualDefinitions: [
+        {
+          id: "1c438a26-e65d-4a67-81d0-4785fd6cf599",
+          seriesId: "c230f9bf-cd58-4a29-acd4-3da350aac241",
+          version: 1,
+          displayName: "MARIPOSA DIVIDIDO",
+          slot: "neck",
+          layer: "component",
+          binding: {
+            productTemplateIds: [6],
+            attributeId: 63,
+            valueId: 7013,
+            attributeName: "Modelo de cuello",
+            valueName: "MARIPOSA DIVIDIDO",
+          },
+          activationConditions: [],
+          selectedElementIds: [],
+          elementPaints: {},
+          runtimeSvg:
+            '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
+        },
+      ],
+    };
+
+    const ui = deriveConfiguratorUi(dynamicMariposaDivididoSession, {
+      ...dynamicMariposaDivididoSession.selectedValueIds,
+      "63": [7013],
+    });
+
+    expect(ui.previewScene.useStableFemaleBlouseSilhouette).toBe(true);
+    expect(ui.previewScene.sleeveAnchorSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+    );
+  });
+
   it("carga JDC con vivos lineales, completos interiores y cogotera recta", () => {
     const ui = deriveConfiguratorUi(session, {
       ...session.selectedValueIds,

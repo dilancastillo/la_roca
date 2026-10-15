@@ -3136,6 +3136,44 @@ describe("deriveAutomationRenderScene", () => {
     ]);
   });
 
+  it("ancla los puños de MARIPOSA DIVIDIDO a su activo cuando llega como silueta dinámica", () => {
+    const dynamicMariposaDivididoSession: ConfiguratorSession = {
+      ...session,
+      visualDefinitions: [
+        {
+          id: "91ea2c45-d831-4e11-91e8-c2045ee9a72e",
+          seriesId: "92b9138f-e480-49f4-9abb-7975e3f1f4e7",
+          version: 1,
+          displayName: "MARIPOSA DIVIDIDO",
+          slot: "neck",
+          layer: "component",
+          binding: {
+            productTemplateIds: [6],
+            attributeId: 63,
+            valueId: 7013,
+            attributeName: "Modelo de cuello",
+            valueName: "MARIPOSA DIVIDIDO",
+          },
+          activationConditions: [],
+          selectedElementIds: [],
+          elementPaints: {},
+          runtimeSvg:
+            '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
+        },
+      ],
+    };
+
+    const renderScene = deriveAutomationRenderScene(dynamicMariposaDivididoSession, {
+      ...dynamicMariposaDivididoSession.selectedValueIds,
+      "63": [7013],
+    });
+
+    expect(renderScene.useStableFemaleBlouseSilhouette).toBe(true);
+    expect(renderScene.sleeveAnchorAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
+    );
+  });
+
   it("carga MODELO 29 con bordes divididos y cogotera ovalada", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,
