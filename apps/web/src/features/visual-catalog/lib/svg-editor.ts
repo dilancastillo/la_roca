@@ -259,10 +259,15 @@ function splitClosedPathSubpaths(rawPathData: string) {
   let startY = 0;
   let currentSubpath: string[] | null = null;
   let currentSubpathIsClosed = false;
+  let hasUnclosedSubpath = false;
 
   const pushCurrentSubpath = () => {
-    if (currentSubpath?.length && currentSubpathIsClosed) {
-      subpaths.push(currentSubpath.join(" "));
+    if (currentSubpath?.length) {
+      if (currentSubpathIsClosed) {
+        subpaths.push(currentSubpath.join(" "));
+      } else {
+        hasUnclosedSubpath = true;
+      }
     }
     currentSubpath = null;
     currentSubpathIsClosed = false;
@@ -329,7 +334,10 @@ function splitClosedPathSubpaths(rawPathData: string) {
   }
 
   pushCurrentSubpath();
-  return subpaths.length > 1 ? subpaths : null;
+  // Un vivo relleno solo es seguro cuando *todos* los subtrazados cierran.
+  // SVG rellena implícitamente un path abierto uniendo el último punto con el
+  // primero; en los cuellos masculinos eso creaba el rectángulo reportado.
+  return !hasUnclosedSubpath && subpaths.length > 0 ? subpaths : null;
 }
 
 function splitCompoundTrimFillPath(element: SVGElement) {
@@ -345,6 +353,17 @@ function splitCompoundTrimFillPath(element: SVGElement) {
     path.setAttribute("data-vc-safe-trim-fill", "true");
     return path;
   });
+}
+
+function isSafeTrimFillElement(element: Element) {
+  if (["rect", "circle", "ellipse", "polygon"].includes(element.localName)) {
+    return true;
+  }
+
+  return (
+    element.localName === "path" &&
+    element.getAttribute("data-vc-safe-trim-fill") === "true"
+  );
 }
 
 function applyElementPaint(
@@ -404,12 +423,17 @@ function applyElementPaint(
     paint.mode === "trim_fill"
       ? `__VC_TRIM_FILL_${paint.trimSourceValueId}__`
       : `__VC_TRIM_STROKE_${paint.trimSourceValueId}__`;
+  const canFillTrim =
+    paint.mode === "trim_fill" && isSafeTrimFillElement(element);
   const isThinVisualPolygon =
     paint.mode === "trim_stroke" &&
     element.localName === "polygon" &&
     isThinVisualPolygonPoints(element.getAttribute("points") ?? undefined);
   const property =
-    paint.mode === "trim_fill" || isThinVisualPolygon ? "fill" : "stroke";
+    canFillTrim || isThinVisualPolygon ? "fill" : "stroke";
+  if (canFillTrim) {
+    element.setAttribute("data-vc-safe-trim-fill", "true");
+  }
   appendImportantStyle(element, `${property}:${token}!important;`);
 }
 

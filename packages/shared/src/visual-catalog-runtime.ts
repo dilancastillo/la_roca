@@ -262,7 +262,20 @@ function normalizeUnfilledTrimAreas(runtimeSvg: string) {
         /(?:^|[;\s])fill\s*:\s*none(?:!important)?\s*;/i.test(markup) ||
         classNames.some((className) => unfilledClasses.has(className));
 
-      return isUnfilled
+      const pathData = markup.match(/\bd=(?:"([^"]*)"|'([^']*)')/i);
+      const subpathStarts = (pathData?.[1] ?? pathData?.[2] ?? "").match(/[Mm]/g)
+        ?.length ?? 0;
+      const subpathClosures = (pathData?.[1] ?? pathData?.[2] ?? "").match(/[Zz]/g)
+        ?.length ?? 0;
+      // Un path abierto no es un área de vivo: SVG lo cierra de forma
+      // implícita al rellenarlo, que es lo que generaba bloques rectangulares
+      // en los cuellos masculinos creados desde el editor.
+      const isOpenPathWithTrimFill =
+        markup.startsWith("<path") &&
+        subpathStarts > 0 &&
+        subpathStarts !== subpathClosures;
+
+      return isUnfilled || isOpenPathWithTrimFill
         ? markup.replace(
             trimFill[0],
             `stroke:${trimFill[1]}${trimFill[2] ?? ""};`,

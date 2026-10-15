@@ -146,6 +146,76 @@ describe("svg-editor", () => {
     expect((runtimeSvg.match(/__VC_TRIM_FILL_635__/g) ?? [])).toHaveLength(2);
   });
 
+  it("convierte un path abierto marcado como vivo relleno en vivo lineal", () => {
+    const indexed = indexVisualSvg(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <path id="cogotera" d="M10 10 L50 80 L90 10" fill="none" />
+      </svg>
+    `);
+
+    const runtimeSvg = buildRuntimeVisualSvg({
+      normalizedSvg: indexed.normalizedSvg,
+      selectedElementIds: ["cogotera"],
+      elementPaints: {
+        cogotera: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      placement: {
+        targetWidth: 100,
+        targetHeight: 100,
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+      },
+    });
+
+    expect(runtimeSvg).toContain("stroke:__VC_TRIM_FILL_635__!important");
+    expect(runtimeSvg).not.toContain('data-vc-safe-trim-fill="true"');
+  });
+
+  it("corrige en laboratorio un runtime moderno ya guardado con path abierto", () => {
+    const definition = {
+      id: "open-neck-trim",
+      seriesId: "open-neck-trim-series",
+      version: 1,
+      displayName: "Cogotera masculina",
+      slot: "neck",
+      layer: "component",
+      binding: {
+        productTemplateIds: [7],
+        attributeId: 63,
+        valueId: 2952,
+        sourceValueId: 2952,
+        attributeName: "Modelo de cuello",
+        valueName: "CUELLO ALTO CON CREMALLERA",
+      },
+      activationConditions: [],
+      selectedElementIds: ["cogotera"],
+      elementPaints: {
+        cogotera: {
+          mode: "trim_fill",
+          trimSourceValueId: 414,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `<svg data-vc-runtime-format="2" viewBox="0 0 100 100"><path d="M10 10 L50 80 L90 10" style="fill:__VC_TRIM_FILL_414__!important;" /></svg>`,
+    } satisfies ActiveVisualDefinition;
+
+    const materializedSvg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#ffffff", [
+        { valueId: 1, sourceValueId: 414, colorHex: "#00a6d6" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(materializedSvg).toContain("stroke:#00a6d6!important");
+    expect(materializedSvg).not.toContain("fill:#00a6d6!important");
+  });
+
   it("conserva los subtrazados de un SVG legado al volver a guardarlo", () => {
     const indexed = indexVisualSvg(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
