@@ -10,7 +10,7 @@
     </clipPath>
   </defs>
   <g id="chest-pocket-zipper-internal" transform="translate(600 390) scale(.45)">
-    <rect x="30" y="30" width="320" height="75" fill="#ffffff" stroke="#1d1d1b" stroke-width="6"/>
+    <rect x="30" y="30" width="320" height="75" fill="#ffffff" stroke="#1d1d1b" stroke-width="10"/>
     <rect
       x="30"
       y="30"
