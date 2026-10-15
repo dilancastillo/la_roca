@@ -1740,6 +1740,14 @@ function getHiddenFixedInvisibleSideZipperAttributeIds(
   selectedValueIds: Record<string, number[]>,
 ) {
   const hiddenAttributeIds = new Set<number>();
+  const genderAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.gender,
+    (name) => name === "genero",
+  );
+  const isMan = getSelectedOptions(genderAttribute, selectedValueIds).some(
+    (value) => normalize(value.name) === "hombre",
+  );
 
   for (const attribute of session.attributes) {
     const normalizedName = normalize(attribute.name);
@@ -1753,14 +1761,18 @@ function getHiddenFixedInvisibleSideZipperAttributeIds(
     }
 
     const selectedOptions = getSelectedOptions(attribute, selectedValueIds);
-    const isFixedToNo =
+    const isSelectedNo =
       selectedOptions.length > 0 &&
-      selectedOptions.every((value) => normalize(value.name) === "no") &&
-      !attribute.values.some((value) => isYesTextToggleValue(value));
+      selectedOptions.every((value) => normalize(value.name) === "no");
+    const hasSelectableYesOption = attribute.values.some((value) =>
+      isYesTextToggleValue(value),
+    );
+    const isFixedToNo = isSelectedNo && (!hasSelectableYesOption || isMan);
 
-    // Odoo entrega algunos pedidos con este valor fijo en "No" y sin una
-    // alternativa seleccionable. No representa una decisión de diseño, por
-    // lo que no debe ocupar un paso del configurador.
+    // En Hombre Odoo precarga este atributo en "No". No representa una
+    // decisión de diseño y no debe ocupar un paso aunque el catálogo también
+    // conserve una opción "Sí" para otros flujos. En cualquier género se
+    // conserva además el caso histórico con el valor fijo y sin alternativa.
     if (isFixedToNo) {
       hiddenAttributeIds.add(attribute.id);
     }

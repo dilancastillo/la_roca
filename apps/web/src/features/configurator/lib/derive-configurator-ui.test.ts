@@ -6351,4 +6351,58 @@ describe("deriveConfiguratorUi", () => {
       ).groups.map((group) => group.attributeId),
     ).not.toContain(invisibleZipperAttributeId);
   });
+
+  it("oculta la cremallera lateral invisible precargada en No para Hombre", () => {
+    const invisibleZipperAttributeId = 99011;
+    const sessionWithMaleDefaultInvisibleZipper: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            { id: 531, name: "Hombre", attributeId: 142, attributeName: "Género" },
+            { id: 532, name: "Mujer", attributeId: 142, attributeName: "Género" },
+          ],
+        },
+        ...session.attributes,
+        {
+          id: invisibleZipperAttributeId,
+          name: "Cremallera lateral invisible",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 99012,
+              name: "No",
+              attributeId: invisibleZipperAttributeId,
+              attributeName: "Cremallera lateral invisible",
+            },
+            {
+              id: 99013,
+              name: "Sí",
+              attributeId: invisibleZipperAttributeId,
+              attributeName: "Cremallera lateral invisible",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...session.selectedValueIds,
+        "142": [531],
+        [String(invisibleZipperAttributeId)]: [99012],
+      },
+    };
+
+    expect(
+      deriveConfiguratorUi(
+        sessionWithMaleDefaultInvisibleZipper,
+        sessionWithMaleDefaultInvisibleZipper.selectedValueIds,
+      ).groups.map((group) => group.attributeId),
+    ).not.toContain(invisibleZipperAttributeId);
+  });
 });
