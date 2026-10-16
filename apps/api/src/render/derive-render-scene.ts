@@ -1137,14 +1137,32 @@ function deriveSingleAutomationRenderScene(
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
-  const isSpecialFemaleSleeveAnchor =
+  // Los SVG completos ya publicados para estos cuellos traen mangas
+  // históricas. Igual que EL HATO, se compone el cuello sobre la base estable
+  // para conservar los puños y vivos en su posición verificada.
+  const isStableFemaleSleeveAnchor =
     !hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
-    ["cuello v", "mariposa cruzado", "mariposa dividido", "el hato"].includes(
+    [
+      "cuello v",
+      "jdc",
+      "v - dividido",
+      "v-dividido",
+      "mariposa dividido",
+      "cuello alto",
+      "20-19",
+      "2019",
+      "20-20",
+      "cruzado",
+      "20-21",
+      "cirugia",
+      "mariposa cruzado",
+      "el hato",
+    ].includes(
       normalize(selectedNeck?.name ?? ""),
     );
   const useStableFemaleBlouseSilhouette =
-    Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
+    Boolean(dynamicBaseSilhouette) && isStableFemaleSleeveAnchor;
   // Web y API deben pedir el mismo ajuste al borde real sólo para un SVG
   // completo del editor; los activos estáticos mantienen sus anclas actuales.
   const alignDynamicSleeveTrims =
@@ -1261,7 +1279,7 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
-    ...((dynamicBaseSilhouette || isSpecialFemaleSleeveAnchor) && selectedNeckAssetPath
+    ...((dynamicBaseSilhouette || isStableFemaleSleeveAnchor) && selectedNeckAssetPath
       ? { sleeveAnchorAssetPath: selectedNeckAssetPath }
       : {}),
     ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),

@@ -2233,21 +2233,39 @@ function deriveSingleConfiguratorUi(
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
-  const isSpecialFemaleSleeveAnchor =
+  // Estos modelos ya existen en el catálogo y sus SVG completos del editor
+  // contienen mangas históricas. Se dibujan sobre la base femenina estable,
+  // usando el activo del cuello como ancla de puños, igual que EL HATO.
+  const isStableFemaleSleeveAnchor =
     !hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
-    ["cuello v", "mariposa cruzado", "mariposa dividido", "el hato"].includes(
+    [
+      "cuello v",
+      "jdc",
+      "v - dividido",
+      "v-dividido",
+      "mariposa dividido",
+      "cuello alto",
+      "20-19",
+      "2019",
+      "20-20",
+      "cruzado",
+      "20-21",
+      "cirugia",
+      "mariposa cruzado",
+      "el hato",
+    ].includes(
       normalize(selectedNeck?.name ?? ""),
     );
   const usesStableFemaleBlouseSilhouette =
-    Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
+    Boolean(dynamicBaseSilhouette) && isStableFemaleSleeveAnchor;
   // Un SVG completo del editor no tiene una entrada segura en las tablas
   // históricas por archivo. Esta señal no altera los modelos publicados.
   const alignDynamicSleeveTrims =
     Boolean(dynamicBaseSilhouette) && !usesStableFemaleBlouseSilhouette;
-  // Igual que Hombre, estas tres siluetas especiales conservan una base de
-  // blusa estable y aplican solamente su cuello dinámico. Así sus vivos no
-  // heredan los polígonos de manga desplazados que vienen en el SVG completo.
+  // Estos cuellos conservan una base de blusa estable y aplican solamente su
+  // cuello dinámico. Así sus vivos no heredan los polígonos de manga
+  // desplazados que vienen en el SVG completo.
   const neckImageSrc = maleNeckAssetPath
     ? `/${maleNeckAssetPath}`
     : usesStableFemaleBlouseSilhouette
@@ -2368,7 +2386,7 @@ function deriveSingleConfiguratorUi(
       productName: session.productName,
       baseColorHex,
       garmentImageSrc,
-      ...((dynamicBaseSilhouette || isSpecialFemaleSleeveAnchor) && selectedNeckAssetSrc
+      ...((dynamicBaseSilhouette || isStableFemaleSleeveAnchor) && selectedNeckAssetSrc
         ? { sleeveAnchorSrc: selectedNeckAssetSrc }
         : {}),
       ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),

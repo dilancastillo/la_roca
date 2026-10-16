@@ -3175,6 +3175,66 @@ describe("deriveAutomationRenderScene", () => {
     expect(renderScene.alignDynamicSleeveTrims).toBeUndefined();
   });
 
+  it("conserva la base estable en API para los cuellos publicados con puños verificados", () => {
+    const stableNames = [
+      "JDC",
+      "V - DIVIDIDO",
+      "MARIPOSA DIVIDIDO",
+      "CUELLO ALTO",
+      "20-19",
+      "20-20",
+      "CRUZADO",
+      "20-21",
+      "CIRUGÍA",
+    ];
+
+    for (const name of stableNames) {
+      const dynamicSession: ConfiguratorSession = {
+        ...session,
+        attributes: session.attributes.map((attribute) =>
+          attribute.id === 63
+            ? {
+                ...attribute,
+                values: attribute.values.map((value) =>
+                  value.id === 338 ? { ...value, name } : value,
+                ),
+              }
+            : attribute,
+        ),
+        visualDefinitions: [
+          {
+            id: "66d8990c-b69f-4423-9ebd-2e12bd18f4bb",
+            seriesId: "9c63f308-1bda-4b2c-8f10-d1dd6ef99981",
+            version: 1,
+            displayName: name,
+            slot: "neck",
+            layer: "component",
+            binding: {
+              productTemplateIds: [6],
+              attributeId: 63,
+              valueId: 338,
+              attributeName: "Modelo de cuello",
+              valueName: name,
+            },
+            activationConditions: [],
+            selectedElementIds: [],
+            elementPaints: {},
+            runtimeSvg:
+              '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
+          },
+        ],
+      };
+
+      const renderScene = deriveAutomationRenderScene(dynamicSession, {
+        ...dynamicSession.selectedValueIds,
+        "63": [338],
+      });
+
+      expect(renderScene.useStableFemaleBlouseSilhouette, name).toBe(true);
+      expect(renderScene.alignDynamicSleeveTrims, name).toBeUndefined();
+    }
+  });
+
   it("solicita anclaje al borde visible para una silueta nueva del editor", () => {
     const dynamicEditorSession: ConfiguratorSession = {
       ...session,
