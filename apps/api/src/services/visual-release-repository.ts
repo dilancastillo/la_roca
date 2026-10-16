@@ -513,6 +513,58 @@ function hasSameTarget(left: VisualDefinitionSummary, right: VisualDefinitionSum
     JSON.stringify(leftProducts) === JSON.stringify(rightProducts);
 }
 
+function isGenderCondition(condition: VisualDefinitionSummary["activationConditions"][number]) {
+  return condition.attributeName
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase() === "genero";
+}
+
+function getGenderSourceValueIds(definition: VisualDefinitionSummary) {
+  return definition.activationConditions
+    .filter(isGenderCondition)
+    .flatMap((condition) => condition.sourceValueIds);
+}
+
+function normalizeNonGenderConditions(definition: VisualDefinitionSummary) {
+  return JSON.stringify(
+    definition.activationConditions
+      .filter((condition) => !isGenderCondition(condition))
+      .map((condition) => ({
+        attributeId: condition.attributeId,
+        sourceValueIds: [...condition.sourceValueIds].sort((a, b) => a - b),
+      }))
+      .sort((a, b) =>
+        a.attributeId - b.attributeId ||
+        JSON.stringify(a.sourceValueIds).localeCompare(JSON.stringify(b.sourceValueIds)),
+      ),
+  );
+}
+
+function hasOverlappingGenderScopedTarget(
+  left: VisualDefinitionSummary,
+  right: VisualDefinitionSummary,
+) {
+  const leftGenderIds = getGenderSourceValueIds(left);
+  const rightGenderIds = getGenderSourceValueIds(right);
+  if (leftGenderIds.length === 0 || rightGenderIds.length === 0) {
+    return false;
+  }
+
+  return (
+    left.slot === right.slot &&
+    left.layer === right.layer &&
+    left.binding.attributeId === right.binding.attributeId &&
+    (left.binding.sourceValueId ?? left.binding.valueId) ===
+      (right.binding.sourceValueId ?? right.binding.valueId) &&
+    normalizeNonGenderConditions(left) === normalizeNonGenderConditions(right) &&
+    [...left.binding.productTemplateIds].sort((a, b) => a - b).join(",") ===
+      [...right.binding.productTemplateIds].sort((a, b) => a - b).join(",") &&
+    leftGenderIds.some((id) => rightGenderIds.includes(id))
+  );
+}
+
 function mergeChangedDefinitionsIntoSnapshot(
   snapshotDefinitionIds: string[],
   changedDefinitionIds: string[],
@@ -526,7 +578,11 @@ function mergeChangedDefinitionsIntoSnapshot(
   const changes = selected.filter((definition): definition is VisualDefinitionSummary => Boolean(definition));
   const retained = snapshotDefinitionIds.filter((id) => {
     const current = byId.get(id);
-    return !current || !changes.some((change) => hasSameTarget(current, change));
+    return !current || !changes.some(
+      (change) =>
+        hasSameTarget(current, change) ||
+        hasOverlappingGenderScopedTarget(current, change),
+    );
   });
   return Array.from(new Set([...retained, ...changes.map((change) => change.id)]));
 }

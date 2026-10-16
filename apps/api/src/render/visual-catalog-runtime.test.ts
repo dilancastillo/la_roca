@@ -288,6 +288,63 @@ describe("runtime del catalogo visual general", () => {
     ]);
   });
 
+  it("elige la revisión de género más reciente cuando una regla amplia se solapa", () => {
+    const manV1 = makeDefinition("bolsillo-hombre-v1", "component", []);
+    manV1.slot = "lower_pocket";
+    manV1.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [531],
+        valueNames: ["Hombre"],
+      },
+    ];
+
+    const bothV2 = makeDefinition("bolsillo-ambos-v2", "component", []);
+    bothV2.slot = "lower_pocket";
+    bothV2.version = 2;
+    bothV2.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [530, 531],
+        valueNames: ["Mujer", "Hombre"],
+      },
+    ];
+
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: 142,
+          name: "Genero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            { id: 531, sourceValueId: 531, name: "Hombre", attributeId: 142, attributeName: "Genero" },
+            { id: 530, sourceValueId: 530, name: "Mujer", attributeId: 142, attributeName: "Genero" },
+          ],
+        },
+      ],
+    };
+
+    const forMan = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [manV1, bothV2] },
+      { ...session.selectedValueIds, "142": [531] },
+      "uniforme",
+    );
+    const forWoman = getSelectedVisualDefinitions(
+      { ...sessionWithGender, visualDefinitions: [manV1, bothV2] },
+      { ...session.selectedValueIds, "142": [530] },
+      "uniforme",
+    );
+
+    expect(forMan.map((definition) => definition.id)).toEqual(["bolsillo-ambos-v2"]);
+    expect(forWoman.map((definition) => definition.id)).toEqual(["bolsillo-ambos-v2"]);
+  });
+
   it("resuelve visibilidad por elemento y toma colores solo de la orden", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

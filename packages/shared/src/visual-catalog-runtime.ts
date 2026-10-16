@@ -144,6 +144,54 @@ function hasGenderActivationCondition(definition: ActiveVisualDefinition) {
   );
 }
 
+function normalizeNonGenderConditions(definition: ActiveVisualDefinition) {
+  return JSON.stringify(
+    definition.activationConditions
+      .filter((condition) => normalize(condition.attributeName) !== "genero")
+      .map((condition) => ({
+        attributeId: condition.attributeId,
+        sourceValueIds: [...condition.sourceValueIds].sort(
+          (left, right) => left - right,
+        ),
+      }))
+      .sort(
+        (left, right) =>
+          left.attributeId - right.attributeId ||
+          JSON.stringify(left.sourceValueIds).localeCompare(
+            JSON.stringify(right.sourceValueIds),
+          ),
+      ),
+  );
+}
+
+function getGenderScopedTargetKey(definition: ActiveVisualDefinition) {
+  const sourceValueId =
+    definition.binding.sourceValueId ?? definition.binding.valueId;
+  const productTemplateIds = [...definition.binding.productTemplateIds]
+    .sort((left, right) => left - right)
+    .join(",");
+
+  return [
+    definition.slot,
+    definition.layer,
+    definition.binding.attributeId,
+    sourceValueId,
+    productTemplateIds,
+    normalizeNonGenderConditions(definition),
+  ].join("|");
+}
+
+function isNewerDefinition(
+  candidate: ActiveVisualDefinition,
+  current: ActiveVisualDefinition,
+) {
+  return (
+    candidate.version > current.version ||
+    (candidate.version === current.version &&
+      candidate.id.localeCompare(current.id) > 0)
+  );
+}
+
 function replaceTrimColorTokens(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
@@ -600,7 +648,7 @@ export function getSelectedVisualDefinitions(
   // de género. Se conservan como respaldo, pero una variante explícita del
   // mismo componente para el género actual debe reemplazarlas. Sin esto, al
   // editar un bolsillo para Hombre se componía además el SVG heredado Mujer.
-  const definitions = matchingDefinitions.filter((definition) => {
+  const withoutLegacyDuplicates = matchingDefinitions.filter((definition) => {
     const isGenderScopedSlot =
       definition.slot === "neck" || definition.slot === "lower_pocket";
     if (!isGenderScopedSlot || hasGenderActivationCondition(definition)) {
@@ -623,6 +671,39 @@ export function getSelectedVisualDefinitions(
       [...candidate.binding.productTemplateIds]
         .sort((left, right) => left - right)
         .join(",") === productTemplateIds,
+    );
+  });
+
+  // Releases históricas pueden contener dos revisiones explícitas de género
+  // que aplican a la misma selección (por ejemplo, Hombre y Mujer+Hombre).
+  // Para cuello y bolsillo inferior la revisión más reciente gana. Las
+  // variantes legítimas Hombre/Mujer no compiten porque solo una coincide con
+  // el género seleccionado.
+  const newestGenderScopedByTarget = new Map<string, ActiveVisualDefinition>();
+  for (const definition of withoutLegacyDuplicates) {
+    const isGenderScopedSlot =
+      definition.slot === "neck" || definition.slot === "lower_pocket";
+    if (!isGenderScopedSlot || !hasGenderActivationCondition(definition)) {
+      continue;
+    }
+
+    const key = getGenderScopedTargetKey(definition);
+    const current = newestGenderScopedByTarget.get(key);
+    if (!current || isNewerDefinition(definition, current)) {
+      newestGenderScopedByTarget.set(key, definition);
+    }
+  }
+
+  const definitions = withoutLegacyDuplicates.filter((definition) => {
+    const isGenderScopedSlot =
+      definition.slot === "neck" || definition.slot === "lower_pocket";
+    if (!isGenderScopedSlot || !hasGenderActivationCondition(definition)) {
+      return true;
+    }
+
+    return (
+      newestGenderScopedByTarget.get(getGenderScopedTargetKey(definition))
+        ?.id === definition.id
     );
   });
 

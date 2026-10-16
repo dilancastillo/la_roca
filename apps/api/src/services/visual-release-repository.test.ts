@@ -322,6 +322,68 @@ describe("visual release repository", () => {
     expect(candidate.definitionIds).toContain(legacy.id);
   });
 
+  it("reemplaza la variante de género anterior cuando una nueva regla se solapa", async () => {
+    const manV1 = await approveDefinition({
+      ...mutation,
+      displayName: "Bolsillo rectangular Hombre v1",
+      slot: "lower_pocket",
+      binding: {
+        ...mutation.binding,
+        attributeId: 154,
+        sourceValueId: 9552,
+        valueId: 9552,
+        attributeName: "Modelo bolsillo inferior",
+        valueName: "RECTANGULAR",
+      },
+      activationConditions: [
+        {
+          attributeId: 142,
+          attributeName: "Genero",
+          sourceValueIds: [531],
+          valueNames: ["Hombre"],
+        },
+      ],
+    });
+    await makeActiveRelease("Bolsillo Hombre base", [manV1.id]);
+
+    const broadDraft = await cloneVisualDefinition(env, manV1.id, actorEmail);
+    const broadEdited = await updateVisualDefinition(
+      env,
+      broadDraft.id,
+      {
+        ...mutation,
+        displayName: "Bolsillo rectangular Mujer y Hombre v2",
+        slot: "lower_pocket",
+        binding: manV1.binding,
+        activationConditions: [
+          {
+            attributeId: 142,
+            attributeName: "Genero",
+            sourceValueIds: [530, 531],
+            valueNames: ["Mujer", "Hombre"],
+          },
+        ],
+      },
+      actorEmail,
+    );
+    await submitVisualDefinition(env, broadEdited.id, actorEmail);
+    const broadV2 = await approveVisualDefinition(env, broadEdited.id, actorEmail);
+
+    const candidate = await createVisualReleaseCandidate(
+      env,
+      {
+        displayName: "Bolsillo rectangular ampliado",
+        notes: "",
+        changedDefinitionIds: [broadV2.id],
+      },
+      await listVisualDefinitions(env),
+      actorEmail,
+    );
+
+    expect(candidate.definitionIds).toContain(broadV2.id);
+    expect(candidate.definitionIds).not.toContain(manV1.id);
+  });
+
   it("permite publicar un cambio puntual sin forzar modelos aprobados ajenos", async () => {
     const initial = await approveDefinition({
       ...mutation,
