@@ -2,7 +2,10 @@ import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
-import { renderDesignImage } from "./render-design-image.js";
+import {
+  alignSpecialSleeveTrimsToVisibleEdge,
+  renderDesignImage,
+} from "./render-design-image.js";
 
 const baseScene: AutomationRenderScene = {
   productName: "Blusa",
@@ -12,6 +15,67 @@ const baseScene: AutomationRenderScene = {
   lowerPocketLayout: "double",
   trimSections: [],
 };
+
+describe("anclaje dinámico de vivos de manga", () => {
+  it("corrige una silueta del editor sin mover un activo estático", () => {
+    const width = 64;
+    const height = 64;
+    const data = new Uint8ClampedArray(width * height * 4);
+    // Simula el borde visible de un puño 18 px más abajo que la coordenada
+    // histórica. Fuera de esa fila permanece transparente.
+    for (let x = 10; x <= 38; x += 1) {
+      data[(28 * width + x) * 4 + 3] = 255;
+    }
+    const processed = {
+      width,
+      height,
+      data,
+      bounds: { x: 0, y: 0, width, height },
+    };
+    const shapes = [
+      {
+        points: [
+          [10, 10],
+          [38, 10],
+          [38, 0],
+          [10, 0],
+        ],
+        upper: [
+          [10, 0],
+          [38, 0],
+        ],
+        lower: [
+          [10, 10],
+          [38, 10],
+        ],
+      },
+    ] as const;
+
+    expect(
+      alignSpecialSleeveTrimsToVisibleEdge(
+        processed,
+        "assets/catalog/blusa/modelo-estatico.svg",
+        shapes,
+      ),
+    ).toEqual(shapes);
+
+    const aligned = alignSpecialSleeveTrimsToVisibleEdge(
+      processed,
+      "assets/catalog/blusa/modelo-estatico.svg",
+      shapes,
+      true,
+    );
+
+    expect(aligned[0]?.lower).toEqual([
+      [10, 28],
+      [38, 28],
+    ]);
+    expect(aligned[0]?.upper).toEqual([
+      [10, 18],
+      [38, 18],
+    ]);
+  });
+});
 
 async function readRawPng(buffer: Buffer) {
   return await sharp(buffer).ensureAlpha().raw().toBuffer({

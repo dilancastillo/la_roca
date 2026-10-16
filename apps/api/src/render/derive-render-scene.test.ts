@@ -3172,6 +3172,46 @@ describe("deriveAutomationRenderScene", () => {
     expect(renderScene.sleeveAnchorAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
     );
+    expect(renderScene.alignDynamicSleeveTrims).toBeUndefined();
+  });
+
+  it("solicita anclaje al borde visible para una silueta nueva del editor", () => {
+    const dynamicEditorSession: ConfiguratorSession = {
+      ...session,
+      visualDefinitions: [
+        {
+          id: "4d70c23f-72a3-4e9c-8270-8f11681c9f7a",
+          seriesId: "d978c6a0-2402-4ad3-a511-a6525f3233c5",
+          version: 1,
+          displayName: "MODELO 29 EDITADO",
+          slot: "neck",
+          layer: "component",
+          binding: {
+            productTemplateIds: [6],
+            attributeId: 63,
+            valueId: 7014,
+            attributeName: "Modelo de cuello",
+            valueName: "MODELO 29",
+          },
+          activationConditions: [],
+          selectedElementIds: [],
+          elementPaints: {},
+          runtimeSvg:
+            '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
+        },
+      ],
+    };
+
+    const renderScene = deriveAutomationRenderScene(dynamicEditorSession, {
+      ...dynamicEditorSession.selectedValueIds,
+      "63": [7014],
+    });
+
+    expect(renderScene.useStableFemaleBlouseSilhouette).toBeUndefined();
+    expect(renderScene.alignDynamicSleeveTrims).toBe(true);
+    expect(renderScene.sleeveAnchorAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-28-modelo-29.svg",
+    );
   });
 
   it("carga MODELO 29 con bordes divididos y cogotera ovalada", () => {

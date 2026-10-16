@@ -83,6 +83,8 @@ export type PreviewScene = {
   useMaleBlouseSilhouette?: boolean | undefined;
   /** Base femenina estable con detalle de cuello dinámico recortado. */
   useStableFemaleBlouseSilhouette?: boolean | undefined;
+  /** Ancla vivos a la tinta de una silueta completa materializada por el editor. */
+  alignDynamicSleeveTrims?: boolean | undefined;
   /**
    * El SVG del catálogo ya dibuja el cuello. El canvas no debe superponerle
    * los overlays históricos asociados al nombre del archivo.
@@ -2239,6 +2241,10 @@ function deriveSingleConfiguratorUi(
     );
   const usesStableFemaleBlouseSilhouette =
     Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
+  // Un SVG completo del editor no tiene una entrada segura en las tablas
+  // históricas por archivo. Esta señal no altera los modelos publicados.
+  const alignDynamicSleeveTrims =
+    Boolean(dynamicBaseSilhouette) && !usesStableFemaleBlouseSilhouette;
   // Igual que Hombre, estas tres siluetas especiales conservan una base de
   // blusa estable y aplican solamente su cuello dinámico. Así sus vivos no
   // heredan los polígonos de manga desplazados que vienen en el SVG completo.
@@ -2388,6 +2394,7 @@ function deriveSingleConfiguratorUi(
       ...(usesStableFemaleBlouseSilhouette
         ? { useStableFemaleBlouseSilhouette: true }
         : {}),
+      ...(alignDynamicSleeveTrims ? { alignDynamicSleeveTrims: true } : {}),
       // Señal explícita para que canvas-renderer evite duplicar el cuello.
       ...(hasDynamicNeck ? { hasDynamicNeckVisual: true } : {}),
       lowerPocketImageSrc,

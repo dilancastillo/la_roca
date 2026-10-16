@@ -4008,8 +4008,12 @@ async function alignSpecialSleeveTrimsToVisibleEdge(
   placementSrc: string,
   anchorSrc: string,
   shapes: readonly OriginalSleeveTrimShape[],
+  forceDynamicAlignment = false,
 ) {
-  if (!DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(getFileNameFromSource(anchorSrc))) {
+  if (
+    !forceDynamicAlignment &&
+    !DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(getFileNameFromSource(anchorSrc))
+  ) {
     return shapes;
   }
 
@@ -4319,6 +4323,7 @@ async function drawOriginalSleevesTrim(
   placementSrc: string,
   trimColors: OriginalSleevesTrimColors,
   anchorSrc = placementSrc,
+  forceDynamicAlignment = false,
 ) {
   if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
     return;
@@ -4329,12 +4334,14 @@ async function drawOriginalSleevesTrim(
     placementSrc,
     anchorSrc,
     getOriginalSleeveTrimShapes(placementSrc, anchorSrc),
+    forceDynamicAlignment,
   );
   const fillShapes = trimColors.fill
     ? await alignSpecialSleeveTrimsToVisibleEdge(
         placementSrc,
         anchorSrc,
         getOriginalSleeveFillShapes(placementSrc, anchorSrc),
+        forceDynamicAlignment,
       )
     : trimShapes;
   context.save();
@@ -5775,7 +5782,7 @@ async function composeSingleDesign(
         upper: sleeveUpperTrimColor,
         lower: sleeveLowerTrimColor,
         fill: sleeveFillTrimColor,
-      }, sleeveAnchorSrc);
+      }, sleeveAnchorSrc, Boolean(scene.alignDynamicSleeveTrims));
     }
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {

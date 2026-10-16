@@ -64,6 +64,8 @@ export type AutomationRenderScene = {
   useMaleBlouseSilhouette?: boolean;
   /** Los tres cuellos dinámicos femeninos se aplican sobre la base estable. */
   useStableFemaleBlouseSilhouette?: boolean;
+  /** Ancla vivos a la tinta de una silueta completa materializada por el editor. */
+  alignDynamicSleeveTrims?: boolean;
   lowerPocketAssetPath?: string;
   lowerPocketLayout: LowerPocketLayout;
   lowerPocketAuxiliaryAddonKind?: LowerPocketAuxiliaryAddonKind;
@@ -1143,6 +1145,10 @@ function deriveSingleAutomationRenderScene(
     );
   const useStableFemaleBlouseSilhouette =
     Boolean(dynamicBaseSilhouette) && isSpecialFemaleSleeveAnchor;
+  // Web y API deben pedir el mismo ajuste al borde real sólo para un SVG
+  // completo del editor; los activos estáticos mantienen sus anclas actuales.
+  const alignDynamicSleeveTrims =
+    Boolean(dynamicBaseSilhouette) && !useStableFemaleBlouseSilhouette;
   // La API debe seguir exactamente la misma composición que el navegador:
   // estos SVG femeninos son prendas completas, pero sólo su cuello central se
   // puede superponer a la base estable. Sus mangas no entran al render final.
@@ -1281,6 +1287,7 @@ function deriveSingleAutomationRenderScene(
     ...(useStableFemaleBlouseSilhouette
       ? { useStableFemaleBlouseSilhouette: true }
       : {}),
+    ...(alignDynamicSleeveTrims ? { alignDynamicSleeveTrims: true } : {}),
     ...(resolvedLowerPocketLayout !== "none" && lowerPocketAssetPath
       ? { lowerPocketAssetPath }
       : {}),

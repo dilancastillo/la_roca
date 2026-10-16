@@ -4414,12 +4414,14 @@ function offsetOriginalSleeveTrimShape(
   };
 }
 
-function alignSpecialSleeveTrimsToVisibleEdge(
+export function alignSpecialSleeveTrimsToVisibleEdge(
   processed: ProcessedImage,
   anchorAssetPath: string,
   shapes: readonly OriginalSleeveTrimShape[],
+  forceDynamicAlignment = false,
 ) {
   if (
+    !forceDynamicAlignment &&
     !DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(
       getAssetFileName(anchorAssetPath),
     )
@@ -4857,6 +4859,7 @@ async function getOriginalSleevesTrimSvg(
   placementAssetPath: string,
   trimColors: OriginalSleevesTrimColors,
   anchorAssetPath = placementAssetPath,
+  forceDynamicAlignment = false,
 ) {
   if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
     return "";
@@ -4871,11 +4874,13 @@ async function getOriginalSleevesTrimSvg(
     processed,
     anchorAssetPath,
     getOriginalSleeveTrimShapes(placementAssetPath, anchorAssetPath),
+    forceDynamicAlignment,
   );
   const fillShapes = alignSpecialSleeveTrimsToVisibleEdge(
     processed,
     anchorAssetPath,
     getOriginalSleeveFillShapes(placementAssetPath, anchorAssetPath),
+    forceDynamicAlignment,
   );
   const layers: string[] = [];
 
@@ -6014,6 +6019,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             fill: sleeveFillTrimColor,
           },
           sleeveAnchorAssetPath,
+          Boolean(scene.alignDynamicSleeveTrims),
         ),
       );
     }
