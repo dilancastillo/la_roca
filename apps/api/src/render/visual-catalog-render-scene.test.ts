@@ -123,7 +123,7 @@ describe("catalogo visual en la escena de automatizacion", () => {
     ).not.toBe(true);
   });
 
-  it("usa como base una definición de cuello con reemplazo explícito", () => {
+  it("compone un cuello publicado sobre la base estable cuando trae reemplazo explícito", () => {
     const markedRuntimeSvg = runtimeSvg.replace(
       "<svg",
       '<svg data-vc-render-mode="replace-base"',
@@ -139,10 +139,16 @@ describe("catalogo visual en la escena de automatizacion", () => {
       session.selectedValueIds,
     );
 
-    expect(scene.garmentAssetPath).toMatch(/^data:image\/svg\+xml/);
+    // V-DIVIDIDO es un cuello publicado con puños verificados: aunque el
+    // editor lo guarde como silueta completa, la prenda conserva su base
+    // estable y el SVG dinámico se aplica únicamente como cuello.
+    expect(scene.garmentAssetPath).toContain(
+      "blouse-base-closed-no-collar.svg",
+    );
+    expect(scene.neckAssetPath).toMatch(/^data:image\/svg\+xml/);
     expect(scene.suppressGarmentBaseOutline).toBe(true);
-    // Una silueta de reemplazo ya es la base de la prenda. Volver a incluirla
-    // como detalle duplicaría su cuello y sus trazos en la imagen final.
+    // El SVG dinámico ya se compone por neckAssetPath; no debe duplicarse como
+    // detalle de la prenda.
     expect(
       scene.garmentDetailAssetPaths?.some((assetPath) =>
         assetPath.startsWith("data:image/svg+xml"),
