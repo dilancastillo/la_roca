@@ -4739,7 +4739,7 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
   return assetPaths.some(isOriginalSleevesDetailAsset);
 }
 
-function getOriginalSleeveTrimShapes(
+export function getOriginalSleeveTrimShapes(
   placementAssetPath: string,
   anchorAssetPath = placementAssetPath,
 ) {
@@ -4753,7 +4753,11 @@ function getOriginalSleeveTrimShapes(
     getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
     placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
   ) {
-    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+    // EL HATO se compone sobre la misma silueta estable que CUELLO V. El
+    // perfil genérico deja el puño izquierdo hacia adentro; reutilizamos las
+    // aristas exteriores ya verificadas de CUELLO V, sin aplicar el ajuste
+    // alfa independiente que antes hacía asimétricos ambos lados.
+    return CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
   if (placementFileName === "blouse-model-15-presillas.svg") {
@@ -4805,7 +4809,7 @@ function getOriginalSleeveFillShapes(
     getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
     placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
   ) {
-    return ORIGINAL_SLEEVE_TRIM_SHAPES;
+    return CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
   if (placementFileName === "blouse-model-15-presillas.svg") {

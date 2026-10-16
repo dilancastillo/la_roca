@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 import {
   alignSpecialSleeveTrimsToVisibleEdge,
+  getOriginalSleeveTrimShapes,
   renderDesignImage,
 } from "./render-design-image.js";
 
@@ -17,6 +18,19 @@ const baseScene: AutomationRenderScene = {
 };
 
 describe("anclaje dinámico de vivos de manga", () => {
+  it("aplica a El Hato el mismo perfil estable de puños de Cuello V", () => {
+    const base =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+    const cuelloV =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+    const elHato =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+
+    expect(getOriginalSleeveTrimShapes(base, elHato)).toEqual(
+      getOriginalSleeveTrimShapes(cuelloV),
+    );
+  });
+
   it("corrige una silueta del editor sin mover un activo estático", () => {
     const width = 64;
     const height = 64;
