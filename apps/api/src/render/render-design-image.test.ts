@@ -18,18 +18,24 @@ const baseScene: AutomationRenderScene = {
 };
 
 describe("anclaje dinámico de vivos de manga", () => {
-  it("aplica a El Hato el mismo perfil estable de puños de Cuello V", () => {
-    const base =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
-    const cuelloV =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
-    const elHato =
-      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg";
+  it.each([
+    ["El Hato", "blouse-model-39-el-hato.svg"],
+    ["Cuello Alto", "blouse-model-08.svg"],
+    ["Cirugía", "blouse-model-37-cirugia.svg"],
+  ])(
+    "aplica a %s el mismo perfil estable de puños de Cuello V",
+    (_model, fileName) => {
+      const base =
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+      const cuelloV =
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg";
+      const anchor = `assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`;
 
-    expect(getOriginalSleeveTrimShapes(base, elHato)).toEqual(
-      getOriginalSleeveTrimShapes(cuelloV),
-    );
-  });
+      expect(getOriginalSleeveTrimShapes(base, anchor)).toEqual(
+        getOriginalSleeveTrimShapes(cuelloV),
+      );
+    },
+  );
 
   it("corrige una silueta del editor sin mover un activo estático", () => {
     const width = 64;

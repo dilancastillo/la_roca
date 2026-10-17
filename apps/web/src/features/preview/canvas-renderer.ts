@@ -3969,7 +3969,14 @@ const DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES = new Set([
   "blouse-model-04.svg",
   "blouse-model-40-mariposa.svg",
 ]);
-const EL_HATO_SLEEVE_ANCHOR_FILE_NAME = "blouse-model-39-el-hato.svg";
+// Estos cuellos se componen sobre la silueta femenina estable. Sus SVG
+// históricos describen el puño contra otra base, por lo que reutilizan el
+// contorno exterior ya verificado de Cuello V.
+const STABLE_CUELLO_V_SLEEVE_ANCHOR_FILE_NAMES = new Set([
+  "blouse-model-08.svg",
+  "blouse-model-37-cirugia.svg",
+  "blouse-model-39-el-hato.svg",
+]);
 
 function getPixelAlpha(
   data: Uint8ClampedArray,
@@ -4219,11 +4226,10 @@ export function getOriginalSleeveTrimShapes(
 
   if (
     getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
-    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+    STABLE_CUELLO_V_SLEEVE_ANCHOR_FILE_NAMES.has(placementFileName)
   ) {
-    // EL HATO se compone sobre la misma silueta estable que CUELLO V. El
-    // perfil genérico deja el puño izquierdo hacia adentro; reutilizamos las
-    // aristas exteriores ya verificadas de CUELLO V, sin aplicar el ajuste
+    // El perfil genérico deja el puño izquierdo hacia adentro; reutilizamos
+    // las aristas exteriores ya verificadas de CUELLO V, sin aplicar el ajuste
     // alfa independiente que antes hacía asimétricos ambos lados.
     return CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
@@ -4275,7 +4281,7 @@ function getOriginalSleeveFillShapes(
 
   if (
     getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
-    placementFileName === EL_HATO_SLEEVE_ANCHOR_FILE_NAME
+    STABLE_CUELLO_V_SLEEVE_ANCHOR_FILE_NAMES.has(placementFileName)
   ) {
     return CUELLO_V_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }

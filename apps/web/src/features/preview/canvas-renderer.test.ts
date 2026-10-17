@@ -103,21 +103,28 @@ describe("vivos de mangas originales", () => {
     ]);
   });
 
-  it("usa para El Hato el perfil de puño ya corregido de Cuello V", () => {
-    const [left, right] = getOriginalSleeveTrimShapes(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-39-el-hato.svg",
-    );
+  it.each([
+    ["El Hato", "blouse-model-39-el-hato.svg"],
+    ["Cuello Alto", "blouse-model-08.svg"],
+    ["Cirugía", "blouse-model-37-cirugia.svg"],
+  ])(
+    "usa para %s el perfil de puño ya corregido de Cuello V",
+    (_model, fileName) => {
+      const [left, right] = getOriginalSleeveTrimShapes(
+        "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+        `/assets/catalog/blusa-antifluido-t180/svg-clean/${fileName}`,
+      );
 
-    expect(left?.lower).toEqual([
-      [110.72, 533.35],
-      [264.49, 670.72],
-    ]);
-    expect(right?.lower).toEqual([
-      [970.21, 515.32],
-      [834.2, 642.19],
-    ]);
-  });
+      expect(left?.lower).toEqual([
+        [110.72, 533.35],
+        [264.49, 670.72],
+      ]);
+      expect(right?.lower).toEqual([
+        [970.21, 515.32],
+        [834.2, 642.19],
+      ]);
+    },
+  );
 
   it.each([
     [
