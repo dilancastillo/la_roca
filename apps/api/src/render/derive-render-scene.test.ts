@@ -3231,7 +3231,9 @@ describe("deriveAutomationRenderScene", () => {
       });
 
       expect(renderScene.useStableFemaleBlouseSilhouette, name).toBe(true);
-      expect(renderScene.alignDynamicSleeveTrims, name).toBeUndefined();
+      expect(renderScene.alignDynamicSleeveTrims, name).toBe(
+        name === "CIRUGÍA" ? true : undefined,
+      );
     }
   });
 

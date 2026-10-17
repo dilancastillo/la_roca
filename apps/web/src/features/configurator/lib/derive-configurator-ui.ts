@@ -2261,8 +2261,15 @@ function deriveSingleConfiguratorUi(
     Boolean(dynamicBaseSilhouette) && isStableFemaleSleeveAnchor;
   // Un SVG completo del editor no tiene una entrada segura en las tablas
   // históricas por archivo. Esta señal no altera los modelos publicados.
+  // CIRUGÍA conserva la base estable, pero sus puños publicados requieren
+  // volver a localizar el borde de tinta antes de pintar el vivo. No aplicamos
+  // este ajuste a los demás cuellos estables para preservar sus coordenadas
+  // ya verificadas.
+  const requiresStableSleeveEdgeCorrection =
+    normalize(selectedNeck?.name ?? "") === "cirugia";
   const alignDynamicSleeveTrims =
-    Boolean(dynamicBaseSilhouette) && !usesStableFemaleBlouseSilhouette;
+    Boolean(dynamicBaseSilhouette) &&
+    (!usesStableFemaleBlouseSilhouette || requiresStableSleeveEdgeCorrection);
   // Estos cuellos conservan una base de blusa estable y aplican solamente su
   // cuello dinámico. Así sus vivos no heredan los polígonos de manga
   // desplazados que vienen en el SVG completo.

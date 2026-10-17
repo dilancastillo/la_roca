@@ -1165,8 +1165,15 @@ function deriveSingleAutomationRenderScene(
     Boolean(dynamicBaseSilhouette) && isStableFemaleSleeveAnchor;
   // Web y API deben pedir el mismo ajuste al borde real sólo para un SVG
   // completo del editor; los activos estáticos mantienen sus anclas actuales.
+  // CIRUGÍA conserva la base estable, pero sus puños publicados requieren
+  // volver a localizar el borde de tinta antes de pintar el vivo. No aplicamos
+  // este ajuste a los demás cuellos estables para preservar sus coordenadas
+  // ya verificadas.
+  const requiresStableSleeveEdgeCorrection =
+    normalize(selectedNeck?.name ?? "") === "cirugia";
   const alignDynamicSleeveTrims =
-    Boolean(dynamicBaseSilhouette) && !useStableFemaleBlouseSilhouette;
+    Boolean(dynamicBaseSilhouette) &&
+    (!useStableFemaleBlouseSilhouette || requiresStableSleeveEdgeCorrection);
   // La API debe seguir exactamente la misma composición que el navegador:
   // estos SVG femeninos son prendas completas, pero sólo su cuello central se
   // puede superponer a la base estable. Sus mangas no entran al render final.

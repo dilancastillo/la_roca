@@ -4382,7 +4382,9 @@ describe("deriveConfiguratorUi", () => {
       });
 
       expect(ui.previewScene.useStableFemaleBlouseSilhouette, name).toBe(true);
-      expect(ui.previewScene.alignDynamicSleeveTrims, name).toBeUndefined();
+      expect(ui.previewScene.alignDynamicSleeveTrims, name).toBe(
+        name === "CIRUGÍA" ? true : undefined,
+      );
     }
   });
 
