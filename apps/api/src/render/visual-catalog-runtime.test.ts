@@ -352,6 +352,32 @@ describe("runtime del catalogo visual general", () => {
     expect(forWoman.map((definition) => definition.id)).toEqual(["bolsillo-ambos-v2"]);
   });
 
+  it("descarta una revisión histórica duplicada de bolsillo para Hombre", () => {
+    const andesV5 = makeDefinition("andes-hombre-v5", "component", []);
+    andesV5.slot = "lower_pocket";
+    andesV5.version = 5;
+    andesV5.binding.productTemplateIds = [6, 7];
+
+    const andesV9 = makeDefinition("andes-hombre-v9", "component", []);
+    andesV9.slot = "lower_pocket";
+    andesV9.version = 9;
+    andesV9.binding.productTemplateIds = [7];
+
+    const selected = getSelectedVisualDefinitions(
+      {
+        ...session,
+        productTemplateId: 7,
+        visualDefinitions: [andesV5, andesV9],
+      },
+      session.selectedValueIds,
+      "uniforme",
+    );
+
+    expect(selected.map((definition) => definition.id)).toEqual([
+      "andes-hombre-v9",
+    ]);
+  });
+
   it("resuelve visibilidad por elemento y toma colores solo de la orden", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

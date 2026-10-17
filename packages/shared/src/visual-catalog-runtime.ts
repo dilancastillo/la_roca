@@ -138,12 +138,6 @@ function isBindingSelected(
   ).has(definition.binding.sourceValueId);
 }
 
-function hasGenderActivationCondition(definition: ActiveVisualDefinition) {
-  return definition.activationConditions.some(
-    (condition) => normalize(condition.attributeName) === "genero",
-  );
-}
-
 function normalizeNonGenderConditions(definition: ActiveVisualDefinition) {
   return JSON.stringify(
     definition.activationConditions
@@ -646,57 +640,35 @@ export function getSelectedVisualDefinitions(
       ),
   );
 
-  // Las versiones antiguas de cuello y bolsillo inferior no tienen condición
-  // de género. Se conservan como respaldo, pero una variante explícita del
-  // mismo componente para el género actual debe reemplazarlas. Sin esto, al
-  // editar un bolsillo para Hombre se componía además el SVG heredado Mujer.
-  const withoutLegacyDuplicates = matchingDefinitions.filter((definition) => {
-    const isGenderScopedSlot =
+  // Una release puede guardar revisiones históricas del mismo cuello o
+  // bolsillo: algunas sin género y otras con alcances de plantilla distintos.
+  // A esta altura ya solo quedan definiciones que aplican a la prenda y la
+  // selección actual. Por eso, para una misma identidad visual, conserva solo
+  // la revisión más nueva sin depender de cómo se haya expresado el género.
+  const newestDefinitionByTarget = new Map<string, ActiveVisualDefinition>();
+  for (const definition of matchingDefinitions) {
+    const isVersionedVisualSlot =
       definition.slot === "neck" || definition.slot === "lower_pocket";
-    if (!isGenderScopedSlot || hasGenderActivationCondition(definition)) {
-      return true;
-    }
-
-    const targetKey = getGenderScopedTargetKey(definition);
-    return !matchingDefinitions.some((candidate) =>
-      candidate.id !== definition.id &&
-      hasGenderActivationCondition(candidate) &&
-      // Las dos definiciones ya fueron filtradas por la plantilla de la línea.
-      // Comparar su alcance completo aquí deja activo el legado cuando la nueva
-      // regla de Hombre tiene un alcance más específico.
-      getGenderScopedTargetKey(candidate) === targetKey,
-    );
-  });
-
-  // Releases históricas pueden contener dos revisiones explícitas de género
-  // que aplican a la misma selección (por ejemplo, Hombre y Mujer+Hombre).
-  // Para cuello y bolsillo inferior la revisión más reciente gana. Las
-  // variantes legítimas Hombre/Mujer no compiten porque solo una coincide con
-  // el género seleccionado.
-  const newestGenderScopedByTarget = new Map<string, ActiveVisualDefinition>();
-  for (const definition of withoutLegacyDuplicates) {
-    const isGenderScopedSlot =
-      definition.slot === "neck" || definition.slot === "lower_pocket";
-    if (!isGenderScopedSlot || !hasGenderActivationCondition(definition)) {
+    if (!isVersionedVisualSlot) {
       continue;
     }
 
     const key = getGenderScopedTargetKey(definition);
-    const current = newestGenderScopedByTarget.get(key);
+    const current = newestDefinitionByTarget.get(key);
     if (!current || isNewerDefinition(definition, current)) {
-      newestGenderScopedByTarget.set(key, definition);
+      newestDefinitionByTarget.set(key, definition);
     }
   }
 
-  const definitions = withoutLegacyDuplicates.filter((definition) => {
-    const isGenderScopedSlot =
+  const definitions = matchingDefinitions.filter((definition) => {
+    const isVersionedVisualSlot =
       definition.slot === "neck" || definition.slot === "lower_pocket";
-    if (!isGenderScopedSlot || !hasGenderActivationCondition(definition)) {
+    if (!isVersionedVisualSlot) {
       return true;
     }
 
     return (
-      newestGenderScopedByTarget.get(getGenderScopedTargetKey(definition))
+      newestDefinitionByTarget.get(getGenderScopedTargetKey(definition))
         ?.id === definition.id
     );
   });
