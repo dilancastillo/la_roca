@@ -109,9 +109,53 @@ function isNoLogoValueName(name: string) {
   );
 }
 
-function isOptionalUnselectedAttribute(
+function isYesValueName(name: string) {
+  const normalized = normalizeText(name);
+  return normalized === "si" || normalized === "yes";
+}
+
+function isLowerPocketZipperOptionsAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
+  return normalizeText(attribute.name) === "opciones de cremallera";
+}
+
+function hasLowerPocketZipperEnabled(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const zipperToggle = session.attributes.find((attribute) => {
+    const name = normalizeText(attribute.name);
+    return (
+      name.includes("bolsillos") &&
+      name.includes("inferiores") &&
+      name.includes("cremallera") &&
+      !name.includes("opciones")
+    );
+  });
+
+  if (!zipperToggle) {
+    return true;
+  }
+
+  const selected = new Set(selectedValueIds[String(zipperToggle.id)] ?? []);
+  return zipperToggle.values.some(
+    (value) => selected.has(value.id) && isYesValueName(value.name),
+  );
+}
+
+function isOptionalUnselectedAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  if (
+    isLowerPocketZipperOptionsAttribute(attribute) &&
+    !hasLowerPocketZipperEnabled(session, selectedValueIds)
+  ) {
+    return true;
+  }
+
   if (attribute.selectionMode !== "multiple") {
     return false;
   }
@@ -158,7 +202,10 @@ function validateSelections(
     const selected = selectedValueIds[String(attribute.id)] ?? [];
     const selectedSet = new Set(selected);
 
-    if (!isOptionalUnselectedAttribute(attribute) && selected.length === 0) {
+    if (
+      !isOptionalUnselectedAttribute(attribute, session, selectedValueIds) &&
+      selected.length === 0
+    ) {
       errors.push(
         `Falta seleccionar "${attribute.name}". No se guardo para evitar una variante incompleta.`,
       );

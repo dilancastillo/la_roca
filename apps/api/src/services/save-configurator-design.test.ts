@@ -662,6 +662,132 @@ describe("saveConfiguratorDesign", () => {
     ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
   });
 
+  it("permite guardar sin opciones de cremallera cuando los bolsillos no la llevan", async () => {
+    const zipperToggleId = 94;
+    const zipperOptionsId = 95;
+    const sessionWithoutLowerPocketZipper: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: zipperToggleId,
+          name: "¿Bolsillos inferiores con cremallera?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9401,
+              name: "No",
+              attributeId: zipperToggleId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+            {
+              id: 9402,
+              name: "Sí",
+              attributeId: zipperToggleId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+          ],
+        },
+        {
+          id: zipperOptionsId,
+          name: "Opciones de cremallera",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9501,
+              name: "Cremallera visible",
+              attributeId: zipperOptionsId,
+              attributeName: "Opciones de cremallera",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(zipperToggleId)]: [9401],
+        [String(zipperOptionsId)]: [],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithoutLowerPocketZipper);
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithoutLowerPocketZipper.selectedValueIds,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
+  });
+
+  it("exige opciones de cremallera cuando los bolsillos inferiores la llevan", async () => {
+    const zipperToggleId = 94;
+    const zipperOptionsId = 95;
+    const sessionWithLowerPocketZipper: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: zipperToggleId,
+          name: "¿Bolsillos inferiores con cremallera?",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9401,
+              name: "No",
+              attributeId: zipperToggleId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+            {
+              id: 9402,
+              name: "Sí",
+              attributeId: zipperToggleId,
+              attributeName: "¿Bolsillos inferiores con cremallera?",
+            },
+          ],
+        },
+        {
+          id: zipperOptionsId,
+          name: "Opciones de cremallera",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 9501,
+              name: "Cremallera visible",
+              attributeId: zipperOptionsId,
+              attributeName: "Opciones de cremallera",
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(zipperToggleId)]: [9402],
+        [String(zipperOptionsId)]: [],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithLowerPocketZipper);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithLowerPocketZipper.selectedValueIds,
+      }),
+    ).rejects.toThrow(/falta seleccionar "opciones de cremallera"/i);
+  });
+
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {
     mocks.odooSearchRead.mockResolvedValue([]);
     mocks.odooCreate.mockRejectedValue(
