@@ -2,7 +2,21 @@ import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooWrite } from "../lib/odoo-client.js";
 
 export const DESIGN_IMAGE_FIELD = "x_product_design_image" as const;
-export const LOGO_IMAGE_FIELD = "x_studio_imagen_adjunta" as const;
+
+export const LOGO_LINE_FIELDS = [
+  {
+    image: "x_studio_imagen_adjunta",
+    details: "x_studio_detalles_adicionales",
+  },
+  {
+    image: "x_studio_logo_2",
+    details: "x_studio_detalles_logo_2",
+  },
+  {
+    image: "x_studio_logo_3",
+    details: "x_studio_detalles_logo_3",
+  },
+] as const;
 
 type StoreDesignImageInput = {
   saleOrderLineId: number;

@@ -8,7 +8,7 @@ import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
 import {
-  LOGO_IMAGE_FIELD,
+  LOGO_LINE_FIELDS,
   buildDesignImageStoragePayload,
   createDesignImageAttachment,
 } from "./store-design-image.js";
@@ -360,6 +360,12 @@ export async function saveConfiguratorDesign(
   }
 
   const selectedLogoValueIds = getSelectedLogoValueIds(session, selectedValueIds);
+  if (selectedLogoValueIds.length > 3) {
+    throw new Error("Solo se permiten hasta tres ubicaciones de logo.");
+  }
+  if ((payload.logoAttachments?.length ?? 0) > 3) {
+    throw new Error("Solo se permiten hasta tres imágenes de logo.");
+  }
   const uploadedLogoValueIds = new Set(
     (payload.logoAttachments ?? []).map((attachment) => attachment.placementValueId),
   );
@@ -419,13 +425,18 @@ export async function saveConfiguratorDesign(
     }),
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
-  const primaryLogoLineValues = payload.logoAttachments?.[0]
-    ? {
-        [LOGO_IMAGE_FIELD]: stripDataUrlPrefix(
-          payload.logoAttachments[0].dataBase64,
-        ),
-      }
-    : {};
+  const logoLineValues = Object.fromEntries(
+    (payload.logoAttachments ?? []).flatMap((attachment, index) => {
+      const fields = LOGO_LINE_FIELDS[index];
+
+      return fields
+        ? [
+            [fields.image, stripDataUrlPrefix(attachment.dataBase64)],
+            [fields.details, attachment.placementLabel],
+          ]
+        : [];
+    }),
+  );
   const attachmentId = await createDesignImageAttachment(
     env,
     designImageInput,
@@ -473,7 +484,7 @@ export async function saveConfiguratorDesign(
     product_no_variant_attribute_value_ids: [[6, 0, noVariantValueIds]],
     product_custom_attribute_value_ids: customValueCommands,
     ...designImageStorage.lineValues,
-    ...primaryLogoLineValues,
+    ...logoLineValues,
   });
 
   return {

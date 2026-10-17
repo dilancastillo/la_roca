@@ -91,6 +91,9 @@ export const CONFIGURATOR_VALUE_IDS = {
     chestRight: [575],
     lowerLeft: [576],
     lowerRight: [577],
+    back: [2121],
+    rightSleeve: [2122],
+    leftSleeve: [2123],
   },
 } as const;
 

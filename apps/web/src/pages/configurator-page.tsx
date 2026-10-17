@@ -4,6 +4,7 @@ import type {
   ConfiguratorSession,
   UploadedAttachment,
 } from "@repo/shared/schemas/configurator";
+import { CONFIGURATOR_ATTRIBUTE_IDS } from "@repo/shared/configurator-id-rules";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
@@ -81,6 +82,15 @@ function synchronizeTextAttributeSelections(
 
 function isNoTrimValueName(value: string) {
   return normalizeText(value) === "sin vivos";
+}
+
+function isNoLogoValueName(value: string) {
+  const normalized = normalizeText(value);
+  return (
+    normalized === "no" ||
+    normalized.includes("sin logo") ||
+    normalized.includes("sin seleccion")
+  );
 }
 
 function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
@@ -402,10 +412,8 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     }
 
     previousLogoSelectionKeyRef.current = selectionKey;
-    setExpandedAttributeId(null);
     setIsLogoUploadExpanded(true);
-    setIsLogoUploadActive(true);
-    scheduleLogoUploadScroll();
+    setIsLogoUploadActive(false);
   }, [uiModel?.logoSelection]);
 
   const previewSceneKey = useMemo(
@@ -799,8 +807,26 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     const noTrimOption = group?.options.find((option) =>
       isNoTrimValueName(option.name),
     );
+    const noLogoOption = group?.options.find((option) =>
+      isNoLogoValueName(option.name),
+    );
     const current = new Set(state.selectedValueIds[key] ?? []);
     const isSelecting = !current.has(valueId);
+    const isLogoGroup = attributeId === CONFIGURATOR_ATTRIBUTE_IDS.logo;
+
+    if (
+      isLogoGroup &&
+      isSelecting &&
+      toggledOption &&
+      !isNoLogoValueName(toggledOption.name) &&
+      Array.from(current).filter((selectedId) => {
+        const option = group?.options.find((candidate) => candidate.id === selectedId);
+        return option && !isNoLogoValueName(option.name);
+      }).length >= 3
+    ) {
+      setLogoUploadError("Puedes seleccionar hasta tres ubicaciones de logo.");
+      return;
+    }
 
     if (isSelecting) {
       current.add(valueId);
@@ -808,11 +834,18 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
       current.delete(valueId);
     }
 
-    if (isSelecting && toggledOption && isNoTrimValueName(toggledOption.name)) {
+    if (
+      isSelecting &&
+      toggledOption &&
+      (isNoTrimValueName(toggledOption.name) ||
+        (isLogoGroup && isNoLogoValueName(toggledOption.name)))
+    ) {
       current.clear();
       current.add(valueId);
     } else if (isSelecting && noTrimOption) {
       current.delete(noTrimOption.id);
+    } else if (isSelecting && isLogoGroup && noLogoOption) {
+      current.delete(noLogoOption.id);
     }
 
     const nextSelectedValueIds = {
@@ -828,6 +861,13 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
         isSelecting ? valueId : undefined,
       ),
     });
+    if (isLogoGroup) {
+      setExpandedAttributeId(attributeId);
+      setIsLogoUploadExpanded(true);
+      setIsLogoUploadActive(false);
+      return;
+    }
+
     collapseAfterSelection(attributeId, isSelecting ? valueId : undefined);
   }
 

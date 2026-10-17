@@ -556,6 +556,9 @@ const LOGO_MARKER_POSITIONS = {
   chestPocketLeft: { x: 570, y: 455 },
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
+  back: { x: 540, y: 500 },
+  rightSleeve: { x: 170, y: 408 },
+  leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 170, y: 408 },
@@ -1718,6 +1721,21 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
 
     if (key.includes("pecho") && key.includes("derech")) {
       positions.push(LOGO_MARKER_POSITIONS.chestRight);
+      continue;
+    }
+
+    if (key.includes("espalda")) {
+      positions.push(LOGO_MARKER_POSITIONS.back);
+      continue;
+    }
+
+    if (key.includes("manga") && key.includes("derech")) {
+      positions.push(LOGO_MARKER_POSITIONS.rightSleeve);
+      continue;
+    }
+
+    if (key.includes("manga") && key.includes("izquierd")) {
+      positions.push(LOGO_MARKER_POSITIONS.leftSleeve);
     }
   }
 

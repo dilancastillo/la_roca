@@ -91,7 +91,24 @@ export const saveDesignRequestSchema = z.object({
     .optional(),
   selectedValueIds: z.record(z.string(), z.array(z.number())),
   customValuesByValueId: z.record(z.string(), z.string()).optional(),
-  logoAttachments: z.array(logoAttachmentSchema).optional(),
+  logoAttachments: z
+    .array(logoAttachmentSchema)
+    .max(3, "Solo se permiten hasta tres imágenes de logo.")
+    .superRefine((attachments, context) => {
+      const placementIds = new Set<number>();
+
+      attachments.forEach((attachment, index) => {
+        if (placementIds.has(attachment.placementValueId)) {
+          context.addIssue({
+            code: "custom",
+            path: [index, "placementValueId"],
+            message: "Cada ubicación de logo solo puede tener una imagen.",
+          });
+        }
+        placementIds.add(attachment.placementValueId);
+      });
+    })
+    .optional(),
 });
 
 export type SaveDesignRequest = z.infer<typeof saveDesignRequestSchema>;

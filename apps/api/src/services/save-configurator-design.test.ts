@@ -231,6 +231,7 @@ describe("saveConfiguratorDesign", () => {
       expect.objectContaining({
         x_product_design_image: "png-base64",
         x_studio_imagen_adjunta: "logo-base64",
+        x_studio_detalles_adicionales: "Bolsillo de pecho izquierdo",
       }),
     );
     expect(mocks.odooCreate).toHaveBeenCalledTimes(2);
@@ -259,6 +260,61 @@ describe("saveConfiguratorDesign", () => {
       ],
     );
     expect(result.logoImageUpdated).toBe(true);
+  });
+
+  it("distribuye hasta tres logos en los campos de la línea de Odoo", async () => {
+    mocks.odooSearchRead.mockResolvedValue([
+      {
+        id: 777,
+        display_name: "Blusa / Verde Olivo Claro",
+        product_template_attribute_value_ids: [9001],
+      },
+    ]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await saveConfiguratorDesign(env, {
+      saleOrderLineId: 290,
+      filename: "sale-line-290-design.png",
+      imageBase64: "png-base64",
+      selectedValueIds: editableSession.selectedValueIds,
+      logoAttachments: [
+        {
+          placementValueId: 572,
+          placementLabel: "Bolsillo de pecho izquierdo",
+          filename: "logo-1.png",
+          mimeType: "image/png",
+          dataBase64: "data:image/png;base64,logo-1-base64",
+        },
+        {
+          placementValueId: 2122,
+          placementLabel: "Manga derecha",
+          filename: "logo-2.png",
+          mimeType: "image/png",
+          dataBase64: "data:image/png;base64,logo-2-base64",
+        },
+        {
+          placementValueId: 2123,
+          placementLabel: "Manga izquierda",
+          filename: "logo-3.png",
+          mimeType: "image/png",
+          dataBase64: "data:image/png;base64,logo-3-base64",
+        },
+      ],
+    });
+
+    expect(mocks.odooWrite).toHaveBeenCalledWith(
+      env,
+      "sale.order.line",
+      [290],
+      expect.objectContaining({
+        x_studio_imagen_adjunta: "logo-1-base64",
+        x_studio_detalles_adicionales: "Bolsillo de pecho izquierdo",
+        x_studio_logo_2: "logo-2-base64",
+        x_studio_detalles_logo_2: "Manga derecha",
+        x_studio_logo_3: "logo-3-base64",
+        x_studio_detalles_logo_3: "Manga izquierda",
+      }),
+    );
   });
 
   it("guarda metadata de seleccion tambien en imagenes adicionales de Uniforme", async () => {
