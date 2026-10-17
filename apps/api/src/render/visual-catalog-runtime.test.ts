@@ -226,8 +226,10 @@ describe("runtime del catalogo visual general", () => {
   it("aísla un bolsillo específico de Hombre sin duplicar el heredado de Mujer", () => {
     const legacy = makeDefinition("bolsillo-heredado", "component", []);
     legacy.slot = "lower_pocket";
+    legacy.binding.productTemplateIds = [6, 7];
     const man = makeDefinition("bolsillo-hombre", "component", []);
     man.slot = "lower_pocket";
+    man.binding.productTemplateIds = [7];
     man.activationConditions = [
       {
         attributeId: 142,

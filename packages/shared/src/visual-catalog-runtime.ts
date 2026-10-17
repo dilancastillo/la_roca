@@ -657,22 +657,14 @@ export function getSelectedVisualDefinitions(
       return true;
     }
 
-    const sourceValueId =
-      definition.binding.sourceValueId ?? definition.binding.valueId;
-    const productTemplateIds = [...definition.binding.productTemplateIds]
-      .sort((left, right) => left - right)
-      .join(",");
-
+    const targetKey = getGenderScopedTargetKey(definition);
     return !matchingDefinitions.some((candidate) =>
       candidate.id !== definition.id &&
-      candidate.slot === definition.slot &&
       hasGenderActivationCondition(candidate) &&
-      candidate.layer === definition.layer &&
-      candidate.binding.attributeId === definition.binding.attributeId &&
-      (candidate.binding.sourceValueId ?? candidate.binding.valueId) === sourceValueId &&
-      [...candidate.binding.productTemplateIds]
-        .sort((left, right) => left - right)
-        .join(",") === productTemplateIds,
+      // Las dos definiciones ya fueron filtradas por la plantilla de la línea.
+      // Comparar su alcance completo aquí deja activo el legado cuando la nueva
+      // regla de Hombre tiene un alcance más específico.
+      getGenderScopedTargetKey(candidate) === targetKey,
     );
   });
 
