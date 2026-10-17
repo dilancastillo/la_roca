@@ -167,10 +167,11 @@ function getGenderScopedTargetKey(definition: ActiveVisualDefinition) {
   // otra más específica que ambas aplican a la prenda actual; el resultado es
   // que el Lab pinta el componente dos veces. La plantilla seleccionada ya
   // forma parte del filtro anterior, así que aquí importa la identidad visual
-  // (slot, capa, atributo, valor y condiciones no relacionadas con género).
+  // (slot, atributo, valor y condiciones no relacionadas con género).
+  // La capa no forma parte de la identidad: la estructura histórica y el
+  // componente actualizado del mismo bolsillo son revisiones alternativas.
   return [
     definition.slot,
-    definition.layer,
     definition.binding.attributeId,
     sourceValueId,
     normalizeNonGenderConditions(definition),
