@@ -142,9 +142,7 @@ function withGenderActivationCondition(
   genderCondition: VisualActivationCondition,
 ) {
   return [
-    ...conditions.filter(
-      (condition) => condition.attributeId !== genderCondition.attributeId,
-    ),
+    ...conditions.filter((condition) => !isGenderActivationCondition(condition)),
     genderCondition,
   ];
 }
@@ -157,11 +155,26 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
+function isGenderActivationCondition(condition: VisualActivationCondition) {
+  return normalize(condition.attributeName) === "genero";
+}
+
+// El género de cuellos y bolsillos inferiores se deriva de la silueta al
+// guardar. No debe aparecer ni poder editarse como una regla adicional.
+function getManualActivationConditions(
+  conditions: VisualActivationCondition[],
+  slot: VisualSlot,
+) {
+  return requiresGenderScopedDefinition(slot)
+    ? conditions.filter((condition) => !isGenderActivationCondition(condition))
+    : conditions;
+}
+
 function getDefinitionGenderLabel(definition: {
   activationConditions: VisualActivationCondition[];
 }) {
   const genderCondition = definition.activationConditions.find(
-    (condition) => normalize(condition.attributeName) === "genero",
+    isGenderActivationCondition,
   );
   const genderValue = genderCondition?.valueNames.find((valueName) => {
     const normalizedValue = normalize(valueName);
@@ -675,6 +688,15 @@ export function VisualCatalogPage() {
           : null,
       ),
     [commonAttributes, selectedAttribute, selectedProducts, selectedValue],
+  );
+  const manualConditionAttributes = useMemo(
+    () =>
+      requiresGenderScopedDefinition(slot)
+        ? compatibleAttributes.filter(
+            (attribute) => normalize(attribute.name) !== "genero",
+          )
+        : compatibleAttributes,
+    [compatibleAttributes, slot],
   );
   const reusableSelectionCandidates = useMemo(() => {
     if (!indexedSvg || !selectedAttribute || !selectedValue) {
@@ -1249,9 +1271,13 @@ export function VisualCatalogPage() {
       return;
     }
 
+    const manualConditions = getManualActivationConditions(
+      activationConditions,
+      slot,
+    );
     const effectiveActivationConditions = genderCondition
-      ? withGenderActivationCondition(activationConditions, genderCondition)
-      : activationConditions;
+      ? withGenderActivationCondition(manualConditions, genderCondition)
+      : manualConditions;
 
     setIsBusy(true);
     try {
@@ -1291,7 +1317,7 @@ export function VisualCatalogPage() {
         : undefined;
       const editedDefinitionHasGender = Boolean(
         editedDefinition?.activationConditions.some(
-          (condition) => normalize(condition.attributeName) === "genero",
+          isGenderActivationCondition,
         ),
       );
       // Las versiones históricas de bolsillo no tenían género. Al abrirlas
@@ -1333,7 +1359,12 @@ export function VisualCatalogPage() {
     setSelectedProductIds(definition.binding.productTemplateIds);
     setAttributeId(definition.binding.attributeId);
     setValueSourceId(findSourceValueId(definition, products));
-    setActivationConditions(definition.activationConditions);
+    setActivationConditions(
+      getManualActivationConditions(
+        definition.activationConditions,
+        definition.slot,
+      ),
+    );
     setDisplayName(definition.displayName);
     setOriginalSvg(definition.originalSvg);
     setSourceFileName(`${definition.displayName}.svg`);
@@ -1650,7 +1681,7 @@ export function VisualCatalogPage() {
             <div className="visual-editor__section">
               <ConditionsEditor
                 title="Reglas adicionales"
-                attributes={compatibleAttributes}
+                attributes={manualConditionAttributes}
                 conditions={activationConditions}
                 onChange={setActivationConditions}
               />
@@ -1687,8 +1718,8 @@ export function VisualCatalogPage() {
                   <option value="man">Hombre</option>
                 </select>
                 <small>
-                  Solo cambia la base de esta vista; el SVG y la definición
-                  guardada no se modifican.
+                  Define la base de revisión y la variante automática de
+                  género que se guardarán con esta definición.
                 </small>
               </label>
               {requiresGenderScopedDefinition(slot) ? (

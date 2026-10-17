@@ -71,6 +71,41 @@ describe("integridad de definiciones visuales", () => {
     expect(visualDefinitionMutationSchema.safeParse(mutation).success).toBe(true);
   });
 
+  it("permite una única variante automática de género para cuello o bolsillo", () => {
+    const result = visualDefinitionMutationSchema.safeParse({
+      ...mutation,
+      activationConditions: [
+        {
+          attributeId: 142,
+          attributeName: "Género",
+          sourceValueIds: [531],
+          valueNames: ["Hombre"],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rechaza una regla de género amplia en cuello o bolsillo", () => {
+    const result = visualDefinitionMutationSchema.safeParse({
+      ...mutation,
+      activationConditions: [
+        {
+          attributeId: 142,
+          attributeName: "Género",
+          sourceValueIds: [530, 531],
+          valueNames: ["Mujer", "Hombre"],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message).join(" ")).toMatch(
+      /única opción/i,
+    );
+  });
+
   it("rechaza elementos seleccionados ausentes o duplicados", () => {
     const missing = visualDefinitionMutationSchema.safeParse({
       ...mutation,

@@ -218,6 +218,36 @@ export const visualDefinitionMutationSchema = z
       });
     }
 
+    // Cuellos y bolsillos inferiores usan una variante automática por
+    // silueta. Aceptar Mujer y Hombre dentro de la misma condición los vuelve
+    // indistinguibles de una definición neutral y permite que se superpongan
+    // revisiones históricas. Las reglas manuales siguen disponibles para los
+    // demás atributos.
+    if (mutation.slot === "neck" || mutation.slot === "lower_pocket") {
+      const genderConditions = mutation.activationConditions.filter(
+        (condition) =>
+          condition.attributeName
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .trim()
+            .toLowerCase() === "genero",
+      );
+
+      if (
+        genderConditions.length > 1 ||
+        genderConditions.some(
+          (condition) => condition.sourceValueIds.length !== 1,
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["activationConditions"],
+          message:
+            "El género de un cuello o bolsillo inferior se determina automáticamente por la silueta y debe tener una única opción.",
+        });
+      }
+    }
+
     const selectedIds = new Set(mutation.selectedElementIds);
 
     const requestsBaseReplacement =
