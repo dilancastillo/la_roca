@@ -1779,6 +1779,57 @@ describe("renderDesignImage", () => {
     ).toBeUndefined();
   }, 20000);
 
+  it.each([
+    [
+      "rectangular",
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-model.svg",
+    ],
+    [
+      "punta",
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point.svg",
+    ],
+  ])(
+    "rellena el bolsillo de pecho %s con el color de vivos",
+    async (_model, chestPocketAssetPath) => {
+      const pocketScene: AutomationRenderScene = {
+        ...baseScene,
+        chestPocketAssetPath,
+        trimSections: [],
+      };
+      const withoutFill = await readRawPng(
+        await renderDesignImage(pocketScene),
+      );
+      const withFill = await readRawPng(
+        await renderDesignImage({
+          ...pocketScene,
+          trimSections: [
+            {
+              valueId: 7042,
+              role: "chestPocket",
+              key: "bolsillo-pecho-relleno",
+              label: "Bolsillo pecho relleno",
+              colorHex: "#f4c7cc",
+            },
+          ],
+        }),
+      );
+
+      const fillBounds = getPastelPinkPixelBounds(
+        withFill.data,
+        withFill.info.width,
+        withFill.info.height,
+      );
+
+      expect(fillBounds?.count).toBeGreaterThan(1000);
+      expect(fillBounds?.minY ?? 0).toBeGreaterThan(300);
+      expect(fillBounds?.maxY ?? Number.MAX_SAFE_INTEGER).toBeLessThan(500);
+      expect(
+        countDifferentPixels(withoutFill.data, withFill.data),
+      ).toBeGreaterThan(1000);
+    },
+    20000,
+  );
+
   it("superpone las lineas de Pespunte del pantalon sobre la base liza", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",

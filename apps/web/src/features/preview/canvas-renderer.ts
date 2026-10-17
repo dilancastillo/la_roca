@@ -519,6 +519,16 @@ const chestPocketSectionTrimOverlayByFileName: Record<
   },
 };
 
+// El relleno se pinta antes de los vivos lineales para preservar sus bordes.
+const chestPocketFillOverlayByFileName: Record<string, string> = {
+  "chest-pocket-rectangular-v2.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-fill.svg",
+  "chest-pocket-rectangular-model.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-fill.svg",
+  "chest-pocket-point.svg":
+    "/assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-fill.svg",
+};
+
 const fullChestPocketTrimOverlayFileNames = new Set([
   "chest-pocket-zipper-external.svg",
 ]);
@@ -2400,6 +2410,18 @@ function isChestPocketTrimSection(
   );
 }
 
+function isChestPocketFillTrimSection(
+  section: PreviewScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho relleno") ||
+    key.includes("bolsillo de pecho relleno") ||
+    key.includes("bolsillo-pecho-relleno")
+  );
+}
+
 function isChestPocketUpperTrimSection(
   section: PreviewScene["trimSections"][number],
 ) {
@@ -3454,6 +3476,7 @@ type LowerPocketBandTrimColors = {
 
 type ChestPocketTrimColors = {
   generic?: string | undefined;
+  fill?: string | undefined;
   upper?: string | undefined;
   zipper?: string | undefined;
   lower?: string | undefined;
@@ -3787,6 +3810,13 @@ async function drawChestPocketOverlay(
   context.save();
   context.translate(0, CHEST_POCKET_VERTICAL_OFFSET);
   context.drawImage(overlayCanvas, 0, 0);
+
+  const fillSrc = chestPocketFillOverlayByFileName[fileName];
+
+  if (fillSrc && trimColors.fill) {
+    const fillCanvas = await createRasterCanvas(fillSrc, placementSrc);
+    context.drawImage(recolorCanvasInk(fillCanvas, trimColors.fill), 0, 0);
+  }
 
   const sectionTrimOverlays = getChestPocketSectionTrimOverlays(sourceSrc);
 
@@ -5507,6 +5537,10 @@ async function composeSingleDesign(
       scene,
       isChestPocketTrimSection,
     );
+    const chestPocketFillTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketFillTrimSection,
+    );
     const chestPocketUpperTrimColor = getTrimSectionColor(
       scene,
       isChestPocketUpperTrimSection,
@@ -5791,6 +5825,7 @@ async function composeSingleDesign(
         baseAssetSrc,
         {
           generic: chestPocketTrimColor,
+          fill: chestPocketFillTrimColor,
           upper: chestPocketUpperTrimColor,
           zipper: chestPocketZipperTrimColor,
           lower: chestPocketLowerTrimColor,

@@ -464,6 +464,12 @@ const chestPocketSectionTrimOverlayByFileName: Record<
   string,
   { upper?: string; zipper?: string; lower?: string }
 > = {
+  "chest-pocket-rectangular-v2.svg": {
+    upper:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-upper-trim.svg",
+    lower:
+      "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-lower-trim.svg",
+  },
   "chest-pocket-point-zipper.svg": {
     upper:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-zipper-upper-trim.svg",
@@ -496,6 +502,15 @@ const chestPocketSectionTrimOverlayByFileName: Record<
     zipper:
       "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-zipper-internal-trim.svg",
   },
+};
+
+const chestPocketFillOverlayByFileName: Record<string, string> = {
+  "chest-pocket-rectangular-v2.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-fill.svg",
+  "chest-pocket-rectangular-model.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-rectangular-fill.svg",
+  "chest-pocket-point.svg":
+    "assets/catalog/blusa-antifluido-t180/detail-overlays/chest-pocket-point-fill.svg",
 };
 
 const fullChestPocketTrimOverlayFileNames = new Set([
@@ -2392,6 +2407,18 @@ function isChestPocketTrimSection(
   );
 }
 
+function isChestPocketFillTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  const key = getTrimSectionText(section);
+
+  return (
+    key.includes("bolsillo pecho relleno") ||
+    key.includes("bolsillo de pecho relleno") ||
+    key.includes("bolsillo-pecho-relleno")
+  );
+}
+
 function isChestPocketUpperTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
@@ -3553,6 +3580,28 @@ async function createChestPocketSectionTrimOverlayBuffer(
     chestPocketSectionTrimOverlayByFileName[getAssetFileName(assetPath)]?.[
       section
     ];
+
+  if (!overlayPath) {
+    return undefined;
+  }
+
+  const [overlayProcessed, placementProcessed] = await Promise.all([
+    loadProcessedImage(overlayPath),
+    loadProcessedImage(placementAssetPath),
+  ]);
+
+  return await createOverlayBufferFromProcessed(
+    overlayProcessed,
+    placementProcessed,
+  );
+}
+
+async function createChestPocketFillOverlayBuffer(
+  assetPath: string,
+  placementAssetPath: string,
+) {
+  const overlayPath =
+    chestPocketFillOverlayByFileName[getAssetFileName(assetPath)];
 
   if (!overlayPath) {
     return undefined;
@@ -5408,6 +5457,10 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       scene,
       isChestPocketTrimSection,
     );
+    const chestPocketFillTrimColor = getTrimSectionColor(
+      scene,
+      isChestPocketFillTrimSection,
+    );
     const chestPocketUpperTrimColor = getTrimSectionColor(
       scene,
       isChestPocketUpperTrimSection,
@@ -5944,6 +5997,26 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       layers.push(
         getImageSvg(toDataUri(overlayBuffer), CHEST_POCKET_VERTICAL_OFFSET),
       );
+
+      if (chestPocketFillTrimColor) {
+        const fillOverlayBuffer = await createChestPocketFillOverlayBuffer(
+          scene.chestPocketAssetPath,
+          baseAssetPath,
+        );
+
+        if (fillOverlayBuffer) {
+          const fillColorBuffer = await recolorPngInkBuffer(
+            fillOverlayBuffer,
+            chestPocketFillTrimColor,
+          );
+          layers.push(
+            getImageSvg(
+              toDataUri(fillColorBuffer),
+              CHEST_POCKET_VERTICAL_OFFSET,
+            ),
+          );
+        }
+      }
 
       const chestPocketSectionTrimOverlays =
         chestPocketSectionTrimOverlayByFileName[
