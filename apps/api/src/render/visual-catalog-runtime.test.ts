@@ -291,6 +291,10 @@ describe("runtime del catalogo visual general", () => {
   it("elige la revisión de género más reciente cuando una regla amplia se solapa", () => {
     const manV1 = makeDefinition("bolsillo-hombre-v1", "component", []);
     manV1.slot = "lower_pocket";
+    // La definición histórica alcanzaba dos plantillas; la revisión nueva se
+    // limita a la plantilla de esta línea. Ambas aplican a la plantilla 7 y
+    // solo debe quedar la más reciente.
+    manV1.binding.productTemplateIds = [6, 7];
     manV1.activationConditions = [
       {
         attributeId: 142,
@@ -303,6 +307,7 @@ describe("runtime del catalogo visual general", () => {
     const bothV2 = makeDefinition("bolsillo-ambos-v2", "component", []);
     bothV2.slot = "lower_pocket";
     bothV2.version = 2;
+    bothV2.binding.productTemplateIds = [7];
     bothV2.activationConditions = [
       {
         attributeId: 142,
