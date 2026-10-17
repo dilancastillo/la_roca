@@ -252,8 +252,20 @@ describe("runtime del catalogo visual general", () => {
           selectionMode: "single",
           variantMode: "no_variant",
           values: [
-            { id: 531, sourceValueId: 531, name: "Hombre", attributeId: 142, attributeName: "Genero" },
-            { id: 530, sourceValueId: 530, name: "Mujer", attributeId: 142, attributeName: "Genero" },
+            {
+              id: 531,
+              sourceValueId: 531,
+              name: "Hombre",
+              attributeId: 142,
+              attributeName: "Genero",
+            },
+            {
+              id: 530,
+              sourceValueId: 530,
+              name: "Mujer",
+              attributeId: 142,
+              attributeName: "Genero",
+            },
           ],
         },
       ],
@@ -292,7 +304,7 @@ describe("runtime del catalogo visual general", () => {
     ]);
   });
 
-  it("elige la revisión de género más reciente cuando una regla amplia se solapa", () => {
+  it("prioriza la revisión explícita de género sobre una histórica amplia", () => {
     const manV1 = makeDefinition("bolsillo-hombre-v1", "component", []);
     manV1.slot = "lower_pocket";
     // La definición histórica alcanzaba dos plantillas; la revisión nueva se
@@ -350,8 +362,58 @@ describe("runtime del catalogo visual general", () => {
       "uniforme",
     );
 
-    expect(forMan.map((definition) => definition.id)).toEqual(["bolsillo-ambos-v2"]);
+    expect(forMan.map((definition) => definition.id)).toEqual(["bolsillo-hombre-v1"]);
     expect(forWoman.map((definition) => definition.id)).toEqual(["bolsillo-ambos-v2"]);
+  });
+
+  it("conserva la versión masculina aunque el legado sin género tenga un número mayor", () => {
+    const man = makeDefinition("costura-maria-hombre", "component", []);
+    man.slot = "lower_pocket";
+    man.version = 8;
+    man.activationConditions = [
+      {
+        attributeId: 142,
+        attributeName: "Genero",
+        sourceValueIds: [531],
+        valueNames: ["Hombre"],
+      },
+    ];
+    const legacy = makeDefinition("costura-maria-legado", "component", []);
+    legacy.slot = "lower_pocket";
+    legacy.version = 15;
+
+    const sessionWithGender: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: 142,
+          name: "Genero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            { id: 531, sourceValueId: 531, name: "Hombre", attributeId: 142, attributeName: "Genero" },
+            { id: 530, sourceValueId: 530, name: "Mujer", attributeId: 142, attributeName: "Genero" },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      getSelectedVisualDefinitions(
+        { ...sessionWithGender, visualDefinitions: [legacy, man] },
+        { ...session.selectedValueIds, "142": [531] },
+        "uniforme",
+      ).map((definition) => definition.id),
+    ).toEqual(["costura-maria-hombre"]);
+    expect(
+      getSelectedVisualDefinitions(
+        { ...sessionWithGender, visualDefinitions: [legacy, man] },
+        { ...session.selectedValueIds, "142": [530] },
+        "uniforme",
+      ).map((definition) => definition.id),
+    ).toEqual(["costura-maria-legado"]);
   });
 
   it("descarta una revisión histórica duplicada de bolsillo para Hombre", () => {

@@ -178,6 +178,45 @@ function getGenderScopedTargetKey(definition: ActiveVisualDefinition) {
   ].join("|");
 }
 
+function getGenderMatchPriority(
+  definition: ActiveVisualDefinition,
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const genderConditions = definition.activationConditions.filter(
+    (condition) => normalize(condition.attributeName) === "genero",
+  );
+
+  // Las versiones históricas no tenían género. Siguen siendo un respaldo para
+  // la silueta que no posee una versión propia, pero no pueden reemplazar una
+  // definición que sí fue publicada expresamente para el género elegido.
+  if (genderConditions.length === 0) {
+    return 1;
+  }
+
+  const selectedGenderSourceIds = new Set<number>();
+  for (const condition of genderConditions) {
+    getSelectedSourceValueIds(
+      session,
+      selectedValueIds,
+      condition.attributeId,
+    ).forEach((sourceValueId) => selectedGenderSourceIds.add(sourceValueId));
+  }
+  const configuredGenderSourceIds = new Set(
+    genderConditions.flatMap((condition) => condition.sourceValueIds),
+  );
+
+  // Una sola alternativa es el alcance explícito creado automáticamente por
+  // el editor (Hombre o Mujer). Las reglas antiguas que mezclan ambos géneros
+  // son compatibles, pero menos específicas que esa versión explícita.
+  return configuredGenderSourceIds.size === 1 &&
+    Array.from(configuredGenderSourceIds).some((sourceValueId) =>
+      selectedGenderSourceIds.has(sourceValueId),
+    )
+    ? 2
+    : 0;
+}
+
 function isNewerDefinition(
   candidate: ActiveVisualDefinition,
   current: ActiveVisualDefinition,
@@ -678,7 +717,20 @@ export function getSelectedVisualDefinitions(
 
     const key = getGenderScopedTargetKey(definition);
     const current = newestDefinitionByTarget.get(key);
-    if (!current || isNewerDefinition(definition, current)) {
+    const candidatePriority = getGenderMatchPriority(
+      definition,
+      session,
+      selectedValueIds,
+    );
+    const currentPriority = current
+      ? getGenderMatchPriority(current, session, selectedValueIds)
+      : -1;
+    if (
+      !current ||
+      candidatePriority > currentPriority ||
+      (candidatePriority === currentPriority &&
+        isNewerDefinition(definition, current))
+    ) {
       newestDefinitionByTarget.set(key, definition);
     }
   }
