@@ -640,13 +640,35 @@ export function getSelectedVisualDefinitions(
       ),
   );
 
+  // Una serie representa la historia de un mismo componente. Una release puede
+  // conservar varias revisiones aprobadas de la misma serie y, tras editar una
+  // referencia de Odoo, esas revisiones pueden dejar de tener la misma clave de
+  // activación. No deben dibujarse juntas: dentro de una misma serie, slot y
+  // capa, solo la revisión más reciente puede llegar al renderer.
+  const newestDefinitionBySeriesLayer = new Map<
+    string,
+    ActiveVisualDefinition
+  >();
+  for (const definition of matchingDefinitions) {
+    const key = `${definition.seriesId}:${definition.slot}:${definition.layer}`;
+    const current = newestDefinitionBySeriesLayer.get(key);
+    if (!current || isNewerDefinition(definition, current)) {
+      newestDefinitionBySeriesLayer.set(key, definition);
+    }
+  }
+
+  const newestSeriesDefinitions = matchingDefinitions.filter((definition) => {
+    const key = `${definition.seriesId}:${definition.slot}:${definition.layer}`;
+    return newestDefinitionBySeriesLayer.get(key)?.id === definition.id;
+  });
+
   // Una release puede guardar revisiones históricas del mismo cuello o
   // bolsillo: algunas sin género y otras con alcances de plantilla distintos.
   // A esta altura ya solo quedan definiciones que aplican a la prenda y la
   // selección actual. Por eso, para una misma identidad visual, conserva solo
   // la revisión más nueva sin depender de cómo se haya expresado el género.
   const newestDefinitionByTarget = new Map<string, ActiveVisualDefinition>();
-  for (const definition of matchingDefinitions) {
+  for (const definition of newestSeriesDefinitions) {
     const isVersionedVisualSlot =
       definition.slot === "neck" || definition.slot === "lower_pocket";
     if (!isVersionedVisualSlot) {
@@ -660,7 +682,7 @@ export function getSelectedVisualDefinitions(
     }
   }
 
-  const definitions = matchingDefinitions.filter((definition) => {
+  const definitions = newestSeriesDefinitions.filter((definition) => {
     const isVersionedVisualSlot =
       definition.slot === "neck" || definition.slot === "lower_pocket";
     if (!isVersionedVisualSlot) {

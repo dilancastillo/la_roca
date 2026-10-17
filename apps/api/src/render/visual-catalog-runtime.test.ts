@@ -80,7 +80,9 @@ function makeDefinition(
 ): ActiveVisualDefinition {
   return {
     id,
-    seriesId: "2387ea71-e800-40ca-82e0-b343a7740141",
+    // Cada invocación representa un componente independiente salvo que la
+    // prueba indique expresamente que dos versiones pertenecen a una serie.
+    seriesId: `series-${id}`,
     version: 1,
     displayName: id,
     slot: "neck",
@@ -355,11 +357,13 @@ describe("runtime del catalogo visual general", () => {
   it("descarta una revisión histórica duplicada de bolsillo para Hombre", () => {
     const andesV5 = makeDefinition("andes-hombre-v5", "component", []);
     andesV5.slot = "lower_pocket";
+    andesV5.seriesId = "series-andes-hombre";
     andesV5.version = 5;
     andesV5.binding.productTemplateIds = [6, 7];
 
     const andesV9 = makeDefinition("andes-hombre-v9", "component", []);
     andesV9.slot = "lower_pocket";
+    andesV9.seriesId = "series-andes-hombre";
     andesV9.version = 9;
     andesV9.binding.productTemplateIds = [7];
 
@@ -375,6 +379,61 @@ describe("runtime del catalogo visual general", () => {
 
     expect(selected.map((definition) => definition.id)).toEqual([
       "andes-hombre-v9",
+    ]);
+  });
+
+  it("conserva solo la revisión más nueva de una serie aunque Odoo cambie su referencia", () => {
+    const rectangularV5 = makeDefinition("rectangular-hombre-v5", "component", []);
+    rectangularV5.slot = "lower_pocket";
+    rectangularV5.seriesId = "series-rectangular-hombre";
+    rectangularV5.version = 5;
+
+    const rectangularV14 = makeDefinition("rectangular-hombre-v14", "component", []);
+    rectangularV14.slot = "lower_pocket";
+    rectangularV14.seriesId = "series-rectangular-hombre";
+    rectangularV14.version = 14;
+    rectangularV14.binding = {
+      ...rectangularV14.binding,
+      attributeId: 64,
+      valueId: 335,
+      sourceValueId: 563,
+      attributeName: "Modelo bolsillo inferior Hombre",
+    };
+
+    const sessionWithTwoPocketReferences: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes,
+        {
+          id: 64,
+          name: "Modelo bolsillo inferior Hombre",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 335,
+              sourceValueId: 563,
+              name: "RECTANGULAR",
+              attributeId: 64,
+              attributeName: "Modelo bolsillo inferior Hombre",
+            },
+          ],
+        },
+      ],
+    };
+
+    const selected = getSelectedVisualDefinitions(
+      {
+        ...sessionWithTwoPocketReferences,
+        visualDefinitions: [rectangularV5, rectangularV14],
+      },
+      { ...session.selectedValueIds, "64": [335] },
+      "uniforme",
+    );
+
+    expect(selected.map((definition) => definition.id)).toEqual([
+      "rectangular-hombre-v14",
     ]);
   });
 
