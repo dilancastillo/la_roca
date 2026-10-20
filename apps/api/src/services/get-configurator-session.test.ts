@@ -329,7 +329,7 @@ describe("getConfiguratorSession", () => {
 
     expect(session.productTemplateId).toBe(7);
     expect(session.selectedValueIds).toEqual({
-      "90": [],
+      "90": [9001],
       "91": [9102],
       "92": [],
       "93": [9301],

@@ -13,10 +13,10 @@ describe("validación antes de guardar", () => {
     ],
   };
 
-  it("no permite guardar cuando el cuello es Ninguno", () => {
+  it("permite guardar cuando el cuello se deja explicitamente en Ninguno", () => {
     expect(
       getMissingRequiredSelectionGroups([neckGroup], { "63": [1] }),
-    ).toEqual([neckGroup]);
+    ).toEqual([]);
   });
 
   it("permite guardar cuando se selecciona un cuello real", () => {
@@ -25,7 +25,7 @@ describe("validación antes de guardar", () => {
     ).toEqual([]);
   });
 
-  it("exige elegir un modelo de bolsillo inferior o Ninguno", () => {
+  it("acepta una primera opcion explicita para el bolsillo inferior", () => {
     const lowerPocketGroup = {
       attributeId: 70,
       label: "Modelo bolsillo inferior",
@@ -40,7 +40,7 @@ describe("validación antes de guardar", () => {
 
     expect(
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [1] }),
-    ).toEqual([lowerPocketGroup]);
+    ).toEqual([]);
     expect(
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [2] }),
     ).toEqual([]);

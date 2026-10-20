@@ -1,6 +1,9 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { describe, expect, it } from "vitest";
-import { sanitizeSelectedValueIdsForExclusions } from "./selection-exclusions";
+import {
+  applyFirstOptionDefaults,
+  sanitizeSelectedValueIdsForExclusions,
+} from "./selection-exclusions";
 
 const session = {
   attributes: [
@@ -75,6 +78,19 @@ const session = {
 } as ConfiguratorSession;
 
 describe("sanitizeSelectedValueIdsForExclusions", () => {
+  it("asigna la primera opcion compatible a los atributos simples vacios", () => {
+    expect(
+      applyFirstOptionDefaults(session, {
+        "10": [101],
+      }),
+    ).toEqual({
+      "10": [101],
+      // La primera opcion de bolsillo entra en conflicto con Modelo 1; toma
+      // la siguiente sin reemplazar la seleccion existente.
+      "20": [202],
+    });
+  });
+
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
     expect(
       sanitizeSelectedValueIdsForExclusions(session, {

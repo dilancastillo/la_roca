@@ -20,7 +20,10 @@ import {
   sanitizeSelectedValueIdsForHiddenTextAttributes,
   type UiAttributeGroup,
 } from "../features/configurator/lib/derive-configurator-ui";
-import { sanitizeSelectedValueIdsForExclusions } from "../features/configurator/lib/selection-exclusions";
+import {
+  applyFirstOptionDefaults,
+  sanitizeSelectedValueIdsForExclusions,
+} from "../features/configurator/lib/selection-exclusions";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
 import { DesignPreviewCanvas } from "../features/preview/components/design-preview-canvas";
 import {
@@ -60,9 +63,13 @@ function synchronizeTextAttributeSelections(
     selectedValueIds,
     preferredValueId,
   );
-  const visibleSelections = sanitizeSelectedValueIdsForHiddenTextAttributes(
+  const selectionsWithRequiredDefaults = applyFirstOptionDefaults(
     session,
     validSelections,
+  );
+  const visibleSelections = sanitizeSelectedValueIdsForHiddenTextAttributes(
+    session,
+    selectionsWithRequiredDefaults,
   );
   const selectionsWithDefaults = applyDefaultTextStyleSelections(
     session,
@@ -103,36 +110,11 @@ function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
   return label.includes("logo") || (label.includes("seccion") && label.includes("vivo"));
 }
 
-function isNeckModelGroup(group: UiAttributeGroup) {
-  return normalizeText(group.label).includes("modelo de cuello");
-}
-
-function isLowerPocketModelGroup(group: UiAttributeGroup) {
-  return normalizeText(group.label).includes("modelo bolsillo inferior");
-}
-
 function isGroupComplete(
   group: UiAttributeGroup,
   selectedValueIds: Record<string, number[]>,
 ) {
   const selectedIds = selectedValueIds[String(group.attributeId)] ?? [];
-
-  if (isNeckModelGroup(group)) {
-    return selectedIds.some((id) => {
-      const selectedOption = group.options.find((option) => option.id === id);
-      return selectedOption && normalizeText(selectedOption.name) !== "ninguno";
-    });
-  }
-
-  if (isLowerPocketModelGroup(group)) {
-    return selectedIds.some((id) => {
-      const selectedOption = group.options.find((option) => option.id === id);
-      return (
-        selectedOption &&
-        normalizeText(selectedOption.name) !== "sin seleccion"
-      );
-    });
-  }
 
   return (
     isOptionalMultipleSelectionGroup(group) ||
@@ -362,7 +344,10 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     dispatch({
       type: "INITIALIZE",
       value: {
-        selectedValueIds: sessionQuery.data.selectedValueIds,
+        selectedValueIds: synchronizeTextAttributeSelections(
+          sessionQuery.data,
+          sessionQuery.data.selectedValueIds,
+        ),
         customValuesByValueId: sessionQuery.data.customValuesByValueId ?? {},
       },
     });
@@ -962,9 +947,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 0);
       setSaveError(
-        isNeckModelGroup(firstMissingGroup)
-          ? "Selecciona un modelo de cuello antes de guardar."
-          : `Selecciona un valor para "${firstMissingGroup.label}" o elige "Ninguno" antes de guardar.`,
+        `Selecciona un valor para "${firstMissingGroup.label}" antes de guardar.`,
       );
       return;
     }

@@ -47,6 +47,55 @@ function removeSelectedValue(
   }
 }
 
+function conflictsWithCurrentSelection(
+  valueId: number,
+  selected: Set<number>,
+  exclusions: ConfiguratorSession["exclusions"],
+) {
+  return exclusions.some(
+    (rule) =>
+      (rule.sourceValueId === valueId && selected.has(rule.excludedValueId)) ||
+      (rule.excludedValueId === valueId && selected.has(rule.sourceValueId)),
+  );
+}
+
+/**
+ * Odoo puede entregar atributos simples sin valor cuando la línea todavía no
+ * ha materializado una variante. Para que el configurador nunca quede
+ * bloqueado, se elige la primera opción compatible en el orden recibido de
+ * Odoo. Los campos múltiples siguen vacíos: logos y secciones de vivo son
+ * decisiones opcionales, no valores por defecto.
+ */
+export function applyFirstOptionDefaults(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const nextSelectedValueIds = cloneSelectedValueIds(selectedValueIds);
+
+  for (const attribute of session.attributes) {
+    const key = String(attribute.id);
+
+    if (
+      attribute.selectionMode === "multiple" ||
+      (nextSelectedValueIds[key]?.length ?? 0) > 0
+    ) {
+      continue;
+    }
+
+    const selected = selectedSet(nextSelectedValueIds);
+    const firstCompatibleOption = attribute.values.find(
+      (value) =>
+        !conflictsWithCurrentSelection(value.id, selected, session.exclusions),
+    );
+
+    if (firstCompatibleOption) {
+      nextSelectedValueIds[key] = [firstCompatibleOption.id];
+    }
+  }
+
+  return nextSelectedValueIds;
+}
+
 export function sanitizeSelectedValueIdsForExclusions(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,

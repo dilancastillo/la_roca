@@ -54,6 +54,51 @@ type ProductAttributeRecord = {
   create_variant?: string | false;
 };
 
+function hasSelectionConflict(
+  valueId: number,
+  selectedValueIds: Record<string, number[]>,
+  exclusions: Array<{ sourceValueId: number; excludedValueId: number }>,
+) {
+  const selected = new Set(Object.values(selectedValueIds).flat());
+
+  return exclusions.some(
+    (rule) =>
+      (rule.sourceValueId === valueId && selected.has(rule.excludedValueId)) ||
+      (rule.excludedValueId === valueId && selected.has(rule.sourceValueId)),
+  );
+}
+
+function applyFirstOptionDefaults(
+  attributes: ConfiguratorSession["attributes"],
+  selectedValueIds: Record<string, number[]>,
+  exclusions: Array<{ sourceValueId: number; excludedValueId: number }>,
+) {
+  const next = Object.fromEntries(
+    Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
+      attributeId,
+      [...valueIds],
+    ]),
+  ) as Record<string, number[]>;
+
+  for (const attribute of attributes) {
+    const key = String(attribute.id);
+
+    if (attribute.selectionMode === "multiple" || (next[key]?.length ?? 0) > 0) {
+      continue;
+    }
+
+    const firstCompatibleOption = attribute.values.find(
+      (value) => !hasSelectionConflict(value.id, next, exclusions),
+    );
+
+    if (firstCompatibleOption) {
+      next[key] = [firstCompatibleOption.id];
+    }
+  }
+
+  return next;
+}
+
 type ProductTemplateAttributeLineRecord = {
   id: number;
   attribute_id: Many2one;
@@ -763,6 +808,24 @@ export async function getConfiguratorSession(
       );
   }
 
+  const exclusions = ptavs.flatMap((ptav) => {
+    const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
+
+    if (excludedIds.length === 0) {
+      return [];
+    }
+
+    return excludedIds.map((excludedValueId) => ({
+      sourceValueId: ptav.id,
+      excludedValueId,
+    }));
+  });
+  const selectedValueIdsWithDefaults = applyFirstOptionDefaults(
+    sortedAttributes,
+    selectedValueIds,
+    exclusions,
+  );
+
   const latestDesignAttachment = await loadLatestDesignAttachment(
     env,
     saleOrderLineId,
@@ -812,19 +875,6 @@ export async function getConfiguratorSession(
     return [];
   });
 
-  const exclusions = ptavs.flatMap((ptav) => {
-    const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
-
-    if (excludedIds.length === 0) {
-      return [];
-    }
-
-    return excludedIds.map((excludedValueId) => ({
-      sourceValueId: ptav.id,
-      excludedValueId,
-    }));
-  });
-
   return {
     saleOrderLineId,
     saleOrderId: order.id,
@@ -834,7 +884,7 @@ export async function getConfiguratorSession(
     productName,
     graphicManifestKey: normalizeGraphicManifestKey(productName),
     attributes: sortedAttributes,
-    selectedValueIds,
+    selectedValueIds: selectedValueIdsWithDefaults,
     customValuesByValueId,
     exclusions,
     visualDefinitions,
