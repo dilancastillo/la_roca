@@ -493,8 +493,13 @@ function normalizeThinPolygonVisualStrokes(runtimeSvg: string) {
 }
 
 function normalizeNeckVectorStrokeWidths(runtimeSvg: string) {
+  // Un cuello del Editor ya identifica explícitamente sus líneas con los
+  // token `outline` o un vivo marcado explícitamente. Solo esas líneas
+  // semánticas pueden reforzarse: un
+  // selector global por etiqueta SVG también engrosaría cierres, franjas,
+  // botones y la silueta completa de la prenda.
   return runtimeSvg.replace(
-    /<(path|rect|circle|ellipse|line|polyline|polygon|use)\b[^>]*__VC_TRIM_(?:FILL|STROKE)_\d+__[^>]*>/gi,
+    /<(path|rect|circle|ellipse|line|polyline|polygon|use)\b[^>]*(?:__VC_OUTLINE_COLOR__|__VC_TRIM_(?:FILL|STROKE)_\d+__)[^>]*>/gi,
     (elementMarkup) => {
       const strokeStyle =
         "stroke-width:3px!important;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;";

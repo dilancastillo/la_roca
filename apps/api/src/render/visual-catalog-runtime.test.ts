@@ -138,6 +138,26 @@ function makeDefinition(
 }
 
 describe("runtime del catalogo visual general", () => {
+  it("refuerza solo el contorno semantico de un cuello, sin tocar su decoracion", () => {
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("4a364c0a-289c-48c9-a655-f5bfa77a115c", "component", []),
+      selectedElementIds: ["contorno"],
+      elementPaints: {
+        contorno: { mode: "outline", visibilityConditions: [] },
+      },
+      runtimeSvg:
+        '<svg><path id="contorno" style="stroke:__VC_OUTLINE_COLOR__!important"/><path id="cierre" style="stroke:#111827;stroke-width:1px"/></svg>',
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#132c5a", []).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain('id="contorno"');
+    expect(svg).toContain("stroke-width:3px!important");
+    expect(svg).toContain('id="cierre" style="stroke:#111827;stroke-width:1px"');
+  });
+
   it("aplica AND entre condiciones, OR dentro de una condicion y orden por capa", () => {
     const definitions = [
       makeDefinition(
