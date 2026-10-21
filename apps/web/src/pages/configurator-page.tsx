@@ -53,38 +53,68 @@ function normalizeText(value: string) {
     .toLowerCase();
 }
 
+function haveSameSelections(
+  left: Record<string, number[]>,
+  right: Record<string, number[]>,
+) {
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+
+  return Array.from(keys).every((key) => {
+    const leftValues = left[key] ?? [];
+    const rightValues = right[key] ?? [];
+    return (
+      leftValues.length === rightValues.length &&
+      leftValues.every((valueId, index) => valueId === rightValues[index])
+    );
+  });
+}
+
 function synchronizeTextAttributeSelections(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
   preferredValueId?: number,
 ) {
-  const validSelections = sanitizeSelectedValueIdsForExclusions(
-    session,
-    selectedValueIds,
-    preferredValueId,
-  );
-  const selectionsWithRequiredDefaults = applyFirstOptionDefaults(
-    session,
-    validSelections,
-  );
-  const visibleSelections = sanitizeSelectedValueIdsForHiddenTextAttributes(
-    session,
-    selectionsWithRequiredDefaults,
-  );
-  const selectionsWithDefaults = applyDefaultTextStyleSelections(
-    session,
-    visibleSelections,
-  );
-  const selectionsWithBootMeasurements = applyBootMeasurementSelections(
-    session,
-    selectionsWithDefaults,
-  );
+  let nextSelections = selectedValueIds;
 
-  return sanitizeSelectedValueIdsForExclusions(
-    session,
-    selectionsWithBootMeasurements,
-    preferredValueId,
-  );
+  // Una exclusión puede borrar una selección después de haber aplicado los
+  // valores por defecto (por ejemplo, al cambiar Mujer por Hombre). Repetir
+  // hasta estabilidad garantiza una opción compatible en cada campo simple.
+  for (let attempt = 0; attempt <= session.attributes.length; attempt += 1) {
+    const validSelections = sanitizeSelectedValueIdsForExclusions(
+      session,
+      nextSelections,
+      preferredValueId,
+    );
+    const selectionsWithRequiredDefaults = applyFirstOptionDefaults(
+      session,
+      validSelections,
+    );
+    const visibleSelections = sanitizeSelectedValueIdsForHiddenTextAttributes(
+      session,
+      selectionsWithRequiredDefaults,
+    );
+    const selectionsWithDefaults = applyDefaultTextStyleSelections(
+      session,
+      visibleSelections,
+    );
+    const selectionsWithBootMeasurements = applyBootMeasurementSelections(
+      session,
+      selectionsWithDefaults,
+    );
+    const sanitizedSelections = sanitizeSelectedValueIdsForExclusions(
+      session,
+      selectionsWithBootMeasurements,
+      preferredValueId,
+    );
+
+    if (haveSameSelections(nextSelections, sanitizedSelections)) {
+      return sanitizedSelections;
+    }
+
+    nextSelections = sanitizedSelections;
+  }
+
+  return nextSelections;
 }
 
 function isNoTrimValueName(value: string) {

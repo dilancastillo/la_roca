@@ -59,6 +59,22 @@ function conflictsWithCurrentSelection(
   );
 }
 
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isNeckModelAttribute(attributeName: string) {
+  return normalizeText(attributeName).includes("modelo de cuello");
+}
+
+function isEmptyNeckOption(optionName: string) {
+  return ["sin seleccion", "ninguno"].includes(normalizeText(optionName));
+}
+
 /**
  * Odoo puede entregar atributos simples sin valor cuando la línea todavía no
  * ha materializado una variante. Para que el configurador nunca quede
@@ -83,7 +99,10 @@ export function applyFirstOptionDefaults(
     }
 
     const selected = selectedSet(nextSelectedValueIds);
-    const firstCompatibleOption = attribute.values.find(
+    const candidateValues = isNeckModelAttribute(attribute.name)
+      ? attribute.values.filter((value) => !isEmptyNeckOption(value.name))
+      : attribute.values;
+    const firstCompatibleOption = candidateValues.find(
       (value) =>
         !conflictsWithCurrentSelection(value.id, selected, session.exclusions),
     );

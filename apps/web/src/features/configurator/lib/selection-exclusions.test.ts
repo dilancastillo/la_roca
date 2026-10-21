@@ -91,6 +91,31 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
+  it("elige un cuello real en vez de Sin selección cuando el género invalida el anterior", () => {
+    const sessionWithEmptyNeck: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          ...session.attributes[0]!,
+          values: [
+            {
+              id: 100,
+              name: "Sin selección",
+              attributeId: 10,
+              attributeName: "Modelo de cuello",
+            },
+            ...session.attributes[0]!.values,
+          ],
+        },
+        ...session.attributes.slice(1),
+      ],
+    };
+
+    expect(applyFirstOptionDefaults(sessionWithEmptyNeck, {})).toMatchObject({
+      "10": [101],
+    });
+  });
+
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
     expect(
       sanitizeSelectedValueIdsForExclusions(session, {
