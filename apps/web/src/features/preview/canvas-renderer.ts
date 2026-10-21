@@ -3363,6 +3363,46 @@ function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
   return outputCanvas;
 }
 
+// Los SVG históricos de cuello usan tinta #262626. En telas oscuras se ve
+// apagada aunque la geometría sea correcta. Este ajuste cambia únicamente el
+// color de tinta neutra oscura; no cambia alpha, tamaño, viewBox ni trazos.
+function normalizeNeckOutlineInk(canvas: HTMLCanvasElement) {
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = canvas.width;
+  outputCanvas.height = canvas.height;
+  const outputContext = outputCanvas.getContext("2d");
+
+  if (!outputContext) {
+    throw new Error("No se pudo reforzar el contorno del cuello.");
+  }
+
+  outputContext.drawImage(canvas, 0, 0);
+  const imageData = outputContext.getImageData(
+    0,
+    0,
+    outputCanvas.width,
+    outputCanvas.height,
+  );
+
+  for (let offset = 0; offset < imageData.data.length; offset += 4) {
+    const red = imageData.data[offset] ?? 0;
+    const green = imageData.data[offset + 1] ?? 0;
+    const blue = imageData.data[offset + 2] ?? 0;
+    const alpha = imageData.data[offset + 3] ?? 0;
+    const darkest = Math.min(red, green, blue);
+    const lightest = Math.max(red, green, blue);
+
+    if (alpha > 0 && lightest <= 84 && lightest - darkest <= 12) {
+      imageData.data[offset] = 17;
+      imageData.data[offset + 1] = 24;
+      imageData.data[offset + 2] = 39;
+    }
+  }
+
+  outputContext.putImageData(imageData, 0, 0);
+  return outputCanvas;
+}
+
 function drawCanvasInRegions(
   context: CanvasRenderingContext2D,
   sourceCanvas: HTMLCanvasElement,
@@ -5280,6 +5320,7 @@ export async function createTintedBaseCanvas(
   src: string,
   fillColor: string,
   includeOutline = true,
+  emphasizeNeckOutline = false,
 ) {
   const processed = await getProcessedImage(src);
   const mask = await getInteriorMask(src, !includeOutline);
@@ -5316,7 +5357,10 @@ export async function createTintedBaseCanvas(
   tintContext.drawImage(fillCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
 
   if (includeOutline) {
-    tintContext.drawImage(processed.canvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
+    const outlineCanvas = emphasizeNeckOutline
+      ? normalizeNeckOutlineInk(processed.canvas)
+      : processed.canvas;
+    tintContext.drawImage(outlineCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
   }
 
   return tintCanvas;
@@ -5366,6 +5410,7 @@ async function composeSingleDesign(
       baseAssetSrc,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
+      Boolean(scene.neckImageSrc),
     );
     if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
       // Los modelos dinámicos son prendas completas. Sobre la base estable

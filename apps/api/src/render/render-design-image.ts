@@ -2879,6 +2879,7 @@ async function createTintedBaseBuffer(
   assetPath: string,
   fillColor: string,
   includeOutline = true,
+  emphasizeNeckOutline = false,
 ) {
   const processed = await loadProcessedImage(assetPath);
   const mask = computeInteriorMask(processed, assetPath, !includeOutline);
@@ -2901,9 +2902,20 @@ async function createTintedBaseBuffer(
     }
 
     if (includeOutline && (processed.data[offset + 3] ?? 0) > 0) {
-      tint[offset] = processed.data[offset] ?? 0;
-      tint[offset + 1] = processed.data[offset + 1] ?? 0;
-      tint[offset + 2] = processed.data[offset + 2] ?? 0;
+      const red = processed.data[offset] ?? 0;
+      const green = processed.data[offset + 1] ?? 0;
+      const blue = processed.data[offset + 2] ?? 0;
+      const darkest = Math.min(red, green, blue);
+      const lightest = Math.max(red, green, blue);
+      const isDarkNeutralOutline =
+        emphasizeNeckOutline && lightest <= 84 && lightest - darkest <= 12;
+
+      // Los SVG históricos usan tinta #262626: sobre una blusa oscura se
+      // pierde visualmente. Se normaliza solo esa tinta neutra, sin modificar
+      // alpha, tamaño, viewBox ni geometría del modelo.
+      tint[offset] = isDarkNeutralOutline ? 17 : red;
+      tint[offset + 1] = isDarkNeutralOutline ? 24 : green;
+      tint[offset + 2] = isDarkNeutralOutline ? 39 : blue;
       tint[offset + 3] = processed.data[offset + 3] ?? 0;
     }
   }
@@ -5245,6 +5257,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
       baseAssetPath,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
+      Boolean(scene.neckAssetPath),
     );
     if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
       // Igual que en web, solo se toma el centro del modelo histórico: allí
