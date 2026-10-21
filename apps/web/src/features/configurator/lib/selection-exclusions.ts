@@ -67,12 +67,8 @@ function normalizeText(value: string) {
     .toLowerCase();
 }
 
-function isNeckModelAttribute(attributeName: string) {
-  return normalizeText(attributeName).includes("modelo de cuello");
-}
-
-function isEmptyNeckOption(optionName: string) {
-  return ["sin seleccion", "ninguno"].includes(normalizeText(optionName));
+function isPlaceholderOption(optionName: string) {
+  return ["sin seleccion", "seleccione"].includes(normalizeText(optionName));
 }
 
 /**
@@ -91,20 +87,44 @@ export function applyFirstOptionDefaults(
   for (const attribute of session.attributes) {
     const key = String(attribute.id);
 
-    if (
-      attribute.selectionMode === "multiple" ||
-      (nextSelectedValueIds[key]?.length ?? 0) > 0
-    ) {
+    if (attribute.selectionMode === "multiple") {
+      continue;
+    }
+
+    const selectedValueIds = nextSelectedValueIds[key] ?? [];
+    const selectedValues = attribute.values.filter((value) =>
+      selectedValueIds.includes(value.id),
+    );
+    const hasOnlyPlaceholderSelection =
+      selectedValues.length > 0 &&
+      selectedValues.every((value) => isPlaceholderOption(value.name));
+
+    if (selectedValueIds.length > 0 && !hasOnlyPlaceholderSelection) {
       continue;
     }
 
     const selected = selectedSet(nextSelectedValueIds);
-    const candidateValues = isNeckModelAttribute(attribute.name)
-      ? attribute.values.filter((value) => !isEmptyNeckOption(value.name))
+    const meaningfulValues = attribute.values.filter(
+      (value) => !isPlaceholderOption(value.name),
+    );
+    // "Ninguno" es una selección explícita y válida. En cambio, "Sin
+    // selección" es el placeholder que Odoo puede devolver después de una
+    // exclusión por género y nunca debe bloquear el avance de un campo simple.
+    const candidateValues = meaningfulValues.length > 0
+      ? meaningfulValues
       : attribute.values;
+    const selectedWithoutPlaceholders = new Set(
+      Array.from(selected).filter(
+        (valueId) => !selectedValueIds.includes(valueId),
+      ),
+    );
     const firstCompatibleOption = candidateValues.find(
       (value) =>
-        !conflictsWithCurrentSelection(value.id, selected, session.exclusions),
+        !conflictsWithCurrentSelection(
+          value.id,
+          selectedWithoutPlaceholders,
+          session.exclusions,
+        ),
     );
 
     if (firstCompatibleOption) {

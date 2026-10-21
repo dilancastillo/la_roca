@@ -114,6 +114,45 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     expect(applyFirstOptionDefaults(sessionWithEmptyNeck, {})).toMatchObject({
       "10": [101],
     });
+
+    // Odoo puede dejar seleccionado el valor placeholder en vez de una lista
+    // vacía al recalcular exclusiones después de cambiar el género.
+    expect(
+      applyFirstOptionDefaults(sessionWithEmptyNeck, { "10": [100] }),
+    ).toMatchObject({
+      "10": [101],
+    });
+  });
+
+  it("reemplaza Sin selección en cualquier atributo simple por una opción real", () => {
+    const sessionWithPlaceholderPocket: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        session.attributes[0]!,
+        {
+          ...session.attributes[1]!,
+          values: [
+            {
+              id: 200,
+              name: "Sin seleccion",
+              attributeId: 20,
+              attributeName: "Modelo bolsillo inferior",
+            },
+            ...session.attributes[1]!.values,
+          ],
+        },
+        session.attributes[2]!,
+      ],
+    };
+
+    expect(
+      applyFirstOptionDefaults(sessionWithPlaceholderPocket, { "20": [200] }),
+    ).toMatchObject({
+      // Modelo 1 queda excluido por el cuello que se selecciona también por
+      // defecto; el siguiente valor compatible demuestra que nunca persiste
+      // el placeholder.
+      "20": [202],
+    });
   });
 
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
