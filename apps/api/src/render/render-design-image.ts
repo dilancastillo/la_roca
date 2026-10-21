@@ -2913,9 +2913,9 @@ async function createTintedBaseBuffer(
       // Los SVG históricos usan tinta #262626: sobre una blusa oscura se
       // pierde visualmente. Se normaliza solo esa tinta neutra, sin modificar
       // alpha, tamaño, viewBox ni geometría del modelo.
-      tint[offset] = isDarkNeutralOutline ? 17 : red;
-      tint[offset + 1] = isDarkNeutralOutline ? 24 : green;
-      tint[offset + 2] = isDarkNeutralOutline ? 39 : blue;
+      tint[offset] = isDarkNeutralOutline ? 0 : red;
+      tint[offset + 1] = isDarkNeutralOutline ? 0 : green;
+      tint[offset + 2] = isDarkNeutralOutline ? 0 : blue;
       tint[offset + 3] = processed.data[offset + 3] ?? 0;
     }
   }

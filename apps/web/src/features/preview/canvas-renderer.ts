@@ -3393,9 +3393,9 @@ function normalizeNeckOutlineInk(canvas: HTMLCanvasElement) {
     const lightest = Math.max(red, green, blue);
 
     if (alpha > 0 && lightest <= 84 && lightest - darkest <= 12) {
-      imageData.data[offset] = 17;
-      imageData.data[offset + 1] = 24;
-      imageData.data[offset + 2] = 39;
+      imageData.data[offset] = 0;
+      imageData.data[offset + 1] = 0;
+      imageData.data[offset + 2] = 0;
     }
   }
 
