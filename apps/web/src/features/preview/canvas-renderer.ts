@@ -3363,17 +3363,18 @@ function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
   return outputCanvas;
 }
 
-// Los SVG históricos de cuello usan tinta #262626. En telas oscuras se ve
-// apagada aunque la geometría sea correcta. Este ajuste cambia únicamente el
-// color de tinta neutra oscura; no cambia alpha, tamaño, viewBox ni trazos.
-function normalizeNeckOutlineInk(canvas: HTMLCanvasElement) {
+// Los SVG históricos no separan el cuello de la prenda mediante metadata.
+// Esta ventana cubre el detalle central superior del cuello, nunca mangas ni
+// costados. Solo se toman trazos neutros oscuros para no convertir vivos ni
+// otros detalles de color en un contorno.
+function createSemanticNeckContourMask(canvas: HTMLCanvasElement) {
   const outputCanvas = document.createElement("canvas");
   outputCanvas.width = canvas.width;
   outputCanvas.height = canvas.height;
   const outputContext = outputCanvas.getContext("2d");
 
   if (!outputContext) {
-    throw new Error("No se pudo reforzar el contorno del cuello.");
+    throw new Error("No se pudo aislar el contorno del cuello.");
   }
 
   outputContext.drawImage(canvas, 0, 0);
@@ -3392,10 +3393,26 @@ function normalizeNeckOutlineInk(canvas: HTMLCanvasElement) {
     const darkest = Math.min(red, green, blue);
     const lightest = Math.max(red, green, blue);
 
-    if (alpha > 0 && lightest <= 84 && lightest - darkest <= 12) {
+    const pixelIndex = offset / 4;
+    const x = pixelIndex % outputCanvas.width;
+    const y = Math.floor(pixelIndex / outputCanvas.width);
+    const isInsideNeckRegion =
+      x >= outputCanvas.width * 0.28 &&
+      x <= outputCanvas.width * 0.72 &&
+      y >= outputCanvas.height * 0.04 &&
+      y <= outputCanvas.height * 0.48;
+
+    if (
+      isInsideNeckRegion &&
+      alpha > 0 &&
+      lightest <= 84 &&
+      lightest - darkest <= 12
+    ) {
       imageData.data[offset] = 0;
       imageData.data[offset + 1] = 0;
       imageData.data[offset + 2] = 0;
+    } else {
+      imageData.data[offset + 3] = 0;
     }
   }
 
@@ -5357,10 +5374,49 @@ export async function createTintedBaseCanvas(
   tintContext.drawImage(fillCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
 
   if (includeOutline) {
-    const outlineCanvas = emphasizeNeckOutline
-      ? normalizeNeckOutlineInk(processed.canvas)
-      : processed.canvas;
-    tintContext.drawImage(outlineCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
+    tintContext.drawImage(
+      processed.canvas,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+    );
+
+    if (emphasizeNeckOutline) {
+      const neckContourMask = createSemanticNeckContourMask(processed.canvas);
+      // El halo negro es de un píxel visual: mejora contraste sin mover ni
+      // redimensionar la geometría del cuello ni los vivos existentes.
+      tintContext.save();
+      tintContext.shadowColor = "#000000";
+      tintContext.shadowBlur = 2;
+      tintContext.drawImage(
+        neckContourMask,
+        bounds.x,
+        bounds.y,
+        bounds.width,
+        bounds.height,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight,
+      );
+      tintContext.restore();
+      tintContext.drawImage(
+        neckContourMask,
+        bounds.x,
+        bounds.y,
+        bounds.width,
+        bounds.height,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight,
+      );
+    }
   }
 
   return tintCanvas;

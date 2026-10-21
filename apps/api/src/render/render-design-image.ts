@@ -2875,6 +2875,43 @@ async function placeProcessedBufferOnCanvas(
     .toBuffer();
 }
 
+async function createSemanticNeckContourBuffer(processed: ProcessedImage) {
+  const contour = new Uint8ClampedArray(processed.data.length);
+
+  for (let offset = 0; offset < contour.length; offset += 4) {
+    const pixelIndex = offset / 4;
+    const x = pixelIndex % processed.width;
+    const y = Math.floor(pixelIndex / processed.width);
+    const red = processed.data[offset] ?? 0;
+    const green = processed.data[offset + 1] ?? 0;
+    const blue = processed.data[offset + 2] ?? 0;
+    const alpha = processed.data[offset + 3] ?? 0;
+    const lightest = Math.max(red, green, blue);
+    const darkest = Math.min(red, green, blue);
+    const isInsideNeckRegion =
+      x >= processed.width * 0.28 &&
+      x <= processed.width * 0.72 &&
+      y >= processed.height * 0.04 &&
+      y <= processed.height * 0.48;
+
+    if (
+      isInsideNeckRegion &&
+      alpha > 0 &&
+      lightest <= 84 &&
+      lightest - darkest <= 12
+    ) {
+      contour[offset + 3] = alpha;
+    }
+  }
+
+  const contourPng = await rgbaToPngBuffer(
+    contour,
+    processed.width,
+    processed.height,
+  );
+  return await placeProcessedBufferOnCanvas(contourPng, processed.bounds);
+}
+
 async function createTintedBaseBuffer(
   assetPath: string,
   fillColor: string,
@@ -2905,23 +2942,33 @@ async function createTintedBaseBuffer(
       const red = processed.data[offset] ?? 0;
       const green = processed.data[offset + 1] ?? 0;
       const blue = processed.data[offset + 2] ?? 0;
-      const darkest = Math.min(red, green, blue);
-      const lightest = Math.max(red, green, blue);
-      const isDarkNeutralOutline =
-        emphasizeNeckOutline && lightest <= 84 && lightest - darkest <= 12;
-
-      // Los SVG históricos usan tinta #262626: sobre una blusa oscura se
-      // pierde visualmente. Se normaliza solo esa tinta neutra, sin modificar
-      // alpha, tamaño, viewBox ni geometría del modelo.
-      tint[offset] = isDarkNeutralOutline ? 0 : red;
-      tint[offset + 1] = isDarkNeutralOutline ? 0 : green;
-      tint[offset + 2] = isDarkNeutralOutline ? 0 : blue;
+      tint[offset] = red;
+      tint[offset + 1] = green;
+      tint[offset + 2] = blue;
       tint[offset + 3] = processed.data[offset + 3] ?? 0;
     }
   }
 
   const imageBuffer = await rgbaToPngBuffer(tint, processed.width, processed.height);
-  return await placeProcessedBufferOnCanvas(imageBuffer, processed.bounds);
+  const baseBuffer = await placeProcessedBufferOnCanvas(imageBuffer, processed.bounds);
+
+  if (!emphasizeNeckOutline) {
+    return baseBuffer;
+  }
+
+  const neckContourBuffer = await createSemanticNeckContourBuffer(processed);
+  const neckHaloBuffer = await sharp(neckContourBuffer)
+    .blur(1)
+    .tint({ r: 0, g: 0, b: 0 })
+    .png()
+    .toBuffer();
+
+  // Misma regla que el canvas: se acentúa solo el trazo neutro del cuello.
+  // No se altera viewBox, tamaño, mangas, cuerpo ni vivos de color.
+  return await sharp(baseBuffer)
+    .composite([{ input: neckHaloBuffer }, { input: neckContourBuffer }])
+    .png()
+    .toBuffer();
 }
 
 async function createOverlayBufferFromProcessed(
