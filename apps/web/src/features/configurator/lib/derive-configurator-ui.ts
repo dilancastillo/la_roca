@@ -1199,9 +1199,9 @@ export function applyBootMeasurementSelections(
   const measurementAttributes = session.attributes.filter(
     (attribute) =>
       attribute.id !== bootTypeAttribute.id &&
-      attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootLength ||
-      attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootWidth ||
-      isBootMeasurementAttributeName(normalize(attribute.name)),
+      (attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootLength ||
+        attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootWidth ||
+        isBootMeasurementAttributeName(normalize(attribute.name))),
   );
 
   if (measurementAttributes.length === 0) {
@@ -1737,6 +1737,44 @@ function getHiddenBootZipperAttributeIds(
   return hiddenAttributeIds;
 }
 
+function getHiddenBootMeasurementAttributeIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const hiddenAttributeIds = new Set<number>();
+  const bootTypeAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.bootType,
+    isBootTypeAttributeName,
+  );
+
+  if (!bootTypeAttribute) {
+    return hiddenAttributeIds;
+  }
+
+  const isOriginalBoot = getSelectedOptions(
+    bootTypeAttribute,
+    selectedValueIds,
+  ).some((value) => isOriginalBootValue(value));
+
+  if (!isOriginalBoot) {
+    return hiddenAttributeIds;
+  }
+
+  for (const attribute of session.attributes) {
+    if (
+      attribute.id !== bootTypeAttribute.id &&
+      (attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootLength ||
+        attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.bootWidth ||
+        isBootMeasurementAttributeName(normalize(attribute.name)))
+    ) {
+      hiddenAttributeIds.add(attribute.id);
+    }
+  }
+
+  return hiddenAttributeIds;
+}
+
 function getHiddenFixedInvisibleSideZipperAttributeIds(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -1801,6 +1839,7 @@ function getHiddenConditionalAttributeIds(
       selectedValueIds,
     ),
     ...getHiddenBootZipperAttributeIds(session, selectedValueIds),
+    ...getHiddenBootMeasurementAttributeIds(session, selectedValueIds),
     ...getHiddenFixedInvisibleSideZipperAttributeIds(
       session,
       selectedValueIds,

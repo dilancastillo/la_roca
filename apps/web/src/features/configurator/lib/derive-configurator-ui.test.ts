@@ -924,6 +924,40 @@ describe("deriveConfiguratorUi", () => {
     });
   });
 
+  it("oculta Largo bota y Ancho bota cuando Tipo bota es Original", () => {
+    const sessionWithBootMeasurements: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes,
+        {
+          id: 85,
+          name: "Largo bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [{ id: 8501, name: "Largo bota", attributeId: 85, attributeName: "Largo bota" }],
+        },
+        {
+          id: 86,
+          name: "Ancho bota",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [{ id: 8601, name: "Ancho bota", attributeId: 86, attributeName: "Ancho bota" }],
+        },
+      ],
+      selectedValueIds: { "84": [4266], "85": [], "86": [], "90": [6921] },
+    };
+
+    const groupIds = deriveConfiguratorUi(
+      sessionWithBootMeasurements,
+      sessionWithBootMeasurements.selectedValueIds,
+    ).groups.map((group) => group.attributeId);
+
+    expect(groupIds).not.toContain(85);
+    expect(groupIds).not.toContain(86);
+  });
+
   it("resuelve assets por IDs aunque Odoo cambie nombres de atributos o valores", () => {
     const ui = deriveConfiguratorUi(session, session.selectedValueIds);
 
