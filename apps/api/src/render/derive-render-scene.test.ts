@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import { getPantsKneeTrimSectionBySourceValueId } from "@repo/shared/pants-knee-patch-rules";
 import { describe, expect, it } from "vitest";
 import { deriveAutomationRenderScene } from "./derive-render-scene.js";
 
@@ -676,6 +677,31 @@ const pantalonSession: ConfiguratorSession = {
 };
 
 describe("deriveAutomationRenderScene", () => {
+  it("mantiene una identidad lateral única para cada vivo de bolsillo de rodilla", () => {
+    expect(
+      [
+        [644, "patchRight"], [2112, "patchLeft"],
+        [2092, "ringRight"], [2097, "ringLeft"],
+        [2093, "linearUpperRight"], [2094, "linearUpperLeft"],
+        [2095, "linearLowerRight"], [2096, "linearLowerLeft"],
+        [2104, "zipperRight"], [2105, "zipperLeft"],
+        [2106, "ribeteRight"], [2107, "ribeteLeft"],
+        [2108, "buttonRight"], [2109, "buttonLeft"],
+      ].map(([sourceValueId]) => [
+        sourceValueId,
+        getPantsKneeTrimSectionBySourceValueId(sourceValueId as number),
+      ]),
+    ).toEqual([
+      [644, "patchRight"], [2112, "patchLeft"],
+      [2092, "ringRight"], [2097, "ringLeft"],
+      [2093, "linearUpperRight"], [2094, "linearUpperLeft"],
+      [2095, "linearLowerRight"], [2096, "linearLowerLeft"],
+      [2104, "zipperRight"], [2105, "zipperLeft"],
+      [2106, "ribeteRight"], [2107, "ribeteLeft"],
+      [2108, "buttonRight"], [2109, "buttonLeft"],
+    ]);
+  });
+
   it("no pinta vivos solo con escoger color de vivo", () => {
     const scene = deriveAutomationRenderScene(session, {
       ...session.selectedValueIds,

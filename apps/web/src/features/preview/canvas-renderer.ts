@@ -2098,27 +2098,6 @@ function isPantsSidePocketTrimSection(
   );
 }
 
-function isPantsKneePatchTrimSection(
-  section: PreviewScene["trimSections"][number],
-) {
-  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
-    return false;
-  }
-
-  const key = getTrimSectionText(section);
-
-  return (
-    !hasPantsKneePatchSideTerm(key) &&
-    (key.includes("parche rodilla") ||
-      key.includes("parche-rodilla") ||
-      (key.includes("parche") && key.includes("rodilla")))
-  );
-}
-
-function hasPantsKneePatchSideTerm(key: string) {
-  return key.includes("derecha") || key.includes("izquierda");
-}
-
 function hasPantsKneeTrimSection(
   section: PreviewScene["trimSections"][number],
   expected: PantsKneeTrimSection,
@@ -2187,44 +2166,6 @@ function isPantsKneePatchLeftRibeteTrimSection(
     key.includes("ribete") &&
     key.includes("rodilla") &&
     key.includes("izquierda")
-  );
-}
-
-function isPantsKneePatchUpperLinearTrimSection(
-  section: PreviewScene["trimSections"][number],
-) {
-  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
-    return false;
-  }
-
-  const key = getTrimSectionText(section);
-
-  return (
-    !hasPantsKneePatchSideTerm(key) &&
-    (key.includes("rodilla lineal superior") ||
-      key.includes("rodilla-lineal-superior") ||
-      (key.includes("rodilla") &&
-        key.includes("lineal") &&
-        key.includes("superior")))
-  );
-}
-
-function isPantsKneePatchLowerLinearTrimSection(
-  section: PreviewScene["trimSections"][number],
-) {
-  if (getPantsKneeTrimSectionBySourceValueId(section.sourceValueId)) {
-    return false;
-  }
-
-  const key = getTrimSectionText(section);
-
-  return (
-    !hasPantsKneePatchSideTerm(key) &&
-    (key.includes("rodilla lineal inferior") ||
-      key.includes("rodilla-lineal-inferior") ||
-      (key.includes("rodilla") &&
-        key.includes("lineal") &&
-        key.includes("inferior")))
   );
 }
 
@@ -4972,13 +4913,10 @@ async function drawPantsKneePatchOverlaysFromAsset(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
   scene: PreviewScene,
-  trimColor: string | undefined,
   rightTrimColor: string | undefined,
   leftTrimColor: string | undefined,
   rightRibeteTrimColor: string | undefined,
   leftRibeteTrimColor: string | undefined,
-  upperLinearTrimColor: string | undefined,
-  lowerLinearTrimColor: string | undefined,
   rightUpperLinearTrimColor: string | undefined,
   leftUpperLinearTrimColor: string | undefined,
   rightLowerLinearTrimColor: string | undefined,
@@ -4996,7 +4934,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     "right",
     scene.pantsKneePatchRightModel,
     scene.pantsKneePatchRightType,
-    rightTrimColor ?? trimColor,
+    rightTrimColor,
     rightVerticalZipperTrimColor,
     rightButtonTrimColor,
     rightRibeteTrimColor,
@@ -5007,7 +4945,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
     "left",
     scene.pantsKneePatchLeftModel,
     scene.pantsKneePatchLeftType,
-    leftTrimColor ?? trimColor,
+    leftTrimColor,
     leftVerticalZipperTrimColor,
     leftButtonTrimColor,
     leftRibeteTrimColor,
@@ -5026,8 +4964,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
       side === "right" ? rightUpperLinearTrimColor : leftUpperLinearTrimColor;
     const sideLowerLinearTrimColor =
       side === "right" ? rightLowerLinearTrimColor : leftLowerLinearTrimColor;
-    const upperColor = sideUpperLinearTrimColor ?? upperLinearTrimColor;
-    const lowerColor = sideLowerLinearTrimColor ?? lowerLinearTrimColor;
+    const upperColor = sideUpperLinearTrimColor;
+    const lowerColor = sideLowerLinearTrimColor;
     const upperRingTrimColor =
       side === "right" ? rightUpperRingTrimColor : leftUpperRingTrimColor;
 
@@ -5659,10 +5597,6 @@ async function composeSingleDesign(
       scene,
       isPantsSidePocketTrimSection,
     );
-    const pantsKneePatchTrimColor = getTrimSectionColor(
-      scene,
-      isPantsKneePatchTrimSection,
-    );
     const pantsKneePatchRightTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchRightTrimSection,
@@ -5678,14 +5612,6 @@ async function composeSingleDesign(
     const pantsKneePatchLeftRibeteTrimColor = getTrimSectionColor(
       scene,
       isPantsKneePatchLeftRibeteTrimSection,
-    );
-    const pantsKneePatchUpperLinearTrimColor = getTrimSectionColor(
-      scene,
-      isPantsKneePatchUpperLinearTrimSection,
-    );
-    const pantsKneePatchLowerLinearTrimColor = getTrimSectionColor(
-      scene,
-      isPantsKneePatchLowerLinearTrimSection,
     );
     const pantsKneePatchRightUpperLinearTrimColor = getTrimSectionColor(
       scene,
@@ -5754,13 +5680,10 @@ async function composeSingleDesign(
       context,
       baseAssetSrc,
       scene,
-      pantsKneePatchTrimColor,
       pantsKneePatchRightTrimColor,
       pantsKneePatchLeftTrimColor,
       pantsKneePatchRightRibeteTrimColor,
       pantsKneePatchLeftRibeteTrimColor,
-      pantsKneePatchUpperLinearTrimColor,
-      pantsKneePatchLowerLinearTrimColor,
       pantsKneePatchRightUpperLinearTrimColor,
       pantsKneePatchLeftUpperLinearTrimColor,
       pantsKneePatchRightLowerLinearTrimColor,
