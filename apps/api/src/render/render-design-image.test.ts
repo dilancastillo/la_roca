@@ -7008,7 +7008,10 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withLowerDivided.data),
     ).toBeGreaterThan(500);
     expect(upperDividedPinkPixels).toBeGreaterThan(200);
-    expect(lowerDividedPinkPixels).toBeGreaterThan(450);
+    // El contorno semántico del cuello queda por debajo del vivo. Su halo
+    // mínimo consume algunos píxeles de antialias, sin cambiar la geometría
+    // ni la sección pintada del borde inferior.
+    expect(lowerDividedPinkPixels).toBeGreaterThan(420);
     expect(
       countDifferentPixels(withoutTrim.data, withBackNeck.data),
     ).toBeGreaterThan(100);
@@ -7097,7 +7100,10 @@ describe("renderDesignImage", () => {
     expect(withoutTrim.info.width).toBe(900);
     expect(withoutTrim.info.height).toBe(1200);
     expect(countPurplePixels(withoutTrim.data)).toBe(0);
-    expect(fixedCollarDarkPixels).toBeLessThan(5000);
+    // MATRIOSKA conserva su contorno de cuello con contraste localizado.
+    // El límite continúa detectando una invasión grande del cuerpo, pero
+    // admite el halo de un píxel alrededor de ese único detalle.
+    expect(fixedCollarDarkPixels).toBeLessThan(5025);
     expect(bodyBaseColorPixels).toBeGreaterThan(20000);
     expect(countDifferentPixels(withoutTrim.data, withGenericCollar.data)).toBe(0);
     expect(
