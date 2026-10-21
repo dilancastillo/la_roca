@@ -3271,7 +3271,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withRightZipperTrim.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla camuflados y pinta la pieza superior con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla camuflados con vivos laterales", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3368,8 +3368,16 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9018,
-            key: "parche-rodilla",
-            label: "Parche rodilla",
+            sourceValueId: 2112,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9019,
+            sourceValueId: 644,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
             colorHex: "#a000b0",
           },
         ],
@@ -3582,7 +3590,7 @@ describe("renderDesignImage", () => {
     }
   }, 20000);
 
-  it("superpone bolsillos camuflados con hebilla y conserva el vivo de parche", async () => {
+  it("superpone bolsillos camuflados con hebilla y conserva vivos laterales", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3610,8 +3618,16 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9078,
-            key: "parche-rodilla",
-            label: "Parche rodilla",
+            sourceValueId: 2112,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9079,
+            sourceValueId: 644,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
             colorHex: "#a000b0",
           },
         ],
@@ -3664,7 +3680,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedBucklePatch.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla punta y pinta la costura esfero con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla punta y pinta la costura por lado", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3688,8 +3704,16 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9018,
-            key: "parche-rodilla",
-            label: "Parche rodilla",
+            sourceValueId: 2112,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9019,
+            sourceValueId: 644,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
             colorHex: "#a000b0",
           },
         ],
@@ -3764,7 +3788,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedPointPatch.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla pestana triangular y pinta solo la linea superior con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla pestana triangular con vivos laterales", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3788,8 +3812,16 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9064,
-            key: "parche-rodilla",
-            label: "Parche rodilla",
+            sourceValueId: 2112,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
+            colorHex: "#a000b0",
+          },
+          {
+            valueId: 9065,
+            sourceValueId: 644,
+            key: "parche-rodilla-derecha",
+            label: "Parche rodilla derecha",
             colorHex: "#a000b0",
           },
         ],
@@ -3856,7 +3888,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedTriangularFlapPatch.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla ribete y no pinta lizo con Parche rodilla", async () => {
+  it("superpone bolsillos de parche de rodilla ribete y no pinta lizo con vivo izquierdo", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3884,8 +3916,9 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9088,
-            key: "parche-rodilla",
-            label: "Parche rodilla",
+            sourceValueId: 2112,
+            key: "parche-rodilla-izquierda",
+            label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
           },
         ],
