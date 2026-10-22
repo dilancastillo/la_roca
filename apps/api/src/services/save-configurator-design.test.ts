@@ -844,6 +844,83 @@ describe("saveConfiguratorDesign", () => {
     ).rejects.toThrow(/falta seleccionar "opciones de cremallera"/i);
   });
 
+  it("no exige Largo ni Ancho bota cuando Tipo bota es Original", async () => {
+    const bootTypeAttributeId = 84;
+    const bootLengthAttributeId = 85;
+    const bootWidthAttributeId = 86;
+    const sessionWithOriginalBoot: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: bootTypeAttributeId,
+          name: "Tipo bota",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8401,
+              name: "Original",
+              attributeId: bootTypeAttributeId,
+              attributeName: "Tipo bota",
+            },
+          ],
+        },
+        {
+          id: bootLengthAttributeId,
+          name: "Largo bota",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8501,
+              name: "Largo bota",
+              attributeId: bootLengthAttributeId,
+              attributeName: "Largo bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+        {
+          id: bootWidthAttributeId,
+          name: "Ancho bota",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 8601,
+              name: "Ancho bota",
+              attributeId: bootWidthAttributeId,
+              attributeName: "Ancho bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(bootTypeAttributeId)]: [8401],
+        [String(bootLengthAttributeId)]: [],
+        [String(bootWidthAttributeId)]: [],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithOriginalBoot);
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithOriginalBoot.selectedValueIds,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
+  });
+
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {
     mocks.odooSearchRead.mockResolvedValue([]);
     mocks.odooCreate.mockRejectedValue(

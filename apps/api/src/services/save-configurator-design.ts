@@ -120,6 +120,41 @@ function isLowerPocketZipperOptionsAttribute(
   return normalizeText(attribute.name) === "opciones de cremallera";
 }
 
+function isBootTypeAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return (
+    name === "tipo bota" ||
+    name === "tipo de bota" ||
+    name === "modelo bota" ||
+    name === "modelo de bota"
+  );
+}
+
+function isBootMeasurementAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return name.includes("bota") && (name.includes("largo") || name.includes("ancho"));
+}
+
+function hasOriginalBootSelection(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const bootTypeAttribute = session.attributes.find(isBootTypeAttribute);
+
+  if (!bootTypeAttribute) {
+    return false;
+  }
+
+  const selected = new Set(selectedValueIds[String(bootTypeAttribute.id)] ?? []);
+  return bootTypeAttribute.values.some(
+    (value) => selected.has(value.id) && normalizeText(value.name) === "original",
+  );
+}
+
 function hasLowerPocketZipperEnabled(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
@@ -149,6 +184,13 @@ function isOptionalUnselectedAttribute(
   session: ConfiguratorSession,
   selectedValueIds: Record<string, number[]>,
 ) {
+  if (
+    isBootMeasurementAttribute(attribute) &&
+    hasOriginalBootSelection(session, selectedValueIds)
+  ) {
+    return true;
+  }
+
   if (
     isLowerPocketZipperOptionsAttribute(attribute) &&
     !hasLowerPocketZipperEnabled(session, selectedValueIds)
