@@ -1578,6 +1578,34 @@ function getHiddenKneePatchTypeAttributeIds(
     }
   }
 
+  // El bolsillo trasero sigue la misma relación modelo → tipo que los dos
+  // bolsillos de rodilla. Si Odoo indica una opción explícita de ausencia,
+  // no se debe pedir ni mostrar su tipo como si aún existiera un bolsillo.
+  const backPocketModelAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.backPocketModel,
+    (name) => name === "modelo bolsillo trasero",
+  );
+  const backPocketTypeAttribute = findAttributeByIdOrName(
+    session,
+    CONFIGURATOR_ATTRIBUTE_IDS.backPocketType,
+    (name) => name === "tipo de bolsillo trasero",
+  );
+
+  if (backPocketModelAttribute && backPocketTypeAttribute) {
+    const selectedModels = getSelectedOptions(
+      backPocketModelAttribute,
+      selectedValueIds,
+    );
+    const hasApplicableModel = selectedModels.some(
+      (value) => !isNoApplyDependentModelValue(value),
+    );
+
+    if (selectedModels.length > 0 && !hasApplicableModel) {
+      hiddenAttributeIds.add(backPocketTypeAttribute.id);
+    }
+  }
+
   return hiddenAttributeIds;
 }
 

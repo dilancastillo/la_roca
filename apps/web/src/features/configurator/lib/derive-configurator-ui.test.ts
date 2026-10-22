@@ -5676,6 +5676,77 @@ describe("deriveConfiguratorUi", () => {
     );
   });
 
+  it("oculta el tipo de bolsillo trasero cuando su modelo es Ninguno", () => {
+    const backPocketModelAttributeId = 167;
+    const backPocketTypeAttributeId = 168;
+    const sessionWithBackPocketDependency: ConfiguratorSession = {
+      ...pantalonSession,
+      attributes: [
+        ...pantalonSession.attributes.filter(
+          (attribute) =>
+            attribute.id !== backPocketModelAttributeId &&
+            attribute.id !== backPocketTypeAttributeId,
+        ),
+        {
+          id: backPocketModelAttributeId,
+          name: "Modelo bolsillo trasero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12510,
+              name: "Ninguno",
+              attributeId: backPocketModelAttributeId,
+              attributeName: "Modelo bolsillo trasero",
+            },
+            {
+              id: 12511,
+              name: "Rectangular",
+              attributeId: backPocketModelAttributeId,
+              attributeName: "Modelo bolsillo trasero",
+            },
+          ],
+        },
+        {
+          id: backPocketTypeAttributeId,
+          name: "Tipo de bolsillo trasero",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: 12512,
+              name: "Cremallera",
+              attributeId: backPocketTypeAttributeId,
+              attributeName: "Tipo de bolsillo trasero",
+            },
+          ],
+        },
+      ],
+    };
+
+    const groupLabelsWithNone = deriveConfiguratorUi(
+      sessionWithBackPocketDependency,
+      {
+        ...pantalonSession.selectedValueIds,
+        [String(backPocketModelAttributeId)]: [12510],
+        [String(backPocketTypeAttributeId)]: [12512],
+      },
+    ).groups.map((group) => group.label);
+    const groupLabelsWithModel = deriveConfiguratorUi(
+      sessionWithBackPocketDependency,
+      {
+        ...pantalonSession.selectedValueIds,
+        [String(backPocketModelAttributeId)]: [12511],
+        [String(backPocketTypeAttributeId)]: [12512],
+      },
+    ).groups.map((group) => group.label);
+
+    expect(groupLabelsWithNone).not.toContain("Tipo de bolsillo trasero");
+    expect(groupLabelsWithModel).toContain("Tipo de bolsillo trasero");
+  });
+
   it("solo muestra bolsillos adicionales de pantalon cuando estan en Si", () => {
     const additionalPocketsAttributeId = 12300;
     const additionalPocketsNoValueId = 12301;

@@ -957,8 +957,12 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
       session,
       state.selectedValueIds,
     );
+    // La elección puede ocultar dependencias (por ejemplo Largo/Ancho cuando
+    // Tipo bota es Original). Validar la UI reconstruida evita reclamar un
+    // campo que ya no corresponde a la variante que se va a guardar.
+    const uiForSave = deriveConfiguratorUi(session, selectedValueIdsForSave);
     const missingRequiredSelectionGroups = getMissingRequiredSelectionGroups(
-      ui.groups,
+      uiForSave.groups,
       selectedValueIdsForSave,
     );
 
@@ -983,7 +987,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     }
     const missingCustomValues = getMissingCustomValues(
       session,
-      ui.groups,
+      uiForSave.groups,
       selectedValueIdsForSave,
       state.customValuesByValueId,
     );
@@ -1015,7 +1019,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     setInvalidCustomValueIds(new Set());
 
-    const missingLogoPlacements = ui.logoSelection?.placements.filter(
+    const missingLogoPlacements = uiForSave.logoSelection?.placements.filter(
       (placement) => !logoAttachments[placement.valueId],
     ) ?? [];
     if (missingLogoPlacements.length > 0) {
