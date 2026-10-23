@@ -683,10 +683,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
   const totalSteps = ui.groups.length + (hasLogoUploadStep ? 1 : 0);
   const completedSteps =
     completedGroups +
-    (hasLogoUploadStep && ui.logoSelection &&
-    ui.logoSelection.valueIds.every((valueId) => logoAttachments[valueId])
-      ? 1
-      : 0);
+    (hasLogoUploadStep ? 1 : 0);
   const firstIncompleteGroup =
     ui.groups.find(
       (group) => !isGroupComplete(group, state.selectedValueIds),
@@ -720,7 +717,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     : activeGroup?.label;
   const activeStepSelection = isLogoUploadActive
     ? ui.logoSelection
-      ? `${Object.keys(logoAttachments).length}/${ui.logoSelection.valueIds.length} imágenes cargadas`
+      ? `${Object.keys(logoAttachments).length}/3 imágenes cargadas`
       : "Pendiente de cargar"
     : activeGroup
       ? getSelectionLabel(activeGroup.attributeId)
@@ -891,20 +888,6 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     const current = new Set(state.selectedValueIds[key] ?? []);
     const isSelecting = !current.has(valueId);
     const isLogoGroup = attributeId === CONFIGURATOR_ATTRIBUTE_IDS.logo;
-
-    if (
-      isLogoGroup &&
-      isSelecting &&
-      toggledOption &&
-      !isNoLogoValueName(toggledOption.name) &&
-      Array.from(current).filter((selectedId) => {
-        const option = group?.options.find((candidate) => candidate.id === selectedId);
-        return option && !isNoLogoValueName(option.name);
-      }).length >= 3
-    ) {
-      setLogoUploadError("Puedes seleccionar hasta tres ubicaciones de logo.");
-      return;
-    }
 
     if (isSelecting) {
       current.add(valueId);
@@ -1081,21 +1064,6 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     }
 
     setInvalidCustomValueIds(new Set());
-
-    const missingLogoPlacements = uiForSave.logoSelection?.placements.filter(
-      (placement) => !logoAttachments[placement.valueId],
-    ) ?? [];
-    if (missingLogoPlacements.length > 0) {
-      setLogoUploadError(
-        `Carga la imagen del logo para "${missingLogoPlacements[0]?.label}" antes de guardar.`,
-      );
-      setSaveError("Falta cargar la imagen obligatoria del logo.");
-      setExpandedAttributeId(null);
-      setIsLogoUploadExpanded(true);
-      setIsLogoUploadActive(true);
-      scheduleLogoUploadScroll();
-      return;
-    }
 
     if (catalogPreview) {
       if (!visualReleaseId) {

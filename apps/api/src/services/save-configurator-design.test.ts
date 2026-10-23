@@ -533,7 +533,7 @@ describe("saveConfiguratorDesign", () => {
     });
   });
 
-  it("rechaza guardar cuando hay logo seleccionado pero no llega imagen del logo", async () => {
+  it("permite guardar ubicaciones de logo seleccionadas sin obligar una imagen en cada una", async () => {
     const sessionWithLogo: ConfiguratorSession = {
       ...editableSession,
       attributes: [
@@ -566,6 +566,8 @@ describe("saveConfiguratorDesign", () => {
       },
     };
     mocks.getConfiguratorSession.mockResolvedValue(sessionWithLogo);
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
 
     await expect(
       saveConfiguratorDesign(env, {
@@ -574,11 +576,16 @@ describe("saveConfiguratorDesign", () => {
         imageBase64: "png-base64",
         selectedValueIds: sessionWithLogo.selectedValueIds,
       }),
-    ).rejects.toThrow(/carga la imagen del logo/i);
+    ).resolves.toMatchObject({ productId: 778 });
 
-    expect(mocks.odooSearchRead).not.toHaveBeenCalled();
-    expect(mocks.odooWrite).not.toHaveBeenCalled();
-    expect(mocks.odooCreate).not.toHaveBeenCalled();
+    expect(mocks.odooWrite).toHaveBeenCalledWith(
+      env,
+      "sale.order.line",
+      [290],
+      expect.objectContaining({
+        product_no_variant_attribute_value_ids: [[6, 0, [9101, 9301]]],
+      }),
+    );
   });
 
   it("guarda los valores personalizados seleccionados sin depender del nombre del atributo", async () => {

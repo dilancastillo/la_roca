@@ -25,7 +25,7 @@ describe("LogoUploadSection", () => {
     render(<LogoUploadSection {...props} isActive />);
 
     expect(screen.getByText("Imágenes de logo")).toBeTruthy();
-    expect(screen.getByText("0/1 imágenes cargadas")).toBeTruthy();
+    expect(screen.getByText("0/3 imágenes cargadas")).toBeTruthy();
     expect(screen.getByText(/pecho izquierdo/i)).toBeTruthy();
     expect(screen.getByText("Editando")).toBeTruthy();
 
@@ -56,7 +56,27 @@ describe("LogoUploadSection", () => {
   it("oculta el cuerpo al contraerse", () => {
     render(<LogoUploadSection {...createProps()} expanded={false} />);
 
-    expect(screen.queryByText(/carga una imagen independiente/i)).toBeNull();
-    expect(screen.queryByText(/obligatorio para poder guardar/i)).toBeNull();
+    expect(screen.queryByText(/puedes seleccionar todas las ubicaciones/i)).toBeNull();
+    expect(screen.queryByText(/opcional. puedes cargar/i)).toBeNull();
+  });
+
+  it("limita las imágenes a tres sin limitar las ubicaciones seleccionadas", () => {
+    const props = createProps();
+    render(
+      <LogoUploadSection
+        {...props}
+        placements={[1, 2, 3, 4].map((valueId) => ({
+          valueId,
+          label: `Ubicación ${valueId}`,
+          ...(valueId <= 3 ? { attachmentFilename: `logo-${valueId}.png` } : {}),
+        }))}
+      />,
+    );
+
+    const inputs = document.querySelectorAll<HTMLInputElement>('input[type="file"]');
+    expect(inputs).toHaveLength(4);
+    expect(inputs[0]?.disabled).toBe(false);
+    expect(inputs[3]?.disabled).toBe(true);
+    expect(screen.getByText(/ya cargaste el máximo de tres imágenes/i)).toBeTruthy();
   });
 });

@@ -28,7 +28,7 @@ export function LogoUploadSection({
   onRemove,
 }: Props) {
   const uploadedCount = placements.filter((placement) => placement.attachmentFilename).length;
-  const selectionLabel = `${uploadedCount}/${placements.length} imágenes cargadas`;
+  const selectionLabel = `${uploadedCount}/3 imágenes cargadas`;
 
   return (
     <section
@@ -77,40 +77,49 @@ export function LogoUploadSection({
 
       {expanded ? (
         <div id="logo-upload-section" className="config-section__body">
-          <p className="config-section__help">Carga una imagen independiente para cada ubicación seleccionada.</p>
+          <p className="config-section__help">
+            Puedes seleccionar todas las ubicaciones. Carga hasta tres imágenes en las
+            ubicaciones que necesites.
+          </p>
 
-          {placements.map((placement) => (
-          <div className="logo-upload-field" key={placement.valueId}>
-            <strong>{placement.label}</strong>
-            <label className="logo-upload-panel__action">
-              <input
-                type="file"
-                accept={accept}
-                disabled={disabled}
-                onChange={(event) => onFileChange(placement.valueId, event)}
-              />
-              {placement.attachmentFilename ? "Cambiar imagen" : "Cargar imagen"}
-            </label>
+          {placements.map((placement) => {
+            const canUpload = Boolean(placement.attachmentFilename) || uploadedCount < 3;
 
-            {placement.attachmentFilename ? (
-              <div className="logo-upload-panel__file">
-                <span>{placement.attachmentFilename}</span>
-                <button
-                  type="button"
-                  className="logo-upload-panel__remove"
-                  onClick={() => onRemove(placement.valueId)}
-                  disabled={disabled}
-                >
-                  Quitar
-                </button>
+            return (
+              <div className="logo-upload-field" key={placement.valueId}>
+                <strong>{placement.label}</strong>
+                <label className="logo-upload-panel__action">
+                  <input
+                    type="file"
+                    accept={accept}
+                    disabled={disabled || !canUpload}
+                    onChange={(event) => onFileChange(placement.valueId, event)}
+                  />
+                  {placement.attachmentFilename ? "Cambiar imagen" : "Cargar imagen"}
+                </label>
+
+                {placement.attachmentFilename ? (
+                  <div className="logo-upload-panel__file">
+                    <span>{placement.attachmentFilename}</span>
+                    <button
+                      type="button"
+                      className="logo-upload-panel__remove"
+                      onClick={() => onRemove(placement.valueId)}
+                      disabled={disabled}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <p className="logo-upload-panel__hint">
+                    {canUpload
+                      ? "Opcional. Puedes cargar una imagen en esta ubicación."
+                      : "Ya cargaste el máximo de tres imágenes."}
+                  </p>
+                )}
               </div>
-            ) : (
-              <p className="logo-upload-panel__hint">
-                Obligatorio para poder guardar el diseno.
-              </p>
-            )}
-          </div>
-          ))}
+            );
+          })}
 
           {error ? (
             <p className="error-banner" role="alert">
