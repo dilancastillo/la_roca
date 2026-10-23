@@ -2116,12 +2116,19 @@ function hasPantsKneeTrimSection(
   return getPantsKneeTrimSectionBySourceValueId(section.sourceValueId) === expected;
 }
 
+function hasKnownPantsKneeTrimSection(
+  section: AutomationRenderScene["trimSections"][number],
+) {
+  return getPantsKneeTrimSectionBySourceValueId(section.sourceValueId) !== undefined;
+}
+
 function isPantsKneePatchRightTrimSection(
   section: AutomationRenderScene["trimSections"][number],
 ) {
   if (hasPantsKneeTrimSection(section, "patchRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2138,6 +2145,7 @@ function isPantsKneePatchLeftTrimSection(
   if (hasPantsKneeTrimSection(section, "patchLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2154,6 +2162,7 @@ function isPantsKneePatchRightRibeteTrimSection(
   if (hasPantsKneeTrimSection(section, "ribeteRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2170,6 +2179,7 @@ function isPantsKneePatchLeftRibeteTrimSection(
   if (hasPantsKneeTrimSection(section, "ribeteLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2186,6 +2196,7 @@ function isPantsKneePatchRightUpperLinearTrimSection(
   if (hasPantsKneeTrimSection(section, "linearUpperRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2203,6 +2214,7 @@ function isPantsKneePatchLeftUpperLinearTrimSection(
   if (hasPantsKneeTrimSection(section, "linearUpperLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2220,6 +2232,7 @@ function isPantsKneePatchRightLowerLinearTrimSection(
   if (hasPantsKneeTrimSection(section, "linearLowerRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2237,6 +2250,7 @@ function isPantsKneePatchLeftLowerLinearTrimSection(
   if (hasPantsKneeTrimSection(section, "linearLowerLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2254,6 +2268,7 @@ function isPantsKneePatchRightRingTrimSection(
   if (hasPantsKneeTrimSection(section, "ringRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2270,6 +2285,7 @@ function isPantsKneePatchLeftRingTrimSection(
   if (hasPantsKneeTrimSection(section, "ringLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2288,6 +2304,7 @@ function isPantsKneePatchRightVerticalZipperTrimSection(
   if (hasPantsKneeTrimSection(section, "zipperRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2306,6 +2323,7 @@ function isPantsKneePatchLeftVerticalZipperTrimSection(
   if (hasPantsKneeTrimSection(section, "zipperLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2324,6 +2342,7 @@ function isPantsKneePatchRightButtonTrimSection(
   if (hasPantsKneeTrimSection(section, "buttonRight")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 
@@ -2340,6 +2359,7 @@ function isPantsKneePatchLeftButtonTrimSection(
   if (hasPantsKneeTrimSection(section, "buttonLeft")) {
     return true;
   }
+  if (hasKnownPantsKneeTrimSection(section)) return false;
 
   const key = getTrimSectionText(section);
 

@@ -3036,6 +3036,78 @@ describe("renderDesignImage", () => {
     ).toBeLessThan(20);
   }, 20000);
 
+  it("usa el ID de Odoo como fuente de verdad aunque el texto heredado indique el otro lado", async () => {
+    const pantsScene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+      trimSections: [],
+    };
+    const withRightIdButLeftText = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9130,
+            sourceValueId: 2095,
+            key: "rodilla-izquierda-lineal-inferior",
+            label: "Rodilla izquierda lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const withLeftIdButRightText = await readRawPng(
+      await renderDesignImage({
+        ...pantsScene,
+        trimSections: [
+          {
+            valueId: 9131,
+            sourceValueId: 2096,
+            key: "rodilla-derecha-lineal-inferior",
+            label: "Rodilla derecha lineal inferior",
+            colorHex: "#a000b0",
+          },
+        ],
+      }),
+    );
+    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+
+    expect(
+      countPurplePixelsInRegion(
+        withRightIdButLeftText.data,
+        withRightIdButLeftText.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withRightIdButLeftText.data,
+        withRightIdButLeftText.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeLessThan(20);
+
+    expect(
+      countPurplePixelsInRegion(
+        withLeftIdButRightText.data,
+        withLeftIdButRightText.info.width,
+        leftLowerRegion,
+      ),
+    ).toBeGreaterThan(80);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftIdButRightText.data,
+        withLeftIdButRightText.info.width,
+        rightLowerRegion,
+      ),
+    ).toBeLessThan(20);
+  }, 20000);
+
   it("pinta Aro rodilla derecha e izquierda en el lineal superior del lado seleccionado", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
