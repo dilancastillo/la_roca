@@ -112,6 +112,12 @@ describe("saveConfiguratorDesign", () => {
         product_no_variant_attribute_value_ids: [[6, 0, [9101]]],
         product_custom_attribute_value_ids: [[5, 0, 0]],
         x_product_design_image: "png-base64",
+        x_studio_imagen_adjunta: false,
+        x_studio_detalles_adicionales: false,
+        x_studio_logo_2: false,
+        x_studio_detalles_logo_2: false,
+        x_studio_logo_3: false,
+        x_studio_detalles_logo_3: false,
       },
     );
     expect(mocks.odooCreate).toHaveBeenNthCalledWith(
@@ -313,6 +319,38 @@ describe("saveConfiguratorDesign", () => {
         x_studio_detalles_logo_2: "Manga derecha",
         x_studio_logo_3: "logo-3-base64",
         x_studio_detalles_logo_3: "Manga izquierda",
+      }),
+    );
+  });
+
+  it("limpia los campos de logo heredados que ya no se seleccionan en la copia", async () => {
+    mocks.odooSearchRead.mockResolvedValue([
+      {
+        id: 777,
+        display_name: "Blusa / Verde Olivo Claro",
+        product_template_attribute_value_ids: [9001],
+      },
+    ]);
+    mocks.odooWrite.mockResolvedValue(true);
+
+    await saveConfiguratorDesign(env, {
+      saleOrderLineId: 290,
+      filename: "sale-line-290-design.png",
+      imageBase64: "png-base64",
+      selectedValueIds: editableSession.selectedValueIds,
+    });
+
+    expect(mocks.odooWrite).toHaveBeenCalledWith(
+      env,
+      "sale.order.line",
+      [290],
+      expect.objectContaining({
+        x_studio_imagen_adjunta: false,
+        x_studio_detalles_adicionales: false,
+        x_studio_logo_2: false,
+        x_studio_detalles_logo_2: false,
+        x_studio_logo_3: false,
+        x_studio_detalles_logo_3: false,
       }),
     );
   });
@@ -919,6 +957,60 @@ describe("saveConfiguratorDesign", () => {
         selectedValueIds: sessionWithOriginalBoot.selectedValueIds,
       }),
     ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
+  });
+
+  it("rechaza texto y valores fuera de rango en Largo", async () => {
+    const lengthAttributeId = 851;
+    const lengthValueId = 8511;
+    const sessionWithLength: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: lengthAttributeId,
+          name: "Largo bota",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: lengthValueId,
+              name: "Largo bota",
+              attributeId: lengthAttributeId,
+              attributeName: "Largo bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(lengthAttributeId)]: [lengthValueId],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithLength);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithLength.selectedValueIds,
+        customValuesByValueId: { [String(lengthValueId)]: "4 de cadera" },
+      }),
+    ).rejects.toThrow(/largo solo admite números/i);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithLength.selectedValueIds,
+        customValuesByValueId: { [String(lengthValueId)]: "1000" },
+      }),
+    ).rejects.toThrow(/entre 1 y 999/i);
+
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
   });
 
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {

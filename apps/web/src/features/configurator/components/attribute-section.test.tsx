@@ -293,4 +293,25 @@ describe("AttributeSection", () => {
     expect(input.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByText(/este texto es obligatorio para guardar/i)).toBeTruthy();
   });
+
+  it("diferencia Largo como medida numérica y explica el rango", () => {
+    const baseProps = {
+      ...createProps(),
+      group: {
+        ...createProps().group,
+        label: "Largo bota",
+        options: [{ id: 11, name: "Largo", allowsCustomValue: true }],
+      },
+      selectedValueIds: [11],
+      customValuesByValueId: { "11": "4 de cadera" },
+      selectionLabel: "Largo",
+    };
+
+    render(<AttributeSection {...baseProps} expanded />);
+
+    const input = screen.getByLabelText(/valor personalizado para largo/i);
+    expect(input.getAttribute("inputmode")).toBe("decimal");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/largo solo admite números/i)).toBeTruthy();
+  });
 });

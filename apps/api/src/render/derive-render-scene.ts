@@ -2,6 +2,7 @@ import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
   getPantsKneeTrimSectionBySourceValueId,
   PANTS_KNEE_PATCH_ATTRIBUTE_IDS,
   type PantsKneePatchModel,
@@ -662,6 +663,13 @@ function isGenericZipperKneePatch(valueName: string | undefined) {
   );
 }
 
+function isInvisibleZipperKneePatch(valueName: string | undefined) {
+  return valueName
+    ? normalize(valueName).includes("cremallera") &&
+        normalize(valueName).includes("invisible")
+    : false;
+}
+
 function isButtonKneePatch(valueName: string | undefined) {
   if (!valueName) {
     return false;
@@ -760,6 +768,7 @@ function resolveKneePatchType(option: KneePatchOption): PantsKneePatchType | und
   if (isVelcroKneePatch(option.name)) return "velcro";
   if (isBuckleKneePatch(option.name)) return "buckle";
   if (isPenSeamKneePatch(option.name)) return "penSeam";
+  if (isInvisibleZipperKneePatch(option.name)) return "invisibleZipper";
   if (isGenericZipperKneePatch(option.name)) return "zipper";
   if (isHorizontalZipperKneePatch(option.name)) return "horizontalZipper";
   if (isVerticalZipperKneePatch(option.name)) return "verticalZipper";
@@ -1079,11 +1088,23 @@ function deriveSingleAutomationRenderScene(
     getSelectedOptions(leftKneePatchTypeAttribute, selectedValueIds).find(
       resolveKneePatchType,
     );
-  const rightKneePatchTypeValue = rightKneePatchType
+  const resolvedRightKneePatchType = rightKneePatchType
     ? resolveKneePatchType(rightKneePatchType)
     : undefined;
-  const leftKneePatchTypeValue = leftKneePatchType
+  const resolvedLeftKneePatchType = leftKneePatchType
     ? resolveKneePatchType(leftKneePatchType)
+    : undefined;
+  const rightKneePatchTypeValue = isPantsKneePatchTypeAllowedForModel(
+    rightKneePatchModelValue,
+    resolvedRightKneePatchType,
+  )
+    ? resolvedRightKneePatchType
+    : undefined;
+  const leftKneePatchTypeValue = isPantsKneePatchTypeAllowedForModel(
+    leftKneePatchModelValue,
+    resolvedLeftKneePatchType,
+  )
+    ? resolvedLeftKneePatchType
     : undefined;
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
     isAsorsaludSidePocket(option),

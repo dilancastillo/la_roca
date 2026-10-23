@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  getMeasurementValueError,
+  isMeasurementAttributeName,
+  isNumericLengthAttributeName,
+} from "@repo/shared/measurement-rules";
 import type { UiAttributeGroup } from "../lib/derive-configurator-ui";
 
 type Props = {
@@ -347,33 +352,53 @@ export function AttributeSection({
               {selectedCustomOptions.map((option) => {
                 const isInvalid = invalidCustomValueIds.has(option.id);
                 const errorId = `custom-value-error-${option.id}`;
+                const currentValue = customValuesByValueId[String(option.id)] ?? "";
+                const measurementError = getMeasurementValueError(
+                  group.label,
+                  currentValue,
+                );
+                const hasMeasurementError = Boolean(measurementError);
+                const isMeasurement = isMeasurementAttributeName(group.label);
+                const isNumericLength = isNumericLengthAttributeName(group.label);
 
                 return (
                   <label
                     key={option.id}
                     className={[
                       "custom-value-field",
-                      isInvalid ? "custom-value-field--invalid" : "",
+                      isInvalid || hasMeasurementError
+                        ? "custom-value-field--invalid"
+                        : "",
+                      isMeasurement ? "custom-value-field--measurement" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <span>Valor personalizado para {option.name}</span>
                     <input
-                      type="text"
-                      value={customValuesByValueId[String(option.id)] ?? ""}
-                      placeholder="Escribe el texto exactamente como debe quedar"
+                      type={isNumericLength ? "text" : "text"}
+                      inputMode={isMeasurement ? "decimal" : undefined}
+                      value={currentValue}
+                      placeholder={
+                        isNumericLength
+                          ? "Número entre 1 y 999"
+                          : isMeasurement
+                            ? "Valor de la medida"
+                            : "Escribe el texto exactamente como debe quedar"
+                      }
                       disabled={disabled}
                       maxLength={120}
-                      aria-invalid={isInvalid}
-                      aria-describedby={isInvalid ? errorId : undefined}
+                      aria-invalid={isInvalid || hasMeasurementError}
+                      aria-describedby={
+                        isInvalid || hasMeasurementError ? errorId : undefined
+                      }
                       onChange={(event) =>
                         onCustomValueChange(option.id, event.target.value)
                       }
                     />
-                    {isInvalid ? (
+                    {isInvalid || hasMeasurementError ? (
                       <span id={errorId} className="custom-value-field__error">
-                        Este texto es obligatorio para guardar.
+                        {measurementError ?? "Este texto es obligatorio para guardar."}
                       </span>
                     ) : null}
                   </label>

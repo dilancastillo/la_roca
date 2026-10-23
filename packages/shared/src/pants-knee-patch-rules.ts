@@ -15,6 +15,8 @@ export type PantsKneePatchType =
   | "buckle"
   | "penSeam"
   | "plain"
+  /** The zipper exists structurally, but its teeth are intentionally not shown. */
+  | "invisibleZipper"
   | "zipper"
   | "horizontalZipper"
   | "verticalZipper";
@@ -66,7 +68,9 @@ const PANTS_KNEE_PATCH_TYPE_BY_SOURCE_VALUE_ID = new Map<
   PantsKneePatchType
 >([
   [763, "verticalZipper"],
-  [764, "zipper"],
+  // Odoo calls this option "Cremallera invisible". It must not reuse the
+  // visible horizontal zipper artwork.
+  [764, "invisibleZipper"],
   [765, "plain"],
   [766, "velcro"],
   [1935, "buckle"],
@@ -77,7 +81,7 @@ const PANTS_KNEE_PATCH_TYPE_BY_SOURCE_VALUE_ID = new Map<
   [2110, "overlaid"],
   [2115, "doubleButton"],
   [771, "verticalZipper"],
-  [772, "zipper"],
+  [772, "invisibleZipper"],
   [773, "plain"],
   [774, "velcro"],
   [1936, "buckle"],
@@ -123,6 +127,22 @@ export function getPantsKneePatchTypeBySourceValueId(
   return sourceValueId === undefined
     ? undefined
     : PANTS_KNEE_PATCH_TYPE_BY_SOURCE_VALUE_ID.get(sourceValueId);
+}
+
+/**
+ * Odoo shares the type selector across knee-pocket models, but these finishes
+ * are approved only for the rectangular patch. Keeping the rule here makes
+ * the web preview and the generated image agree even for old configurations.
+ */
+export function isPantsKneePatchTypeAllowedForModel(
+  model: PantsKneePatchModel | undefined,
+  type: PantsKneePatchType | undefined,
+) {
+  if (!type) {
+    return true;
+  }
+
+  return !["overlaid", "velcro", "plain"].includes(type) || model === "square";
 }
 
 export function getPantsKneeTrimSectionBySourceValueId(

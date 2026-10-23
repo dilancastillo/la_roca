@@ -56,6 +56,15 @@ export const configuratorSessionSchema = z.object({
   exclusions: z.array(exclusionRuleSchema),
   status: configuratorStatusSchema,
   existingDesignBase64: z.string().min(1).nullable().optional(),
+  existingLogoAttachments: z.array(
+    z.object({
+      placementValueId: z.number().int().positive(),
+      placementLabel: z.string().min(1).max(140),
+      filename: z.string().min(1).max(140),
+      mimeType: z.string().min(1).max(120),
+      dataBase64: z.string().min(1),
+    }),
+  ).optional(),
   warnings: z.array(z.string()).default([]),
   visualDefinitions: z.array(activeVisualDefinitionSchema).optional(),
   visualReleaseId: z.string().uuid().nullable().optional(),

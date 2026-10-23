@@ -159,6 +159,30 @@ export function getMissingRequiredSelectionGroups(
   return groups.filter((group) => !isGroupComplete(group, selectedValueIds));
 }
 
+export function getFirstPendingTextValueGroup(
+  groups: UiAttributeGroup[],
+  selectedValueIds: Record<string, number[]>,
+  customValuesByValueId: Record<string, string>,
+) {
+  return (
+    groups.find((group) => {
+      if (!normalizeText(group.label).includes("texto")) {
+        return false;
+      }
+
+      const selectedIds = new Set(
+        selectedValueIds[String(group.attributeId)] ?? [],
+      );
+      return group.options.some(
+        (option) =>
+          option.allowsCustomValue &&
+          selectedIds.has(option.id) &&
+          !(customValuesByValueId[String(option.id)] ?? "").trim(),
+      );
+    }) ?? null
+  );
+}
+
 function shouldKeepSectionOpenAfterSelection(
   group: UiAttributeGroup,
   selectedValueId?: number,
@@ -384,6 +408,33 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     setInvalidCustomValueIds(new Set());
   }, [lineId, sessionQuery.data, sessionQuery.isFetching]);
 
+  useEffect(() => {
+    const existing = sessionQuery.data?.existingLogoAttachments ?? [];
+    if (existing.length === 0) {
+      return;
+    }
+
+    // A duplicated Odoo line already owns its copied binary fields. Seed the
+    // upload state from those fields so it can be saved immediately; choosing
+    // “Cambiar imagen” replaces only this line's data.
+    setLogoAttachments((current) => {
+      if (Object.keys(current).length > 0) {
+        return current;
+      }
+
+      return Object.fromEntries(
+        existing.map((attachment) => [
+          attachment.placementValueId,
+          {
+            filename: attachment.filename,
+            mimeType: attachment.mimeType,
+            dataBase64: attachment.dataBase64,
+          },
+        ]),
+      );
+    });
+  }, [lineId, sessionQuery.data?.existingLogoAttachments]);
+
   const uiModel = useMemo(() => {
     if (!sessionQuery.data) {
       return null;
@@ -486,10 +537,16 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
       return;
     }
 
+    const firstPendingTextValueGroup = getFirstPendingTextValueGroup(
+      uiModel.groups,
+      state.selectedValueIds,
+      state.customValuesByValueId,
+    );
     const firstIncompleteGroup =
       uiModel.groups.find(
         (group) => !isGroupComplete(group, state.selectedValueIds),
       ) ?? uiModel.groups[0];
+    const initialExpandedGroup = firstPendingTextValueGroup ?? firstIncompleteGroup;
 
     const expandedStillExists = uiModel.groups.some(
       (group) => group.attributeId === expandedAttributeId,
@@ -500,7 +557,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     if (!hasInitializedExpandedAttributeRef.current) {
       hasInitializedExpandedAttributeRef.current = true;
-      setExpandedAttributeId(firstIncompleteGroup?.attributeId ?? null);
+      setExpandedAttributeId(initialExpandedGroup?.attributeId ?? null);
       return;
     }
 
@@ -511,7 +568,13 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     if (lastEditedAttributeId !== null && !lastEditedStillExists) {
       setLastEditedAttributeId(null);
     }
-  }, [expandedAttributeId, lastEditedAttributeId, state.selectedValueIds, uiModel]);
+  }, [
+    expandedAttributeId,
+    lastEditedAttributeId,
+    state.customValuesByValueId,
+    state.selectedValueIds,
+    uiModel,
+  ]);
 
   useEffect(
     () => () => {

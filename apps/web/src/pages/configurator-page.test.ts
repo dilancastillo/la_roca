@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getMissingRequiredSelectionGroups } from "./configurator-page";
+import {
+  getFirstPendingTextValueGroup,
+  getMissingRequiredSelectionGroups,
+} from "./configurator-page";
 
 describe("validación antes de guardar", () => {
   const neckGroup = {
@@ -44,5 +47,42 @@ describe("validación antes de guardar", () => {
     expect(
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [2] }),
     ).toEqual([]);
+  });
+});
+
+describe("campos de texto pendientes", () => {
+  const textGroup = {
+    attributeId: 150,
+    label: "¿Texto en manga derecha?",
+    controlType: "chips" as const,
+    selectionMode: "single" as const,
+    options: [
+      { id: 10, name: "No", allowsCustomValue: false },
+      { id: 11, name: "Si", allowsCustomValue: true },
+    ],
+  };
+
+  it("prioriza abrir el texto seleccionado que todavía está vacío", () => {
+    expect(
+      getFirstPendingTextValueGroup([textGroup], { "150": [11] }, {}),
+    ).toMatchObject({ attributeId: 150 });
+  });
+
+  it("no abre un texto ya diligenciado ni una medida", () => {
+    const measurementGroup = {
+      attributeId: 151,
+      label: "Largo bota",
+      controlType: "chips" as const,
+      selectionMode: "single" as const,
+      options: [{ id: 12, name: "Largo", allowsCustomValue: true }],
+    };
+
+    expect(
+      getFirstPendingTextValueGroup(
+        [measurementGroup, textGroup],
+        { "151": [12], "150": [11] },
+        { "11": "LA ROCA" },
+      ),
+    ).toBeNull();
   });
 });

@@ -1,7 +1,17 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
-import { getPantsKneeTrimSectionBySourceValueId } from "@repo/shared/pants-knee-patch-rules";
+import {
+  getPantsKneePatchTypeBySourceValueId,
+  getPantsKneeTrimSectionBySourceValueId,
+} from "@repo/shared/pants-knee-patch-rules";
 import { describe, expect, it } from "vitest";
 import { deriveAutomationRenderScene } from "./derive-render-scene.js";
+
+describe("tipos de bolsillo de rodilla", () => {
+  it("mantiene la cremallera invisible de Odoo como invisible en ambos lados", () => {
+    expect(getPantsKneePatchTypeBySourceValueId(764)).toBe("invisibleZipper");
+    expect(getPantsKneePatchTypeBySourceValueId(772)).toBe("invisibleZipper");
+  });
+});
 
 const session: ConfiguratorSession = {
   saleOrderLineId: 290,
@@ -2449,9 +2459,9 @@ describe("deriveAutomationRenderScene", () => {
     );
 
     expect(scene.pantsKneePatchRightModel).toBe("camouflage");
-    expect(scene.pantsKneePatchRightType).toBe("velcro");
+    expect(scene.pantsKneePatchRightType).toBeUndefined();
     expect(scene.pantsKneePatchLeftModel).toBe("camouflage");
-    expect(scene.pantsKneePatchLeftType).toBe("velcro");
+    expect(scene.pantsKneePatchLeftType).toBeUndefined();
   });
 
   it("activa doble boton en bolsillos de parche de rodilla camuflados", () => {
@@ -2990,7 +3000,7 @@ describe("deriveAutomationRenderScene", () => {
     );
 
     expect(scene.pantsKneePatchRightModel).toBe("ribete");
-    expect(scene.pantsKneePatchRightType).toBe("plain");
+    expect(scene.pantsKneePatchRightType).toBeUndefined();
     expect(scene.pantsKneePatchLeftModel).toBe("ribete");
     expect(scene.pantsKneePatchLeftType).toBe("zipper");
     expect(scene.trimSections).toContainEqual({

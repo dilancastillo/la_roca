@@ -30,6 +30,10 @@
       "types": "./dist/configurator-id-rules.d.ts",
       "default": "./dist/configurator-id-rules.js"
     },
+    "./measurement-rules": {
+      "types": "./dist/measurement-rules.d.ts",
+      "default": "./dist/measurement-rules.js"
+    },
     "./visual-assets": {
       "types": "./dist/visual-assets.d.ts",
       "default": "./dist/visual-assets.js"

@@ -3,6 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import {
   getPantsKneeTrimSectionBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
   type PantsKneeTrimSection,
 } from "@repo/shared/pants-knee-patch-rules";
 import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
@@ -571,7 +572,6 @@ const LOGO_MARKER_POSITIONS = {
   chestPocketLeft: { x: 570, y: 455 },
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
-  back: { x: 540, y: 500 },
   rightSleeve: { x: 170, y: 408 },
   leftSleeve: { x: 742, y: 408 },
 } as const;
@@ -1680,7 +1680,10 @@ function isBlouseScene(scene: AutomationRenderScene, baseAssetPath?: string) {
   );
 }
 
-function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {
+export function getLogoMarkerPositions(
+  placement: string,
+  sourceValueIds: number[] = [],
+) {
   const positions: Array<{ x: number; y: number }> = [];
   const sourcePlacements = Object.entries(CONFIGURATOR_VALUE_IDS.logoPlacement);
 
@@ -1689,7 +1692,18 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
       continue;
     }
 
-    positions.push(LOGO_MARKER_POSITIONS[placementKey as keyof typeof LOGO_MARKER_POSITIONS]);
+    // El render automatizado también muestra el frente. No proyectamos un
+    // logo de espalda encima del pecho: se conserva en la selección y en la
+    // salida a Odoo, pero una vista frontal no lo puede representar fielmente.
+    if (placementKey === "back") {
+      continue;
+    }
+
+    positions.push(
+      LOGO_MARKER_POSITIONS[
+        placementKey as Exclude<keyof typeof LOGO_MARKER_POSITIONS, "back">
+      ],
+    );
   }
 
   if (positions.length > 0) {
@@ -1740,7 +1754,7 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
     }
 
     if (key.includes("espalda")) {
-      positions.push(LOGO_MARKER_POSITIONS.back);
+      // Véase la nota anterior: esta es una vista frontal.
       continue;
     }
 
@@ -3146,6 +3160,10 @@ async function createPantsKneePatchSideOverlayBuffers(
     return [];
   }
 
+  type = isPantsKneePatchTypeAllowedForModel(model, type)
+    ? type
+    : undefined;
+
   const buffers: Buffer[] = [];
   if (model === "camouflage") {
     if (trimColor) {
@@ -3354,6 +3372,19 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   if (patchOverlayBuffer) {
     buffers.push(patchOverlayBuffer);
+  }
+
+  if (type === "velcro") {
+    const velcroMarkBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE[side],
+      placementAssetPath,
+    );
+
+    if (velcroMarkBuffer) {
+      buffers.push(velcroMarkBuffer);
+    }
+
+    return buffers;
   }
 
   if (type === "overlaid") {

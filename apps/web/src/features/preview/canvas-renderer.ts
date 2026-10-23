@@ -1,6 +1,7 @@
 import type { PreviewScene } from "../configurator/lib/derive-configurator-ui";
 import {
   getPantsKneeTrimSectionBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
   type PantsKneeTrimSection,
 } from "@repo/shared/pants-knee-patch-rules";
 import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
@@ -593,7 +594,6 @@ const LOGO_MARKER_POSITIONS = {
   chestPocketLeft: { x: 570, y: 455 },
   lowerLeft: { x: 585, y: 850 },
   lowerRight: { x: 355, y: 850 },
-  back: { x: 540, y: 500 },
   rightSleeve: { x: 170, y: 408 },
   leftSleeve: { x: 742, y: 408 },
 } as const;
@@ -1750,7 +1750,19 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
       continue;
     }
 
-    positions.push(LOGO_MARKER_POSITIONS[placementKey as keyof typeof LOGO_MARKER_POSITIONS]);
+    // El lienzo es la vista frontal de la prenda. Un marcador de espalda
+    // proyectado sobre ella se confundía con un logo de pecho; la selección
+    // sigue guardándose y mostrando su etiqueta, pero no se inventa una
+    // posición frontal para un logo que pertenece al reverso.
+    if (placementKey === "back") {
+      continue;
+    }
+
+    positions.push(
+      LOGO_MARKER_POSITIONS[
+        placementKey as Exclude<keyof typeof LOGO_MARKER_POSITIONS, "back">
+      ],
+    );
   }
 
   if (positions.length > 0) {
@@ -1801,7 +1813,7 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
     }
 
     if (key.includes("espalda")) {
-      positions.push(LOGO_MARKER_POSITIONS.back);
+      // Véase la nota anterior: esta es una vista frontal.
       continue;
     }
 
@@ -4703,6 +4715,10 @@ async function drawPantsKneePatchSideFromAsset(
     return;
   }
 
+  type = isPantsKneePatchTypeAllowedForModel(model, type)
+    ? type
+    : undefined;
+
   if (model === "camouflage") {
     if (trimColor) {
       const fillCanvas = await createRasterCanvas(
@@ -4861,6 +4877,15 @@ async function drawPantsKneePatchSideFromAsset(
     sourceSrc,
   );
   context.drawImage(patchCanvas, 0, 0);
+
+  if (type === "velcro") {
+    const velcroMarkCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_SRC_BY_SIDE[side],
+      sourceSrc,
+    );
+    context.drawImage(velcroMarkCanvas, 0, 0);
+    return;
+  }
 
   if (type === "overlaid") {
     const lowerLineCanvas = await createRasterCanvas(

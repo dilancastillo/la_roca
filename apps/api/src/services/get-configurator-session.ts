@@ -2,6 +2,7 @@ import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import type { AppEnv, OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
 import { parseVisualDefinitionVersionIds } from "./configurator-state-metadata.js";
+import { LOGO_LINE_FIELDS } from "./store-design-image.js";
 import { loadActiveVisualDefinitions } from "./visual-catalog-repository.js";
 import {
   getOrCreateLineVisualRelease,
@@ -18,6 +19,12 @@ type SaleOrderLineRecord = {
   product_no_variant_attribute_value_ids?: number[];
   product_custom_attribute_value_ids?: number[];
   x_product_design_image?: string | false;
+  x_studio_imagen_adjunta?: string | false;
+  x_studio_detalles_adicionales?: string | false;
+  x_studio_logo_2?: string | false;
+  x_studio_detalles_logo_2?: string | false;
+  x_studio_logo_3?: string | false;
+  x_studio_detalles_logo_3?: string | false;
 };
 
 type SaleOrderRecord = {
@@ -191,6 +198,19 @@ function normalizeGraphicManifestKey(productName: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function normalizeComparableText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isNoLogoOptionName(value: string) {
+  const normalized = normalizeComparableText(value);
+  return normalized === "no" || normalized.includes("sin logo") || normalized.includes("sin seleccion");
+}
+
 function normalizeManyIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
     return [];
@@ -285,6 +305,67 @@ export function toOdooImageDataUri(value: string | false | undefined) {
   const dataBase64 = normalized.replace(/\s/g, "");
 
   return `data:${inferOdooImageMimeType(dataBase64)};base64,${dataBase64}`;
+}
+
+function buildExistingLogoAttachments(
+  line: SaleOrderLineRecord,
+  attributes: ConfiguratorSession["attributes"],
+  selectedValueIds: Record<string, number[]>,
+) {
+  const placements = attributes
+    .filter((attribute) => normalizeComparableText(attribute.name).includes("logo"))
+    .flatMap((attribute) => {
+      const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
+      return attribute.values.filter(
+        (value) => selected.has(value.id) && !isNoLogoOptionName(value.name),
+      );
+    });
+  const usedPlacementIds = new Set<number>();
+  const attachments: Array<{
+    placementValueId: number;
+    placementLabel: string;
+    filename: string;
+    mimeType: string;
+    dataBase64: string;
+  }> = [];
+
+  for (const fields of LOGO_LINE_FIELDS) {
+    const binary = line[fields.image];
+    if (typeof binary !== "string" || binary.trim().length === 0) {
+      continue;
+    }
+
+    const details = line[fields.details];
+    const normalizedDetails =
+      typeof details === "string" ? normalizeComparableText(details) : "";
+    const matchedPlacement = placements.find(
+      (placement) =>
+        !usedPlacementIds.has(placement.id) &&
+        normalizedDetails.length > 0 &&
+        normalizeComparableText(placement.name) === normalizedDetails,
+    );
+    // Historic saves wrote images in the selected-location order without a
+    // location label. Preserve those too so duplicating a line never forces a
+    // second upload merely because it was saved by an older app version.
+    const placement = matchedPlacement ?? placements.find(
+      (option) => !usedPlacementIds.has(option.id),
+    );
+    const dataBase64 = toOdooImageDataUri(binary);
+    if (!placement || !dataBase64) {
+      continue;
+    }
+
+    usedPlacementIds.add(placement.id);
+    attachments.push({
+      placementValueId: placement.id,
+      placementLabel: placement.name,
+      filename: `logo-heredado-${placement.id}.png`,
+      mimeType: inferOdooImageMimeType(binary),
+      dataBase64,
+    });
+  }
+
+  return attachments;
 }
 
 export function resolveOdooOptionImageSrc({
@@ -512,6 +593,7 @@ export async function getConfiguratorSession(
       "product_no_variant_attribute_value_ids",
       "product_custom_attribute_value_ids",
       "x_product_design_image",
+      ...LOGO_LINE_FIELDS.flatMap((fields) => [fields.image, fields.details]),
     ],
   );
 
@@ -825,6 +907,11 @@ export async function getConfiguratorSession(
     selectedValueIds,
     exclusions,
   );
+  const existingLogoAttachments = buildExistingLogoAttachments(
+    line,
+    sortedAttributes,
+    selectedValueIdsWithDefaults,
+  );
 
   const latestDesignAttachment = await loadLatestDesignAttachment(
     env,
@@ -901,6 +988,7 @@ export async function getConfiguratorSession(
       typeof line.x_product_design_image === "string"
         ? line.x_product_design_image
         : null,
+    existingLogoAttachments,
     warnings: [
       ...ptavWarnings,
       ...attributeValueWarnings,

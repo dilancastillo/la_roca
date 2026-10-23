@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 import {
   alignSpecialSleeveTrimsToVisibleEdge,
+  getLogoMarkerPositions,
   getOriginalSleeveTrimShapes,
   renderDesignImage,
 } from "./render-design-image.js";
@@ -95,6 +96,74 @@ describe("anclaje dinámico de vivos de manga", () => {
       [38, 18],
     ]);
   });
+});
+
+describe("cremallera invisible de rodilla", () => {
+  it("conserva el modelo de parche sin dibujar una cremallera visible", async () => {
+    const scene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+    };
+    const patchOnly = await readRawPng(await renderDesignImage(scene));
+    const invisibleZipper = await readRawPng(
+      await renderDesignImage({
+        ...scene,
+        pantsKneePatchRightType: "invisibleZipper",
+        pantsKneePatchLeftType: "invisibleZipper",
+      }),
+    );
+
+    expect(countDifferentPixels(patchOnly.data, invisibleZipper.data)).toBe(0);
+  }, 20000);
+});
+
+describe("velcro de rodilla rectangular", () => {
+  it("dibuja la X solo en el lado seleccionado", async () => {
+    const scene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+    };
+    const base = await readRawPng(await renderDesignImage(scene));
+    const right = await readRawPng(
+      await renderDesignImage({ ...scene, pantsKneePatchRightType: "velcro" }),
+    );
+    const left = await readRawPng(
+      await renderDesignImage({ ...scene, pantsKneePatchLeftType: "velcro" }),
+    );
+    const leftRegion = { x: 220, y: 530, width: 130, height: 130 };
+    const rightRegion = { x: 550, y: 530, width: 130, height: 130 };
+
+    expect(
+      countDifferentPixelsInRegion(
+        base.data, right.data, right.info.width, rightRegion,
+      ),
+    ).toBeGreaterThan(20);
+    expect(
+      countDifferentPixelsInRegion(
+        base.data, right.data, right.info.width, leftRegion,
+      ),
+    ).toBe(0);
+    expect(
+      countDifferentPixelsInRegion(
+        base.data, left.data, left.info.width, leftRegion,
+      ),
+    ).toBeGreaterThan(20);
+    expect(
+      countDifferentPixelsInRegion(
+        base.data, left.data, left.info.width, rightRegion,
+      ),
+    ).toBe(0);
+  }, 20000);
 });
 
 async function readRawPng(buffer: Buffer) {
@@ -652,6 +721,13 @@ const straightBackNeckModelsWithoutUpperContour = new Set([
 ]);
 
 describe("renderDesignImage", () => {
+  it("no proyecta un logo de espalda sobre el frente", () => {
+    expect(getLogoMarkerPositions("Espalda", [2121])).toEqual([]);
+    expect(getLogoMarkerPositions("Pecho izquierdo", [574])).toEqual([
+      { x: 595, y: 430 },
+    ]);
+  });
+
   it("rellena hasta arriba la blusa cerrada sin dibujar una V de cuello", async () => {
     const rendered = await renderDesignImage({
       ...baseScene,

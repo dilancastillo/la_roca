@@ -162,9 +162,11 @@ describe("getConfiguratorSession", () => {
             order_id: [68, "S00068"],
             product_id: [700, "Uniforme"],
             product_template_attribute_value_ids: [],
-            product_no_variant_attribute_value_ids: [9102],
+            product_no_variant_attribute_value_ids: [9102, 9401],
             product_custom_attribute_value_ids: [501],
             x_product_design_image: "png-base64",
+            x_studio_imagen_adjunta: "iVBORw0KGgoAAAANSUhEUg",
+            x_studio_detalles_adicionales: "Bolsillo de pecho izquierdo",
           },
         ];
       }
@@ -215,6 +217,7 @@ describe("getConfiguratorSession", () => {
             display_type: "radio",
             create_variant: "no_variant",
           },
+          { id: 94, name: "Logo", display_type: "multi", create_variant: "no_variant" },
         ];
       }
 
@@ -224,6 +227,7 @@ describe("getConfiguratorSession", () => {
           { id: 19101, name: "Rosa", html_color: "#f4c7cc" },
           { id: 19201, name: "Cogotera" },
           { id: 19301, name: "Si", is_custom: true },
+          { id: 19401, name: "Bolsillo de pecho izquierdo" },
         ];
       }
 
@@ -284,6 +288,14 @@ describe("getConfiguratorSession", () => {
             ptav_active: true,
             is_custom: true,
           },
+          {
+            id: 9401,
+            name: "Bolsillo de pecho izquierdo",
+            attribute_id: [94, "Logo"],
+            product_attribute_value_id: [19401, "Bolsillo de pecho izquierdo"],
+            product_tmpl_id: [7, "Uniforme"],
+            ptav_active: true,
+          },
         ];
       }
 
@@ -293,6 +305,7 @@ describe("getConfiguratorSession", () => {
           { id: 2, attribute_id: [91, "Color de vivo"], sequence: 2 },
           { id: 3, attribute_id: [92, "Seccion de vivo"], sequence: 3 },
           { id: 4, attribute_id: [93, "Texto en pecho derecho"], sequence: 4 },
+          { id: 5, attribute_id: [94, "Logo"], sequence: 5 },
         ];
       }
 
@@ -333,6 +346,7 @@ describe("getConfiguratorSession", () => {
       "91": [9102],
       "92": [],
       "93": [9301],
+      "94": [9401],
     });
     expect(session.customValuesByValueId).toEqual({
       "9301": "ODOO ACTUAL",
@@ -352,7 +366,17 @@ describe("getConfiguratorSession", () => {
       91,
       92,
       93,
+      94,
     ]);
     expect(session.status.version).toBe(4);
+    expect(session.existingLogoAttachments).toEqual([
+      {
+        placementValueId: 9401,
+        placementLabel: "Bolsillo de pecho izquierdo",
+        filename: "logo-heredado-9401.png",
+        mimeType: "image/png",
+        dataBase64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg",
+      },
+    ]);
   });
 });

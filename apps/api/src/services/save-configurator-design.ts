@@ -3,6 +3,10 @@ import type {
   SaveDesignRequest,
 } from "@repo/shared/schemas/configurator";
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
+import {
+  getMeasurementValueError,
+  isNumericLengthAttributeName,
+} from "@repo/shared/measurement-rules";
 import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
@@ -71,6 +75,37 @@ function parseCustomValuesByValueId(
       ];
     }),
   );
+}
+
+function validateCustomMeasurements(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+  customValuesByValueId: Record<string, string>,
+) {
+  for (const attribute of session.attributes) {
+    if (!isNumericLengthAttributeName(attribute.name)) {
+      continue;
+    }
+
+    const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
+    for (const value of attribute.values) {
+      if (!value.allowsCustomValue || !selected.has(value.id)) {
+        continue;
+      }
+
+      const customValue = customValuesByValueId[String(value.id)] ?? "";
+      if (customValue.trim().length === 0) {
+        return `El largo de "${attribute.name}" es obligatorio.`;
+      }
+
+      const error = getMeasurementValueError(attribute.name, customValue);
+      if (error) {
+        return error;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function stripDataUrlPrefix(dataBase64: string) {
@@ -395,6 +430,14 @@ export async function saveConfiguratorDesign(
   const customValuesByValueId = parseCustomValuesByValueId(
     payload.customValuesByValueId,
   );
+  const measurementError = validateCustomMeasurements(
+    session,
+    selectedValueIds,
+    customValuesByValueId,
+  );
+  if (measurementError) {
+    throw new Error(measurementError);
+  }
   const validationErrors = validateSelections(session, selectedValueIds);
 
   if (validationErrors.length > 0) {
@@ -467,8 +510,18 @@ export async function saveConfiguratorDesign(
     }),
   };
   const designImageStorage = buildDesignImageStoragePayload(designImageInput);
-  const logoLineValues = Object.fromEntries(
-    (payload.logoAttachments ?? []).flatMap((attachment, index) => {
+  const logoLineValues = {
+    // An inherited image must not survive after the advisor removes its logo
+    // location in the duplicate. Explicitly clear all slots first, then fill
+    // the slots selected in this save.
+    ...Object.fromEntries(
+      LOGO_LINE_FIELDS.flatMap((fields) => [
+        [fields.image, false],
+        [fields.details, false],
+      ]),
+    ),
+    ...Object.fromEntries(
+      (payload.logoAttachments ?? []).flatMap((attachment, index) => {
       const fields = LOGO_LINE_FIELDS[index];
 
       return fields
@@ -477,8 +530,9 @@ export async function saveConfiguratorDesign(
             [fields.details, attachment.placementLabel],
           ]
         : [];
-    }),
-  );
+      }),
+    ),
+  };
   const attachmentId = await createDesignImageAttachment(
     env,
     designImageInput,
