@@ -3612,7 +3612,7 @@ describe("renderDesignImage", () => {
     ).toBeLessThan(10);
     expect(
       countDifferentPixels(withVelcroWithoutTrim.data, withSnapWithoutTrim.data),
-    ).toBeGreaterThan(20);
+    ).toBeLessThan(10);
     expect(countPurplePixels(withButtonWithoutTrim.data)).toBeLessThan(20);
     expect(purpleFlapPixels).toBeGreaterThan(1200);
     expect(unspecifiedTypePurpleFlapPixels).toBeGreaterThan(1200);
@@ -4047,7 +4047,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedRibetePatch.data)).toBe(0);
   }, 20000);
 
-  it("pinta ribete lizo de rodilla por lado con secciones de ribete", async () => {
+  it("no aplica lizo de rodilla fuera del modelo Rectangular", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -4094,7 +4094,7 @@ describe("renderDesignImage", () => {
         withRightRibeteTrim.info.width,
         rightRibeteRegion,
       ),
-    ).toBeGreaterThan(450);
+    ).toBeLessThan(30);
     expect(
       countPurplePixelsInRegion(
         withRightRibeteTrim.data,
@@ -4108,7 +4108,7 @@ describe("renderDesignImage", () => {
         withLeftRibeteTrim.info.width,
         leftRibeteRegion,
       ),
-    ).toBeGreaterThan(450);
+    ).toBeLessThan(30);
     expect(
       countPurplePixelsInRegion(
         withLeftRibeteTrim.data,
