@@ -534,6 +534,25 @@ function getSelectedTrimSections(
   return selectedSections;
 }
 
+function hasActiveNeckModel(value: SourceBackedOption | undefined) {
+  const name = normalize(value?.name ?? "");
+  return Boolean(name) &&
+    name !== "sin seleccion" &&
+    name !== "seleccione" &&
+    name !== "ninguno" &&
+    name !== "ninguna" &&
+    !name.includes("no aplica");
+}
+
+function isNeckDependentTrimSection(section: AutomationTrimSection) {
+  const name = normalize(`${section.key} ${section.label}`);
+  return section.role === "backNeck" ||
+    section.role === "upperNeck" ||
+    section.role === "lowerNeck" ||
+    name.includes("cuello") ||
+    name.includes("cogotera");
+}
+
 function isPantsSidePocketAttributeName(normalizedName: string) {
   return (
     normalizedName === "lateral" ||
@@ -1125,7 +1144,9 @@ function deriveSingleAutomationRenderScene(
       : undefined;
   const baseColorHex =
     partColorHex ?? selectedColor?.colorHex ?? "#d8dee9";
-  const trimSections = getSelectedTrimSections(session, selectedValueIds);
+  const trimSections = getSelectedTrimSections(session, selectedValueIds).filter(
+    (section) => hasActiveNeckModel(selectedNeck) || !isNeckDependentTrimSection(section),
+  );
   const dynamicVisualDefinitions = materializeSelectedVisualDefinitions(
     session,
     selectedValueIds,

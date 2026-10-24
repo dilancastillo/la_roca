@@ -989,6 +989,18 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBeUndefined();
   });
 
+  it("no pinta vivos de cuello residuales cuando el cuello queda Sin selección", () => {
+    const ui = deriveConfiguratorUi(session, {
+      ...session.selectedValueIds,
+      "63": [],
+      "92": [417, 5150],
+    });
+
+    expect(ui.previewScene.trimSections.map((section) => section.key)).not.toEqual(
+      expect.arrayContaining(["cuello-v-lineal-interno-derecho"]),
+    );
+  });
+
   it("usa la base recta para Hombre sin cambiar atributos ni componentes", () => {
     const sessionWithManGender: ConfiguratorSession = {
       ...session,
