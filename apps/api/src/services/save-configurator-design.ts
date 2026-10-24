@@ -130,6 +130,20 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function isLogoAttributeName(name: string) {
+  const normalized = normalizeText(name);
+  return normalized === "logo" || normalized.includes("logo");
+}
+
+function isNoLogoValueName(name: string) {
+  const normalized = normalizeText(name);
+  return (
+    normalized === "no" ||
+    normalized.includes("sin logo") ||
+    normalized.includes("sin seleccion")
+  );
+}
+
 function isYesValueName(name: string) {
   const normalized = normalizeText(name);
   return normalized === "si" || normalized === "yes";
@@ -229,6 +243,20 @@ function isOptionalUnselectedAttribute(
     normalized.includes("logo") ||
     (normalized.includes("seccion") && normalized.includes("vivo"))
   );
+}
+
+function getSelectedLogoValueIds(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  return session.attributes
+    .filter((attribute) => isLogoAttributeName(attribute.name))
+    .flatMap((attribute) => {
+      const selected = new Set(selectedValueIds[String(attribute.id)] ?? []);
+      return attribute.values
+        .filter((value) => selected.has(value.id) && !isNoLogoValueName(value.name))
+        .map((value) => value.id);
+    });
 }
 
 function validateSelections(
@@ -416,6 +444,9 @@ export async function saveConfiguratorDesign(
     throw new Error(validationErrors[0]);
   }
 
+  if (getSelectedLogoValueIds(session, selectedValueIds).length > 3) {
+    throw new Error("Solo se permiten hasta tres ubicaciones de logo.");
+  }
   if ((payload.logoAttachments?.length ?? 0) > 3) {
     throw new Error("Solo se permiten hasta tres imágenes de logo.");
   }

@@ -889,6 +889,26 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     const isSelecting = !current.has(valueId);
     const isLogoGroup = attributeId === CONFIGURATOR_ATTRIBUTE_IDS.logo;
 
+    const selectedLogoLocations = isLogoGroup
+      ? Array.from(current).filter((selectedValueId) => selectedValueId !== noLogoOption?.id)
+      : [];
+
+    if (
+      isLogoGroup &&
+      isSelecting &&
+      toggledOption &&
+      !isNoLogoValueName(toggledOption.name) &&
+      selectedLogoLocations.length >= 3
+    ) {
+      setLogoUploadError(
+        "Solo puedes seleccionar hasta tres ubicaciones de logo. Desmarca una ubicación antes de seleccionar otra.",
+      );
+      setExpandedAttributeId(attributeId);
+      setIsLogoUploadExpanded(true);
+      setIsLogoUploadActive(true);
+      return;
+    }
+
     if (isSelecting) {
       current.add(valueId);
     } else {

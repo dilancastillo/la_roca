@@ -56,11 +56,11 @@ describe("LogoUploadSection", () => {
   it("oculta el cuerpo al contraerse", () => {
     render(<LogoUploadSection {...createProps()} expanded={false} />);
 
-    expect(screen.queryByText(/puedes seleccionar todas las ubicaciones/i)).toBeNull();
+    expect(screen.queryByText(/selecciona hasta tres ubicaciones/i)).toBeNull();
     expect(screen.queryByText(/opcional. puedes cargar/i)).toBeNull();
   });
 
-  it("limita las imágenes a tres sin limitar las ubicaciones seleccionadas", () => {
+  it("limita las imágenes a tres", () => {
     const props = createProps();
     render(
       <LogoUploadSection

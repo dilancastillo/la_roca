@@ -588,6 +588,43 @@ describe("saveConfiguratorDesign", () => {
     );
   });
 
+  it("rechaza una cuarta ubicación de logo aunque no tenga imagen cargada", async () => {
+    const sessionWithFourLogoLocations: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: 93,
+          name: "Logo",
+          displayType: "multi",
+          selectionMode: "multiple",
+          variantMode: "no_variant",
+          values: [
+            { id: 9301, name: "Pecho derecho", attributeId: 93, attributeName: "Logo" },
+            { id: 9302, name: "Pecho izquierdo", attributeId: 93, attributeName: "Logo" },
+            { id: 9303, name: "Manga derecha", attributeId: 93, attributeName: "Logo" },
+            { id: 9304, name: "Manga izquierda", attributeId: 93, attributeName: "Logo" },
+            { id: 9305, name: "Sin logo", attributeId: 93, attributeName: "Logo" },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        "93": [9301, 9302, 9303, 9304],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithFourLogoLocations);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithFourLogoLocations.selectedValueIds,
+      }),
+    ).rejects.toThrow("Solo se permiten hasta tres ubicaciones de logo.");
+  });
+
   it("guarda los valores personalizados seleccionados sin depender del nombre del atributo", async () => {
     const sessionWithCustomValue: ConfiguratorSession = {
       ...editableSession,

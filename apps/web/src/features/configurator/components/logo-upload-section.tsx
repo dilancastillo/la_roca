@@ -78,8 +78,8 @@ export function LogoUploadSection({
       {expanded ? (
         <div id="logo-upload-section" className="config-section__body">
           <p className="config-section__help">
-            Puedes seleccionar todas las ubicaciones. Carga hasta tres imágenes en las
-            ubicaciones que necesites.
+            Selecciona hasta tres ubicaciones. Para seleccionar otra, primero desmarca
+            una de las ubicaciones elegidas. Puedes cargar hasta tres imágenes.
           </p>
 
           {placements.map((placement) => {
