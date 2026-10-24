@@ -1,4 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import {
+  getPantsKneePatchModelBySourceValueId,
+  getPantsKneePatchTypeBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
+  PANTS_KNEE_PATCH_ATTRIBUTE_IDS,
+} from "@repo/shared/pants-knee-patch-rules";
 
 function cloneSelectedValueIds(selectedValueIds: Record<string, number[]>) {
   return Object.fromEntries(
@@ -86,6 +92,62 @@ function isPlaceholderOption(
   return ["sin seleccion", "seleccione"].includes(normalizeText(optionName));
 }
 
+function getKneePatchModelForTypeAttribute(
+  session: ConfiguratorSession,
+  attributeId: number,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const modelAttributeId = attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType
+    ? PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightModel
+    : attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType
+      ? PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftModel
+      : undefined;
+  const modelAttribute = session.attributes.find(
+    (attribute) => attribute.id === modelAttributeId,
+  );
+  const selectedModelIds = modelAttribute
+    ? selectedValueIds[String(modelAttribute.id)] ?? []
+    : [];
+
+  return modelAttribute?.values
+    .find((value) => selectedModelIds.includes(value.id))
+    ?.sourceValueId;
+}
+
+/** Removes a knee-pocket finish that does not belong to its selected model. */
+export function sanitizePantsKneePatchTypeSelections(
+  session: ConfiguratorSession,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const nextSelectedValueIds = cloneSelectedValueIds(selectedValueIds);
+
+  for (const typeAttributeId of [
+    PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType,
+    PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType,
+  ]) {
+    const typeAttribute = session.attributes.find(
+      (attribute) => attribute.id === typeAttributeId,
+    );
+    const model = getPantsKneePatchModelBySourceValueId(
+      getKneePatchModelForTypeAttribute(session, typeAttributeId, nextSelectedValueIds),
+    );
+
+    if (!typeAttribute || !model) {
+      continue;
+    }
+
+    const key = String(typeAttribute.id);
+    nextSelectedValueIds[key] = (nextSelectedValueIds[key] ?? []).filter((valueId) => {
+      const type = getPantsKneePatchTypeBySourceValueId(
+        typeAttribute.values.find((value) => value.id === valueId)?.sourceValueId,
+      );
+      return isPantsKneePatchTypeAllowedForModel(model, type);
+    });
+  }
+
+  return nextSelectedValueIds;
+}
+
 /**
  * Odoo puede entregar atributos simples sin valor cuando la línea todavía no
  * ha materializado una variante. Para que el configurador nunca quede
@@ -128,12 +190,23 @@ export function applyFirstOptionDefaults(
     const candidateValues = meaningfulValues.length > 0
       ? meaningfulValues
       : attribute.values;
+    const kneePatchModel = getPantsKneePatchModelBySourceValueId(
+      getKneePatchModelForTypeAttribute(session, attribute.id, nextSelectedValueIds),
+    );
+    const compatibleCandidateValues = kneePatchModel
+      ? candidateValues.filter((value) =>
+          isPantsKneePatchTypeAllowedForModel(
+            kneePatchModel,
+            getPantsKneePatchTypeBySourceValueId(value.sourceValueId),
+          ),
+        )
+      : candidateValues;
     const selectedWithoutPlaceholders = new Set(
       Array.from(selected).filter(
         (valueId) => !selectedValueIds.includes(valueId),
       ),
     );
-    const firstCompatibleOption = candidateValues.find(
+    const firstCompatibleOption = compatibleCandidateValues.find(
       (value) =>
         !conflictsWithCurrentSelection(
           value.id,

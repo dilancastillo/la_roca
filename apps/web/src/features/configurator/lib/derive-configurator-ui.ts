@@ -3,6 +3,7 @@ import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
   getPantsKneeTrimSectionBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
   PANTS_KNEE_PATCH_ATTRIBUTE_IDS,
   type PantsKneePatchModel,
   type PantsKneePatchType,
@@ -713,7 +714,12 @@ function isKneePatchTypeAttributeName(
 }
 
 function isSquareKneePatch(valueName: string | undefined) {
-  return valueName ? normalize(valueName).includes("cuadrado") : false;
+  if (!valueName) {
+    return false;
+  }
+
+  const value = normalize(valueName);
+  return value.includes("cuadrado") || value.includes("rectangular");
 }
 
 function isCamouflageKneePatch(valueName: string | undefined) {
@@ -1981,7 +1987,7 @@ function deriveSingleConfiguratorUi(
       !hiddenConditionalAttributeIds.has(attribute.id) &&
       !hiddenGenderAttributeIds.has(attribute.id),
   );
-  const groups = visibleAttributes.map((attribute) => {
+  let groups = visibleAttributes.map((attribute) => {
     const controlType = getControlType(attribute);
 
     return {
@@ -2238,6 +2244,35 @@ function deriveSingleConfiguratorUi(
   const leftKneePatchTypeValue = leftKneePatchType
     ? resolveKneePatchType(leftKneePatchType)
     : undefined;
+
+  // Sobrepuesto, velcro y lizo son acabados aprobados únicamente para el
+  // bolsillo rectangular. El filtro se aplica por lado: elegir un modelo a
+  // la izquierda no altera las alternativas de la rodilla derecha.
+  for (const [attribute, model] of [
+    [rightKneePatchTypeAttribute, rightKneePatchModelValue],
+    [leftKneePatchTypeAttribute, leftKneePatchModelValue],
+  ] as const) {
+    if (!attribute || !model) {
+      continue;
+    }
+
+    groups = groups.map((group) =>
+      group.attributeId === attribute.id
+        ? {
+            ...group,
+            options: group.options.filter((option) => {
+              const sourceOption = attribute.values.find(
+                (value) => value.id === option.id,
+              );
+              return !sourceOption || isPantsKneePatchTypeAllowedForModel(
+                model,
+                resolveKneePatchType(sourceOption),
+              );
+            }),
+          }
+        : group,
+    );
+  }
   const pantsSidePocketType = selectedPantsSidePocketOptions.some((option) =>
     isAsorsaludSidePocket(option),
   )

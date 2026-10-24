@@ -22,6 +22,7 @@ import {
 } from "../features/configurator/lib/derive-configurator-ui";
 import {
   applyFirstOptionDefaults,
+  sanitizePantsKneePatchTypeSelections,
   sanitizeSelectedValueIdsForExclusions,
 } from "../features/configurator/lib/selection-exclusions";
 import { configuratorReducer } from "../features/configurator/reducers/configurator-reducer";
@@ -80,9 +81,13 @@ function synchronizeTextAttributeSelections(
   // valores por defecto (por ejemplo, al cambiar Mujer por Hombre). Repetir
   // hasta estabilidad garantiza una opción compatible en cada campo simple.
   for (let attempt = 0; attempt <= session.attributes.length; attempt += 1) {
-    const validSelections = sanitizeSelectedValueIdsForExclusions(
+    const kneeCompatibleSelections = sanitizePantsKneePatchTypeSelections(
       session,
       nextSelections,
+    );
+    const validSelections = sanitizeSelectedValueIdsForExclusions(
+      session,
+      kneeCompatibleSelections,
       preferredValueId,
     );
     const selectionsWithRequiredDefaults = applyFirstOptionDefaults(
@@ -101,10 +106,14 @@ function synchronizeTextAttributeSelections(
       session,
       selectionsWithDefaults,
     );
-    const sanitizedSelections = sanitizeSelectedValueIdsForExclusions(
+    const exclusionSanitizedSelections = sanitizeSelectedValueIdsForExclusions(
       session,
       selectionsWithBootMeasurements,
       preferredValueId,
+    );
+    const sanitizedSelections = sanitizePantsKneePatchTypeSelections(
+      session,
+      exclusionSanitizedSelections,
     );
 
     if (haveSameSelections(nextSelections, sanitizedSelections)) {
