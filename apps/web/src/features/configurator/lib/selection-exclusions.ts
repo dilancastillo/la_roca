@@ -78,6 +78,16 @@ function isPantsSizeAttribute(attribute: ConfiguratorSession["attributes"][numbe
   return name.includes("talla") && name.includes("pantalon");
 }
 
+function isNeckModelAttribute(attribute: ConfiguratorSession["attributes"][number]) {
+  const name = normalizeText(attribute.name);
+  return name.includes("modelo") && name.includes("cuello");
+}
+
+function isExplicitNoneOption(optionName: string) {
+  const name = normalizeText(optionName);
+  return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
+}
+
 function isPlaceholderOption(
   attribute: ConfiguratorSession["attributes"][number],
   optionName: string,
@@ -201,12 +211,22 @@ export function applyFirstOptionDefaults(
           ),
         )
       : candidateValues;
+    // Al cambiar Mujer → Hombre Odoo puede excluir el cuello femenino y
+    // dejar el atributo vacío. Para cuello, "Ninguno" es la alternativa
+    // segura y explícita: evita que el render reutilice un detalle residual
+    // mientras el usuario decide un cuello compatible con Hombre.
+    const defaultCandidateValues = isNeckModelAttribute(attribute)
+      ? [
+          ...compatibleCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
+          ...compatibleCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
+        ]
+      : compatibleCandidateValues;
     const selectedWithoutPlaceholders = new Set(
       Array.from(selected).filter(
         (valueId) => !selectedValueIds.includes(valueId),
       ),
     );
-    const firstCompatibleOption = compatibleCandidateValues.find(
+    const firstCompatibleOption = defaultCandidateValues.find(
       (value) =>
         !conflictsWithCurrentSelection(
           value.id,

@@ -92,7 +92,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
-  it("elige un cuello real en vez de Sin selección cuando el género invalida el anterior", () => {
+  it("elige Ninguno cuando el género invalida el cuello anterior", () => {
     const sessionWithEmptyNeck: ConfiguratorSession = {
       ...session,
       attributes: [
@@ -105,6 +105,12 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
               attributeId: 10,
               attributeName: "Modelo de cuello",
             },
+            {
+              id: 103,
+              name: "Ninguno",
+              attributeId: 10,
+              attributeName: "Modelo de cuello",
+            },
             ...session.attributes[0]!.values,
           ],
         },
@@ -113,7 +119,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     };
 
     expect(applyFirstOptionDefaults(sessionWithEmptyNeck, {})).toMatchObject({
-      "10": [101],
+      "10": [103],
     });
 
     // Odoo puede dejar seleccionado el valor placeholder en vez de una lista
@@ -121,7 +127,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     expect(
       applyFirstOptionDefaults(sessionWithEmptyNeck, { "10": [100] }),
     ).toMatchObject({
-      "10": [101],
+      "10": [103],
     });
   });
 
