@@ -64,6 +64,12 @@ const PANTS_KNEE_PATCH_SQUARE_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_ASSET_BY_SIDE = {
+  left:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-left.svg",
+  right:
+    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_CAMOUFLAGE_ASSET_BY_SIDE = {
   left:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-left.svg",
@@ -3420,14 +3426,25 @@ async function createPantsKneePatchSideOverlayBuffers(
     return buffers;
   }
 
-  if (type === "plain" && trimColor) {
-    const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-      PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE[side],
+  if (type === "plain") {
+    const plainMarkerBuffer = await createGarmentDetailAssetOverlayBuffer(
+      PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_ASSET_BY_SIDE[side],
       placementAssetPath,
     );
 
-    if (trimOverlayBuffer) {
-      buffers.push(await recolorPngInkBuffer(trimOverlayBuffer, trimColor));
+    if (plainMarkerBuffer) {
+      buffers.push(plainMarkerBuffer);
+    }
+
+    if (trimColor) {
+      const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
+        PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE[side],
+        placementAssetPath,
+      );
+
+      if (trimOverlayBuffer) {
+        buffers.push(await recolorPngInkBuffer(trimOverlayBuffer, trimColor));
+      }
     }
 
     return buffers;

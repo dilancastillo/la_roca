@@ -67,6 +67,12 @@ const PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
 } as const;
+const PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_SRC_BY_SIDE = {
+  left:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-left.svg",
+  right:
+    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-right.svg",
+} as const;
 const PANTS_KNEE_PATCH_CAMOUFLAGE_SRC_BY_SIDE = {
   left:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-left.svg",
@@ -4916,12 +4922,21 @@ async function drawPantsKneePatchSideFromAsset(
     return;
   }
 
-  if (type === "plain" && trimColor) {
-    const trimCanvas = await createRasterCanvas(
-      PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE[side],
+  if (type === "plain") {
+    const plainMarkerCanvas = await createRasterCanvas(
+      PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_SRC_BY_SIDE[side],
       sourceSrc,
     );
-    context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    context.drawImage(plainMarkerCanvas, 0, 0);
+
+    if (trimColor) {
+      const trimCanvas = await createRasterCanvas(
+        PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE[side],
+        sourceSrc,
+      );
+      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    }
+
     return;
   }
 

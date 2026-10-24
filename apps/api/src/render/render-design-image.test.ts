@@ -2709,6 +2709,45 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
+  it("distingue el parche cuadrado liso con un marcador cuadrado en ambas rodillas", async () => {
+    const scene: AutomationRenderScene = {
+      productName: "Pantalon",
+      baseColorHex: "#D1D5DB",
+      garmentAssetPath: "assets/catalog/pantalon/svg-clean/pants-model-01.svg",
+      lowerPocketLayout: "none",
+      trimSections: [],
+      pantsKneePatchRightModel: "square",
+      pantsKneePatchLeftModel: "square",
+    };
+    const patchOnly = await readRawPng(await renderDesignImage(scene));
+    const plain = await readRawPng(
+      await renderDesignImage({
+        ...scene,
+        pantsKneePatchRightType: "plain",
+        pantsKneePatchLeftType: "plain",
+      }),
+    );
+    const leftMarkerRegion = { x: 264, y: 548, width: 32, height: 32 };
+    const rightMarkerRegion = { x: 606, y: 548, width: 32, height: 32 };
+
+    expect(
+      countDifferentPixelsInRegion(
+        patchOnly.data,
+        plain.data,
+        plain.info.width,
+        leftMarkerRegion,
+      ),
+    ).toBeGreaterThan(40);
+    expect(
+      countDifferentPixelsInRegion(
+        patchOnly.data,
+        plain.data,
+        plain.info.width,
+        rightMarkerRegion,
+      ),
+    ).toBeGreaterThan(40);
+  }, 20000);
+
   it("dibuja el lineal inferior base en bolsillos cuadrados sobrepuestos", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
