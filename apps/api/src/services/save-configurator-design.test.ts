@@ -1050,11 +1050,53 @@ describe("saveConfiguratorDesign", () => {
         filename: "sale-line-290-design.png",
         imageBase64: "png-base64",
         selectedValueIds: sessionWithLength.selectedValueIds,
-        customValuesByValueId: { [String(lengthValueId)]: "1000" },
+        customValuesByValueId: { [String(lengthValueId)]: "91" },
       }),
-    ).rejects.toThrow(/entre 1 y 999/i);
+    ).rejects.toThrow(/entre 1 y 90/i);
 
     expect(mocks.odooWrite).not.toHaveBeenCalled();
+  });
+
+  it("rechaza ancho de pantalón o bota mayor a 35", async () => {
+    const widthAttributeId = 852;
+    const widthValueId = 8521;
+    const sessionWithWidth: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: widthAttributeId,
+          name: "Ancho bota",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: widthValueId,
+              name: "Ancho bota",
+              attributeId: widthAttributeId,
+              attributeName: "Ancho bota",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(widthAttributeId)]: [widthValueId],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithWidth);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithWidth.selectedValueIds,
+        customValuesByValueId: { [String(widthValueId)]: "36" },
+      }),
+    ).rejects.toThrow(/ancho debe estar entre 1 y 35/i);
   });
 
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {

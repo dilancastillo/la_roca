@@ -314,4 +314,26 @@ describe("AttributeSection", () => {
     expect(input.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByText(/largo solo admite números/i)).toBeTruthy();
   });
+
+  it("limita Ancho a 35 cm", () => {
+    const baseProps = {
+      ...createProps(),
+      group: {
+        ...createProps().group,
+        label: "Ancho bota",
+        options: [{ id: 11, name: "Ancho", allowsCustomValue: true }],
+      },
+      selectedValueIds: [11],
+      customValuesByValueId: { "11": "36" },
+      selectionLabel: "Ancho",
+    };
+
+    render(<AttributeSection {...baseProps} expanded />);
+
+    const input = screen.getByLabelText(/valor personalizado para ancho/i);
+    expect(input.getAttribute("inputmode")).toBe("decimal");
+    expect(input.getAttribute("placeholder")).toBe("Número entre 1 y 35 cm");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/ancho debe estar entre 1 y 35/i)).toBeTruthy();
+  });
 });

@@ -1,9 +1,9 @@
 /**
- * Reglas comunes de las medidas personalizadas. El rango amplio evita textos
- * o valores imposibles sin asumir una talla comercial específica.
+ * Reglas comunes de las medidas personalizadas aprobadas para pantalón y bota.
  */
 export const MEASUREMENT_MIN = 1;
-export const MEASUREMENT_MAX = 999;
+export const LENGTH_MEASUREMENT_MAX = 90;
+export const WIDTH_MEASUREMENT_MAX = 35;
 
 function normalize(value: string) {
   return value
@@ -22,25 +22,42 @@ export function isNumericLengthAttributeName(attributeName: string) {
   return normalize(attributeName).includes("largo");
 }
 
+export function isNumericWidthAttributeName(attributeName: string) {
+  return normalize(attributeName).includes("ancho");
+}
+
+export function isNumericMeasurementAttributeName(attributeName: string) {
+  return (
+    isNumericLengthAttributeName(attributeName) ||
+    isNumericWidthAttributeName(attributeName)
+  );
+}
+
 export function getMeasurementValueError(
   attributeName: string,
   value: string,
 ) {
-  if (!isNumericLengthAttributeName(attributeName) || value.trim().length === 0) {
+  if (!isNumericMeasurementAttributeName(attributeName) || value.trim().length === 0) {
     return undefined;
   }
 
   if (!/^\d+(?:[.,]\d{1,2})?$/.test(value.trim())) {
-    return "El largo solo admite números.";
+    return isNumericLengthAttributeName(attributeName)
+      ? "El largo solo admite números."
+      : "El ancho solo admite números.";
   }
 
   const numericValue = Number(value.replace(",", "."));
+  const maximum = isNumericLengthAttributeName(attributeName)
+    ? LENGTH_MEASUREMENT_MAX
+    : WIDTH_MEASUREMENT_MAX;
+  const label = isNumericLengthAttributeName(attributeName) ? "largo" : "ancho";
   if (
     !Number.isFinite(numericValue) ||
     numericValue < MEASUREMENT_MIN ||
-    numericValue > MEASUREMENT_MAX
+    numericValue > maximum
   ) {
-    return `El largo debe estar entre ${MEASUREMENT_MIN} y ${MEASUREMENT_MAX}.`;
+    return `El ${label} debe estar entre ${MEASUREMENT_MIN} y ${maximum}.`;
   }
 
   return undefined;

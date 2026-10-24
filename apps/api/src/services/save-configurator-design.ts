@@ -5,6 +5,7 @@ import type {
 import { normalizeLowerPocketSelectionsForSave } from "@repo/shared/lower-pocket-rules";
 import {
   getMeasurementValueError,
+  isMeasurementAttributeName,
   isNumericLengthAttributeName,
 } from "@repo/shared/measurement-rules";
 import type { OdooEnv } from "../lib/app-env.js";
@@ -83,7 +84,7 @@ function validateCustomMeasurements(
   customValuesByValueId: Record<string, string>,
 ) {
   for (const attribute of session.attributes) {
-    if (!isNumericLengthAttributeName(attribute.name)) {
+    if (!isMeasurementAttributeName(attribute.name)) {
       continue;
     }
 
@@ -94,7 +95,7 @@ function validateCustomMeasurements(
       }
 
       const customValue = customValuesByValueId[String(value.id)] ?? "";
-      if (customValue.trim().length === 0) {
+      if (isNumericLengthAttributeName(attribute.name) && customValue.trim().length === 0) {
         return `El largo de "${attribute.name}" es obligatorio.`;
       }
 

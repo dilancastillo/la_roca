@@ -381,9 +381,9 @@ export function AttributeSection({
                       value={currentValue}
                       placeholder={
                         isNumericLength
-                          ? "Número entre 1 y 999"
+                          ? "Número entre 1 y 90 cm"
                           : isMeasurement
-                            ? "Valor de la medida"
+                            ? "Número entre 1 y 35 cm"
                             : "Escribe el texto exactamente como debe quedar"
                       }
                       disabled={disabled}
