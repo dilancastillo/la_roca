@@ -159,27 +159,29 @@ export function getMissingRequiredSelectionGroups(
   return groups.filter((group) => !isGroupComplete(group, selectedValueIds));
 }
 
-export function getFirstPendingTextValueGroup(
+export function getTextGroupsWithContent(
   groups: UiAttributeGroup[],
   selectedValueIds: Record<string, number[]>,
   customValuesByValueId: Record<string, string>,
 ) {
-  return (
-    groups.find((group) => {
-      if (!normalizeText(group.label).includes("texto")) {
-        return false;
-      }
+  return new Set(
+    groups
+      .filter((group) => {
+        if (!normalizeText(group.label).includes("texto")) {
+          return false;
+        }
 
-      const selectedIds = new Set(
-        selectedValueIds[String(group.attributeId)] ?? [],
-      );
-      return group.options.some(
-        (option) =>
-          option.allowsCustomValue &&
-          selectedIds.has(option.id) &&
-          !(customValuesByValueId[String(option.id)] ?? "").trim(),
-      );
-    }) ?? null
+        const selectedIds = new Set(
+          selectedValueIds[String(group.attributeId)] ?? [],
+        );
+        return group.options.some(
+          (option) =>
+            option.allowsCustomValue &&
+            selectedIds.has(option.id) &&
+            Boolean(customValuesByValueId[String(option.id)]?.trim()),
+        );
+      })
+      .map((group) => group.attributeId),
   );
 }
 
@@ -532,21 +534,30 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
     return computeDisabledValueIds(sessionQuery.data, state.selectedValueIds);
   }, [sessionQuery.data, state.selectedValueIds]);
 
+  // Los textos ya diligenciados son información útil al reabrir un diseño:
+  // se muestran desplegados sin convertir los campos vacíos en espacio muerto.
+  // Al borrar el último texto, el Set se actualiza y el grupo se contrae.
+  const textGroupsWithContent = useMemo(
+    () =>
+      uiModel
+        ? getTextGroupsWithContent(
+            uiModel.groups,
+            state.selectedValueIds,
+            state.customValuesByValueId,
+          )
+        : new Set<number>(),
+    [uiModel, state.customValuesByValueId, state.selectedValueIds],
+  );
+
   useEffect(() => {
     if (!uiModel || uiModel.groups.length === 0) {
       return;
     }
 
-    const firstPendingTextValueGroup = getFirstPendingTextValueGroup(
-      uiModel.groups,
-      state.selectedValueIds,
-      state.customValuesByValueId,
-    );
     const firstIncompleteGroup =
       uiModel.groups.find(
         (group) => !isGroupComplete(group, state.selectedValueIds),
       ) ?? uiModel.groups[0];
-    const initialExpandedGroup = firstPendingTextValueGroup ?? firstIncompleteGroup;
 
     const expandedStillExists = uiModel.groups.some(
       (group) => group.attributeId === expandedAttributeId,
@@ -557,7 +568,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
 
     if (!hasInitializedExpandedAttributeRef.current) {
       hasInitializedExpandedAttributeRef.current = true;
-      setExpandedAttributeId(initialExpandedGroup?.attributeId ?? null);
+      setExpandedAttributeId(firstIncompleteGroup?.attributeId ?? null);
       return;
     }
 
@@ -1383,7 +1394,10 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
                         selectedValueIds={state.selectedValueIds[String(group.attributeId)] ?? []}
                         disabledValueIds={disabledValueIds}
                         disabled={isReadOnly}
-                        expanded={expandedAttributeId === group.attributeId}
+                        expanded={
+                          expandedAttributeId === group.attributeId ||
+                          textGroupsWithContent.has(group.attributeId)
+                        }
                         isActive={
                           !isLogoUploadActive &&
                           activeAttributeId === group.attributeId

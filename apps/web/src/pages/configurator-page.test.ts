@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  getFirstPendingTextValueGroup,
+  getTextGroupsWithContent,
   getMissingRequiredSelectionGroups,
 } from "./configurator-page";
 
@@ -50,7 +50,7 @@ describe("validación antes de guardar", () => {
   });
 });
 
-describe("campos de texto pendientes", () => {
+describe("expansión condicional de campos de texto", () => {
   const textGroup = {
     attributeId: 150,
     label: "¿Texto en manga derecha?",
@@ -62,13 +62,17 @@ describe("campos de texto pendientes", () => {
     ],
   };
 
-  it("prioriza abrir el texto seleccionado que todavía está vacío", () => {
+  it("abre automáticamente el texto seleccionado que contiene información", () => {
     expect(
-      getFirstPendingTextValueGroup([textGroup], { "150": [11] }, {}),
-    ).toMatchObject({ attributeId: 150 });
+      getTextGroupsWithContent(
+        [textGroup],
+        { "150": [11] },
+        { "11": "LA ROCA" },
+      ),
+    ).toEqual(new Set([150]));
   });
 
-  it("no abre un texto ya diligenciado ni una medida", () => {
+  it("no abre un texto vacío ni una medida", () => {
     const measurementGroup = {
       attributeId: 151,
       label: "Largo bota",
@@ -78,11 +82,17 @@ describe("campos de texto pendientes", () => {
     };
 
     expect(
-      getFirstPendingTextValueGroup(
+      getTextGroupsWithContent(
         [measurementGroup, textGroup],
         { "151": [12], "150": [11] },
-        { "11": "LA ROCA" },
+        {},
       ),
-    ).toBeNull();
+    ).toEqual(new Set());
+  });
+
+  it("se contrae al borrar el último contenido", () => {
+    expect(
+      getTextGroupsWithContent([textGroup], { "150": [11] }, { "11": "" }),
+    ).toEqual(new Set());
   });
 });

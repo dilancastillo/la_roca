@@ -67,7 +67,22 @@ function normalizeText(value: string) {
     .toLowerCase();
 }
 
-function isPlaceholderOption(optionName: string) {
+function isPantsSizeAttribute(attribute: ConfiguratorSession["attributes"][number]) {
+  const name = normalizeText(attribute.name);
+  return name.includes("talla") && name.includes("pantalon");
+}
+
+function isPlaceholderOption(
+  attribute: ConfiguratorSession["attributes"][number],
+  optionName: string,
+) {
+  // Para Talla pantalón, Odoo usa literalmente "Sin selección" como una
+  // variante comercial válida. No es el placeholder genérico que se debe
+  // sustituir en otros atributos simples.
+  if (isPantsSizeAttribute(attribute) && normalizeText(optionName) === "sin seleccion") {
+    return false;
+  }
+
   return ["sin seleccion", "seleccione"].includes(normalizeText(optionName));
 }
 
@@ -97,7 +112,7 @@ export function applyFirstOptionDefaults(
     );
     const hasOnlyPlaceholderSelection =
       selectedValues.length > 0 &&
-      selectedValues.every((value) => isPlaceholderOption(value.name));
+      selectedValues.every((value) => isPlaceholderOption(attribute, value.name));
 
     if (selectedValueIds.length > 0 && !hasOnlyPlaceholderSelection) {
       continue;
@@ -105,7 +120,7 @@ export function applyFirstOptionDefaults(
 
     const selected = selectedSet(nextSelectedValueIds);
     const meaningfulValues = attribute.values.filter(
-      (value) => !isPlaceholderOption(value.name),
+      (value) => !isPlaceholderOption(attribute, value.name),
     );
     // "Ninguno" es una selección explícita y válida. En cambio, "Sin
     // selección" es el placeholder que Odoo puede devolver después de una

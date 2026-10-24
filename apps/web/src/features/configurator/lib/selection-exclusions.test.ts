@@ -155,6 +155,41 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
+  it("conserva Sin selección como variante válida de Talla pantalón", () => {
+    const pantsSizeAttribute = {
+      id: 31,
+      name: "Talla pantalón",
+      displayType: "option" as const,
+      selectionMode: "single" as const,
+      variantMode: "dynamic" as const,
+      values: [
+        {
+          id: 310,
+          name: "SIN SELECCIÓN",
+          attributeId: 31,
+          attributeName: "Talla pantalón",
+        },
+        {
+          id: 311,
+          name: "6",
+          attributeId: 31,
+          attributeName: "Talla pantalón",
+        },
+      ],
+    };
+    const sessionWithPantsSize: ConfiguratorSession = {
+      ...session,
+      attributes: [pantsSizeAttribute, ...session.attributes],
+    };
+
+    expect(
+      applyFirstOptionDefaults(sessionWithPantsSize, { "31": [310] }),
+    ).toMatchObject({ "31": [310] });
+    expect(applyFirstOptionDefaults(sessionWithPantsSize, {})).toMatchObject({
+      "31": [310],
+    });
+  });
+
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
     expect(
       sanitizeSelectedValueIdsForExclusions(session, {
