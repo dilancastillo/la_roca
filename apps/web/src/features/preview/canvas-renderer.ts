@@ -741,8 +741,8 @@ export function applySleeveCalibration(
       ] as OriginalSleevePoint,
       [0, 0] as OriginalSleevePoint,
     );
-    // La escala es longitudinal: se proyecta sobre el borde largo del vivo.
-    // Su grosor transversal permanece intacto.
+    // Ambas escalas se proyectan sobre los ejes propios del vivo: longitud
+    // sobre su borde largo y grosor en dirección transversal.
     const [start, end] = shape.upper;
     const edgeX = end[0] - start[0];
     const edgeY = end[1] - start[1];
@@ -752,6 +752,7 @@ export function applySleeveCalibration(
     const transverseX = -longitudinalY;
     const transverseY = longitudinalX;
     const longitudinalScale = offset.scaleY;
+    const thicknessScale = offset.scaleX;
     const radians = (offset.rotation * Math.PI) / 180;
     const cosine = Math.cos(radians);
     const sine = Math.sin(radians);
@@ -762,7 +763,7 @@ export function applySleeveCalibration(
         (relativeX * longitudinalX + relativeY * longitudinalY) *
         longitudinalScale;
       const transverse =
-        relativeX * transverseX + relativeY * transverseY;
+        (relativeX * transverseX + relativeY * transverseY) * thicknessScale;
       const scaledX =
         longitudinalX * longitudinal + transverseX * transverse;
       const scaledY =

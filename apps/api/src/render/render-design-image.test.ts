@@ -39,7 +39,7 @@ describe("anclaje dinámico de vivos de manga", () => {
     ]);
   });
 
-  it("escala a lo largo del vivo sin ensancharlo", () => {
+  it("escala longitud y grosor del vivo de forma independiente", () => {
     const shapes = getOriginalSleeveTrimShapes(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
@@ -48,7 +48,7 @@ describe("anclaje dinámico de vivos de manga", () => {
       right: { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 },
     };
     const calibrated = applySleeveCalibration(shapes, calibration);
-    const legacyWidthScale = applySleeveCalibration(shapes, {
+    const thicknessScale = applySleeveCalibration(shapes, {
       ...calibration,
       left: { ...calibration.left, scaleX: 0.7 },
     });
@@ -58,7 +58,7 @@ describe("anclaje dinámico de vivos de manga", () => {
     expect(
       distance(calibrated[0]!.upper[0], calibrated[0]!.upper[1]),
     ).toBeCloseTo(distance(shapes[0]!.upper[0], shapes[0]!.upper[1]) * 1.3);
-    expect(legacyWidthScale[0]?.points).toEqual(calibrated[0]?.points);
+    expect(thicknessScale[0]?.points).not.toEqual(calibrated[0]?.points);
     expect(calibrated[1]?.points).toEqual(shapes[1]?.points);
   });
 
