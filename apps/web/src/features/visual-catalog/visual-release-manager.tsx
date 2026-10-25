@@ -226,6 +226,8 @@ export function VisualReleaseManager({
   const [scenariosByRelease, setScenariosByRelease] = useState<
     Record<string, VisualReleaseScenario[]>
   >({});
+  const [expandedReleaseIds, setExpandedReleaseIds] = useState<string[]>([]);
+  const [loadingScenarioReleaseIds, setLoadingScenarioReleaseIds] = useState<string[]>([]);
   const [isBusy, setIsBusy] = useState(false);
 
   const approvedDefinitions = useMemo(
@@ -238,29 +240,37 @@ export function VisualReleaseManager({
   );
 
   useEffect(() => {
-    let isCurrent = true;
-
-    void Promise.all(
-      releases.map(async (release) => [
-        release.id,
-        await fetchVisualReleaseScenarios(release.id),
-      ] as const),
-    )
-      .then((entries) => {
-        if (isCurrent) {
-          setScenariosByRelease(Object.fromEntries(entries));
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setScenariosByRelease({});
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
+    const releaseIds = new Set(releases.map((release) => release.id));
+    setExpandedReleaseIds((current) => current.filter((releaseId) => releaseIds.has(releaseId)));
+    setScenariosByRelease((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([releaseId]) => releaseIds.has(releaseId)),
+      ),
+    );
   }, [releases]);
+
+  async function toggleReleaseDetails(releaseId: string) {
+    const isExpanded = expandedReleaseIds.includes(releaseId);
+    if (isExpanded) {
+      setExpandedReleaseIds((current) => current.filter((id) => id !== releaseId));
+      return;
+    }
+
+    setExpandedReleaseIds((current) => [...current, releaseId]);
+    if (scenariosByRelease[releaseId] || loadingScenarioReleaseIds.includes(releaseId)) {
+      return;
+    }
+
+    setLoadingScenarioReleaseIds((current) => [...current, releaseId]);
+    try {
+      const scenarios = await fetchVisualReleaseScenarios(releaseId);
+      setScenariosByRelease((current) => ({ ...current, [releaseId]: scenarios }));
+    } catch {
+      // Una falla puntual no bloquea la lista; se vuelve a intentar al reabrir.
+    } finally {
+      setLoadingScenarioReleaseIds((current) => current.filter((id) => id !== releaseId));
+    }
+  }
 
   async function runAction(action: () => Promise<unknown>, success: string) {
     setIsBusy(true);
@@ -370,6 +380,8 @@ export function VisualReleaseManager({
           releases.map((release) => {
             const completedChecks = Object.values(release.checklist).filter(Boolean).length;
             const scenarios = scenariosByRelease[release.id] ?? [];
+            const isExpanded = expandedReleaseIds.includes(release.id);
+            const isLoadingScenarios = loadingScenarioReleaseIds.includes(release.id);
             return (
               <article className="visual-release-card" key={release.id}>
                 <header className="visual-release-card__header">
@@ -391,6 +403,18 @@ export function VisualReleaseManager({
                     <span>comprobaciones</span>
                   </div>
                 </header>
+
+                <button
+                  type="button"
+                  className="secondary-button visual-release-card__details-toggle"
+                  onClick={() => void toggleReleaseDetails(release.id)}
+                  aria-expanded={isExpanded}
+                >
+                  {isExpanded ? "Ocultar detalles" : "Ver detalles y comprobar"}
+                </button>
+
+                {isExpanded ? (
+                  <>
 
                 <div className="visual-release-changes">
                   <strong>Cambios incluidos</strong>
@@ -449,7 +473,9 @@ export function VisualReleaseManager({
                   </button>
                 </div>
 
-                {scenarios.length > 0 ? (
+                {isLoadingScenarios ? (
+                  <p className="catalog-empty">Cargando escenarios guardados…</p>
+                ) : scenarios.length > 0 ? (
                   <div className="visual-release-scenarios">
                     <strong>Escenarios guardados</strong>
                     {scenarios.slice(0, 4).map((scenario) => (
@@ -582,6 +608,8 @@ export function VisualReleaseManager({
                     <span className="visual-release-active-label">Version activa</span>
                   ) : null}
                 </footer>
+                  </>
+                ) : null}
               </article>
             );
           })
