@@ -25,8 +25,8 @@ describe("anclaje dinámico de vivos de manga", () => {
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
     const calibrated = applySleeveCalibration(shapes, {
-      left: { x: -12, y: 5 },
-      right: { x: 9, y: -4 },
+      left: { x: -12, y: 5, scaleX: 1, scaleY: 1, rotation: 0 },
+      right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
     });
 
     expect(calibrated[0]?.points[0]).toEqual([
@@ -37,6 +37,19 @@ describe("anclaje dinámico de vivos de manga", () => {
       (shapes[1]?.points[0]?.[0] ?? 0) + 9,
       (shapes[1]?.points[0]?.[1] ?? 0) - 4,
     ]);
+  });
+
+  it("permite escalar y rotar solo el vivo elegido", () => {
+    const shapes = getOriginalSleeveTrimShapes(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    const calibrated = applySleeveCalibration(shapes, {
+      left: { x: 0, y: 0, scaleX: 0.7, scaleY: 1.3, rotation: 18 },
+      right: { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 },
+    });
+
+    expect(calibrated[0]?.points).not.toEqual(shapes[0]?.points);
+    expect(calibrated[1]?.points).toEqual(shapes[1]?.points);
   });
 
   it("mantiene el perfil de manga cuando el cuello editado es un data URI", () => {

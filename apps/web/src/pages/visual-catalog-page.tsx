@@ -53,7 +53,11 @@ import {
   isTrimValueInVisualSlot,
 } from "../features/visual-catalog/lib/odoo-option-compatibility";
 import { ApiError } from "../lib/api-client";
-import { getOriginalSleeveTrimShapes } from "../features/preview/canvas-renderer";
+import {
+  applySleeveCalibration,
+  getOriginalSleeveTrimShapes,
+} from "../features/preview/canvas-renderer";
+import { getVisualAssetPathForValue } from "@repo/shared/visual-assets";
 
 const SLOT_OPTIONS: Array<{
   value: VisualSlot;
@@ -83,6 +87,10 @@ const DEFAULT_PLACEMENT: VisualPlacement = {
 
 function boundedCalibration(value: number) {
   return Math.max(-160, Math.min(160, Math.round(value)));
+}
+
+function defaultSleeveCalibrationSide() {
+  return { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 };
 }
 
 const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
@@ -666,7 +674,7 @@ export function VisualCatalogPage() {
     event: ReactPointerEvent<HTMLButtonElement>,
     side: "left" | "right",
   ) => {
-    const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+    const value = placement.sleeveCalibration?.[side] ?? defaultSleeveCalibrationSide();
     sleeveCalibrationDragRef.current = {
       side,
       pointerX: event.clientX,
@@ -693,9 +701,14 @@ export function VisualCatalogPage() {
     setPlacement((current) => ({
       ...current,
       sleeveCalibration: {
-        left: current.sleeveCalibration?.left ?? { x: 0, y: 0 },
-        right: current.sleeveCalibration?.right ?? { x: 0, y: 0 },
-        [drag.side]: { x, y },
+        left: current.sleeveCalibration?.left ?? defaultSleeveCalibrationSide(),
+        right: current.sleeveCalibration?.right ?? defaultSleeveCalibrationSide(),
+        [drag.side]: {
+          ...(current.sleeveCalibration?.[drag.side] ??
+            defaultSleeveCalibrationSide()),
+          x,
+          y,
+        },
       },
     }));
   };
@@ -703,6 +716,7 @@ export function VisualCatalogPage() {
   const endSleeveCalibrationDrag = () => {
     sleeveCalibrationDragRef.current = null;
   };
+
 
   const compatibleProducts = useMemo(
     () => products.filter((product) => supportsSlot(product, slot)),
@@ -854,20 +868,36 @@ export function VisualCatalogPage() {
   // se combina con una silueta Mujer: esa composición fue la causa de sisas
   // deformadas y ya no representa el render real del laboratorio.
   const displayedRuntimePreviewSrc = runtimePreviewSrc;
+  const sleeveGuideProfileSrc = useMemo(() => {
+    if (!selectedAttribute || !selectedValue || slot !== "neck") {
+      return sourceFileName || previewReferenceAssetSrc;
+    }
+
+    // Este es el mismo resolvedor de activos que usa el configurador. El
+    // sourceValueId evita que una etiqueta editable como PRESILLAS.svg cambie
+    // silenciosamente el perfil de puño que se ve en publicación.
+    const assetPath = getVisualAssetPathForValue(
+      "uniforme",
+      selectedAttribute.id,
+      selectedValue.id,
+      selectedAttribute.name,
+      selectedValue.name,
+      selectedValue.sourceValueId,
+    );
+    return assetPath ? `/${assetPath}` : sourceFileName || previewReferenceAssetSrc;
+  }, [previewReferenceAssetSrc, selectedAttribute, selectedValue, slot, sourceFileName]);
   const sleeveCalibrationGuide = useMemo(() => {
     if (slot !== "neck") return [];
 
     // El nombre del archivo conserva el perfil geométrico histórico cuando la
     // versión proviene del catálogo; si no existe, la base neutra ofrece una
     // guía segura que el administrador puede ajustar con el mouse.
-    const profileSrc = sourceFileName || previewReferenceAssetSrc;
-    return getOriginalSleeveTrimShapes(
-      previewReferenceAssetSrc,
-      profileSrc,
+    return applySleeveCalibration(
+      getOriginalSleeveTrimShapes(previewReferenceAssetSrc, sleeveGuideProfileSrc),
+      placement.sleeveCalibration,
     ).map((shape, index) => {
       const side: "left" | "right" = index === 0 ? "left" : "right";
-      const offset = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
-      const points = shape.points.map(([x, y]) => [x + offset.x, y + offset.y] as const);
+      const points = shape.points;
       const center = points.reduce(
         (total, [x, y]) => ({ x: total.x + x / points.length, y: total.y + y / points.length }),
         { x: 0, y: 0 },
@@ -875,12 +905,12 @@ export function VisualCatalogPage() {
       return {
         side,
         points,
-        upper: shape.upper.map(([x, y]) => [x + offset.x, y + offset.y] as const),
-        lower: shape.lower.map(([x, y]) => [x + offset.x, y + offset.y] as const),
+        upper: shape.upper,
+        lower: shape.lower,
         center,
       };
     });
-  }, [placement.sleeveCalibration, previewReferenceAssetSrc, slot, sourceFileName]);
+  }, [placement.sleeveCalibration, previewReferenceAssetSrc, sleeveGuideProfileSrc, slot]);
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -1868,34 +1898,34 @@ export function VisualCatalogPage() {
                 <fieldset className="catalog-sleeve-calibration">
                   <legend>Calibración de vivos de manga</legend>
                   <p>
-                    Arrastra con el mouse cada control hasta que el vivo coincida
-                    con su manga. Se guarda en esta versión del cuello y se usa
-                    igual en laboratorio y publicación.
+                    Arrastra I o D para mover cada vivo. Las barras controlan el
+                    tamaño horizontal, vertical y la rotación. Se guarda en esta
+                    versión del cuello y se usa igual en laboratorio y publicación.
                   </p>
                   {(["left", "right"] as const).map((side) => {
                     const label = side === "left" ? "Manga izquierda" : "Manga derecha";
-                    const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+                    const value = placement.sleeveCalibration?.[side] ?? defaultSleeveCalibrationSide();
                     return (
                       <div className="catalog-sleeve-calibration__side" key={side}>
                         <strong>{label}</strong>
-                        {(["x", "y"] as const).map((axis) => (
+                        {(["scaleX", "scaleY", "rotation"] as const).map((axis) => (
                           <label key={axis}>
-                            {axis.toUpperCase()} ({value[axis]})
+                            {axis === "scaleX" ? "Escala horizontal" : axis === "scaleY" ? "Escala vertical" : "Rotación"} ({axis === "rotation" ? `${value[axis]}°` : value[axis].toFixed(2)})
                             <input
                               type="range"
-                              min="-160"
-                              max="160"
-                              step="1"
+                              min={axis === "rotation" ? "-180" : "0.25"}
+                              max={axis === "rotation" ? "180" : "2"}
+                              step={axis === "rotation" ? "1" : "0.01"}
                               value={value[axis]}
                               onChange={(event) => {
-                                const nextValue = boundedCalibration(Number(event.target.value));
+                                const nextValue = Number(event.target.value);
                                 setPlacement((current) => ({
                                   ...current,
                                   sleeveCalibration: {
-                                    left: current.sleeveCalibration?.left ?? { x: 0, y: 0 },
-                                    right: current.sleeveCalibration?.right ?? { x: 0, y: 0 },
+                                    left: current.sleeveCalibration?.left ?? defaultSleeveCalibrationSide(),
+                                    right: current.sleeveCalibration?.right ?? defaultSleeveCalibrationSide(),
                                     [side]: {
-                                      ...(current.sleeveCalibration?.[side] ?? { x: 0, y: 0 }),
+                                      ...(current.sleeveCalibration?.[side] ?? defaultSleeveCalibrationSide()),
                                       [axis]: nextValue,
                                     },
                                   },
@@ -1914,8 +1944,8 @@ export function VisualCatalogPage() {
                       setPlacement((current) => ({
                         ...current,
                         sleeveCalibration: {
-                          left: { x: 0, y: 0 },
-                          right: { x: 0, y: 0 },
+                          left: defaultSleeveCalibrationSide(),
+                          right: defaultSleeveCalibrationSide(),
                         },
                       }))
                     }
@@ -2054,22 +2084,23 @@ export function VisualCatalogPage() {
                     {sleeveCalibrationGuide.map((guide) => {
                       const isLeft = guide.side === "left";
                       return (
-                        <button
-                          key={guide.side}
-                          type="button"
-                          className="visual-runtime-preview__sleeve-handle"
-                          style={{
-                            left: `${(guide.center.x / 1080) * 100}%`,
-                            top: `${(guide.center.y / 1350) * 100}%`,
-                          }}
-                          onPointerDown={(event) => beginSleeveCalibrationDrag(event, guide.side)}
-                          onPointerMove={moveSleeveCalibrationDrag}
-                          onPointerUp={endSleeveCalibrationDrag}
-                          onPointerCancel={endSleeveCalibrationDrag}
-                          title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
-                        >
-                          {isLeft ? "I" : "D"}
-                        </button>
+                        <div key={guide.side}>
+                          <button
+                            type="button"
+                            className="visual-runtime-preview__sleeve-handle"
+                            style={{
+                              left: `${(guide.center.x / 1080) * 100}%`,
+                              top: `${(guide.center.y / 1350) * 100}%`,
+                            }}
+                            onPointerDown={(event) => beginSleeveCalibrationDrag(event, guide.side)}
+                            onPointerMove={moveSleeveCalibrationDrag}
+                            onPointerUp={endSleeveCalibrationDrag}
+                            onPointerCancel={endSleeveCalibrationDrag}
+                            title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
+                          >
+                            {isLeft ? "I" : "D"}
+                          </button>
+                        </div>
                       );
                     })}
                   </div>

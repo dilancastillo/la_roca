@@ -726,7 +726,7 @@ type OriginalSleeveTrimShape = {
 
 type SleeveCalibration = NonNullable<PreviewScene["sleeveCalibration"]>;
 
-function applySleeveCalibration(
+export function applySleeveCalibration(
   shapes: readonly OriginalSleeveTrimShape[],
   calibration?: SleeveCalibration,
 ) {
@@ -734,9 +734,25 @@ function applySleeveCalibration(
 
   return shapes.map((shape, index) => {
     const offset = index === 0 ? calibration.left : calibration.right;
+    const center = shape.points.reduce(
+      (total, point) => [
+        total[0] + point[0] / shape.points.length,
+        total[1] + point[1] / shape.points.length,
+      ] as OriginalSleevePoint,
+      [0, 0] as OriginalSleevePoint,
+    );
+    const radians = (offset.rotation * Math.PI) / 180;
+    const cosine = Math.cos(radians);
+    const sine = Math.sin(radians);
     const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
-      point[0] + offset.x,
-      point[1] + offset.y,
+      center[0] +
+        (point[0] - center[0]) * offset.scaleX * cosine -
+        (point[1] - center[1]) * offset.scaleY * sine +
+        offset.x,
+      center[1] +
+        (point[0] - center[0]) * offset.scaleX * sine +
+        (point[1] - center[1]) * offset.scaleY * cosine +
+        offset.y,
     ];
     return {
       points: shape.points.map(move),

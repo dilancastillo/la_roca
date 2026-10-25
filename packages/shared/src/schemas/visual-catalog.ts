@@ -98,8 +98,20 @@ export const visualPlacementSchema = z.object({
    */
   sleeveCalibration: z
     .object({
-      left: z.object({ x: z.number().finite().default(0), y: z.number().finite().default(0) }).default({ x: 0, y: 0 }),
-      right: z.object({ x: z.number().finite().default(0), y: z.number().finite().default(0) }).default({ x: 0, y: 0 }),
+      left: z.object({
+        x: z.number().finite().default(0),
+        y: z.number().finite().default(0),
+        scaleX: z.number().finite().min(0.25).max(2).default(1),
+        scaleY: z.number().finite().min(0.25).max(2).default(1),
+        rotation: z.number().finite().min(-180).max(180).default(0),
+      }).default({ x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 }),
+      right: z.object({
+        x: z.number().finite().default(0),
+        y: z.number().finite().default(0),
+        scaleX: z.number().finite().min(0.25).max(2).default(1),
+        scaleY: z.number().finite().min(0.25).max(2).default(1),
+        rotation: z.number().finite().min(-180).max(180).default(0),
+      }).default({ x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 }),
     })
     .optional(),
 });
