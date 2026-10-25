@@ -741,19 +741,37 @@ export function applySleeveCalibration(
       ] as OriginalSleevePoint,
       [0, 0] as OriginalSleevePoint,
     );
+    // La escala es longitudinal: se proyecta sobre el borde largo del vivo.
+    // Su grosor transversal permanece intacto.
+    const [start, end] = shape.upper;
+    const edgeX = end[0] - start[0];
+    const edgeY = end[1] - start[1];
+    const edgeLength = Math.hypot(edgeX, edgeY) || 1;
+    const longitudinalX = edgeX / edgeLength;
+    const longitudinalY = edgeY / edgeLength;
+    const transverseX = -longitudinalY;
+    const transverseY = longitudinalX;
+    const longitudinalScale = offset.scaleY;
     const radians = (offset.rotation * Math.PI) / 180;
     const cosine = Math.cos(radians);
     const sine = Math.sin(radians);
-    const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
-      center[0] +
-        (point[0] - center[0]) * offset.scaleX * cosine -
-        (point[1] - center[1]) * offset.scaleY * sine +
-        offset.x,
-      center[1] +
-        (point[0] - center[0]) * offset.scaleX * sine +
-        (point[1] - center[1]) * offset.scaleY * cosine +
-        offset.y,
-    ];
+    const move = (point: OriginalSleevePoint): OriginalSleevePoint => {
+      const relativeX = point[0] - center[0];
+      const relativeY = point[1] - center[1];
+      const longitudinal =
+        (relativeX * longitudinalX + relativeY * longitudinalY) *
+        longitudinalScale;
+      const transverse =
+        relativeX * transverseX + relativeY * transverseY;
+      const scaledX =
+        longitudinalX * longitudinal + transverseX * transverse;
+      const scaledY =
+        longitudinalY * longitudinal + transverseY * transverse;
+      return [
+        center[0] + scaledX * cosine - scaledY * sine + offset.x,
+        center[1] + scaledX * sine + scaledY * cosine + offset.y,
+      ];
+    };
     return {
       points: shape.points.map(move),
       upper: [move(shape.upper[0]), move(shape.upper[1])] as const,

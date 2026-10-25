@@ -1898,9 +1898,9 @@ export function VisualCatalogPage() {
                 <fieldset className="catalog-sleeve-calibration">
                   <legend>Calibración de vivos de manga</legend>
                   <p>
-                    Arrastra I o D para mover cada vivo. Las barras controlan el
-                    tamaño horizontal, vertical y la rotación. Se guarda en esta
-                    versión del cuello y se usa igual en laboratorio y publicación.
+                    Arrastra I o D para mover cada vivo. La escala longitudinal alarga
+                    o acorta el vivo sin cambiar su ancho; la otra barra controla la
+                    rotación. Se guarda igual en laboratorio y publicación.
                   </p>
                   {(["left", "right"] as const).map((side) => {
                     const label = side === "left" ? "Manga izquierda" : "Manga derecha";
@@ -1908,9 +1908,9 @@ export function VisualCatalogPage() {
                     return (
                       <div className="catalog-sleeve-calibration__side" key={side}>
                         <strong>{label}</strong>
-                        {(["scaleX", "scaleY", "rotation"] as const).map((axis) => (
+                        {(["scaleY", "rotation"] as const).map((axis) => (
                           <label key={axis}>
-                            {axis === "scaleX" ? "Escala horizontal" : axis === "scaleY" ? "Escala vertical" : "Rotación"} ({axis === "rotation" ? `${value[axis]}°` : value[axis].toFixed(2)})
+                            {axis === "scaleY" ? "Escala longitudinal" : "Rotación"} ({axis === "rotation" ? `${value[axis]}°` : value[axis].toFixed(2)})
                             <input
                               type="range"
                               min={axis === "rotation" ? "-180" : "0.25"}
