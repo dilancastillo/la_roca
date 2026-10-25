@@ -2084,23 +2084,22 @@ export function VisualCatalogPage() {
                     {sleeveCalibrationGuide.map((guide) => {
                       const isLeft = guide.side === "left";
                       return (
-                        <div key={guide.side}>
-                          <button
-                            type="button"
-                            className="visual-runtime-preview__sleeve-handle"
-                            style={{
-                              left: `${(guide.center.x / 1080) * 100}%`,
-                              top: `${(guide.center.y / 1350) * 100}%`,
-                            }}
-                            onPointerDown={(event) => beginSleeveCalibrationDrag(event, guide.side)}
-                            onPointerMove={moveSleeveCalibrationDrag}
-                            onPointerUp={endSleeveCalibrationDrag}
-                            onPointerCancel={endSleeveCalibrationDrag}
-                            title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
-                          >
-                            {isLeft ? "I" : "D"}
-                          </button>
-                        </div>
+                        <button
+                          key={guide.side}
+                          type="button"
+                          className="visual-runtime-preview__sleeve-handle"
+                          style={{
+                            left: `${(guide.center.x / 1080) * 100}%`,
+                            top: `${(guide.center.y / 1350) * 100}%`,
+                          }}
+                          onPointerDown={(event) => beginSleeveCalibrationDrag(event, guide.side)}
+                          onPointerMove={moveSleeveCalibrationDrag}
+                          onPointerUp={endSleeveCalibrationDrag}
+                          onPointerCancel={endSleeveCalibrationDrag}
+                          title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
+                        >
+                          {isLeft ? "I" : "D"}
+                        </button>
                       );
                     })}
                   </div>
