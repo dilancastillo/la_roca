@@ -53,6 +53,7 @@ import {
   isTrimValueInVisualSlot,
 } from "../features/visual-catalog/lib/odoo-option-compatibility";
 import { ApiError } from "../lib/api-client";
+import { getOriginalSleeveTrimShapes } from "../features/preview/canvas-renderer";
 
 const SLOT_OPTIONS: Array<{
   value: VisualSlot;
@@ -853,6 +854,33 @@ export function VisualCatalogPage() {
   // se combina con una silueta Mujer: esa composición fue la causa de sisas
   // deformadas y ya no representa el render real del laboratorio.
   const displayedRuntimePreviewSrc = runtimePreviewSrc;
+  const sleeveCalibrationGuide = useMemo(() => {
+    if (slot !== "neck") return [];
+
+    // El nombre del archivo conserva el perfil geométrico histórico cuando la
+    // versión proviene del catálogo; si no existe, la base neutra ofrece una
+    // guía segura que el administrador puede ajustar con el mouse.
+    const profileSrc = sourceFileName || previewReferenceAssetSrc;
+    return getOriginalSleeveTrimShapes(
+      previewReferenceAssetSrc,
+      profileSrc,
+    ).map((shape, index) => {
+      const side: "left" | "right" = index === 0 ? "left" : "right";
+      const offset = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+      const points = shape.points.map(([x, y]) => [x + offset.x, y + offset.y] as const);
+      const center = points.reduce(
+        (total, [x, y]) => ({ x: total.x + x / points.length, y: total.y + y / points.length }),
+        { x: 0, y: 0 },
+      );
+      return {
+        side,
+        points,
+        upper: shape.upper.map(([x, y]) => [x + offset.x, y + offset.y] as const),
+        lower: shape.lower.map(([x, y]) => [x + offset.x, y + offset.y] as const),
+        center,
+      };
+    });
+  }, [placement.sleeveCalibration, previewReferenceAssetSrc, slot, sourceFileName]);
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -2003,19 +2031,38 @@ export function VisualCatalogPage() {
                     className="visual-runtime-preview__sleeve-calibration"
                     aria-label="Guías de calibración de mangas"
                   >
-                    {(["left", "right"] as const).map((side) => {
-                      const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
-                      const isLeft = side === "left";
+                    <svg
+                      className="visual-runtime-preview__sleeve-guides"
+                      viewBox="0 0 1080 1350"
+                      preserveAspectRatio="xMidYMid meet"
+                      aria-hidden="true"
+                    >
+                      {sleeveCalibrationGuide.map((guide) => (
+                        <g key={guide.side} className="visual-runtime-preview__sleeve-guide">
+                          <polygon
+                            points={guide.points.map(([x, y]) => `${x},${y}`).join(" ")}
+                          />
+                          <polyline
+                            points={guide.upper.map(([x, y]) => `${x},${y}`).join(" ")}
+                          />
+                          <polyline
+                            points={guide.lower.map(([x, y]) => `${x},${y}`).join(" ")}
+                          />
+                        </g>
+                      ))}
+                    </svg>
+                    {sleeveCalibrationGuide.map((guide) => {
+                      const isLeft = guide.side === "left";
                       return (
                         <button
-                          key={side}
+                          key={guide.side}
                           type="button"
                           className="visual-runtime-preview__sleeve-handle"
                           style={{
-                            left: `calc(${isLeft ? 25 : 75}% + ${(value.x / 1080) * 100}%)`,
-                            top: `calc(42% + ${(value.y / 1350) * 100}%)`,
+                            left: `${(guide.center.x / 1080) * 100}%`,
+                            top: `${(guide.center.y / 1350) * 100}%`,
                           }}
-                          onPointerDown={(event) => beginSleeveCalibrationDrag(event, side)}
+                          onPointerDown={(event) => beginSleeveCalibrationDrag(event, guide.side)}
                           onPointerMove={moveSleeveCalibrationDrag}
                           onPointerUp={endSleeveCalibrationDrag}
                           onPointerCancel={endSleeveCalibrationDrag}
