@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type {
   VisualDefinitionSummary,
   VisualRelease,
@@ -117,6 +117,101 @@ type VisualReleaseManagerProps = {
   ) => void;
 };
 
+type ReleaseCreateInput = {
+  displayName: string;
+  notes: string;
+  changedDefinitionIds: string[];
+};
+
+type ReleaseCreateFormProps = {
+  approvedDefinitions: VisualDefinitionSummary[];
+  isBusy: boolean;
+  onCreate: (input: ReleaseCreateInput) => Promise<boolean>;
+};
+
+// Mantener este estado fuera de la lista evita redibujar las releases completas
+// cada vez que el usuario escribe el nombre o las notas de una candidata.
+const ReleaseCreateForm = memo(function ReleaseCreateForm({
+  approvedDefinitions,
+  isBusy,
+  onCreate,
+}: ReleaseCreateFormProps) {
+  const [displayName, setDisplayName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [selectedDefinitionIds, setSelectedDefinitionIds] = useState<string[]>([]);
+
+  async function handleSubmit() {
+    const created = await onCreate({ displayName, notes, changedDefinitionIds: selectedDefinitionIds });
+    if (created) {
+      setDisplayName("");
+      setNotes("");
+      setSelectedDefinitionIds([]);
+    }
+  }
+
+  return (
+    <div className="visual-release-create">
+      <div className="visual-release-create__fields">
+        <label>
+          Nombre de la release
+          <input
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+            placeholder="Ej. Cuellos agosto 2026"
+          />
+        </label>
+        <label>
+          Notas para revision
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={3}
+            placeholder="Que cambia y que combinaciones deben revisarse"
+          />
+        </label>
+      </div>
+
+      <fieldset className="visual-release-definition-picker">
+        <legend>Componentes aprobados que cambian</legend>
+        {approvedDefinitions.length === 0 ? (
+          <p className="catalog-empty">Primero aprueba una version desde la pestaña Versiones.</p>
+        ) : (
+          approvedDefinitions.map((definition) => (
+            <label key={definition.id}>
+              <input
+                type="checkbox"
+                checked={selectedDefinitionIds.includes(definition.id)}
+                onChange={(event) =>
+                  setSelectedDefinitionIds((current) =>
+                    event.target.checked
+                      ? [...current, definition.id]
+                      : current.filter((id) => id !== definition.id),
+                  )
+                }
+              />
+              <span>
+                <strong>{getDefinitionDisplayLabel(definition)}</strong>
+                <small>
+                  {definition.binding.attributeName}: {definition.binding.valueName} · version {definition.version}
+                </small>
+              </span>
+            </label>
+          ))
+        )}
+      </fieldset>
+
+      <button
+        type="button"
+        className="primary-button"
+        onClick={() => void handleSubmit()}
+        disabled={isBusy || approvedDefinitions.length === 0}
+      >
+        Crear candidata
+      </button>
+    </div>
+  );
+});
+
 export function VisualReleaseManager({
   definitions,
   releases,
@@ -127,9 +222,6 @@ export function VisualReleaseManager({
   onError,
   onOpenLaboratory,
 }: VisualReleaseManagerProps) {
-  const [displayName, setDisplayName] = useState("");
-  const [notes, setNotes] = useState("");
-  const [selectedDefinitionIds, setSelectedDefinitionIds] = useState<string[]>([]);
   const [lineIdsByRelease, setLineIdsByRelease] = useState<Record<string, string>>({});
   const [scenariosByRelease, setScenariosByRelease] = useState<
     Record<string, VisualReleaseScenario[]>
@@ -179,6 +271,7 @@ export function VisualReleaseManager({
       await action();
       await onRefresh();
       onMessage(success);
+      return true;
     } catch (error) {
       // The database is authoritative for release state. Refresh even after a
       // failed transition so a stale card cannot invite a second restore.
@@ -192,31 +285,27 @@ export function VisualReleaseManager({
           ? error.message
           : "No se pudo completar la operacion de la release.",
       );
+      return false;
     } finally {
       setIsBusy(false);
     }
   }
 
-  async function handleCreateRelease() {
-    if (!displayName.trim() || selectedDefinitionIds.length === 0) {
+  const handleCreateRelease = useCallback(async (input: ReleaseCreateInput) => {
+    if (!input.displayName.trim() || input.changedDefinitionIds.length === 0) {
       onError("Escribe un nombre y selecciona al menos un componente aprobado.");
-      return;
+      return false;
     }
 
-    await runAction(
-      async () => {
-        await createVisualRelease({
-          displayName: displayName.trim(),
-          notes: notes.trim(),
-          changedDefinitionIds: selectedDefinitionIds,
-        });
-        setDisplayName("");
-        setNotes("");
-        setSelectedDefinitionIds([]);
-      },
+    return await runAction(
+      () => createVisualRelease({
+        displayName: input.displayName.trim(),
+        notes: input.notes.trim(),
+        changedDefinitionIds: input.changedDefinitionIds,
+      }),
       "Release candidata creada. Ya puedes probarla sin afectar a los asesores.",
     );
-  }
+  }, [onError]);
 
   async function handleChecklistChange(
     release: VisualRelease,
@@ -265,68 +354,11 @@ export function VisualReleaseManager({
         </div>
       </header>
 
-      <div className="visual-release-create">
-        <div className="visual-release-create__fields">
-          <label>
-            Nombre de la release
-            <input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Ej. Cuellos agosto 2026"
-            />
-          </label>
-          <label>
-            Notas para revision
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows={3}
-              placeholder="Que cambia y que combinaciones deben revisarse"
-            />
-          </label>
-        </div>
-
-        <fieldset className="visual-release-definition-picker">
-          <legend>Componentes aprobados que cambian</legend>
-          {approvedDefinitions.length === 0 ? (
-            <p className="catalog-empty">
-              Primero aprueba una version desde la pestaña Versiones.
-            </p>
-          ) : (
-            approvedDefinitions.map((definition) => (
-              <label key={definition.id}>
-                <input
-                  type="checkbox"
-                  checked={selectedDefinitionIds.includes(definition.id)}
-                  onChange={(event) =>
-                    setSelectedDefinitionIds((current) =>
-                      event.target.checked
-                        ? [...current, definition.id]
-                        : current.filter((id) => id !== definition.id),
-                    )
-                  }
-                />
-                <span>
-                  <strong>{getDefinitionDisplayLabel(definition)}</strong>
-                  <small>
-                    {definition.binding.attributeName}: {definition.binding.valueName} ·
-                    version {definition.version}
-                  </small>
-                </span>
-              </label>
-            ))
-          )}
-        </fieldset>
-
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => void handleCreateRelease()}
-          disabled={isBusy || approvedDefinitions.length === 0}
-        >
-          Crear candidata
-        </button>
-      </div>
+      <ReleaseCreateForm
+        approvedDefinitions={approvedDefinitions}
+        isBusy={isBusy}
+        onCreate={handleCreateRelease}
+      />
 
       <div className="visual-release-list">
         {releases.length === 0 ? (
