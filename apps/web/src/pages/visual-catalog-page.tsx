@@ -969,18 +969,21 @@ export function VisualCatalogPage() {
   async function refreshVersions() {
     const nextDefinitions = await fetchVisualDefinitions();
     setDefinitions(nextDefinitions);
+  }
 
-    if (isCatalogAdmin) {
-      const [nextAudit, nextReleases, nextReleaseAudit] = await Promise.all([
-        fetchVisualCatalogAudit(),
-        fetchVisualReleases(),
-        fetchVisualReleaseAudit(),
-      ]);
-      setAuditEvents(nextAudit);
-      setReleases(nextReleases.releases);
-      setActiveReleaseId(nextReleases.activeReleaseId);
-      setReleaseAuditEvents(nextReleaseAudit);
-    }
+  async function refreshReleases() {
+    const nextReleases = await fetchVisualReleases();
+    setReleases(nextReleases.releases);
+    setActiveReleaseId(nextReleases.activeReleaseId);
+  }
+
+  async function refreshAudit() {
+    const [nextAudit, nextReleaseAudit] = await Promise.all([
+      fetchVisualCatalogAudit(),
+      fetchVisualReleaseAudit(),
+    ]);
+    setAuditEvents(nextAudit);
+    setReleaseAuditEvents(nextReleaseAudit);
   }
 
   async function refreshProducts(forceRefresh = false) {
@@ -1017,6 +1020,25 @@ export function VisualCatalogPage() {
       );
     });
   }, [canEditCatalog, isCatalogAdmin]);
+
+  useEffect(() => {
+    if (!isCatalogAdmin) {
+      return;
+    }
+
+    const loadTabData = view === "releases" ? refreshReleases : view === "audit" ? refreshAudit : null;
+    if (!loadTabData) {
+      return;
+    }
+
+    void loadTabData().catch((loadError) => {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "No se pudo cargar la informacion de esta pestaña.",
+      );
+    });
+  }, [isCatalogAdmin, view]);
 
   useEffect(() => {
     if (
@@ -2291,7 +2313,7 @@ export function VisualCatalogPage() {
           releases={releases}
           activeReleaseId={activeReleaseId}
           canPublish={Boolean(currentUser.canPublishVisualCatalog)}
-          onRefresh={refreshVersions}
+          onRefresh={refreshReleases}
           onMessage={setMessage}
           onError={setError}
           onOpenLaboratory={(releaseId, saleOrderLineId, scenarioId) =>
