@@ -41,6 +41,10 @@
     "./visual-catalog-runtime": {
       "types": "./dist/visual-catalog-runtime.d.ts",
       "default": "./dist/visual-catalog-runtime.js"
+    },
+    "./sleeve-profiles": {
+      "types": "./dist/sleeve-profiles.d.ts",
+      "default": "./dist/sleeve-profiles.js"
     }
   },
   "files": [

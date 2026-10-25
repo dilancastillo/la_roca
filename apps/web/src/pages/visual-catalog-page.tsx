@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -78,6 +79,10 @@ const DEFAULT_PLACEMENT: VisualPlacement = {
   scaleY: 1,
   rotation: 0,
 };
+
+function boundedCalibration(value: number) {
+  return Math.max(-160, Math.min(160, Math.round(value)));
+}
 
 const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
   neck:
@@ -634,6 +639,13 @@ export function VisualCatalogPage() {
   >({});
   const [placement, setPlacement] =
     useState<VisualPlacement>(DEFAULT_PLACEMENT);
+  const sleeveCalibrationDragRef = useRef<{
+    side: "left" | "right";
+    pointerX: number;
+    pointerY: number;
+    x: number;
+    y: number;
+  } | null>(null);
   // Overlay es el valor seguro: un SVG solo reemplaza la base por decisión
   // explícita del editor, nunca porque un vector sea el más grande.
   const [renderMode, setRenderMode] = useState<VisualRenderMode>("overlay");
@@ -648,6 +660,48 @@ export function VisualCatalogPage() {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  const beginSleeveCalibrationDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    side: "left" | "right",
+  ) => {
+    const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+    sleeveCalibrationDragRef.current = {
+      side,
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      x: value.x,
+      y: value.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveSleeveCalibrationDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) => {
+    const drag = sleeveCalibrationDragRef.current;
+    if (!drag) return;
+    const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
+    if (!bounds) return;
+    const x = boundedCalibration(
+      drag.x + ((event.clientX - drag.pointerX) / bounds.width) * 1080,
+    );
+    const y = boundedCalibration(
+      drag.y + ((event.clientY - drag.pointerY) / bounds.height) * 1350,
+    );
+    setPlacement((current) => ({
+      ...current,
+      sleeveCalibration: {
+        left: current.sleeveCalibration?.left ?? { x: 0, y: 0 },
+        right: current.sleeveCalibration?.right ?? { x: 0, y: 0 },
+        [drag.side]: { x, y },
+      },
+    }));
+  };
+
+  const endSleeveCalibrationDrag = () => {
+    sleeveCalibrationDragRef.current = null;
+  };
 
   const compatibleProducts = useMemo(
     () => products.filter((product) => supportsSlot(product, slot)),
@@ -1782,6 +1836,66 @@ export function VisualCatalogPage() {
                   </label>
                 ))}
               </div>
+              {isCatalogAdmin && slot === "neck" ? (
+                <fieldset className="catalog-sleeve-calibration">
+                  <legend>Calibración de vivos de manga</legend>
+                  <p>
+                    Arrastra con el mouse cada control hasta que el vivo coincida
+                    con su manga. Se guarda en esta versión del cuello y se usa
+                    igual en laboratorio y publicación.
+                  </p>
+                  {(["left", "right"] as const).map((side) => {
+                    const label = side === "left" ? "Manga izquierda" : "Manga derecha";
+                    const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+                    return (
+                      <div className="catalog-sleeve-calibration__side" key={side}>
+                        <strong>{label}</strong>
+                        {(["x", "y"] as const).map((axis) => (
+                          <label key={axis}>
+                            {axis.toUpperCase()} ({value[axis]})
+                            <input
+                              type="range"
+                              min="-160"
+                              max="160"
+                              step="1"
+                              value={value[axis]}
+                              onChange={(event) => {
+                                const nextValue = boundedCalibration(Number(event.target.value));
+                                setPlacement((current) => ({
+                                  ...current,
+                                  sleeveCalibration: {
+                                    left: current.sleeveCalibration?.left ?? { x: 0, y: 0 },
+                                    right: current.sleeveCalibration?.right ?? { x: 0, y: 0 },
+                                    [side]: {
+                                      ...(current.sleeveCalibration?.[side] ?? { x: 0, y: 0 }),
+                                      [axis]: nextValue,
+                                    },
+                                  },
+                                }));
+                              }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      setPlacement((current) => ({
+                        ...current,
+                        sleeveCalibration: {
+                          left: { x: 0, y: 0 },
+                          right: { x: 0, y: 0 },
+                        },
+                      }))
+                    }
+                  >
+                    Restablecer mangas
+                  </button>
+                </fieldset>
+              ) : null}
             </div>
 
             <div className="visual-editor__footer">
@@ -1883,6 +1997,35 @@ export function VisualCatalogPage() {
                     alt=""
                     aria-hidden="true"
                   />
+                ) : null}
+                {isCatalogAdmin && slot === "neck" ? (
+                  <div
+                    className="visual-runtime-preview__sleeve-calibration"
+                    aria-label="Guías de calibración de mangas"
+                  >
+                    {(["left", "right"] as const).map((side) => {
+                      const value = placement.sleeveCalibration?.[side] ?? { x: 0, y: 0 };
+                      const isLeft = side === "left";
+                      return (
+                        <button
+                          key={side}
+                          type="button"
+                          className="visual-runtime-preview__sleeve-handle"
+                          style={{
+                            left: `calc(${isLeft ? 25 : 75}% + ${(value.x / 1080) * 100}%)`,
+                            top: `calc(42% + ${(value.y / 1350) * 100}%)`,
+                          }}
+                          onPointerDown={(event) => beginSleeveCalibrationDrag(event, side)}
+                          onPointerMove={moveSleeveCalibrationDrag}
+                          onPointerUp={endSleeveCalibrationDrag}
+                          onPointerCancel={endSleeveCalibrationDrag}
+                          title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
+                        >
+                          {isLeft ? "I" : "D"}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : null}
               </div>
             </div>

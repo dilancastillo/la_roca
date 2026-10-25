@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import type { VisualPlacement } from "@repo/shared/schemas/visual-catalog";
 import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
@@ -19,6 +20,10 @@ import {
   matchesVisualAssetAttributeId,
 } from "@repo/shared/visual-assets";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
+import {
+  resolveSleeveProfileId,
+  type SleeveProfileId,
+} from "@repo/shared/sleeve-profiles";
 import {
   getLowerPocketAuxiliaryAddon,
   getLowerPocketLayout,
@@ -69,6 +74,9 @@ export type PreviewScene = {
    * dinámico que se dibuja en pantalla.
    */
   sleeveAnchorSrc?: string | undefined;
+  /** Perfil estable de mangas, independiente del SVG dinámico del editor. */
+  sleeveProfileId?: SleeveProfileId | undefined;
+  sleeveCalibration?: VisualPlacement["sleeveCalibration"] | undefined;
   suppressGarmentBaseOutline?: boolean | undefined;
   garmentDetailImageSrc?: string | undefined;
   garmentDetailImageSrcs?: string[] | undefined;
@@ -2353,6 +2361,9 @@ function deriveSingleConfiguratorUi(
   const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
     (definition) => definition.replacesBaseSilhouette,
   );
+  const dynamicNeckDefinition = dynamicVisualDefinitions.find(
+    (definition) => definition.slot === "neck",
+  );
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
@@ -2420,6 +2431,10 @@ function deriveSingleConfiguratorUi(
     ? getImageSource(session.graphicManifestKey, garmentAttribute!, selectedGarment) ??
       getDefaultImageSource(session.graphicManifestKey)
     : getDefaultImageSource(session.graphicManifestKey);
+  const sleeveProfileId = resolveSleeveProfileId(
+    selectedNeckAssetSrc,
+    garmentImageSrc,
+  );
   const selectedGarmentDetailImageSrc = selectedGarment
     ? getGarmentDetailImageSourceForValue(
         session.graphicManifestKey,
@@ -2518,6 +2533,10 @@ function deriveSingleConfiguratorUi(
       garmentImageSrc,
       ...((dynamicBaseSilhouette || isStableFemaleSleeveAnchor) && selectedNeckAssetSrc
         ? { sleeveAnchorSrc: selectedNeckAssetSrc }
+        : {}),
+      ...(sleeveProfileId ? { sleeveProfileId } : {}),
+      ...(dynamicNeckDefinition?.placement.sleeveCalibration
+        ? { sleeveCalibration: dynamicNeckDefinition.placement.sleeveCalibration }
         : {}),
       ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),

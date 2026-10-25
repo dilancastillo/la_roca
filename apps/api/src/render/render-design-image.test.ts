@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 import {
+  applySleeveCalibration,
   alignSpecialSleeveTrimsToVisibleEdge,
   getLogoMarkerPositions,
   getOriginalSleeveTrimShapes,
@@ -19,6 +20,40 @@ const baseScene: AutomationRenderScene = {
 };
 
 describe("anclaje dinámico de vivos de manga", () => {
+  it("calibra cada manga de forma independiente sin escalar el cuello", () => {
+    const shapes = getOriginalSleeveTrimShapes(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
+    const calibrated = applySleeveCalibration(shapes, {
+      left: { x: -12, y: 5 },
+      right: { x: 9, y: -4 },
+    });
+
+    expect(calibrated[0]?.points[0]).toEqual([
+      (shapes[0]?.points[0]?.[0] ?? 0) - 12,
+      (shapes[0]?.points[0]?.[1] ?? 0) + 5,
+    ]);
+    expect(calibrated[1]?.points[0]).toEqual([
+      (shapes[1]?.points[0]?.[0] ?? 0) + 9,
+      (shapes[1]?.points[0]?.[1] ?? 0) - 4,
+    ]);
+  });
+
+  it("mantiene el perfil de manga cuando el cuello editado es un data URI", () => {
+    const base =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg";
+    const presillas =
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg";
+
+    expect(
+      getOriginalSleeveTrimShapes(
+        base,
+        "data:image/svg+xml;base64,edited-neck",
+        "asset:blouse-model-15-presillas.svg",
+      ),
+    ).toEqual(getOriginalSleeveTrimShapes(base, presillas));
+  });
+
   it.each([
     ["El Hato", "blouse-model-39-el-hato.svg"],
     ["Cuello Alto", "blouse-model-08.svg"],

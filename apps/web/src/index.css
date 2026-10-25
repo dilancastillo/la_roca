@@ -1606,6 +1606,64 @@ main {
   gap: 8px;
 }
 
+.catalog-sleeve-calibration {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 12px;
+  border: 1px solid #b8d7e5;
+  border-radius: 8px;
+  background: #f4fbfe;
+}
+
+.catalog-sleeve-calibration p {
+  margin: 0;
+  color: #405866;
+  font-size: 0.84rem;
+}
+
+.catalog-sleeve-calibration__side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.catalog-sleeve-calibration__side strong {
+  grid-column: 1 / -1;
+}
+
+.catalog-sleeve-calibration input[type="range"] {
+  width: 100%;
+  cursor: ew-resize;
+}
+
+.visual-runtime-preview__sleeve-calibration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.visual-runtime-preview__sleeve-handle {
+  position: absolute;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #006d83;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #004b5c;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgb(0 34 51 / 35%);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.visual-runtime-preview__sleeve-handle:active {
+  cursor: grabbing;
+}
+
 .visual-editor__footer {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

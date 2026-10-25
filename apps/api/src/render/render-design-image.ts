@@ -7,6 +7,10 @@ import {
   type PantsKneeTrimSection,
 } from "@repo/shared/pants-knee-patch-rules";
 import { CONFIGURATOR_VALUE_IDS } from "@repo/shared/configurator-id-rules";
+import {
+  getSleeveProfileFileName,
+  type SleeveProfileId,
+} from "@repo/shared/sleeve-profiles";
 import type { AutomationRenderScene } from "./derive-render-scene.js";
 
 const CANVAS_WIDTH = 900;
@@ -695,6 +699,28 @@ type OriginalSleeveTrimShape = {
   upper: readonly [OriginalSleevePoint, OriginalSleevePoint];
   lower: readonly [OriginalSleevePoint, OriginalSleevePoint];
 };
+
+type SleeveCalibration = NonNullable<AutomationRenderScene["sleeveCalibration"]>;
+
+export function applySleeveCalibration(
+  shapes: readonly OriginalSleeveTrimShape[],
+  calibration?: SleeveCalibration,
+) {
+  if (!calibration) return shapes;
+
+  return shapes.map((shape, index) => {
+    const offset = index === 0 ? calibration.left : calibration.right;
+    const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
+      point[0] + offset.x,
+      point[1] + offset.y,
+    ];
+    return {
+      points: shape.points.map(move),
+      upper: [move(shape.upper[0]), move(shape.upper[1])] as const,
+      lower: [move(shape.lower[0]), move(shape.lower[1])] as const,
+    };
+  });
+}
 
 function offsetOriginalSleevePoint(
   point: OriginalSleevePoint,
@@ -4881,12 +4907,14 @@ function hasOriginalSleevesDetailAsset(assetPaths: readonly string[]) {
 export function getOriginalSleeveTrimShapes(
   placementAssetPath: string,
   anchorAssetPath = placementAssetPath,
+  sleeveProfileId?: SleeveProfileId,
 ) {
   if (usesMaleBlouseCoordinateSystem(anchorAssetPath)) {
     return getMaleOriginalSleeveTrimShapes(anchorAssetPath);
   }
 
-  const placementFileName = getAssetFileName(anchorAssetPath);
+  const placementFileName =
+    getSleeveProfileFileName(sleeveProfileId) ?? getAssetFileName(anchorAssetPath);
 
   if (
     getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
@@ -4936,12 +4964,14 @@ export function getOriginalSleeveTrimShapes(
 function getOriginalSleeveFillShapes(
   placementAssetPath: string,
   anchorAssetPath = placementAssetPath,
+  sleeveProfileId?: SleeveProfileId,
 ) {
   if (usesMaleBlouseCoordinateSystem(anchorAssetPath)) {
     return getMaleOriginalSleeveTrimShapes(anchorAssetPath);
   }
 
-  const placementFileName = getAssetFileName(anchorAssetPath);
+  const placementFileName =
+    getSleeveProfileFileName(sleeveProfileId) ?? getAssetFileName(anchorAssetPath);
 
   if (
     getAssetFileName(placementAssetPath) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
@@ -4974,7 +5004,11 @@ function getOriginalSleeveFillShapes(
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  return getOriginalSleeveTrimShapes(placementAssetPath, anchorAssetPath);
+  return getOriginalSleeveTrimShapes(
+    placementAssetPath,
+    anchorAssetPath,
+    sleeveProfileId,
+  );
 }
 
 function resolveGarmentDetailOverlayAssetPath(
@@ -5002,6 +5036,8 @@ async function getOriginalSleevesTrimSvg(
   trimColors: OriginalSleevesTrimColors,
   anchorAssetPath = placementAssetPath,
   forceDynamicAlignment = false,
+  sleeveProfileId?: SleeveProfileId,
+  sleeveCalibration?: SleeveCalibration,
 ) {
   if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
     return "";
@@ -5012,18 +5048,26 @@ async function getOriginalSleevesTrimSvg(
     processed,
     placementAssetPath,
   );
-  const trimShapes = alignSpecialSleeveTrimsToVisibleEdge(
+  const trimShapes = applySleeveCalibration(alignSpecialSleeveTrimsToVisibleEdge(
     processed,
     anchorAssetPath,
-    getOriginalSleeveTrimShapes(placementAssetPath, anchorAssetPath),
+    getOriginalSleeveTrimShapes(
+      placementAssetPath,
+      anchorAssetPath,
+      sleeveProfileId,
+    ),
     forceDynamicAlignment,
-  );
-  const fillShapes = alignSpecialSleeveTrimsToVisibleEdge(
+  ), sleeveCalibration);
+  const fillShapes = applySleeveCalibration(alignSpecialSleeveTrimsToVisibleEdge(
     processed,
     anchorAssetPath,
-    getOriginalSleeveFillShapes(placementAssetPath, anchorAssetPath),
+    getOriginalSleeveFillShapes(
+      placementAssetPath,
+      anchorAssetPath,
+      sleeveProfileId,
+    ),
     forceDynamicAlignment,
-  );
+  ), sleeveCalibration);
   const layers: string[] = [];
 
   const fillTrimColor = trimColors.fill;
@@ -6172,6 +6216,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
           },
           sleeveAnchorAssetPath,
           Boolean(scene.alignDynamicSleeveTrims),
+          scene.sleeveProfileId,
+          scene.sleeveCalibration,
         ),
       );
     }

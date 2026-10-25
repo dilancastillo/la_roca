@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import type { VisualPlacement } from "@repo/shared/schemas/visual-catalog";
 import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
@@ -18,6 +19,10 @@ import {
   getMenBlouseNeckAssetPath,
   matchesVisualAssetAttributeId,
 } from "@repo/shared/visual-assets";
+import {
+  resolveSleeveProfileId,
+  type SleeveProfileId,
+} from "@repo/shared/sleeve-profiles";
 import { materializeSelectedVisualDefinitions } from "@repo/shared/visual-catalog-runtime";
 import {
   getLowerPocketAuxiliaryAddon,
@@ -50,6 +55,9 @@ export type AutomationRenderScene = {
    * cuando la prenda se dibuja sobre una silueta base estable.
    */
   sleeveAnchorAssetPath?: string;
+  /** Perfil estable de manga, independiente del SVG dinámico del editor. */
+  sleeveProfileId?: SleeveProfileId;
+  sleeveCalibration?: VisualPlacement["sleeveCalibration"];
   suppressGarmentBaseOutline?: boolean;
   garmentDetailAssetPath?: string;
   garmentDetailAssetPaths?: string[];
@@ -1176,6 +1184,9 @@ function deriveSingleAutomationRenderScene(
   const dynamicBaseSilhouette = dynamicVisualDefinitions.find(
     (definition) => definition.replacesBaseSilhouette,
   );
+  const dynamicNeckDefinition = dynamicVisualDefinitions.find(
+    (definition) => definition.slot === "neck",
+  );
   const dynamicOverlayDefinitions = dynamicVisualDefinitions.filter(
     (definition) => !definition.replacesBaseSilhouette,
   );
@@ -1245,6 +1256,14 @@ function deriveSingleAutomationRenderScene(
     ? getAssetPath(session, garmentAttribute!, selectedGarment) ??
       getServerDefaultAssetPath(session.graphicManifestKey)
     : getServerDefaultAssetPath(session.graphicManifestKey);
+  const sleeveAnchorAssetPath =
+    (dynamicBaseSilhouette || isStableFemaleSleeveAnchor) && selectedNeckAssetPath
+      ? selectedNeckAssetPath
+      : undefined;
+  const sleeveProfileId = resolveSleeveProfileId(
+    sleeveAnchorAssetPath,
+    garmentAssetPath,
+  );
   const selectedGarmentDetailAssetPath = selectedGarment
     ? getServerGarmentDetailAssetPathForValue(
         session.graphicManifestKey,
@@ -1328,8 +1347,12 @@ function deriveSingleAutomationRenderScene(
     productName: session.productName,
     baseColorHex,
     ...(garmentAssetPath ? { garmentAssetPath } : {}),
-    ...((dynamicBaseSilhouette || isStableFemaleSleeveAnchor) && selectedNeckAssetPath
-      ? { sleeveAnchorAssetPath: selectedNeckAssetPath }
+    ...(sleeveAnchorAssetPath
+      ? { sleeveAnchorAssetPath }
+      : {}),
+    ...(sleeveProfileId ? { sleeveProfileId } : {}),
+    ...(dynamicNeckDefinition?.placement.sleeveCalibration
+      ? { sleeveCalibration: dynamicNeckDefinition.placement.sleeveCalibration }
       : {}),
     ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),

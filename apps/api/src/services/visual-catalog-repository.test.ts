@@ -51,6 +51,10 @@ const mutation: VisualDefinitionMutation = {
     scaleX: 1,
     scaleY: 1,
     rotation: 0,
+    sleeveCalibration: {
+      left: { x: -12, y: 5 },
+      right: { x: 9, y: -4 },
+    },
   },
   referenceAssetSrc:
     "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
@@ -216,6 +220,13 @@ describe("visual catalog repository", () => {
         await loadActiveVisualDefinitions(env, 7, [firstApproved.id])
       ).map((definition) => definition.id),
     ).toEqual([firstApproved.id]);
+    expect(
+      (await loadActiveVisualDefinitions(env, 7, [firstApproved.id]))[0]
+        ?.placement?.sleeveCalibration,
+    ).toEqual({
+      left: { x: -12, y: 5 },
+      right: { x: 9, y: -4 },
+    });
   });
 
   it("mantiene activas las definiciones del mismo valor cuando cambia la capa o la regla", async () => {

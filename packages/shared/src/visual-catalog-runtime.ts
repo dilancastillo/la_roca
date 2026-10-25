@@ -2,6 +2,7 @@ import type { ConfiguratorSession } from "./schemas/configurator.js";
 import type {
   ActiveVisualDefinition,
   VisualActivationCondition,
+  VisualPlacement,
   VisualSlot,
 } from "./schemas/visual-catalog.js";
 
@@ -16,6 +17,17 @@ export type MaterializedVisualDefinition = {
   slot: VisualSlot;
   svgDataUri: string;
   replacesBaseSilhouette: boolean;
+  placement: VisualPlacement;
+};
+
+const DEFAULT_VISUAL_PLACEMENT: VisualPlacement = {
+  targetWidth: 1080,
+  targetHeight: 1350,
+  x: 0,
+  y: 0,
+  scaleX: 1,
+  scaleY: 1,
+  rotation: 0,
 };
 
 
@@ -857,6 +869,7 @@ export function materializeSelectedVisualDefinitions(
     definitionId: definition.id,
     slot: definition.slot,
     replacesBaseSilhouette: replacesBaseSilhouette(definition),
+    placement: definition.placement ?? DEFAULT_VISUAL_PLACEMENT,
     svgDataUri: materializeVisualDefinitionSvg(
       definition,
       baseColorHex,

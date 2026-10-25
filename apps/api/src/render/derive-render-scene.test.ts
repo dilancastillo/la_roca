@@ -3193,6 +3193,14 @@ describe("deriveAutomationRenderScene", () => {
           activationConditions: [],
           selectedElementIds: [],
           elementPaints: {},
+          placement: {
+            targetWidth: 1080, targetHeight: 1350, x: 0, y: 0,
+            scaleX: 1, scaleY: 1, rotation: 0,
+            sleeveCalibration: {
+              left: { x: -12, y: 5 },
+              right: { x: 9, y: -4 },
+            },
+          },
           runtimeSvg:
             '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
         },
@@ -3208,6 +3216,11 @@ describe("deriveAutomationRenderScene", () => {
     expect(renderScene.sleeveAnchorAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-04.svg",
     );
+    expect(renderScene.sleeveProfileId).toBe("asset:blouse-model-04.svg");
+    expect(renderScene.sleeveCalibration).toEqual({
+      left: { x: -12, y: 5 },
+      right: { x: 9, y: -4 },
+    });
     expect(renderScene.alignDynamicSleeveTrims).toBeUndefined();
   });
 
@@ -3309,6 +3322,9 @@ describe("deriveAutomationRenderScene", () => {
     expect(renderScene.alignDynamicSleeveTrims).toBe(true);
     expect(renderScene.sleeveAnchorAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-28-modelo-29.svg",
+    );
+    expect(renderScene.sleeveProfileId).toBe(
+      "asset:blouse-model-28-modelo-29.svg",
     );
   });
 

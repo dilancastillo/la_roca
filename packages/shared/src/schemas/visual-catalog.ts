@@ -91,6 +91,17 @@ export const visualPlacementSchema = z.object({
     .refine((value) => value !== 0, "La escala vertical no puede ser cero.")
     .default(1),
   rotation: z.number().finite().default(0),
+  /**
+   * Ajuste fino de los vivos de manga de un cuello. Se guarda con la versión
+   * del componente, nunca con una cotización, para que laboratorio y
+   * publicación compongan exactamente el mismo modelo histórico.
+   */
+  sleeveCalibration: z
+    .object({
+      left: z.object({ x: z.number().finite().default(0), y: z.number().finite().default(0) }).default({ x: 0, y: 0 }),
+      right: z.object({ x: z.number().finite().default(0), y: z.number().finite().default(0) }).default({ x: 0, y: 0 }),
+    })
+    .optional(),
 });
 export type VisualPlacement = z.infer<typeof visualPlacementSchema>;
 
@@ -344,6 +355,10 @@ export const activeVisualDefinitionSchema = z.object({
   elementPaints: z
     .record(z.string(), visualElementPaintSchema)
     .default({}),
+  // Las definiciones activas anteriores a la calibración no traen placement.
+  // Se conserva opcional para poder renderizarlas sin migración; el runtime
+  // aplica la colocación neutra en ese caso.
+  placement: visualPlacementSchema.optional(),
   runtimeSvg: z.string().min(1),
 });
 export type ActiveVisualDefinition = z.infer<

@@ -1,5 +1,9 @@
 import type { PreviewScene } from "../configurator/lib/derive-configurator-ui";
 import {
+  getSleeveProfileFileName,
+  type SleeveProfileId,
+} from "@repo/shared/sleeve-profiles";
+import {
   getPantsKneeTrimSectionBySourceValueId,
   isPantsKneePatchTypeAllowedForModel,
   type PantsKneeTrimSection,
@@ -317,6 +321,8 @@ export function getSleeveAnchorSrc(
     | "useMaleBlouseSilhouette"
     | "useStableFemaleBlouseSilhouette"
     | "sleeveAnchorSrc"
+    | "sleeveProfileId"
+    | "sleeveCalibration"
   >,
   sleevePlacementSrc: string,
 ) {
@@ -717,6 +723,28 @@ type OriginalSleeveTrimShape = {
   upper: readonly [OriginalSleevePoint, OriginalSleevePoint];
   lower: readonly [OriginalSleevePoint, OriginalSleevePoint];
 };
+
+type SleeveCalibration = NonNullable<PreviewScene["sleeveCalibration"]>;
+
+function applySleeveCalibration(
+  shapes: readonly OriginalSleeveTrimShape[],
+  calibration?: SleeveCalibration,
+) {
+  if (!calibration) return shapes;
+
+  return shapes.map((shape, index) => {
+    const offset = index === 0 ? calibration.left : calibration.right;
+    const move = (point: OriginalSleevePoint): OriginalSleevePoint => [
+      point[0] + offset.x,
+      point[1] + offset.y,
+    ];
+    return {
+      points: shape.points.map(move),
+      upper: [move(shape.upper[0]), move(shape.upper[1])] as const,
+      lower: [move(shape.lower[0]), move(shape.lower[1])] as const,
+    };
+  });
+}
 
 function offsetOriginalSleevePoint(
   point: OriginalSleevePoint,
@@ -4100,10 +4128,13 @@ async function alignSpecialSleeveTrimsToVisibleEdge(
   anchorSrc: string,
   shapes: readonly OriginalSleeveTrimShape[],
   forceDynamicAlignment = false,
+  sleeveProfileId?: SleeveProfileId,
 ) {
+  const profileFileName =
+    getSleeveProfileFileName(sleeveProfileId) ?? getFileNameFromSource(anchorSrc);
   if (
     !forceDynamicAlignment &&
-    !DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(getFileNameFromSource(anchorSrc))
+    !DYNAMIC_SLEEVE_EDGE_ANCHOR_FILE_NAMES.has(profileFileName)
   ) {
     return shapes;
   }
@@ -4301,12 +4332,14 @@ function isPespunteDetailOverlay(overlaySrc: string) {
 export function getOriginalSleeveTrimShapes(
   placementSrc: string,
   anchorSrc = placementSrc,
+  sleeveProfileId?: SleeveProfileId,
 ) {
   if (usesMaleBlouseCoordinateSystem(anchorSrc)) {
     return getMaleOriginalSleeveTrimShapes(anchorSrc);
   }
 
-  const placementFileName = getFileNameFromSource(anchorSrc);
+  const placementFileName =
+    getSleeveProfileFileName(sleeveProfileId) ?? getFileNameFromSource(anchorSrc);
 
   if (
     getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
@@ -4356,12 +4389,14 @@ export function getOriginalSleeveTrimShapes(
 function getOriginalSleeveFillShapes(
   placementSrc: string,
   anchorSrc = placementSrc,
+  sleeveProfileId?: SleeveProfileId,
 ) {
   if (usesMaleBlouseCoordinateSystem(anchorSrc)) {
     return getMaleOriginalSleeveTrimShapes(anchorSrc);
   }
 
-  const placementFileName = getFileNameFromSource(anchorSrc);
+  const placementFileName =
+    getSleeveProfileFileName(sleeveProfileId) ?? getFileNameFromSource(anchorSrc);
 
   if (
     getFileNameFromSource(placementSrc) === CLOSED_NO_COLLAR_BASE_FILE_NAME &&
@@ -4394,7 +4429,7 @@ function getOriginalSleeveFillShapes(
     return PUNTADAS_ORIGINAL_SLEEVE_TRIM_SHAPES;
   }
 
-  return getOriginalSleeveTrimShapes(placementSrc, anchorSrc);
+  return getOriginalSleeveTrimShapes(placementSrc, anchorSrc, sleeveProfileId);
 }
 
 function resolveGarmentDetailOverlaySrc(overlaySrc: string, placementSrc: string) {
@@ -4418,25 +4453,29 @@ async function drawOriginalSleevesTrim(
   trimColors: OriginalSleevesTrimColors,
   anchorSrc = placementSrc,
   forceDynamicAlignment = false,
+  sleeveProfileId?: SleeveProfileId,
+  sleeveCalibration?: SleeveCalibration,
 ) {
   if (!trimColors.upper && !trimColors.lower && !trimColors.fill) {
     return;
   }
 
   const transform = await getAssetToCanvasTransform(placementSrc);
-  const trimShapes = await alignSpecialSleeveTrimsToVisibleEdge(
+  const trimShapes = applySleeveCalibration(await alignSpecialSleeveTrimsToVisibleEdge(
     placementSrc,
     anchorSrc,
-    getOriginalSleeveTrimShapes(placementSrc, anchorSrc),
+    getOriginalSleeveTrimShapes(placementSrc, anchorSrc, sleeveProfileId),
     forceDynamicAlignment,
-  );
+    sleeveProfileId,
+  ), sleeveCalibration);
   const fillShapes = trimColors.fill
-    ? await alignSpecialSleeveTrimsToVisibleEdge(
+    ? applySleeveCalibration(await alignSpecialSleeveTrimsToVisibleEdge(
         placementSrc,
         anchorSrc,
-        getOriginalSleeveFillShapes(placementSrc, anchorSrc),
+        getOriginalSleeveFillShapes(placementSrc, anchorSrc, sleeveProfileId),
         forceDynamicAlignment,
-      )
+        sleeveProfileId,
+      ), sleeveCalibration)
     : trimShapes;
   context.save();
 
@@ -5929,7 +5968,7 @@ async function composeSingleDesign(
         upper: sleeveUpperTrimColor,
         lower: sleeveLowerTrimColor,
         fill: sleeveFillTrimColor,
-      }, sleeveAnchorSrc, Boolean(scene.alignDynamicSleeveTrims));
+      }, sleeveAnchorSrc, Boolean(scene.alignDynamicSleeveTrims), scene.sleeveProfileId, scene.sleeveCalibration);
     }
 
     if (scene.logoMarker && isBlouseScene(scene, baseAssetSrc)) {

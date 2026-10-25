@@ -822,6 +822,7 @@ export async function loadActiveVisualDefinitions(
         activationConditions: definition.activationConditions,
         selectedElementIds: definition.selectedElementIds,
         elementPaints: definition.elementPaints,
+        placement: definition.placement,
         runtimeSvg: await store.getAsset(definition.runtimeAssetKey),
       }),
     ),
