@@ -167,6 +167,28 @@ function isUnselectedOptionName(name: string) {
   return normalizeText(name) === "sin seleccion";
 }
 
+function requiresConcreteSelection(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+
+  return name.includes("color") || name.includes("talla");
+}
+
+function hasNoneSelection(
+  attribute: ConfiguratorSession["attributes"][number],
+  selectedValueIds: number[],
+) {
+  if (!requiresConcreteSelection(attribute)) {
+    return false;
+  }
+
+  const selected = new Set(selectedValueIds);
+  return attribute.values.some(
+    (value) => selected.has(value.id) && normalizeText(value.name) === "ninguno",
+  );
+}
+
 function isBootTypeAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
@@ -299,7 +321,11 @@ function validateSelections(
       errors.push(
         `Falta seleccionar una opcion para "${attribute.name}". No se guardo para evitar una variante incompleta.`,
       );
-
+    }
+    if (hasNoneSelection(attribute, selected)) {
+      errors.push(
+        `Falta seleccionar una opcion para "${attribute.name}". No se guardo para evitar una variante incompleta.`,
+      );
     }
     if (
       !isOptionalUnselectedAttribute(attribute, session, selectedValueIds) &&

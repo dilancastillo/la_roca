@@ -48,6 +48,43 @@ describe("validación antes de guardar", () => {
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [2] }),
     ).toEqual([]);
   });
+
+  it("bloquea Ninguno en color y tallas, pero conserva Sin selección como variante válida", () => {
+    const colorGroup = {
+      attributeId: 71,
+      label: "Color",
+      controlType: "chips" as const,
+      selectionMode: "single" as const,
+      options: [
+        { id: 1, name: "Ninguno" },
+        { id: 2, name: "Azul" },
+      ],
+    };
+    const pantsSizeGroup = {
+      attributeId: 72,
+      label: "Talla pantalón",
+      controlType: "chips" as const,
+      selectionMode: "single" as const,
+      options: [
+        { id: 3, name: "Ninguno" },
+        { id: 4, name: "Sin selección" },
+        { id: 5, name: "6" },
+      ],
+    };
+
+    expect(
+      getMissingRequiredSelectionGroups(
+        [colorGroup, pantsSizeGroup],
+        { "71": [1], "72": [3] },
+      ),
+    ).toEqual([colorGroup, pantsSizeGroup]);
+    expect(
+      getMissingRequiredSelectionGroups(
+        [colorGroup, pantsSizeGroup],
+        { "71": [2], "72": [4] },
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("expansión condicional de campos de texto", () => {
@@ -88,6 +125,31 @@ describe("expansión condicional de campos de texto", () => {
         {},
       ),
     ).toEqual(new Set());
+  });
+
+  it("abre tallas y pespunte únicamente cuando tienen texto", () => {
+    const sizeGroup = {
+      attributeId: 152,
+      label: "Talla de blusa",
+      controlType: "chips" as const,
+      selectionMode: "single" as const,
+      options: [{ id: 13, name: "Personalizada", allowsCustomValue: true }],
+    };
+    const stitchingGroup = {
+      attributeId: 153,
+      label: "Pespunte",
+      controlType: "chips" as const,
+      selectionMode: "single" as const,
+      options: [{ id: 14, name: "Personalizado", allowsCustomValue: true }],
+    };
+
+    expect(
+      getTextGroupsWithContent(
+        [sizeGroup, stitchingGroup],
+        { "152": [13], "153": [14] },
+        { "13": "M", "14": "Doble hilo" },
+      ),
+    ).toEqual(new Set([152, 153]));
   });
 
   it("se contrae al borrar el último contenido", () => {

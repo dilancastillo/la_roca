@@ -170,6 +170,48 @@ describe("saveConfiguratorDesign", () => {
     await expect(saveConfiguratorDesign(env, { saleOrderLineId: 290, filename: "sale-line-290-design.png", imageBase64: "png-base64", selectedValueIds: { ...editableSession.selectedValueIds, "92": [9201] } })).rejects.toThrow("Falta seleccionar una opcion para \"Modelo bolsillo inferior\"");
     expect(mocks.odooWrite).not.toHaveBeenCalled();
   });
+
+  it("rechaza Ninguno en color y talla al guardar", async () => {
+    const sessionWithPendingColorAndSize: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        {
+          id: 90,
+          name: "Color",
+          displayType: "color",
+          selectionMode: "single",
+          variantMode: "variant",
+          values: [
+            { id: 9001, name: "Ninguno", attributeId: 90, attributeName: "Color" },
+            { id: 9002, name: "Azul", attributeId: 90, attributeName: "Color" },
+          ],
+        },
+        {
+          id: 92,
+          name: "Talla pantalón",
+          displayType: "option",
+          selectionMode: "single",
+          variantMode: "variant",
+          values: [
+            { id: 9201, name: "Ninguno", attributeId: 92, attributeName: "Talla pantalón" },
+            { id: 9202, name: "Sin selección", attributeId: 92, attributeName: "Talla pantalón" },
+          ],
+        },
+      ],
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithPendingColorAndSize);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: { "90": [9001], "92": [9201] },
+      }),
+    ).rejects.toThrow('Falta seleccionar una opcion para "Color"');
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+  });
+
   it("reemplaza product_id cuando existe una variante exacta", async () => {
     mocks.odooSearchRead.mockResolvedValue([
       {

@@ -171,6 +171,28 @@ function isLowerPocketModelUnselectedGroup(
   );
 }
 
+function requiresConcreteSelection(group: UiAttributeGroup) {
+  const label = normalizeText(group.label);
+
+  return label.includes("color") || label.includes("talla");
+}
+
+function hasNoneSelection(
+  group: UiAttributeGroup,
+  selectedIds: number[],
+) {
+  if (!requiresConcreteSelection(group)) {
+    return false;
+  }
+
+  return selectedIds.some((selectedId) =>
+    group.options.some(
+      (option) =>
+        option.id === selectedId && normalizeText(option.name) === "ninguno",
+    ),
+  );
+}
+
 function isGroupComplete(
   group: UiAttributeGroup,
   selectedValueIds: Record<string, number[]>,
@@ -179,7 +201,9 @@ function isGroupComplete(
 
   return (
     isOptionalMultipleSelectionGroup(group) ||
-    (selectedIds.length > 0 && !isLowerPocketModelUnselectedGroup(group, selectedIds))
+    (selectedIds.length > 0 &&
+      !isLowerPocketModelUnselectedGroup(group, selectedIds) &&
+      !hasNoneSelection(group, selectedIds))
   );
 }
 
@@ -198,7 +222,12 @@ export function getTextGroupsWithContent(
   return new Set(
     groups
       .filter((group) => {
-        if (!normalizeText(group.label).includes("texto")) {
+        const label = normalizeText(group.label);
+        if (
+          !label.includes("texto") &&
+          !label.includes("talla") &&
+          !label.includes("pespunte")
+        ) {
           return false;
         }
 
