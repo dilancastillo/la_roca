@@ -45,7 +45,7 @@ function isBootMeasurementAttributeName(attributeName: string) {
   return normalize(attributeName).includes("bota");
 }
 
-function getMeasurementRange(attributeName: string) {
+export function getMeasurementRange(attributeName: string) {
   if (
     isNumericLengthAttributeName(attributeName) &&
     isPantsMeasurementAttributeName(attributeName)

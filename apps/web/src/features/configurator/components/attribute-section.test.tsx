@@ -294,7 +294,7 @@ describe("AttributeSection", () => {
     expect(screen.getByText(/este texto es obligatorio para guardar/i)).toBeTruthy();
   });
 
-  it("diferencia Largo como medida numérica y explica el rango", () => {
+  it("permite una referencia de texto en Largo", () => {
     const baseProps = {
       ...createProps(),
       group: {
@@ -311,11 +311,10 @@ describe("AttributeSection", () => {
 
     const input = screen.getByLabelText(/valor personalizado para largo/i);
     expect(input.getAttribute("inputmode")).toBe("decimal");
-    expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(screen.getByText(/largo solo admite números/i)).toBeTruthy();
+    expect(input.getAttribute("aria-invalid")).toBe("false");
   });
 
-  it("limita Ancho a 35 cm", () => {
+  it("limita Ancho de bota entre 12 y 25 cm", () => {
     const baseProps = {
       ...createProps(),
       group: {
@@ -332,8 +331,8 @@ describe("AttributeSection", () => {
 
     const input = screen.getByLabelText(/valor personalizado para ancho/i);
     expect(input.getAttribute("inputmode")).toBe("decimal");
-    expect(input.getAttribute("placeholder")).toBe("Número entre 1 y 35 cm");
+    expect(input.getAttribute("placeholder")).toBe("Número entre 12 y 25 cm");
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(screen.getByText(/ancho debe estar entre 1 y 35/i)).toBeTruthy();
+    expect(screen.getByText(/ancho de bota debe estar entre 12 y 25/i)).toBeTruthy();
   });
 });

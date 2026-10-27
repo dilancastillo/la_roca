@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getMeasurementValueError,
+  getMeasurementRange,
   isMeasurementAttributeName,
   isNumericLengthAttributeName,
 } from "@repo/shared/measurement-rules";
@@ -360,6 +361,7 @@ export function AttributeSection({
                 const hasMeasurementError = Boolean(measurementError);
                 const isMeasurement = isMeasurementAttributeName(group.label);
                 const isNumericLength = isNumericLengthAttributeName(group.label);
+                const measurementRange = isMeasurement ? getMeasurementRange(group.label) : undefined;
 
                 return (
                   <label
@@ -379,13 +381,7 @@ export function AttributeSection({
                       type={isNumericLength ? "text" : "text"}
                       inputMode={isMeasurement ? "decimal" : undefined}
                       value={currentValue}
-                      placeholder={
-                        isNumericLength
-                          ? "Número entre 1 y 90 cm"
-                          : isMeasurement
-                            ? "Número entre 1 y 35 cm"
-                            : "Escribe el texto exactamente como debe quedar"
-                      }
+                      placeholder={measurementRange ? `Número entre ${measurementRange.minimum} y ${measurementRange.maximum} cm` : "Escribe el texto exactamente como debe quedar"}
                       disabled={disabled}
                       maxLength={120}
                       aria-invalid={isInvalid || hasMeasurementError}
