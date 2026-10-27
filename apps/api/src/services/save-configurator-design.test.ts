@@ -164,6 +164,12 @@ describe("saveConfiguratorDesign", () => {
     });
   });
 
+  it("rechaza guardar si Modelo bolsillo inferior sigue en Sin selección", async () => {
+    const sessionWithPendingLowerPocket: ConfiguratorSession = { ...editableSession, attributes: [...editableSession.attributes, { id: 92, name: "Modelo bolsillo inferior", displayType: "option", selectionMode: "single", variantMode: "no_variant", values: [{ id: 9201, name: "Sin selección", attributeId: 92, attributeName: "Modelo bolsillo inferior" }, { id: 9202, name: "Ninguno", attributeId: 92, attributeName: "Modelo bolsillo inferior" }] }] };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithPendingLowerPocket);
+    await expect(saveConfiguratorDesign(env, { saleOrderLineId: 290, filename: "sale-line-290-design.png", imageBase64: "png-base64", selectedValueIds: { ...editableSession.selectedValueIds, "92": [9201] } })).rejects.toThrow("Falta seleccionar una opcion para \"Modelo bolsillo inferior\"");
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+  });
   it("reemplaza product_id cuando existe una variante exacta", async () => {
     mocks.odooSearchRead.mockResolvedValue([
       {
@@ -1003,7 +1009,7 @@ describe("saveConfiguratorDesign", () => {
     ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
   });
 
-  it("rechaza texto y valores fuera de rango en Largo", async () => {
+  it("permite texto, pero rechaza números fuera de rango en Largo", async () => {
     const lengthAttributeId = 851;
     const lengthValueId = 8511;
     const sessionWithLength: ConfiguratorSession = {
@@ -1042,7 +1048,7 @@ describe("saveConfiguratorDesign", () => {
         selectedValueIds: sessionWithLength.selectedValueIds,
         customValuesByValueId: { [String(lengthValueId)]: "4 de cadera" },
       }),
-    ).rejects.toThrow(/largo solo admite números/i);
+    ).resolves.toEqual(expect.objectContaining({ productId: 778 }));
 
     await expect(
       saveConfiguratorDesign(env, {
@@ -1054,10 +1060,10 @@ describe("saveConfiguratorDesign", () => {
       }),
     ).rejects.toThrow(/entre 1 y 90/i);
 
-    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.odooWrite).toHaveBeenCalled();
   });
 
-  it("rechaza ancho de pantalón o bota mayor a 35", async () => {
+  it("rechaza ancho de bota fuera de su rango específico", async () => {
     const widthAttributeId = 852;
     const widthValueId = 8521;
     const sessionWithWidth: ConfiguratorSession = {
@@ -1094,9 +1100,61 @@ describe("saveConfiguratorDesign", () => {
         filename: "sale-line-290-design.png",
         imageBase64: "png-base64",
         selectedValueIds: sessionWithWidth.selectedValueIds,
-        customValuesByValueId: { [String(widthValueId)]: "36" },
+        customValuesByValueId: { [String(widthValueId)]: "26" },
       }),
-    ).rejects.toThrow(/ancho debe estar entre 1 y 35/i);
+    ).rejects.toThrow(/ancho de bota debe estar entre 12 y 25/i);
+  });
+
+  it("aplica el rango propio al largo de pantalón sin alterar el largo de bota", async () => {
+    const pantsLengthAttributeId = 853;
+    const pantsLengthValueId = 8531;
+    const sessionWithPantsLength: ConfiguratorSession = {
+      ...editableSession,
+      attributes: [
+        ...editableSession.attributes,
+        {
+          id: pantsLengthAttributeId,
+          name: "Largo pantalón",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [
+            {
+              id: pantsLengthValueId,
+              name: "Largo pantalón",
+              attributeId: pantsLengthAttributeId,
+              attributeName: "Largo pantalón",
+              allowsCustomValue: true,
+            },
+          ],
+        },
+      ],
+      selectedValueIds: {
+        ...editableSession.selectedValueIds,
+        [String(pantsLengthAttributeId)]: [pantsLengthValueId],
+      },
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(sessionWithPantsLength);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithPantsLength.selectedValueIds,
+        customValuesByValueId: { [String(pantsLengthValueId)]: "69" },
+      }),
+    ).rejects.toThrow(/largo de pantalón debe estar entre 70 y 120/i);
+
+    await expect(
+      saveConfiguratorDesign(env, {
+        saleOrderLineId: 290,
+        filename: "sale-line-290-design.png",
+        imageBase64: "png-base64",
+        selectedValueIds: sessionWithPantsLength.selectedValueIds,
+        customValuesByValueId: { [String(pantsLengthValueId)]: "121" },
+      }),
+    ).rejects.toThrow(/largo de pantalón debe estar entre 70 y 120/i);
   });
 
   it("rechaza guardar si Odoo no puede crear una variante faltante", async () => {

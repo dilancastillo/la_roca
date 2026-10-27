@@ -149,6 +149,28 @@ function isOptionalMultipleSelectionGroup(group: UiAttributeGroup) {
   return label.includes("logo") || (label.includes("seccion") && label.includes("vivo"));
 }
 
+function isLowerPocketModelUnselectedGroup(
+  group: UiAttributeGroup,
+  selectedIds: number[],
+) {
+  const label = normalizeText(group.label);
+
+  if (
+    !label.includes("modelo") ||
+    !label.includes("bolsillo") ||
+    !label.includes("inferior")
+  ) {
+    return false;
+  }
+
+  return selectedIds.some((selectedId) =>
+    group.options.some(
+      (option) =>
+        option.id === selectedId && normalizeText(option.name) === "sin seleccion",
+    ),
+  );
+}
+
 function isGroupComplete(
   group: UiAttributeGroup,
   selectedValueIds: Record<string, number[]>,
@@ -157,7 +179,7 @@ function isGroupComplete(
 
   return (
     isOptionalMultipleSelectionGroup(group) ||
-    selectedIds.length > 0
+    (selectedIds.length > 0 && !isLowerPocketModelUnselectedGroup(group, selectedIds))
   );
 }
 

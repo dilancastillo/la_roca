@@ -156,6 +156,17 @@ function isLowerPocketZipperOptionsAttribute(
   return normalizeText(attribute.name) === "opciones de cremallera";
 }
 
+function isLowerPocketModelAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
+}
+
+function isUnselectedOptionName(name: string) {
+  return normalizeText(name) === "sin seleccion";
+}
+
 function isBootTypeAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
@@ -279,7 +290,17 @@ function validateSelections(
   for (const attribute of session.attributes) {
     const selected = selectedValueIds[String(attribute.id)] ?? [];
     const selectedSet = new Set(selected);
+    if (
+      isLowerPocketModelAttribute(attribute) &&
+      attribute.values.some(
+        (value) => selectedSet.has(value.id) && isUnselectedOptionName(value.name),
+      )
+    ) {
+      errors.push(
+        `Falta seleccionar una opcion para "${attribute.name}". No se guardo para evitar una variante incompleta.`,
+      );
 
+    }
     if (
       !isOptionalUnselectedAttribute(attribute, session, selectedValueIds) &&
       selected.length === 0

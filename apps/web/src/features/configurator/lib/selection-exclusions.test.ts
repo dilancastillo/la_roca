@@ -138,12 +138,13 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
         session.attributes[0]!,
         {
           ...session.attributes[1]!,
+          name: "Modelo bolsillo de pecho",
           values: [
             {
               id: 200,
               name: "Sin seleccion",
               attributeId: 20,
-              attributeName: "Modelo bolsillo inferior",
+              attributeName: "Modelo bolsillo de pecho",
             },
             ...session.attributes[1]!.values,
           ],
@@ -197,6 +198,12 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
+  it("reemplaza Ninguno por Sin selección en Modelo bolsillo inferior", () => {
+    const lowerPocketAttribute = { id: 32, name: "Modelo bolsillo inferior", displayType: "option" as const, selectionMode: "single" as const, variantMode: "no_variant" as const, values: [{ id: 320, name: "Sin selección", attributeId: 32, attributeName: "Modelo bolsillo inferior" }, { id: 321, name: "Ninguno", attributeId: 32, attributeName: "Modelo bolsillo inferior" }, { id: 322, name: "COSTURA", attributeId: 32, attributeName: "Modelo bolsillo inferior" }] };
+    const lowerPocketSession: ConfiguratorSession = { ...session, attributes: [lowerPocketAttribute, ...session.attributes] };
+    expect(applyFirstOptionDefaults(lowerPocketSession, {})).toMatchObject({ "32": [320] });
+    expect(applyFirstOptionDefaults(lowerPocketSession, { "32": [321] })).toMatchObject({ "32": [320] });
+  });
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
     expect(
       sanitizeSelectedValueIdsForExclusions(session, {
@@ -243,6 +250,30 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
 });
 
 describe("sanitizePantsKneePatchTypeSelections", () => {
+  it("elige Liso por defecto para un bolsillo de rodilla rectangular", () => {
+    const kneeSession = {
+      attributes: [
+        {
+          id: 169, name: "Modelo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          values: [
+            { id: 7600, sourceValueId: 760, name: "Rectangular", attributeId: 169, attributeName: "Modelo rodilla derecha" },
+          ],
+        },
+        {
+          id: 170, name: "Tipo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          values: [
+            { id: 7660, sourceValueId: 766, name: "Velcro", attributeId: 170, attributeName: "Tipo rodilla derecha" },
+            { id: 7650, sourceValueId: 765, name: "Liso", attributeId: 170, attributeName: "Tipo rodilla derecha" },
+          ],
+        },
+      ],
+      exclusions: [],
+    } as unknown as ConfiguratorSession;
+
+    expect(applyFirstOptionDefaults(kneeSession, { "169": [7600] }))
+      .toMatchObject({ "170": [7650] });
+  });
+
   it("conserva velcro para rectangular y lo limpia al cambiar a camuflado", () => {
     const kneeSession = {
       attributes: [

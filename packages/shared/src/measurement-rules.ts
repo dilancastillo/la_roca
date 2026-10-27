@@ -4,6 +4,10 @@
 export const MEASUREMENT_MIN = 1;
 export const LENGTH_MEASUREMENT_MAX = 90;
 export const WIDTH_MEASUREMENT_MAX = 35;
+export const PANTS_LENGTH_MEASUREMENT_MIN = 70;
+export const PANTS_LENGTH_MEASUREMENT_MAX = 120;
+export const BOOT_WIDTH_MEASUREMENT_MIN = 12;
+export const BOOT_WIDTH_MEASUREMENT_MAX = 25;
 
 function normalize(value: string) {
   return value
@@ -33,6 +37,45 @@ export function isNumericMeasurementAttributeName(attributeName: string) {
   );
 }
 
+function isPantsMeasurementAttributeName(attributeName: string) {
+  return normalize(attributeName).includes("pantalon");
+}
+
+function isBootMeasurementAttributeName(attributeName: string) {
+  return normalize(attributeName).includes("bota");
+}
+
+function getMeasurementRange(attributeName: string) {
+  if (
+    isNumericLengthAttributeName(attributeName) &&
+    isPantsMeasurementAttributeName(attributeName)
+  ) {
+    return {
+      label: "largo de pantalón",
+      minimum: PANTS_LENGTH_MEASUREMENT_MIN,
+      maximum: PANTS_LENGTH_MEASUREMENT_MAX,
+    };
+  }
+
+  if (
+    isNumericWidthAttributeName(attributeName) &&
+    isBootMeasurementAttributeName(attributeName)
+  ) {
+    return {
+      label: "ancho de bota",
+      minimum: BOOT_WIDTH_MEASUREMENT_MIN,
+      maximum: BOOT_WIDTH_MEASUREMENT_MAX,
+    };
+  }
+
+  const isLength = isNumericLengthAttributeName(attributeName);
+  return {
+    label: isLength ? "largo" : "ancho",
+    minimum: MEASUREMENT_MIN,
+    maximum: isLength ? LENGTH_MEASUREMENT_MAX : WIDTH_MEASUREMENT_MAX,
+  };
+}
+
 export function getMeasurementValueError(
   attributeName: string,
   value: string,
@@ -41,23 +84,21 @@ export function getMeasurementValueError(
     return undefined;
   }
 
+  // Las medidas numéricas se acotan para evitar valores físicamente
+  // imposibles. Un texto es una indicación comercial válida de Odoo (por
+  // ejemplo, una referencia de patrón) y no debe bloquear el guardado.
   if (!/^\d+(?:[.,]\d{1,2})?$/.test(value.trim())) {
-    return isNumericLengthAttributeName(attributeName)
-      ? "El largo solo admite números."
-      : "El ancho solo admite números.";
+    return undefined;
   }
 
   const numericValue = Number(value.replace(",", "."));
-  const maximum = isNumericLengthAttributeName(attributeName)
-    ? LENGTH_MEASUREMENT_MAX
-    : WIDTH_MEASUREMENT_MAX;
-  const label = isNumericLengthAttributeName(attributeName) ? "largo" : "ancho";
+  const { label, minimum, maximum } = getMeasurementRange(attributeName);
   if (
     !Number.isFinite(numericValue) ||
-    numericValue < MEASUREMENT_MIN ||
+    numericValue < minimum ||
     numericValue > maximum
   ) {
-    return `El ${label} debe estar entre ${MEASUREMENT_MIN} y ${maximum}.`;
+    return `El ${label} debe estar entre ${minimum} y ${maximum}.`;
   }
 
   return undefined;

@@ -1,4 +1,10 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import {
+  getPantsKneePatchModelBySourceValueId,
+  getPantsKneePatchTypeBySourceValueId,
+  isPantsKneePatchTypeAllowedForModel,
+  PANTS_KNEE_PATCH_ATTRIBUTE_IDS,
+} from "@repo/shared/pants-knee-patch-rules";
 import type { AppEnv, OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
 import { parseVisualDefinitionVersionIds } from "./configurator-state-metadata.js";
@@ -75,6 +81,60 @@ function hasSelectionConflict(
   );
 }
 
+function getKneePatchModelForTypeAttribute(
+  attributes: ConfiguratorSession["attributes"],
+  attributeId: number,
+  selectedValueIds: Record<string, number[]>,
+) {
+  const modelAttributeId = attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType
+    ? PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightModel
+    : attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType
+      ? PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftModel
+      : undefined;
+  const modelAttribute = attributes.find(
+    (attribute) => attribute.id === modelAttributeId,
+  );
+  const selectedModelIds = modelAttribute
+    ? selectedValueIds[String(modelAttribute.id)] ?? []
+    : [];
+
+  return getPantsKneePatchModelBySourceValueId(
+    modelAttribute?.values.find((value) => selectedModelIds.includes(value.id))
+      ?.sourceValueId,
+  );
+}
+
+function isKneePatchTypeAttribute(attributeId: number) {
+  return (
+    attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType ||
+    attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType
+  );
+}
+
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isLowerPocketModelAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
+}
+
+function isLowerPocketUnselectedOption(optionName: string) {
+  return normalizeText(optionName) === "sin seleccion";
+}
+
+function isExplicitNoneOption(optionName: string) {
+  const name = normalizeText(optionName);
+  return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
+}
+
 function applyFirstOptionDefaults(
   attributes: ConfiguratorSession["attributes"],
   selectedValueIds: Record<string, number[]>,
@@ -90,11 +150,58 @@ function applyFirstOptionDefaults(
   for (const attribute of attributes) {
     const key = String(attribute.id);
 
-    if (attribute.selectionMode === "multiple" || (next[key]?.length ?? 0) > 0) {
+    const selectedValues = attribute.values.filter((value) =>
+      (next[key] ?? []).includes(value.id),
+    );
+    const hasOnlyLowerPocketNoneSelection =
+      isLowerPocketModelAttribute(attribute) &&
+      selectedValues.length > 0 &&
+      selectedValues.every((value) => isExplicitNoneOption(value.name));
+
+    if (
+      attribute.selectionMode === "multiple" ||
+      ((next[key]?.length ?? 0) > 0 && !hasOnlyLowerPocketNoneSelection)
+    ) {
       continue;
     }
 
-    const firstCompatibleOption = attribute.values.find(
+    const kneePatchModel = getKneePatchModelForTypeAttribute(
+      attributes,
+      attribute.id,
+      next,
+    );
+    const compatibleValues = kneePatchModel
+      ? attribute.values.filter((value) =>
+          isPantsKneePatchTypeAllowedForModel(
+            kneePatchModel,
+            getPantsKneePatchTypeBySourceValueId(value.sourceValueId),
+          ),
+        )
+      : attribute.values;
+    const defaultValues = isKneePatchTypeAttribute(attribute.id)
+      ? [
+          ...compatibleValues.filter(
+            (value) =>
+              getPantsKneePatchTypeBySourceValueId(value.sourceValueId) ===
+              "plain",
+          ),
+          ...compatibleValues.filter(
+            (value) =>
+              getPantsKneePatchTypeBySourceValueId(value.sourceValueId) !==
+              "plain",
+          ),
+        ]
+      : isLowerPocketModelAttribute(attribute)
+        ? [
+            ...compatibleValues.filter((value) =>
+              isLowerPocketUnselectedOption(value.name),
+            ),
+            ...compatibleValues.filter(
+              (value) => !isLowerPocketUnselectedOption(value.name),
+            ),
+          ]
+        : compatibleValues;
+    const firstCompatibleOption = defaultValues.find(
       (value) => !hasSelectionConflict(value.id, next, exclusions),
     );
 

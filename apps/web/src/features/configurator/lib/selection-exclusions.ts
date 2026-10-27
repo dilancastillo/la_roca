@@ -83,6 +83,17 @@ function isNeckModelAttribute(attribute: ConfiguratorSession["attributes"][numbe
   return name.includes("modelo") && name.includes("cuello");
 }
 
+function isLowerPocketModelAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
+}
+
+function isUnselectedOption(optionName: string) {
+  return normalizeText(optionName) === "sin seleccion";
+}
+
 function isExplicitNoneOption(optionName: string) {
   const name = normalizeText(optionName);
   return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
@@ -122,6 +133,13 @@ function getKneePatchModelForTypeAttribute(
   return modelAttribute?.values
     .find((value) => selectedModelIds.includes(value.id))
     ?.sourceValueId;
+}
+
+function isKneePatchTypeAttribute(attributeId: number) {
+  return (
+    attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.rightType ||
+    attributeId === PANTS_KNEE_PATCH_ATTRIBUTE_IDS.leftType
+  );
 }
 
 /** Removes a knee-pocket finish that does not belong to its selected model. */
@@ -185,8 +203,16 @@ export function applyFirstOptionDefaults(
     const hasOnlyPlaceholderSelection =
       selectedValues.length > 0 &&
       selectedValues.every((value) => isPlaceholderOption(attribute, value.name));
+    const hasOnlyLowerPocketNoneSelection =
+      isLowerPocketModelAttribute(attribute) &&
+      selectedValues.length > 0 &&
+      selectedValues.every((value) => isExplicitNoneOption(value.name));
 
-    if (selectedValueIds.length > 0 && !hasOnlyPlaceholderSelection) {
+    if (
+      selectedValueIds.length > 0 &&
+      !hasOnlyPlaceholderSelection &&
+      !hasOnlyLowerPocketNoneSelection
+    ) {
       continue;
     }
 
@@ -197,7 +223,12 @@ export function applyFirstOptionDefaults(
     // "Ninguno" es una selección explícita y válida. En cambio, "Sin
     // selección" es el placeholder que Odoo puede devolver después de una
     // exclusión por género y nunca debe bloquear el avance de un campo simple.
-    const candidateValues = meaningfulValues.length > 0
+    const candidateValues = isLowerPocketModelAttribute(attribute)
+      ? [
+          ...attribute.values.filter((value) => isUnselectedOption(value.name)),
+          ...meaningfulValues.filter((value) => !isUnselectedOption(value.name)),
+        ]
+      : meaningfulValues.length > 0
       ? meaningfulValues
       : attribute.values;
     const kneePatchModel = getPantsKneePatchModelBySourceValueId(
@@ -215,12 +246,26 @@ export function applyFirstOptionDefaults(
     // dejar el atributo vacío. Para cuello, "Ninguno" es la alternativa
     // segura y explícita: evita que el render reutilice un detalle residual
     // mientras el usuario decide un cuello compatible con Hombre.
-    const defaultCandidateValues = isNeckModelAttribute(attribute)
+    const kneeDefaultCandidateValues = isKneePatchTypeAttribute(attribute.id)
       ? [
-          ...compatibleCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
-          ...compatibleCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
+          ...compatibleCandidateValues.filter(
+            (value) =>
+              getPantsKneePatchTypeBySourceValueId(value.sourceValueId) ===
+              "plain",
+          ),
+          ...compatibleCandidateValues.filter(
+            (value) =>
+              getPantsKneePatchTypeBySourceValueId(value.sourceValueId) !==
+              "plain",
+          ),
         ]
       : compatibleCandidateValues;
+    const defaultCandidateValues = isNeckModelAttribute(attribute)
+      ? [
+          ...kneeDefaultCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
+          ...kneeDefaultCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
+        ]
+      : kneeDefaultCandidateValues;
     const selectedWithoutPlaceholders = new Set(
       Array.from(selected).filter(
         (valueId) => !selectedValueIds.includes(valueId),

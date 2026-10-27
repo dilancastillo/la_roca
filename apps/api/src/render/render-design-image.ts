@@ -68,12 +68,6 @@ const PANTS_KNEE_PATCH_SQUARE_ASSET_BY_SIDE = {
   right:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
 } as const;
-const PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_ASSET_BY_SIDE = {
-  left:
-    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-left.svg",
-  right:
-    "assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-right.svg",
-} as const;
 const PANTS_KNEE_PATCH_CAMOUFLAGE_ASSET_BY_SIDE = {
   left:
     "assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-left.svg",
@@ -1626,8 +1620,9 @@ const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
 
 const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
-const POCKET_TRIM_LINE_WIDTH = 5;
+const POCKET_TRIM_LINE_WIDTH = 8;
 const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
+const COLORED_TRIM_EXPANSION_RADIUS = 1;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -3120,6 +3115,37 @@ async function recolorPngInkBuffer(buffer: Buffer, colorHex: string) {
   return await rgbaToPngBuffer(data, width, height);
 }
 
+async function expandColoredTrimBuffer(buffer: Buffer) {
+  const metadata = await sharp(buffer).metadata();
+  const width = metadata.width;
+  const height = metadata.height;
+
+  if (!width || !height) {
+    return buffer;
+  }
+
+  const radius = COLORED_TRIM_EXPANSION_RADIUS;
+  const composites: Array<{ input: Buffer; left: number; top: number }> = [];
+  for (let y = -radius; y <= radius; y += 1) {
+    for (let x = -radius; x <= radius; x += 1) {
+      composites.push({ input: buffer, left: x + radius, top: y + radius });
+    }
+  }
+
+  return await sharp({
+    create: {
+      width: width + radius * 2,
+      height: height + radius * 2,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite(composites)
+    .extract({ left: radius, top: radius, width, height })
+    .png()
+    .toBuffer();
+}
+
 async function createLowerPocketOverlayBuffer(assetPath: string) {
   const detailIndexes =
     lowerPocketDetailElementIndexesByFileName[getAssetFileName(assetPath)];
@@ -3223,7 +3249,9 @@ async function createPantsSidePocketTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await expandColoredTrimBuffer(
+    await recolorPngInkBuffer(overlayBuffer, trimColor),
+  );
 }
 
 async function createPantsKneePatchSideOverlayBuffers(
@@ -3488,15 +3516,6 @@ async function createPantsKneePatchSideOverlayBuffers(
   }
 
   if (type === "plain") {
-    const plainMarkerBuffer = await createGarmentDetailAssetOverlayBuffer(
-      PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_ASSET_BY_SIDE[side],
-      placementAssetPath,
-    );
-
-    if (plainMarkerBuffer) {
-      buffers.push(plainMarkerBuffer);
-    }
-
     if (trimColor) {
       const trimOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
         PANTS_KNEE_PATCH_SQUARE_TRIM_ASSET_BY_SIDE[side],
@@ -6040,9 +6059,8 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
             continue;
           }
 
-          const trimColorBuffer = await recolorPngInkBuffer(
-            trimOverlayBuffer,
-            trimColor,
+          const trimColorBuffer = await expandColoredTrimBuffer(
+            await recolorPngInkBuffer(trimOverlayBuffer, trimColor),
           );
 
           layers.push(
@@ -6207,9 +6225,11 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
               getAssetFileName(scene.chestPocketAssetPath),
             )
           ) {
-            const trimColorBuffer = await recolorPngInkBuffer(
-              trimOverlayBuffer,
-              chestPocketTrimColor,
+            const trimColorBuffer = await expandColoredTrimBuffer(
+              await recolorPngInkBuffer(
+                trimOverlayBuffer,
+                chestPocketTrimColor,
+              ),
             );
 
             layers.push(

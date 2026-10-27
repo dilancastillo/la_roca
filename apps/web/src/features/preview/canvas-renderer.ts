@@ -71,12 +71,6 @@ const PANTS_KNEE_PATCH_SQUARE_SRC_BY_SIDE = {
   right:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-right.svg",
 } as const;
-const PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_SRC_BY_SIDE = {
-  left:
-    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-left.svg",
-  right:
-    "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-square-plain-marker-right.svg",
-} as const;
 const PANTS_KNEE_PATCH_CAMOUFLAGE_SRC_BY_SIDE = {
   left:
     "/assets/catalog/pantalon/detail-overlays/pants-knee-patch-camouflage-left.svg",
@@ -1647,8 +1641,9 @@ const lowerPocketTrimModeByFileName: Record<string, "band" | "ink"> = {
 
 const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
-const POCKET_TRIM_LINE_WIDTH = 5;
+const POCKET_TRIM_LINE_WIDTH = 8;
 const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
+const COLORED_TRIM_EXPANSION_RADIUS = 1;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -3405,6 +3400,21 @@ function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
   return outputCanvas;
 }
 
+function drawExpandedColoredTrim(
+  context: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  colorHex: string,
+) {
+  const coloredCanvas = recolorCanvasInk(canvas, colorHex);
+  const radius = COLORED_TRIM_EXPANSION_RADIUS;
+
+  for (let y = -radius; y <= radius; y += 1) {
+    for (let x = -radius; x <= radius; x += 1) {
+      context.drawImage(coloredCanvas, x, y);
+    }
+  }
+}
+
 // Los SVG históricos no separan el cuello de la prenda mediante metadata.
 // Esta ventana cubre el detalle central superior del cuello, nunca mangas ni
 // costados. Solo se toman trazos neutros oscuros para no convertir vivos ni
@@ -3935,7 +3945,7 @@ async function drawChestPocketOverlay(
       }
 
       const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
-      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+      drawExpandedColoredTrim(context, trimCanvas, trimColor);
     }
 
     context.restore();
@@ -3959,7 +3969,7 @@ async function drawChestPocketOverlay(
   const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
 
   if (fullChestPocketTrimOverlayFileNames.has(fileName)) {
-    context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    drawExpandedColoredTrim(context, trimCanvas, trimColor);
     context.restore();
     return;
   }
@@ -4790,7 +4800,7 @@ async function drawPantsSidePocketTrimFromAsset(
     overlaySrc,
     sourceSrc,
   );
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedColoredTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawPantsKneePatchSideFromAsset(
@@ -4997,12 +5007,6 @@ async function drawPantsKneePatchSideFromAsset(
   }
 
   if (type === "plain") {
-    const plainMarkerCanvas = await createRasterCanvas(
-      PANTS_KNEE_PATCH_SQUARE_PLAIN_MARKER_SRC_BY_SIDE[side],
-      sourceSrc,
-    );
-    context.drawImage(plainMarkerCanvas, 0, 0);
-
     if (trimColor) {
       const trimCanvas = await createRasterCanvas(
         PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE[side],

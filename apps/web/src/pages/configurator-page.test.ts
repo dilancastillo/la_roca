@@ -28,7 +28,7 @@ describe("validación antes de guardar", () => {
     ).toEqual([]);
   });
 
-  it("acepta una primera opcion explicita para el bolsillo inferior", () => {
+  it("bloquea Sin selección y permite una selección explícita en el bolsillo inferior", () => {
     const lowerPocketGroup = {
       attributeId: 70,
       label: "Modelo bolsillo inferior",
@@ -43,7 +43,7 @@ describe("validación antes de guardar", () => {
 
     expect(
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [1] }),
-    ).toEqual([]);
+    ).toEqual([lowerPocketGroup]);
     expect(
       getMissingRequiredSelectionGroups([lowerPocketGroup], { "70": [2] }),
     ).toEqual([]);

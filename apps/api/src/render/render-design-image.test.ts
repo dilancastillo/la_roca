@@ -2770,7 +2770,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withPlainTrim.data)).toBe(0);
   }, 20000);
 
-  it("distingue el parche cuadrado liso con un marcador cuadrado en ambas rodillas", async () => {
+  it("no agrega un marcador cuadrado al parche liso de ninguna rodilla", async () => {
     const scene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -2798,7 +2798,7 @@ describe("renderDesignImage", () => {
         plain.info.width,
         leftMarkerRegion,
       ),
-    ).toBeGreaterThan(40);
+    ).toBe(0);
     expect(
       countDifferentPixelsInRegion(
         patchOnly.data,
@@ -2806,7 +2806,7 @@ describe("renderDesignImage", () => {
         plain.info.width,
         rightMarkerRegion,
       ),
-    ).toBeGreaterThan(40);
+    ).toBe(0);
   }, 20000);
 
   it("dibuja el lineal inferior base en bolsillos cuadrados sobrepuestos", async () => {
