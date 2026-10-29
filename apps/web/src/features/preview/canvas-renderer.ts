@@ -1774,6 +1774,7 @@ type ProcessedImage = {
 
 const imageCache = new Map<string, Promise<ProcessedImage>>();
 const maskCache = new Map<string, Promise<HTMLCanvasElement>>();
+const opaqueSourceMaskCache = new Map<string, Promise<HTMLCanvasElement>>();
 const rasterCache = new Map<string, Promise<HTMLCanvasElement>>();
 const detailOverlayCache = new Map<string, Promise<HTMLCanvasElement>>();
 // Los canvas de assets SVG pesan varios MB. En escritorio una caché sin límite
@@ -3006,6 +3007,100 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
     drawWidth,
     drawHeight,
   };
+}
+
+/**
+ * Construye una máscara desde el alfa original del SVG, antes de retirar los
+ * blancos para dibujar la tinta. En Android/WebView algunos SVG de blusa usan
+ * un trazo blanco para cerrar el cuello; si ese blanco se elimina primero, el
+ * flood-fill interpreta la abertura como exterior y deja el torso sin color.
+ *
+ * Aquí el blanco sigue siendo opaco solamente para calcular la silueta. La
+ * tinta visible continúa saliendo de getProcessedImage, por lo que no cambia
+ * contornos, vivos ni geometría del modelo.
+ */
+async function getOpaqueSourceInteriorMask(src: string) {
+  const existing = getRecentCachedValue(opaqueSourceMaskCache, src);
+  if (existing) {
+    return await existing;
+  }
+
+  const promise = (async () => {
+    const image = await loadImage(src);
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = width;
+    sourceCanvas.height = height;
+    const sourceContext = sourceCanvas.getContext("2d");
+
+    if (!sourceContext) {
+      throw new Error("No se pudo crear la máscara opaca de la blusa.");
+    }
+
+    sourceContext.drawImage(image, 0, 0);
+    const sourceData = sourceContext.getImageData(0, 0, width, height).data;
+    const pixelCount = width * height;
+    const opaque = new Uint8Array(pixelCount);
+    const outside = new Uint8Array(pixelCount);
+    const queue: number[] = [];
+
+    for (let index = 0; index < pixelCount; index += 1) {
+      if ((sourceData[index * 4 + 3] ?? 0) > 20) {
+        opaque[index] = 1;
+      }
+    }
+
+    const enqueue = (index: number) => {
+      if (index < 0 || index >= pixelCount || opaque[index] || outside[index]) {
+        return;
+      }
+      outside[index] = 1;
+      queue.push(index);
+    };
+
+    for (let x = 0; x < width; x += 1) {
+      enqueue(x);
+      enqueue((height - 1) * width + x);
+    }
+    for (let y = 0; y < height; y += 1) {
+      enqueue(y * width);
+      enqueue(y * width + width - 1);
+    }
+
+    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+      const index = queue[cursor] as number;
+      const x = index % width;
+      const y = Math.floor(index / width);
+      if (x > 0) enqueue(index - 1);
+      if (x < width - 1) enqueue(index + 1);
+      if (y > 0) enqueue(index - width);
+      if (y < height - 1) enqueue(index + width);
+    }
+
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = width;
+    maskCanvas.height = height;
+    const maskContext = maskCanvas.getContext("2d");
+    if (!maskContext) {
+      throw new Error("No se pudo dibujar la máscara opaca de la blusa.");
+    }
+
+    const maskImageData = maskContext.createImageData(width, height);
+    for (let index = 0; index < pixelCount; index += 1) {
+      if (outside[index]) continue;
+      const offset = index * 4;
+      maskImageData.data[offset] = 255;
+      maskImageData.data[offset + 1] = 255;
+      maskImageData.data[offset + 2] = 255;
+      maskImageData.data[offset + 3] = 255;
+    }
+    maskContext.putImageData(maskImageData, 0, 0);
+    return maskCanvas;
+  })();
+
+  rememberHeavyRenderCache(opaqueSourceMaskCache, src, promise);
+  return await promise;
 }
 
 async function getInteriorMask(
@@ -5482,11 +5577,13 @@ export async function createTintedBaseCanvas(
   closeBlouseNeckMask = false,
 ) {
   const processed = await getProcessedImage(src);
-  const mask = await getInteriorMask(
-    src,
-    !includeOutline,
-    closeBlouseNeckMask,
-  );
+  // Para blusas no usamos la máscara de flood-fill derivada de la tinta: en
+  // móviles el cierre blanco del cuello puede desaparecer durante el raster y
+  // el relleno se fuga. La máscara opaca parte del SVG fuente y es idéntica en
+  // navegador de escritorio, Android y tabletas.
+  const mask = closeBlouseNeckMask
+    ? await getOpaqueSourceInteriorMask(src)
+    : await getInteriorMask(src, !includeOutline, false);
   const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
   const tintCanvas = document.createElement("canvas");
