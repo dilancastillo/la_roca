@@ -1776,6 +1776,12 @@ const imageCache = new Map<string, Promise<ProcessedImage>>();
 const maskCache = new Map<string, Promise<HTMLCanvasElement>>();
 const rasterCache = new Map<string, Promise<HTMLCanvasElement>>();
 const detailOverlayCache = new Map<string, Promise<HTMLCanvasElement>>();
+// Los canvas de assets SVG pesan varios MB. En escritorio una caché sin límite
+// pasa inadvertida, pero en móvil puede agotar la memoria gráfica tras cambiar
+// varias opciones. Conservamos sólo los recursos usados recientemente; borrar
+// la referencia no altera el render actual y permite al navegador liberar el
+// canvas cuando ya no está en uso.
+const MAX_HEAVY_RENDER_CACHE_ENTRIES = 6;
 const svgObjectUrlCache = new Map<string, Promise<string>>();
 const svgViewBoxCache = new Map<
   string,
@@ -1785,6 +1791,36 @@ const lowerPocketDetailObjectUrlCache = new Map<string, Promise<string>>();
 const lowerPocketTrimObjectUrlCache = new Map<string, Promise<string>>();
 const collarTrimObjectUrlCache = new Map<string, Promise<string>>();
 const collarRingsTrimValueIds = new Set([2897, 2898, 2899]);
+
+function getRecentCachedValue<T>(cache: Map<string, T>, key: string) {
+  const value = cache.get(key);
+
+  if (!value) {
+    return undefined;
+  }
+
+  // Map conserva el orden de inserción: mover la entrada al final implementa
+  // una política LRU sin cambiar el contenido del recurso.
+  cache.delete(key);
+  cache.set(key, value);
+  return value;
+}
+
+function rememberHeavyRenderCache<T>(
+  cache: Map<string, T>,
+  key: string,
+  value: T,
+) {
+  cache.set(key, value);
+
+  while (cache.size > MAX_HEAVY_RENDER_CACHE_ENTRIES) {
+    const leastRecentlyUsedKey = cache.keys().next().value;
+    if (typeof leastRecentlyUsedKey !== "string") {
+      break;
+    }
+    cache.delete(leastRecentlyUsedKey);
+  }
+}
 
 function normalize(value: string) {
   return value
@@ -2792,7 +2828,7 @@ async function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 async function getProcessedImage(src: string): Promise<ProcessedImage> {
-  const existing = imageCache.get(src);
+  const existing = getRecentCachedValue(imageCache, src);
   if (existing) {
     return await existing;
   }
@@ -2867,7 +2903,7 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
     };
   })();
 
-  imageCache.set(src, promise);
+  rememberHeavyRenderCache(imageCache, src, promise);
   return await promise;
 }
 
@@ -2956,7 +2992,7 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
 
 async function getInteriorMask(src: string, closeSmallGaps = false) {
   const cacheKey = `${src}::close-gaps=${closeSmallGaps}`;
-  const existing = maskCache.get(cacheKey);
+  const existing = getRecentCachedValue(maskCache, cacheKey);
   if (existing) {
     return await existing;
   }
@@ -3131,7 +3167,7 @@ async function getInteriorMask(src: string, closeSmallGaps = false) {
     return maskCanvas;
   })();
 
-  maskCache.set(cacheKey, promise);
+  rememberHeavyRenderCache(maskCache, cacheKey, promise);
   return await promise;
 }
 
@@ -3169,7 +3205,7 @@ async function drawFullOverlay(
 
 export async function createRasterCanvas(src: string, placementSrc = src) {
   const cacheKey = `${src}::${placementSrc}`;
-  const existing = rasterCache.get(cacheKey);
+  const existing = getRecentCachedValue(rasterCache, cacheKey);
   if (existing) {
     return await existing;
   }
@@ -3208,7 +3244,7 @@ export async function createRasterCanvas(src: string, placementSrc = src) {
     return rasterCanvas;
   })();
 
-  rasterCache.set(cacheKey, promise);
+  rememberHeavyRenderCache(rasterCache, cacheKey, promise);
   return await promise;
 }
 
@@ -3217,7 +3253,7 @@ async function createCoordinateAlignedRasterCanvas(
   placementSrc: string,
 ) {
   const cacheKey = `coordinate-aligned::${src}::${placementSrc}`;
-  const existing = rasterCache.get(cacheKey);
+  const existing = getRecentCachedValue(rasterCache, cacheKey);
   if (existing) {
     return await existing;
   }
@@ -3254,7 +3290,7 @@ async function createCoordinateAlignedRasterCanvas(
     return rasterCanvas;
   })();
 
-  rasterCache.set(cacheKey, promise);
+  rememberHeavyRenderCache(rasterCache, cacheKey, promise);
   return await promise;
 }
 
@@ -3295,7 +3331,7 @@ async function getDetailOverlay(
     .map((region) => `${region.x},${region.y},${region.width},${region.height}`)
     .join("|")}::${inkRadius}`;
 
-  const existing = detailOverlayCache.get(cacheKey);
+  const existing = getRecentCachedValue(detailOverlayCache, cacheKey);
   if (existing) {
     return await existing;
   }
@@ -3362,7 +3398,7 @@ async function getDetailOverlay(
     return outputCanvas;
   })();
 
-  detailOverlayCache.set(cacheKey, promise);
+  rememberHeavyRenderCache(detailOverlayCache, cacheKey, promise);
   return await promise;
 }
 
@@ -6061,45 +6097,54 @@ async function composeUniformDesign(
   const blouseCanvas = createInternalCanvas();
   const pantsCanvas = createInternalCanvas();
 
-  await composeSingleDesign(blouseCanvas, scene.uniformParts.blouse);
-  await composeSingleDesign(pantsCanvas, scene.uniformParts.pants);
+  try {
+    await composeSingleDesign(blouseCanvas, scene.uniformParts.blouse);
+    await composeSingleDesign(pantsCanvas, scene.uniformParts.pants);
 
-  context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  context.drawImage(
-    blouseCanvas,
-    72,
-    10,
-    756,
-    1180,
-    0,
-    188,
-    525,
-    820,
-  );
-  context.drawImage(
-    pantsCanvas,
-    218,
-    56,
-    466,
-    1090,
-    600,
-    145,
-    300,
-    900,
-  );
+    context.drawImage(
+      blouseCanvas,
+      72,
+      10,
+      756,
+      1180,
+      0,
+      188,
+      525,
+      820,
+    );
+    context.drawImage(
+      pantsCanvas,
+      218,
+      56,
+      466,
+      1090,
+      600,
+      145,
+      300,
+      900,
+    );
 
-  return await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("No se pudo generar el PNG final."));
-        return;
-      }
-      resolve(blob);
-    }, "image/png");
-  });
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("No se pudo generar el PNG final."));
+          return;
+        }
+        resolve(blob);
+      }, "image/png");
+    });
+  } finally {
+    // Estos lienzos sólo sirven para componer el uniforme actual. Soltarlos
+    // al terminar evita que queden dos imágenes completas retenidas en móvil.
+    blouseCanvas.width = 0;
+    blouseCanvas.height = 0;
+    pantsCanvas.width = 0;
+    pantsCanvas.height = 0;
+  }
 }
 
 export async function composeDesign(
