@@ -59,6 +59,23 @@ describe("authenticateUser", () => {
     expect(await authenticateUser(env, "nuevo@example.com", password)).not.toBeNull();
   });
 
+  it("prioriza el acceso al configurador sobre un rol heredado de editor", () => {
+    const env = {
+      APP_ADDITIONAL_VISUAL_CATALOG_EDITOR_EMAILS: "ventas@example.com",
+      APP_CONFIGURATOR_ACCESS_EMAILS: "ventas@example.com",
+    };
+
+    expect(withAdminFlag(env, {
+      email: "ventas@example.com",
+      name: "Ventas",
+    })).toMatchObject({
+      isAdmin: false,
+      canEditVisualCatalog: false,
+      isVisualCatalogEditorOnly: false,
+      canPublishVisualCatalog: false,
+    });
+  });
+
   it("distingue un editor exclusivo de un administrador del catalogo", () => {
     const env = {
       APP_ADMIN_EMAILS: "facturas@example.com",

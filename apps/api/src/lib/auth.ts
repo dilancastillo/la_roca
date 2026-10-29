@@ -38,8 +38,20 @@ function isVisualCatalogEditorEmail(env: AuthEnv, email: string) {
   return editors.includes(normalizeEmail(email));
 }
 
+function isConfiguratorAccessEmail(env: AuthEnv, email: string) {
+  return (env.APP_CONFIGURATOR_ACCESS_EMAILS ?? "")
+    .split(",")
+    .map(normalizeEmail)
+    .filter(Boolean)
+    .includes(normalizeEmail(email));
+}
+
 export function canEditVisualCatalog(env: AuthEnv, email: string) {
-  return isAdminEmail(env, email) || isVisualCatalogEditorEmail(env, email);
+  return (
+    isAdminEmail(env, email) ||
+    (isVisualCatalogEditorEmail(env, email) &&
+      !isConfiguratorAccessEmail(env, email))
+  );
 }
 
 export function withAdminFlag(
@@ -48,7 +60,10 @@ export function withAdminFlag(
 ) {
   const isAdmin = isAdminEmail(env, user.email);
   const canEdit = canEditVisualCatalog(env, user.email);
-  const isEditorOnly = !isAdmin && isVisualCatalogEditorEmail(env, user.email);
+  const isEditorOnly =
+    !isAdmin &&
+    isVisualCatalogEditorEmail(env, user.email) &&
+    !isConfiguratorAccessEmail(env, user.email);
   const publishers = [
     ...(
       env.APP_VISUAL_CATALOG_PUBLISHER_EMAILS ??
