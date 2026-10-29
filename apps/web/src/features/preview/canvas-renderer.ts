@@ -1930,8 +1930,12 @@ function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []
   return positions;
 }
 
+function isSvgDataUri(src: string) {
+  return /^data:image\/svg\+xml(?:;[^,]+)?,/i.test(src);
+}
+
 function isSvgSource(src: string) {
-  return src.split("?")[0]?.toLowerCase().endsWith(".svg") ?? false;
+  return isSvgDataUri(src) || (src.split("?")[0]?.toLowerCase().endsWith(".svg") ?? false);
 }
 
 function getFileNameFromSource(src: string) {
@@ -2606,7 +2610,26 @@ function getSvgViewBox(svgText: string) {
   return { x, y, width, height };
 }
 
-async function getSvgViewBoxForSource(src: string) {
+async function readSvgText(src: string) {
+  if (isSvgDataUri(src)) {
+    const separatorIndex = src.indexOf(",");
+    const metadata = src.slice(0, separatorIndex);
+    const content = src.slice(separatorIndex + 1);
+
+    return /;base64$/i.test(metadata)
+      ? atob(content)
+      : decodeURIComponent(content);
+  }
+
+  const response = await fetch(src);
+  if (!response.ok) {
+    throw new Error(`No se pudo cargar ${src}`);
+  }
+
+  return await response.text();
+}
+
+export async function getSvgViewBoxForSource(src: string) {
   if (!isSvgSource(src)) {
     return undefined;
   }
@@ -2616,15 +2639,9 @@ async function getSvgViewBoxForSource(src: string) {
     return await existing;
   }
 
-  const promise = (async () => {
-    const response = await fetch(src);
-
-    if (!response.ok) {
-      return undefined;
-    }
-
-    return getSvgViewBox(await response.text());
-  })();
+  const promise = readSvgText(src)
+    .then(getSvgViewBox)
+    .catch(() => undefined);
 
   svgViewBoxCache.set(src, promise);
   return await promise;
@@ -2670,13 +2687,7 @@ async function getRenderableSvgObjectUrl(src: string) {
   }
 
   const promise = (async () => {
-    const response = await fetch(src);
-
-    if (!response.ok) {
-      throw new Error(`No se pudo cargar ${src}`);
-    }
-
-    const svgText = await response.text();
+    const svgText = await readSvgText(src);
     const blob = new Blob([withExplicitSvgDimensions(svgText)], {
       type: "image/svg+xml",
     });
@@ -2990,8 +3001,12 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
-async function getInteriorMask(src: string, closeSmallGaps = false) {
-  const cacheKey = `${src}::close-gaps=${closeSmallGaps}`;
+async function getInteriorMask(
+  src: string,
+  closeSmallGaps = false,
+  closeBlouseNeckMask = false,
+) {
+  const cacheKey = `${src}::close-gaps=${closeSmallGaps}::close-blouse-neck=${closeBlouseNeckMask}`;
   const existing = getRecentCachedValue(maskCache, cacheKey);
   if (existing) {
     return await existing;
@@ -3035,12 +3050,17 @@ async function getInteriorMask(src: string, closeSmallGaps = false) {
       }
     }
 
-    if (
+    const needsClosedNeckMask =
+      closeBlouseNeckMask ||
       getFileNameFromSource(src) === CLOSED_NO_COLLAR_BASE_FILE_NAME ||
-      getFileNameFromSource(src) === MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME
-    ) {
-      // Las dos bases dejan la abertura del cuello transparente; se cierra
-      // solo en la máscara para que el color de la prenda no se fugue arriba.
+      getFileNameFromSource(src) === MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME;
+
+    if (needsClosedNeckMask) {
+      // Algunas bases y SVG dinámicos de blusa dejan la abertura del cuello
+      // transparente. Se cierra sólo en la máscara para que el color de la
+      // prenda no se fugue hacia el exterior. El cierre debe aplicarse también
+      // a floodBarrier: con closeSmallGaps éste es una copia de ink y es el
+      // arreglo que consulta el flood-fill.
       const scaleX = width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
       const scaleY = height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
       const startX = Math.round(CLOSED_NO_COLLAR_MASK_CLOSURE.x1 * scaleX);
@@ -3063,7 +3083,9 @@ async function getInteriorMask(src: string, closeSmallGaps = false) {
           x <= Math.min(width - 1, endX);
           x += 1
         ) {
-          ink[y * width + x] = 1;
+          const index = y * width + x;
+          ink[index] = 1;
+          floodBarrier[index] = 1;
         }
       }
     }
@@ -5450,9 +5472,14 @@ export async function createTintedBaseCanvas(
   fillColor: string,
   includeOutline = true,
   emphasizeNeckOutline = false,
+  closeBlouseNeckMask = false,
 ) {
   const processed = await getProcessedImage(src);
-  const mask = await getInteriorMask(src, !includeOutline);
+  const mask = await getInteriorMask(
+    src,
+    !includeOutline,
+    closeBlouseNeckMask,
+  );
   const { bounds } = processed;
   const { drawX, drawY, drawWidth, drawHeight } = getDrawRect(bounds);
   const tintCanvas = document.createElement("canvas");
@@ -5559,6 +5586,9 @@ async function composeSingleDesign(
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
+  const closeBlouseNeckMask =
+    Boolean(scene.suppressGarmentBaseOutline) &&
+    isBlouseScene(scene, baseAssetSrc);
 
   if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
     // La base estable mantiene hombros, mangas, sisas y costados en una única
@@ -5569,6 +5599,8 @@ async function composeSingleDesign(
         : FEMALE_BLOUSE_SLEEVE_ANCHOR,
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
+      false,
+      closeBlouseNeckMask,
     );
     context.drawImage(bodyCanvas, 0, 0);
   }
@@ -5579,6 +5611,7 @@ async function composeSingleDesign(
       scene.baseColorHex,
       !scene.suppressGarmentBaseOutline,
       Boolean(scene.neckImageSrc),
+      closeBlouseNeckMask,
     );
     if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
       // Los modelos dinámicos son prendas completas. Sobre la base estable

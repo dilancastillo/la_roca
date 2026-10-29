@@ -4,6 +4,7 @@ import {
   getSleeveAnchorSrc,
   getChestPocketSectionTrimOverlays,
   getOriginalSleeveTrimShapes,
+  getSvgViewBoxForSource,
 } from "./canvas-renderer";
 
 describe("vivos de bolsillo de pecho", () => {
@@ -146,5 +147,19 @@ describe("vivos de mangas originales", () => {
 
     expect(left?.lower).toEqual(leftLower);
     expect(right?.lower).toEqual(rightLower);
+  });
+});
+
+describe("SVG dinámicos del configurador", () => {
+  it("lee el viewBox de un SVG materializado como data URI", async () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350"></svg>';
+    const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+    await expect(getSvgViewBoxForSource(source)).resolves.toEqual({
+      x: 0,
+      y: 0,
+      width: 1080,
+      height: 1350,
+    });
   });
 });
