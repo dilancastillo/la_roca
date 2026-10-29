@@ -5,6 +5,7 @@ import {
   getChestPocketSectionTrimOverlays,
   getOriginalSleeveTrimShapes,
   getSvgViewBoxForSource,
+  shouldCloseBlouseNeckMask,
 } from "./canvas-renderer";
 
 describe("vivos de bolsillo de pecho", () => {
@@ -161,5 +162,25 @@ describe("SVG dinámicos del configurador", () => {
       width: 1080,
       height: 1350,
     });
+  });
+});
+
+describe("máscara de color de blusa", () => {
+  it("cierra el cuello para toda blusa, aun sin una definición dinámica", () => {
+    expect(
+      shouldCloseBlouseNeckMask(
+        { productName: "Blusa" },
+        "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+      ),
+    ).toBe(true);
+  });
+
+  it("conserva el pantalón fuera de la regla de cierre", () => {
+    expect(
+      shouldCloseBlouseNeckMask(
+        { productName: "Pantalón" },
+        "/assets/catalog/pantalon/svg-clean/pants-base.svg",
+      ),
+    ).toBe(false);
   });
 });

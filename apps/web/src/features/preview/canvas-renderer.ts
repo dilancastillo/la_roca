@@ -1830,7 +1830,7 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
-function isBlouseScene(scene: PreviewScene, baseAssetSrc?: string) {
+function isBlouseScene(scene: Pick<PreviewScene, "productName">, baseAssetSrc?: string) {
   const normalizedProductName = normalize(scene.productName);
 
   return (
@@ -1839,6 +1839,13 @@ function isBlouseScene(scene: PreviewScene, baseAssetSrc?: string) {
       normalizedProductName.includes("uniforme") ||
       Boolean(baseAssetSrc?.includes("blusa-antifluido")))
   );
+}
+
+export function shouldCloseBlouseNeckMask(
+  scene: Pick<PreviewScene, "productName">,
+  baseAssetSrc?: string,
+) {
+  return isBlouseScene(scene, baseAssetSrc);
 }
 
 function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {
@@ -5586,9 +5593,13 @@ async function composeSingleDesign(
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   const baseAssetSrc = scene.neckImageSrc ?? scene.garmentImageSrc;
-  const closeBlouseNeckMask =
-    Boolean(scene.suppressGarmentBaseOutline) &&
-    isBlouseScene(scene, baseAssetSrc);
+  // Toda blusa se rellena a partir de una silueta cuyo cuello puede traer una
+  // abertura blanca histórica. No depende de que el SVG llegue desde el editor:
+  // en WebView móvil esa abertura deja escapar el flood-fill y deja el torso
+  // transparente mientras las mangas, que sí son regiones cerradas, conservan
+  // el color. Cerrar la máscara es sólo una regla de relleno; no altera las
+  // líneas, vivos ni la geometría que se dibuja encima.
+  const closeBlouseNeckMask = shouldCloseBlouseNeckMask(scene, baseAssetSrc);
 
   if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
     // La base estable mantiene hombros, mangas, sisas y costados en una única
