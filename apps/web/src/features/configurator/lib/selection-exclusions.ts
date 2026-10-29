@@ -90,6 +90,13 @@ function isLowerPocketModelAttribute(
   return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
 }
 
+function isTrimColorAttribute(
+  attribute: ConfiguratorSession["attributes"][number],
+) {
+  const name = normalizeText(attribute.name);
+  return name.includes("color") && name.includes("vivo");
+}
+
 function isUnselectedOption(optionName: string) {
   return normalizeText(optionName) === "sin seleccion";
 }
@@ -203,15 +210,17 @@ export function applyFirstOptionDefaults(
     const hasOnlyPlaceholderSelection =
       selectedValues.length > 0 &&
       selectedValues.every((value) => isPlaceholderOption(attribute, value.name));
-    const hasOnlyLowerPocketNoneSelection =
-      isLowerPocketModelAttribute(attribute) &&
+    // Un color de vivo debe ser una tinta concreta: Ninguno no es válido.
+    const hasOnlyInvalidTrimColorSelection =
+      isTrimColorAttribute(attribute) &&
       selectedValues.length > 0 &&
       selectedValues.every((value) => isExplicitNoneOption(value.name));
+
 
     if (
       selectedValueIds.length > 0 &&
       !hasOnlyPlaceholderSelection &&
-      !hasOnlyLowerPocketNoneSelection
+      !hasOnlyInvalidTrimColorSelection
     ) {
       continue;
     }
@@ -220,9 +229,9 @@ export function applyFirstOptionDefaults(
     const meaningfulValues = attribute.values.filter(
       (value) => !isPlaceholderOption(attribute, value.name),
     );
-    // "Ninguno" es una selección explícita y válida. En cambio, "Sin
-    // selección" es el placeholder que Odoo puede devolver después de una
-    // exclusión por género y nunca debe bloquear el avance de un campo simple.
+    // "Sin selección" es el placeholder inicial de este campo. "Ninguno",
+    // en cambio, es una elección explícita y válida: se conserva cuando el
+    // usuario la elige manualmente, aunque el valor inicial sea Sin selección.
     const candidateValues = isLowerPocketModelAttribute(attribute)
       ? [
           ...attribute.values.filter((value) => isUnselectedOption(value.name)),
@@ -231,17 +240,21 @@ export function applyFirstOptionDefaults(
       : meaningfulValues.length > 0
       ? meaningfulValues
       : attribute.values;
+    const trimColorCandidateValues = isTrimColorAttribute(attribute)
+      ? candidateValues.filter((value) => !isExplicitNoneOption(value.name))
+      : candidateValues;
+
     const kneePatchModel = getPantsKneePatchModelBySourceValueId(
       getKneePatchModelForTypeAttribute(session, attribute.id, nextSelectedValueIds),
     );
     const compatibleCandidateValues = kneePatchModel
-      ? candidateValues.filter((value) =>
+      ? trimColorCandidateValues.filter((value) =>
           isPantsKneePatchTypeAllowedForModel(
             kneePatchModel,
             getPantsKneePatchTypeBySourceValueId(value.sourceValueId),
           ),
         )
-      : candidateValues;
+      : trimColorCandidateValues;
     // Al cambiar Mujer → Hombre Odoo puede excluir el cuello femenino y
     // dejar el atributo vacío. Para cuello, "Ninguno" es la alternativa
     // segura y explícita: evita que el render reutilice un detalle residual

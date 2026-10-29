@@ -1098,9 +1098,9 @@ describe("saveConfiguratorDesign", () => {
         filename: "sale-line-290-design.png",
         imageBase64: "png-base64",
         selectedValueIds: sessionWithLength.selectedValueIds,
-        customValuesByValueId: { [String(lengthValueId)]: "91" },
+        customValuesByValueId: { [String(lengthValueId)]: "46" },
       }),
-    ).rejects.toThrow(/entre 1 y 90/i);
+    ).rejects.toThrow(/largo de bota debe estar entre 20 y 45/i);
 
     expect(mocks.odooWrite).toHaveBeenCalled();
   });

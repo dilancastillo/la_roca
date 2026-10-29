@@ -2699,5 +2699,24 @@ export function computeDisabledValueIds(
     }
   }
 
+  // Ninguno es una opción válida en otros atributos, pero no es un color de vivo.
+  for (const attribute of session.attributes) {
+    const attributeName = normalize(attribute.name);
+    if (!attributeName.includes("color") || !attributeName.includes("vivo")) {
+      continue;
+    }
+
+    for (const value of attribute.values) {
+      const valueName = normalize(value.name);
+      if (
+        valueName === "ninguno" ||
+        valueName === "ninguna" ||
+        valueName.includes("no aplica")
+      ) {
+        disabled.add(value.id);
+      }
+    }
+  }
+
   return disabled;
 }

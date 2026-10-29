@@ -6,6 +6,8 @@ export const LENGTH_MEASUREMENT_MAX = 90;
 export const WIDTH_MEASUREMENT_MAX = 35;
 export const PANTS_LENGTH_MEASUREMENT_MIN = 70;
 export const PANTS_LENGTH_MEASUREMENT_MAX = 120;
+export const BOOT_LENGTH_MEASUREMENT_MIN = 20;
+export const BOOT_LENGTH_MEASUREMENT_MAX = 45;
 export const BOOT_WIDTH_MEASUREMENT_MIN = 12;
 export const BOOT_WIDTH_MEASUREMENT_MAX = 25;
 
@@ -54,6 +56,17 @@ export function getMeasurementRange(attributeName: string) {
       label: "largo de pantalón",
       minimum: PANTS_LENGTH_MEASUREMENT_MIN,
       maximum: PANTS_LENGTH_MEASUREMENT_MAX,
+    };
+  }
+
+  if (
+    isNumericLengthAttributeName(attributeName) &&
+    isBootMeasurementAttributeName(attributeName)
+  ) {
+    return {
+      label: "largo de bota",
+      minimum: BOOT_LENGTH_MEASUREMENT_MIN,
+      maximum: BOOT_LENGTH_MEASUREMENT_MAX,
     };
   }
 

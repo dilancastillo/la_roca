@@ -198,12 +198,34 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
-  it("reemplaza Ninguno por Sin selección en Modelo bolsillo inferior", () => {
+  it("inicia Sin selección, pero conserva Ninguno elegido en Modelo bolsillo inferior", () => {
     const lowerPocketAttribute = { id: 32, name: "Modelo bolsillo inferior", displayType: "option" as const, selectionMode: "single" as const, variantMode: "no_variant" as const, values: [{ id: 320, name: "Sin selección", attributeId: 32, attributeName: "Modelo bolsillo inferior" }, { id: 321, name: "Ninguno", attributeId: 32, attributeName: "Modelo bolsillo inferior" }, { id: 322, name: "COSTURA", attributeId: 32, attributeName: "Modelo bolsillo inferior" }] };
     const lowerPocketSession: ConfiguratorSession = { ...session, attributes: [lowerPocketAttribute, ...session.attributes] };
     expect(applyFirstOptionDefaults(lowerPocketSession, {})).toMatchObject({ "32": [320] });
-    expect(applyFirstOptionDefaults(lowerPocketSession, { "32": [321] })).toMatchObject({ "32": [320] });
+    expect(applyFirstOptionDefaults(lowerPocketSession, { "32": [321] })).toMatchObject({ "32": [321] });
   });
+  it("reemplaza Ninguno por un color concreto en Color de vivos", () => {
+    const trimColorAttribute: ConfiguratorSession["attributes"][number] = {
+      id: 33,
+      name: "Color de vivos",
+      displayType: "color",
+      selectionMode: "single",
+      variantMode: "no_variant",
+      values: [
+        { id: 330, name: "Ninguno", attributeId: 33, attributeName: "Color de vivos" },
+        { id: 331, name: "Azul", attributeId: 33, attributeName: "Color de vivos" },
+      ],
+    };
+    const trimColorSession: ConfiguratorSession = {
+      ...session,
+      attributes: [trimColorAttribute, ...session.attributes],
+    };
+
+    expect(applyFirstOptionDefaults(trimColorSession, { "33": [330] })).toMatchObject({
+      "33": [331],
+    });
+  });
+
   it("quita selecciones que quedan excluidas por la combinacion actual", () => {
     expect(
       sanitizeSelectedValueIdsForExclusions(session, {
