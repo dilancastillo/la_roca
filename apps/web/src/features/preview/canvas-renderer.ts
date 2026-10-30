@@ -3009,6 +3009,29 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
+function fillKnownBlouseNeckOpening(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  fillColor: string,
+) {
+  // CUELLO V histórico: el SVG conserva el triángulo central como una
+  // abertura transparente. No es una pieza blanca de la prenda; se debe
+  // teñir como base y después volver a dibujar sus contornos negros.
+  if (getFileNameFromSource(sourceSrc) !== "blouse-model-01.svg") {
+    return;
+  }
+
+  context.save();
+  context.fillStyle = fillColor;
+  context.beginPath();
+  context.moveTo(379, 144);
+  context.lineTo(539.5, 407.57);
+  context.lineTo(694, 143.77);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
 /**
  * Construye una máscara desde el alfa original del SVG, antes de retirar los
  * blancos para dibujar la tinta. En Android/WebView algunos SVG de blusa usan
@@ -5613,6 +5636,9 @@ export async function createTintedBaseCanvas(
   fillContext.globalCompositeOperation = "destination-in";
   fillContext.drawImage(mask, 0, 0);
   fillContext.globalCompositeOperation = "source-over";
+  if (closeBlouseNeckMask) {
+    fillKnownBlouseNeckOpening(fillContext, src, fillColor);
+  }
 
   tintContext.drawImage(fillCanvas, bounds.x, bounds.y, bounds.width, bounds.height, drawX, drawY, drawWidth, drawHeight);
 
