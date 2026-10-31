@@ -2391,8 +2391,11 @@ function deriveSingleConfiguratorUi(
     ].includes(
       normalize(selectedNeck?.name ?? ""),
     );
-  const usesStableFemaleBlouseSilhouette =
-    Boolean(dynamicBaseSilhouette) && isStableFemaleSleeveAnchor;
+  // La silueta estable no depende de que el cuello venga del editor. También
+  // protege los modelos estáticos históricos: sus SVG incluyen una prenda
+  // completa con aberturas transparentes en cuello/mangas y, si se usan como
+  // base, esas aberturas dejan zonas blancas en algunos WebView móviles.
+  const usesStableFemaleBlouseSilhouette = isStableFemaleSleeveAnchor;
   // Un SVG completo del editor no tiene una entrada segura en las tablas
   // históricas por archivo. Esta señal no altera los modelos publicados.
   // CIRUGÍA conserva la base estable, pero sus puños publicados requieren
@@ -2410,7 +2413,7 @@ function deriveSingleConfiguratorUi(
   const neckImageSrc = maleNeckAssetPath
     ? `/${maleNeckAssetPath}`
     : usesStableFemaleBlouseSilhouette
-      ? dynamicBaseSilhouette?.svgDataUri
+      ? dynamicBaseSilhouette?.svgDataUri ?? catalogNeckImageSrc
       : catalogNeckImageSrc;
   const shouldUseClosedBlouseWithoutNeck =
     session.graphicManifestKey.includes("blusa") &&

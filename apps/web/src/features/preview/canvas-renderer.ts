@@ -3014,10 +3014,15 @@ function fillKnownBlouseNeckOpening(
   sourceSrc: string,
   fillColor: string,
 ) {
-  // CUELLO V histórico: el SVG conserva el triángulo central como una
-  // abertura transparente. No es una pieza blanca de la prenda; se debe
-  // teñir como base y después volver a dibujar sus contornos negros.
-  if (getFileNameFromSource(sourceSrc) !== "blouse-model-01.svg") {
+  // La base cerrada y CUELLO V histórico conservan el triángulo central como
+  // una abertura transparente. No es una pieza blanca de la prenda; se tiñe
+  // como base y después se dibuja encima el detalle del cuello seleccionado.
+  if (
+    ![
+      "blouse-model-01.svg",
+      CLOSED_NO_COLLAR_BASE_FILE_NAME,
+    ].includes(getFileNameFromSource(sourceSrc))
+  ) {
     return;
   }
 

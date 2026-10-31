@@ -4331,6 +4331,34 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.sleeveAnchorSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
     );
+    expect(ui.previewScene.useStableFemaleBlouseSilhouette).toBe(true);
+  });
+
+  it("usa la base cerrada para CUELLO V estático y conserva su detalle", () => {
+    const staticCuelloVSession: ConfiguratorSession = {
+      ...session,
+      attributes: session.attributes.map((attribute) =>
+        attribute.id === 63
+          ? {
+              ...attribute,
+              values: attribute.values.map((value) =>
+                value.id === 2590 ? { ...value, name: "CUELLO V" } : value,
+              ),
+            }
+          : attribute,
+      ),
+      visualDefinitions: [],
+    };
+
+    const ui = deriveConfiguratorUi(staticCuelloVSession, {
+      ...staticCuelloVSession.selectedValueIds,
+      "63": [2590],
+    });
+
+    expect(ui.previewScene.useStableFemaleBlouseSilhouette).toBe(true);
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-01.svg",
+    );
   });
 
   it("usa la base estable y el activo correcto para los puños de MARIPOSA DIVIDIDO", () => {
