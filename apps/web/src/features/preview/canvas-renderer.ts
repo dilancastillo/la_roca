@@ -1013,18 +1013,21 @@ const PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   },
   {
     points: [
-      [964.83, 530.27],
-      [833.48, 635.7],
-      [820.98, 620.1],
-      [952.33, 514.67],
+      // Espejo exacto de la presilla izquierda respecto al eje central
+      // del SVG (x = 540). Así ambos puños conservan la misma distancia
+      // al borde exterior y el mismo ángulo, aun al usar la base estable.
+      [965.04, 532.54],
+      [818.81, 663.17],
+      [805.48, 648.23],
+      [951.71, 517.6],
     ],
     upper: [
-      [952.33, 514.67],
-      [820.98, 620.1],
+      [951.71, 517.6],
+      [805.48, 648.23],
     ],
     lower: [
-      [964.83, 530.27],
-      [833.48, 635.7],
+      [965.04, 532.54],
+      [818.81, 663.17],
     ],
   },
 ] as const;
