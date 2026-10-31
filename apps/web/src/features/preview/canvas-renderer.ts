@@ -997,37 +997,38 @@ const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
 const PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
-      [114.96, 532.54],
-      [261.19, 663.17],
-      [274.52, 648.23],
-      [128.29, 517.6],
+      // Una presilla es un remate corto de refuerzo, no un vivo que cruza
+      // todo el puño. Se fija junto al extremo exterior de la manga.
+      [109.61, 538.43],
+      [130.45, 557.05],
+      [140.51, 545.79],
+      [119.67, 527.17],
     ],
     upper: [
-      [128.29, 517.6],
-      [274.52, 648.23],
+      [119.67, 527.17],
+      [140.51, 545.79],
     ],
     lower: [
-      [114.96, 532.54],
-      [261.19, 663.17],
+      [109.61, 538.43],
+      [130.45, 557.05],
     ],
   },
   {
     points: [
       // Espejo exacto de la presilla izquierda respecto al eje central
-      // del SVG (x = 540). Así ambos puños conservan la misma distancia
-      // al borde exterior y el mismo ángulo, aun al usar la base estable.
-      [965.04, 532.54],
-      [818.81, 663.17],
-      [805.48, 648.23],
-      [951.71, 517.6],
+      // del SVG (x = 540), para conservar la misma posición y tamaño.
+      [970.39, 538.43],
+      [949.55, 557.05],
+      [939.49, 545.79],
+      [960.33, 527.17],
     ],
     upper: [
-      [951.71, 517.6],
-      [805.48, 648.23],
+      [960.33, 527.17],
+      [939.49, 545.79],
     ],
     lower: [
-      [965.04, 532.54],
-      [818.81, 663.17],
+      [970.39, 538.43],
+      [949.55, 557.05],
     ],
   },
 ] as const;
