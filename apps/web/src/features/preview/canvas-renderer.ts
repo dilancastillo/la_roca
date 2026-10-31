@@ -609,8 +609,8 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   // de cada manga y ser espejo respecto al eje central de la prenda.
   // Los puntos de referencia del SVG (115, 533) y (965, 533) se
   // materializan dentro de TARGET_RECT del lienzo 900x1200.
-  { x: 165, y: 473 },
-  { x: 735, y: 473 },
+  { x: 115, y: 355, rotationDegrees: -35 },
+  { x: 785, y: 355, rotationDegrees: 35 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -4215,6 +4215,11 @@ function drawSleeveTabMarkers(
   for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
     const transform = getSleeveTabMarkerTransform(position);
 
+    context.save();
+    context.translate(position.x, position.y);
+    context.rotate((position.rotationDegrees * Math.PI) / 180);
+    context.translate(-position.x, -position.y);
+
     context.beginPath();
     drawSleeveTabMarkerPath(context, transform);
     context.fillStyle = trimColor;
@@ -4238,6 +4243,8 @@ function drawSleeveTabMarkers(
     );
     context.fillStyle = SLEEVE_TAB_MARKER_STROKE_COLOR;
     context.fill();
+
+    context.restore();
   }
 
   context.restore();

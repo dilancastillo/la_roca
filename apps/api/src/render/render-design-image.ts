@@ -584,8 +584,8 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   // Deben coincidir con el configurador visual.
   // Los puntos de referencia del SVG (115, 533) y (965, 533) se
   // materializan dentro de TARGET_RECT del lienzo 900x1200.
-  { x: 165, y: 473 },
-  { x: 735, y: 473 },
+  { x: 115, y: 355, rotationDegrees: -35 },
+  { x: 785, y: 355, rotationDegrees: 35 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -4545,7 +4545,7 @@ function transformSleeveTabPoint(
 }
 
 function getSleeveTabMarkerSvg(
-  position: { x: number; y: number },
+  position: { x: number; y: number; rotationDegrees: number },
   fill: string,
 ) {
   const transform = getSleeveTabMarkerTransform(position);
@@ -4561,14 +4561,14 @@ function getSleeveTabMarkerSvg(
     transform,
   );
 
-  return `
+  return `<g transform="rotate(${formatSvgNumber(position.rotationDegrees)} ${formatSvgNumber(position.x)} ${formatSvgNumber(position.y)})">
     <polygon points="${points}" fill="${fill}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
     <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
       buttonCenter.y,
     )}" r="${formatSvgNumber(
       SLEEVE_TAB_BUTTON.radius * transform.scale,
     )}" fill="${SLEEVE_TAB_MARKER_STROKE_COLOR}" />
-  `;
+  </g>`;
 }
 
 type AssetToCanvasTransform = {
