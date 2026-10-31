@@ -8458,7 +8458,7 @@ describe("renderDesignImage", () => {
     30000,
   );
 
-  it("dibuja la presilla de manga con el elemento extraido y color de vivo", async () => {
+  it("dibuja las presillas en los extremos exteriores de las mangas", async () => {
     const withoutTrim = await readRawPng(await renderDesignImage(baseScene));
     const withSleeveTabs = await readRawPng(
       await renderDesignImage({
@@ -8473,8 +8473,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 145, y: 378, width: 55, height: 65 };
-    const rightSleeveTabRegion = { x: 717, y: 378, width: 55, height: 65 };
+    const leftSleeveTabRegion = { x: 140, y: 440, width: 55, height: 65 };
+    const rightSleeveTabRegion = { x: 710, y: 440, width: 55, height: 65 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,

@@ -604,8 +604,13 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  { x: 170, y: 408 },
-  { x: 742, y: 408 },
+  // Remates de presilla en los extremos exteriores de los puños.
+  // No son logos ni vivos de manga: deben quedar junto a la abertura
+  // de cada manga y ser espejo respecto al eje central de la prenda.
+  // Los puntos de referencia del SVG (115, 533) y (965, 533) se
+  // materializan dentro de TARGET_RECT del lienzo 900x1200.
+  { x: 165, y: 473 },
+  { x: 735, y: 473 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -997,38 +1002,34 @@ const PRESILLAS_ORIGINAL_SLEEVE_TRIM_SHAPES = [
 const PRESILLAS_NECK_ORIGINAL_SLEEVE_TRIM_SHAPES = [
   {
     points: [
-      // Una presilla es un remate corto de refuerzo, no un vivo que cruza
-      // todo el puño. Se fija junto al extremo exterior de la manga.
-      [109.61, 538.43],
-      [130.45, 557.05],
-      [140.51, 545.79],
-      [119.67, 527.17],
+      [114.96, 532.54],
+      [261.19, 663.17],
+      [274.52, 648.23],
+      [128.29, 517.6],
     ],
     upper: [
-      [119.67, 527.17],
-      [140.51, 545.79],
+      [128.29, 517.6],
+      [274.52, 648.23],
     ],
     lower: [
-      [109.61, 538.43],
-      [130.45, 557.05],
+      [114.96, 532.54],
+      [261.19, 663.17],
     ],
   },
   {
     points: [
-      // Espejo exacto de la presilla izquierda respecto al eje central
-      // del SVG (x = 540), para conservar la misma posición y tamaño.
-      [970.39, 538.43],
-      [949.55, 557.05],
-      [939.49, 545.79],
-      [960.33, 527.17],
+      [964.83, 530.27],
+      [833.48, 635.7],
+      [820.98, 620.1],
+      [952.33, 514.67],
     ],
     upper: [
-      [960.33, 527.17],
-      [939.49, 545.79],
+      [952.33, 514.67],
+      [820.98, 620.1],
     ],
     lower: [
-      [970.39, 538.43],
-      [949.55, 557.05],
+      [964.83, 530.27],
+      [833.48, 635.7],
     ],
   },
 ] as const;

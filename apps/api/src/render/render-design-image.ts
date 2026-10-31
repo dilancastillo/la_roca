@@ -580,8 +580,12 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  { x: 170, y: 408 },
-  { x: 742, y: 408 },
+  // Remates de presilla en los extremos exteriores de los puños.
+  // Deben coincidir con el configurador visual.
+  // Los puntos de referencia del SVG (115, 533) y (965, 533) se
+  // materializan dentro de TARGET_RECT del lienzo 900x1200.
+  { x: 165, y: 473 },
+  { x: 735, y: 473 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,

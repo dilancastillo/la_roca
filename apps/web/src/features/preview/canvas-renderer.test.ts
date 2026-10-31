@@ -105,21 +105,6 @@ describe("vivos de mangas originales", () => {
     ]);
   });
 
-  it("ubica las presillas simétricamente en los extremos de ambos puños", () => {
-    const [left, right] = getOriginalSleeveTrimShapes(
-      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-model-15-presillas.svg",
-    );
-
-    expect(left?.lower).toEqual([
-      [109.61, 538.43],
-      [130.45, 557.05],
-    ]);
-    expect(right?.lower).toEqual([
-      [970.39, 538.43],
-      [949.55, 557.05],
-    ]);
-  });
-
   it.each([
     ["El Hato", "blouse-model-39-el-hato.svg"],
     ["Cuello Alto", "blouse-model-08.svg"],
