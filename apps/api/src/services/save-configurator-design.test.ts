@@ -139,7 +139,7 @@ describe("saveConfiguratorDesign", () => {
       [
         expect.objectContaining({
           name: "design-v2-sale-line-290-design.png",
-          datas: "png-base64",
+          raw: "png-base64",
           res_model: "sale.order.line",
           res_id: 290,
           mimetype: "image/png",
@@ -295,7 +295,7 @@ describe("saveConfiguratorDesign", () => {
       [
         expect.objectContaining({
           name: "design-v2-sale-line-290-design.png",
-          datas: "png-base64",
+          raw: "png-base64",
           res_model: "sale.order.line",
           res_id: 290,
           mimetype: "image/png",
@@ -308,7 +308,7 @@ describe("saveConfiguratorDesign", () => {
       [
         expect.objectContaining({
           name: "logo-572-logo cliente.png",
-          datas: "logo-base64",
+          raw: "logo-base64",
           description: "Logo: Bolsillo de pecho izquierdo",
         }),
       ],

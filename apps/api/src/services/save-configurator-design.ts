@@ -603,7 +603,9 @@ export async function saveConfiguratorDesign(
       odooCreate<number>(env, "ir.attachment", [
         {
           name: `logo-${attachment.placementValueId}-${attachment.filename}`,
-          datas: stripDataUrlPrefix(attachment.dataBase64),
+          // Debe coincidir con la ruta de la imagen del diseño: SaaS 19.3
+          // recibe el binario RPC de los adjuntos mediante `raw`.
+          raw: stripDataUrlPrefix(attachment.dataBase64),
           res_model: "sale.order.line",
           res_id: payload.saleOrderLineId,
           mimetype: attachment.mimeType,

@@ -60,7 +60,10 @@ export async function createDesignImageAttachment(
   return await odooCreate<number>(env, "ir.attachment", [
     {
       name: storage.attachmentName,
-      datas: input.imageBase64,
+      // Odoo SaaS 19.3 procesa el binario de creación mediante `raw`.
+      // Enviar el alias legado `datas` por JSON deja el valor sin normalizar
+      // y Odoo aborta con "_check_contents should handle that".
+      raw: input.imageBase64,
       res_model: "sale.order.line",
       res_id: input.saleOrderLineId,
       mimetype: "image/png",
