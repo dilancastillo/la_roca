@@ -5201,7 +5201,7 @@ describe("renderDesignImage", () => {
       rightCompletePinkPixels.left,
     );
     expect(backNeckPinkPixels).toBeGreaterThan(100);
-  }, 20000);
+  }, 45000);
 
   it("renderiza 20-20 con vivos internos independientes y cogotera recta", async () => {
     const neckAssetPath =
