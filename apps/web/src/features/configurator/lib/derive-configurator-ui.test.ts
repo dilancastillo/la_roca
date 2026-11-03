@@ -1100,6 +1100,43 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.useMaleBlouseSilhouette).toBeUndefined();
   });
 
+  it("conserva el SVG masculino cuando Odoo entrega un ID nuevo para JDC", () => {
+    const sessionWithManGenderAndNewNeckId: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [{ id: 531, name: "Hombre", attributeId: 142, attributeName: "Género" }],
+        },
+        ...session.attributes.map((attribute) =>
+          attribute.id === 63
+            ? {
+                ...attribute,
+                values: attribute.values.map((value) =>
+                  value.id === 338 ? { ...value, sourceValueId: 999999 } : value,
+                ),
+              }
+            : attribute,
+        ),
+      ],
+    };
+
+    const ui = deriveConfiguratorUi(sessionWithManGenderAndNewNeckId, {
+      ...session.selectedValueIds,
+      "63": [338],
+      "142": [531],
+    });
+
+    expect(ui.previewScene.neckImageSrc).toBe(
+      "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-02-jdc.svg",
+    );
+    expect(ui.previewScene.useMaleBlouseSilhouette).toBeUndefined();
+  });
+
   it("usa la base cerrada solo en la blusa del preview de Uniforme", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,

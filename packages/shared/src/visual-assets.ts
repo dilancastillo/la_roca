@@ -953,12 +953,17 @@ export function getMenBlouseNeckAssetPath(
     return undefined;
   }
 
-  if (sourceValueId !== undefined) {
-    return BLUSA_MEN_NECK_ASSETS_BY_SOURCE_VALUE_ID[sourceValueId];
+  const assetBySourceValueId =
+    sourceValueId === undefined
+      ? undefined
+      : BLUSA_MEN_NECK_ASSETS_BY_SOURCE_VALUE_ID[sourceValueId];
+  if (assetBySourceValueId) {
+    return assetBySourceValueId;
   }
 
-  // Los escenarios históricos no siempre incluyen sourceValueId. El nombre
-  // actúa solo como compatibilidad de lectura; Odoo prevalece cuando existe.
+  // Un ID reconocido de Odoo siempre prevalece. Cuando el valor proviene de
+  // una revisión o una copia con un ID nuevo, se usa únicamente la lista
+  // explícita de nombres compatibles para no perder el SVG masculino.
   const normalizedValueName = valueName
     ?.normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")

@@ -847,6 +847,43 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.useMaleBlouseSilhouette).toBeUndefined();
   });
 
+  it("conserva el SVG masculino cuando Odoo entrega un ID nuevo para CUELLO V", () => {
+    const sessionWithManGenderAndNewNeckId: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        {
+          id: 142,
+          name: "Género",
+          displayType: "radio",
+          selectionMode: "single",
+          variantMode: "no_variant",
+          values: [{ id: 531, name: "Hombre", attributeId: 142, attributeName: "Género" }],
+        },
+        ...session.attributes.map((attribute) =>
+          attribute.id === 63
+            ? {
+                ...attribute,
+                values: attribute.values.map((value) =>
+                  value.id === 334 ? { ...value, sourceValueId: 999999 } : value,
+                ),
+              }
+            : attribute,
+        ),
+      ],
+    };
+
+    const scene = deriveAutomationRenderScene(sessionWithManGenderAndNewNeckId, {
+      ...session.selectedValueIds,
+      "63": [334],
+      "142": [531],
+    });
+
+    expect(scene.neckAssetPath).toBe(
+      "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-01-cuello-v.svg",
+    );
+    expect(scene.useMaleBlouseSilhouette).toBeUndefined();
+  });
+
   it("usa la base cerrada solo en la blusa del Uniforme sin cuello", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,
