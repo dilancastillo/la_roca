@@ -8483,10 +8483,10 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 115, y: 360, width: 80, height: 80 };
-    const rightSleeveTabRegion = { x: 690, y: 360, width: 80, height: 80 };
-    const leftSleeveTabTipRegion = { x: 130, y: 400, width: 50, height: 50 };
-    const rightSleeveTabTipRegion = { x: 705, y: 400, width: 50, height: 50 };
+    const leftSleeveTabRegion = { x: 70, y: 455, width: 90, height: 90 };
+    const rightSleeveTabRegion = { x: 740, y: 455, width: 90, height: 90 };
+    const leftSleeveTabTipRegion = { x: 85, y: 495, width: 30, height: 30 };
+    const rightSleeveTabTipRegion = { x: 785, y: 495, width: 30, height: 30 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
