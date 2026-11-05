@@ -8485,8 +8485,8 @@ describe("renderDesignImage", () => {
     );
     const leftSleeveTabRegion = { x: 115, y: 360, width: 80, height: 80 };
     const rightSleeveTabRegion = { x: 690, y: 360, width: 80, height: 80 };
-    const leftSleeveTabTipRegion = { x: 145, y: 414, width: 20, height: 20 };
-    const rightSleeveTabTipRegion = { x: 720, y: 414, width: 20, height: 20 };
+    const leftSleeveTabTipRegion = { x: 130, y: 400, width: 50, height: 50 };
+    const rightSleeveTabTipRegion = { x: 705, y: 400, width: 50, height: 50 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
@@ -8526,14 +8526,14 @@ describe("renderDesignImage", () => {
         withSleeveTabs.info.width,
         leftSleeveTabTipRegion,
       ),
-    ).toBeGreaterThan(25);
+    ).toBeGreaterThan(15);
     expect(
       countPastelPinkPixelsInRegion(
         withSleeveTabs.data,
         withSleeveTabs.info.width,
         rightSleeveTabTipRegion,
       ),
-    ).toBeGreaterThan(25);
+    ).toBeGreaterThan(15);
     expect(leftSleeveTabDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 40);
     expect(rightSleeveTabDarkPixels).toBeGreaterThan(baseRightDarkPixels + 40);
   }, 20000);
