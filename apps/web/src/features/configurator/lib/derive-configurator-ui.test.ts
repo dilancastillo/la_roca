@@ -1097,7 +1097,7 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-02-jdc.svg",
     );
-    expect(ui.previewScene.useMaleBlouseSilhouette).toBeUndefined();
+    expect(ui.previewScene.useMaleBlouseSilhouette).toBe(true);
   });
 
   it("conserva el SVG masculino cuando Odoo entrega un ID nuevo para JDC", () => {
@@ -1134,7 +1134,7 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.neckImageSrc).toBe(
       "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-02-jdc.svg",
     );
-    expect(ui.previewScene.useMaleBlouseSilhouette).toBeUndefined();
+    expect(ui.previewScene.useMaleBlouseSilhouette).toBe(true);
   });
 
   it("usa la base cerrada solo en la blusa del preview de Uniforme", () => {

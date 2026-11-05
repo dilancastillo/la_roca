@@ -844,7 +844,7 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-01-cuello-v.svg",
     );
-    expect(scene.useMaleBlouseSilhouette).toBeUndefined();
+    expect(scene.useMaleBlouseSilhouette).toBe(true);
   });
 
   it("conserva el SVG masculino cuando Odoo entrega un ID nuevo para CUELLO V", () => {
@@ -881,7 +881,7 @@ describe("deriveAutomationRenderScene", () => {
     expect(scene.neckAssetPath).toBe(
       "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-01-cuello-v.svg",
     );
-    expect(scene.useMaleBlouseSilhouette).toBeUndefined();
+    expect(scene.useMaleBlouseSilhouette).toBe(true);
   });
 
   it("usa la base cerrada solo en la blusa del Uniforme sin cuello", () => {

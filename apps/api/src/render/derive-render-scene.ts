@@ -1244,9 +1244,13 @@ function deriveSingleAutomationRenderScene(
   const useMaleBlouseSilhouette =
     hasManGenderSelection(session, selectedValueIds) &&
     session.graphicManifestKey.includes("blusa") &&
-    // El recorte central solo protege la compatibilidad con cuellos
-    // históricos. Una silueta completa del catálogo se dibuja íntegra.
-    Boolean(catalogNeckAssetPath && !maleNeckAssetPath);
+    // Todo cuello estático Hombre se compone sobre la base masculina estable.
+    // Los SVG masculinos contienen polígonos blancos que, si se dibujan como
+    // prenda completa, cubren el color del torso. Esto incluye los valores
+    // recuperados por nombre cuando Odoo crea una revisión con ID nuevo.
+    // Una definición dinámica sí sustituye la silueta completa y no entra aquí.
+    !hasDynamicNeck &&
+    Boolean(catalogNeckAssetPath || maleNeckAssetPath);
   const selectedGarmentIsPespunte = isPespunteGarment(selectedGarment);
   const garmentAssetPath = dynamicBaseSilhouette && !useStableFemaleBlouseSilhouette
     ? dynamicBaseSilhouette.svgDataUri

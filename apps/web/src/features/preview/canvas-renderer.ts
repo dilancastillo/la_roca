@@ -1851,7 +1851,15 @@ export function shouldCloseBlouseNeckMask(
   scene: Pick<PreviewScene, "productName">,
   baseAssetSrc?: string,
 ) {
-  return isBlouseScene(scene, baseAssetSrc);
+  // Los SVG masculinos se componen con una base estable que ya cierra el
+  // cuello dentro de getInteriorMask. La máscara opaca móvil interpreta sus
+  // trazos abiertos como exterior y puede dejar el torso sin relleno.
+  // La exclusión es intencionalmente por activo, no por viewport: aplica igual
+  // en PC, móvil y tableta, sin alterar las blusas femeninas.
+  return (
+    isBlouseScene(scene, baseAssetSrc) &&
+    !getFileNameFromSource(baseAssetSrc ?? "").startsWith("blouse-men-")
+  );
 }
 
 function getLogoMarkerPositions(placement: string, sourceValueIds: number[] = []) {

@@ -175,6 +175,15 @@ describe("máscara de color de blusa", () => {
     ).toBe(true);
   });
 
+  it("conserva la máscara histórica de Hombre fuera del cierre opaco móvil", () => {
+    expect(
+      shouldCloseBlouseNeckMask(
+        { productName: "Blusa" },
+        "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-men-model-01-cuello-v.svg",
+      ),
+    ).toBe(false);
+  });
+
   it("conserva el pantalón fuera de la regla de cierre", () => {
     expect(
       shouldCloseBlouseNeckMask(
