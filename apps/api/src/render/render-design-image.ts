@@ -580,11 +580,10 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Remates de presilla en el borde del puño de cada manga.
-  // Se conservan paralelas al dobladillo diagonal: solo se anclan al borde
-  // exterior inferior del puño, donde termina físicamente cada manga.
-  { x: 115, y: 500, rotationDegrees: -35 },
-  { x: 785, y: 500, rotationDegrees: 35 },
+  // Presillas en la unión entre el cuerpo y cada manga, junto a la costura.
+  // Mantienen el giro original paralelo al remate diagonal de la manga.
+  { x: 170, y: 408, rotationDegrees: -35 },
+  { x: 742, y: 408, rotationDegrees: 35 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
