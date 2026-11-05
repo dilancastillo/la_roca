@@ -204,7 +204,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     expect(applyFirstOptionDefaults(lowerPocketSession, {})).toMatchObject({ "32": [320] });
     expect(applyFirstOptionDefaults(lowerPocketSession, { "32": [321] })).toMatchObject({ "32": [321] });
   });
-  it("reemplaza Ninguno por un color concreto en Color de vivos", () => {
+  it("conserva Ninguno cuando el usuario lo elige en Color de vivos", () => {
     const trimColorAttribute: ConfiguratorSession["attributes"][number] = {
       id: 33,
       name: "Color de vivos",
@@ -222,7 +222,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     };
 
     expect(applyFirstOptionDefaults(trimColorSession, { "33": [330] })).toMatchObject({
-      "33": [331],
+      "33": [330],
     });
   });
 
