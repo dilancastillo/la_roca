@@ -5408,37 +5408,42 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   }
 
   if (baseAssetPath) {
-    const baseBuffer = await createTintedBaseBuffer(
-      baseAssetPath,
-      scene.baseColorHex,
-      !scene.suppressGarmentBaseOutline,
-      Boolean(scene.neckAssetPath),
-    );
-    if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
-      // Igual que en web, solo se toma el centro del modelo histórico: allí
-      // están cuello y cremallera, pero no las mangas/sisas de Mujer.
+    if (scene.useMaleBlouseSilhouette) {
+      // El SVG histórico del cuello contiene relleno blanco. Persistimos solo
+      // su tinta neutra para no tapar la base Hombre con un rectángulo blanco.
+      const neckContourBuffer = await createSemanticNeckContourBuffer(
+        await loadProcessedImage(baseAssetPath),
+      );
       layers.push(
         getOverlaySvg(
-          scene.useMaleBlouseSilhouette
-            ? "male-neck-detail"
-            : "female-neck-detail",
-          toDataUri(baseBuffer),
-          scene.useMaleBlouseSilhouette
-            ? getMaleNeckDetailRegions(baseAssetPath)
-            : getStableFemaleNeckDetailRegions(),
+          "male-neck-detail",
+          toDataUri(neckContourBuffer),
+          getMaleNeckDetailRegions(baseAssetPath),
         ),
       );
-      // Replica exactamente la limpieza del canvas para que preview y PNG
-      // guardado no diverjan en los tres cuellos históricos afectados.
-      if (scene.useMaleBlouseSilhouette) {
+      layers.push(
+        getMaleNeckShoulderCleanupSvg(baseAssetPath, scene.baseColorHex),
+      );
+    } else {
+      const baseBuffer = await createTintedBaseBuffer(
+        baseAssetPath,
+        scene.baseColorHex,
+        !scene.suppressGarmentBaseOutline,
+        Boolean(scene.neckAssetPath),
+      );
+      if (scene.useStableFemaleBlouseSilhouette) {
         layers.push(
-          getMaleNeckShoulderCleanupSvg(baseAssetPath, scene.baseColorHex),
+          getOverlaySvg(
+            "female-neck-detail",
+            toDataUri(baseBuffer),
+            getStableFemaleNeckDetailRegions(),
+          ),
+        );
+      } else {
+        layers.push(
+          `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
         );
       }
-    } else {
-      layers.push(
-        `<image href="${toDataUri(baseBuffer)}" x="0" y="0" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" />`,
-      );
     }
   } else {
     layers.push(getFallbackGarmentSvg(scene.baseColorHex));

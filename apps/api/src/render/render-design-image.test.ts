@@ -934,6 +934,16 @@ describe("renderDesignImage", () => {
         ),
         fileName,
       ).toBeGreaterThan(100);
+      // El recorte del cuello no puede conservar el relleno blanco del SVG
+      // histórico dentro del torso masculino ya coloreado.
+      expect(
+        countWhitePixelsInRegion(
+          rendered.data,
+          rendered.info.width,
+          { x: 420, y: 330, width: 60, height: 120 },
+        ),
+        `${fileName} torso fill`,
+      ).toBe(0);
     }
   }, 45_000);
 

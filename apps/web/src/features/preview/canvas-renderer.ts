@@ -5765,34 +5765,36 @@ async function composeSingleDesign(
   }
 
   if (baseAssetSrc) {
-    const baseCanvas = await createTintedBaseCanvas(
-      baseAssetSrc,
-      scene.baseColorHex,
-      !scene.suppressGarmentBaseOutline,
-      Boolean(scene.neckImageSrc),
-      closeBlouseNeckMask,
-    );
-    if (scene.useMaleBlouseSilhouette || scene.useStableFemaleBlouseSilhouette) {
-      // Los modelos dinámicos son prendas completas. Sobre la base estable
-      // copiamos únicamente el detalle central; nunca brazos ni sisas.
+    if (scene.useMaleBlouseSilhouette) {
+      // El SVG histórico del cuello también trae un relleno blanco de torso.
+      // Sobre la silueta Hombre estable solamente se permiten sus trazos
+      // oscuros; así el cuello no puede volver a blanquear la prenda.
+      const neckContourCanvas = createSemanticNeckContourMask(
+        await createRasterCanvas(baseAssetSrc),
+      );
       drawCanvasInRegions(
         context,
-        baseCanvas,
-        scene.useMaleBlouseSilhouette
-          ? getMaleNeckDetailRegions(baseAssetSrc)
-          : getStableFemaleNeckDetailRegions(),
+        neckContourCanvas,
+        getMaleNeckDetailRegions(baseAssetSrc),
       );
-      // Tres SVG históricos guardan pequeños trazos internos de hombro junto
-      // al cuello. Se limpian después del recorte sin tocar el contorno Hombre.
-      if (scene.useMaleBlouseSilhouette) {
-        cleanMaleNeckShoulderArtifacts(
-          context,
-          baseAssetSrc,
-          scene.baseColorHex,
-        );
-      }
+      cleanMaleNeckShoulderArtifacts(context, baseAssetSrc, scene.baseColorHex);
     } else {
-      context.drawImage(baseCanvas, 0, 0);
+      const baseCanvas = await createTintedBaseCanvas(
+        baseAssetSrc,
+        scene.baseColorHex,
+        !scene.suppressGarmentBaseOutline,
+        Boolean(scene.neckImageSrc),
+        closeBlouseNeckMask,
+      );
+      if (scene.useStableFemaleBlouseSilhouette) {
+        drawCanvasInRegions(
+          context,
+          baseCanvas,
+          getStableFemaleNeckDetailRegions(),
+        );
+      } else {
+        context.drawImage(baseCanvas, 0, 0);
+      }
     }
   } else {
     drawFallbackGarmentFill(context, scene.baseColorHex);
