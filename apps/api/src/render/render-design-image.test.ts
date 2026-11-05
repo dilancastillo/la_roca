@@ -8468,7 +8468,7 @@ describe("renderDesignImage", () => {
     30000,
   );
 
-  it("dibuja las presillas en los extremos exteriores de las mangas", async () => {
+  it("ancla las presillas al lateral bajo de la manga, antes del puño", async () => {
     const withoutTrim = await readRawPng(await renderDesignImage(baseScene));
     const withSleeveTabs = await readRawPng(
       await renderDesignImage({
@@ -8483,10 +8483,13 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 65, y: 290, width: 90, height: 90 };
-    const rightSleeveTabRegion = { x: 745, y: 290, width: 90, height: 90 };
-    const leftSleeveTabTipRegion = { x: 85, y: 320, width: 30, height: 30 };
-    const rightSleeveTabTipRegion = { x: 785, y: 320, width: 30, height: 30 };
+    const leftSleeveTabRegion = { x: 65, y: 410, width: 90, height: 90 };
+    const rightSleeveTabRegion = { x: 745, y: 410, width: 90, height: 90 };
+    const leftSleeveTabTipRegion = { x: 85, y: 440, width: 30, height: 30 };
+    const rightSleeveTabTipRegion = { x: 785, y: 440, width: 30, height: 30 };
+    // Regresión: no deben volver a subir hacia el hombro.
+    const leftSleeveShoulderRegion = { x: 65, y: 260, width: 90, height: 110 };
+    const rightSleeveShoulderRegion = { x: 745, y: 260, width: 90, height: 110 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
@@ -8536,6 +8539,20 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(15);
     expect(leftSleeveTabDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 40);
     expect(rightSleeveTabDarkPixels).toBeGreaterThan(baseRightDarkPixels + 40);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withSleeveTabs.data,
+        withSleeveTabs.info.width,
+        leftSleeveShoulderRegion,
+      ),
+    ).toBeLessThan(20);
+    expect(
+      countPastelPinkPixelsInRegion(
+        withSleeveTabs.data,
+        withSleeveTabs.info.width,
+        rightSleeveShoulderRegion,
+      ),
+    ).toBeLessThan(20);
   }, 20000);
 
   it("pinta los aros del bolsillo inferior AROS con su vivo especifico", async () => {

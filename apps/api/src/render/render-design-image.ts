@@ -580,10 +580,10 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Presillas sobre el lateral exterior de cada manga, antes del remate del puño.
-  // Mantienen el giro original y la punta dirigida hacia abajo.
-  { x: 115, y: 340, rotationDegrees: -35 },
-  { x: 785, y: 340, rotationDegrees: 35 },
+  // Presillas en el lateral exterior bajo de cada manga, inmediatamente antes
+  // del remate diagonal del puño. Conservan su giro y punta hacia abajo.
+  { x: 115, y: 460, rotationDegrees: -35 },
+  { x: 785, y: 460, rotationDegrees: 35 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
