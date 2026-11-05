@@ -210,17 +210,9 @@ export function applyFirstOptionDefaults(
     const hasOnlyPlaceholderSelection =
       selectedValues.length > 0 &&
       selectedValues.every((value) => isPlaceholderOption(attribute, value.name));
-    // Un color de vivo debe ser una tinta concreta: Ninguno no es válido.
-    const hasOnlyInvalidTrimColorSelection =
-      isTrimColorAttribute(attribute) &&
-      selectedValues.length > 0 &&
-      selectedValues.every((value) => isExplicitNoneOption(value.name));
-
-
     if (
       selectedValueIds.length > 0 &&
-      !hasOnlyPlaceholderSelection &&
-      !hasOnlyInvalidTrimColorSelection
+      !hasOnlyPlaceholderSelection
     ) {
       continue;
     }
@@ -240,9 +232,7 @@ export function applyFirstOptionDefaults(
       : meaningfulValues.length > 0
       ? meaningfulValues
       : attribute.values;
-    const trimColorCandidateValues = isTrimColorAttribute(attribute)
-      ? candidateValues.filter((value) => !isExplicitNoneOption(value.name))
-      : candidateValues;
+    const trimColorCandidateValues = candidateValues;
 
     const kneePatchModel = getPantsKneePatchModelBySourceValueId(
       getKneePatchModelForTypeAttribute(session, attribute.id, nextSelectedValueIds),
