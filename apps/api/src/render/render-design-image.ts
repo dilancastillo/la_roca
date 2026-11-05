@@ -2953,6 +2953,34 @@ async function createSemanticNeckContourBuffer(processed: ProcessedImage) {
   return await placeProcessedBufferOnCanvas(contourPng, processed.bounds);
 }
 
+async function applyKnownMaleBlouseSilhouette(
+  tint: Uint8ClampedArray,
+  processed: ProcessedImage,
+  assetPath: string,
+  fillColor: string,
+) {
+  if (getAssetFileName(assetPath) !== MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+    return;
+  }
+
+  // El activo histórico de Hombre deja abierto el tramo superior entre hombros.
+  // La silueta canónica se usa sólo como máscara de color; el contorno original
+  // se conserva y se dibuja después, sin añadir líneas visibles al cuello.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350"><path fill="${fillColor}" d="M379 144 L184 244 L116 531 L262 662 L278 632 L280 1136 C360 1164 446 1178 540 1178 C634 1178 720 1164 800 1136 L802 632 L834 634 L966 513 L895 247 L694 144 Z"/></svg>`;
+  const { data } = await sharp(Buffer.from(svg))
+    .resize(processed.width, processed.height)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  for (let offset = 0; offset < tint.length; offset += 4) {
+    if ((data[offset + 3] ?? 0) === 0) continue;
+    tint[offset] = data[offset] ?? 0;
+    tint[offset + 1] = data[offset + 1] ?? 0;
+    tint[offset + 2] = data[offset + 2] ?? 0;
+    tint[offset + 3] = data[offset + 3] ?? 255;
+  }
+}
 async function createTintedBaseBuffer(
   assetPath: string,
   fillColor: string,
@@ -2978,8 +3006,13 @@ async function createTintedBaseBuffer(
       tint[offset + 2] = blue ?? 0;
       tint[offset + 3] = alpha ?? 255;
     }
+  }
 
-    if (includeOutline && (processed.data[offset + 3] ?? 0) > 0) {
+  await applyKnownMaleBlouseSilhouette(tint, processed, assetPath, fillColor);
+
+  if (includeOutline) {
+    for (let offset = 0; offset < tint.length; offset += 4) {
+      if ((processed.data[offset + 3] ?? 0) === 0) continue;
       const red = processed.data[offset] ?? 0;
       const green = processed.data[offset + 1] ?? 0;
       const blue = processed.data[offset + 2] ?? 0;

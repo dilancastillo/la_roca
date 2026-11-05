@@ -3022,6 +3022,43 @@ function getDrawRect(bounds: ProcessedImage["bounds"]) {
   };
 }
 
+function fillKnownMaleBlouseSilhouette(
+  context: CanvasRenderingContext2D,
+  sourceSrc: string,
+  fillColor: string,
+) {
+  if (getFileNameFromSource(sourceSrc) !== MEN_CLOSED_NO_COLLAR_BASE_FILE_NAME) {
+    return;
+  }
+
+  // La base histórica de Hombre no cierra el contorno entre ambos hombros.
+  // Para colorearla no dependemos de un flood-fill: usamos la misma silueta
+  // vectorial del activo, exclusivamente como máscara de relleno invisible.
+  const scaleX = context.canvas.width / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceWidth;
+  const scaleY = context.canvas.height / CLOSED_NO_COLLAR_MASK_CLOSURE.sourceHeight;
+  const x = (value: number) => value * scaleX;
+  const y = (value: number) => value * scaleY;
+
+  context.save();
+  context.fillStyle = fillColor;
+  context.beginPath();
+  context.moveTo(x(379), y(144));
+  context.lineTo(x(184), y(244));
+  context.lineTo(x(116), y(531));
+  context.lineTo(x(262), y(662));
+  context.lineTo(x(278), y(632));
+  context.lineTo(x(280), y(1136));
+  context.bezierCurveTo(x(360), y(1164), x(446), y(1178), x(540), y(1178));
+  context.bezierCurveTo(x(634), y(1178), x(720), y(1164), x(800), y(1136));
+  context.lineTo(x(802), y(632));
+  context.lineTo(x(834), y(634));
+  context.lineTo(x(966), y(513));
+  context.lineTo(x(895), y(247));
+  context.lineTo(x(694), y(144));
+  context.closePath();
+  context.fill();
+  context.restore();
+}
 function fillKnownBlouseNeckOpening(
   context: CanvasRenderingContext2D,
   sourceSrc: string,
@@ -5661,6 +5698,7 @@ export async function createTintedBaseCanvas(
   fillContext.globalCompositeOperation = "destination-in";
   fillContext.drawImage(mask, 0, 0);
   fillContext.globalCompositeOperation = "source-over";
+  fillKnownMaleBlouseSilhouette(fillContext, src, fillColor);
   if (closeBlouseNeckMask) {
     fillKnownBlouseNeckOpening(fillContext, src, fillColor);
   }
