@@ -605,10 +605,10 @@ const LOGO_MARKER_POSITIONS = {
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
   // Remates de presilla en el borde del puño de cada manga.
-  // La geometría fuente ya termina en punta hacia abajo. No se rota por lado:
-  // ambas presillas conservan esa orientación y quedan simétricas en los puños.
-  { x: 155, y: 400, rotationDegrees: 0 },
-  { x: 730, y: 400, rotationDegrees: 0 },
+  // Presillas orientadas paralelas al dobladillo diagonal exterior del puño.
+  // La punta queda hacia el borde de la manga, simétricas respecto al eje central.
+  { x: 155, y: 400, rotationDegrees: -35 },
+  { x: 730, y: 400, rotationDegrees: 35 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
