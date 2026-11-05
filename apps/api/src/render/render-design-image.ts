@@ -580,12 +580,11 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Remates de presilla en los extremos exteriores de los puños.
-  // Deben coincidir con el configurador visual.
-  // Los puntos de referencia del SVG (115, 533) y (965, 533) se
-  // materializan dentro de TARGET_RECT del lienzo 900x1200.
-  { x: 115, y: 355, rotationDegrees: -35 },
-  { x: 785, y: 355, rotationDegrees: 35 },
+  // Remates de presilla en el borde inferior del puño de cada manga.
+  // La punta queda hacia abajo, pegada al dobladillo exterior del puño,
+  // espejo respecto al eje central de la prenda.
+  { x: 155, y: 490, rotationDegrees: -90 },
+  { x: 730, y: 490, rotationDegrees: 90 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,

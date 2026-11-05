@@ -90,13 +90,6 @@ function isLowerPocketModelAttribute(
   return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
 }
 
-function isTrimColorAttribute(
-  attribute: ConfiguratorSession["attributes"][number],
-) {
-  const name = normalizeText(attribute.name);
-  return name.includes("color") && name.includes("vivo");
-}
-
 function isUnselectedOption(optionName: string) {
   return normalizeText(optionName) === "sin seleccion";
 }

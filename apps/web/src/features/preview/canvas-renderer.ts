@@ -604,11 +604,11 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Remates de presilla en la zona de sisa/axila de cada manga.
-  // No son logos ni vivos de manga: deben quedar junto a la abertura
-  // de cada manga y ser espejo respecto al eje central de la prenda.
-  { x: 200, y: 430, rotationDegrees: -55 },
-  { x: 660, y: 430, rotationDegrees: 55 },
+  // Remates de presilla en el borde inferior del puño de cada manga.
+  // La punta queda hacia abajo, pegada al dobladillo exterior del puño,
+  // espejo respecto al eje central de la prenda.
+  { x: 155, y: 490, rotationDegrees: -90 },
+  { x: 730, y: 490, rotationDegrees: 90 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
