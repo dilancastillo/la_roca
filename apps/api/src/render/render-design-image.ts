@@ -580,11 +580,11 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Remates de presilla en el borde inferior del puño de cada manga.
-  // La punta queda hacia abajo, pegada al dobladillo exterior del puño,
+  // Remates de presilla en el borde del puño de cada manga.
+  // La punta queda hacia abajo pegada al dobladillo exterior del puño,
   // espejo respecto al eje central de la prenda.
-  { x: 155, y: 490, rotationDegrees: -90 },
-  { x: 730, y: 490, rotationDegrees: 90 },
+  { x: 155, y: 400, rotationDegrees: -90 },
+  { x: 730, y: 400, rotationDegrees: 90 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,

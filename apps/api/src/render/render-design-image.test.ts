@@ -8483,8 +8483,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 75, y: 315, width: 80, height: 80 };
-    const rightSleeveTabRegion = { x: 745, y: 315, width: 80, height: 80 };
+    const leftSleeveTabRegion = { x: 115, y: 360, width: 80, height: 80 };
+    const rightSleeveTabRegion = { x: 690, y: 360, width: 80, height: 80 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
