@@ -8483,10 +8483,10 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 65, y: 410, width: 90, height: 90 };
-    const rightSleeveTabRegion = { x: 745, y: 410, width: 90, height: 90 };
-    const leftSleeveTabTipRegion = { x: 85, y: 440, width: 30, height: 30 };
-    const rightSleeveTabTipRegion = { x: 785, y: 440, width: 30, height: 30 };
+    const leftSleeveTabRegion = { x: 50, y: 350, width: 120, height: 120 };
+    const rightSleeveTabRegion = { x: 730, y: 350, width: 120, height: 120 };
+    const leftSleeveTabTipRegion = { x: 65, y: 410, width: 35, height: 35 };
+    const rightSleeveTabTipRegion = { x: 800, y: 410, width: 35, height: 35 };
     // Regresión: no deben volver a subir hacia el hombro.
     const leftSleeveShoulderRegion = { x: 65, y: 260, width: 90, height: 110 };
     const rightSleeveShoulderRegion = { x: 745, y: 260, width: 90, height: 110 };
