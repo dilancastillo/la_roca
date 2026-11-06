@@ -8485,11 +8485,11 @@ describe("renderDesignImage", () => {
     );
     const leftSleeveTabRegion = { x: 50, y: 350, width: 120, height: 120 };
     const rightSleeveTabRegion = { x: 730, y: 350, width: 120, height: 120 };
-    const leftSleeveTabTipRegion = { x: 65, y: 410, width: 35, height: 35 };
-    const rightSleeveTabTipRegion = { x: 800, y: 410, width: 35, height: 35 };
-    // Regresión: no deben volver a subir hacia el hombro.
-    const leftSleeveShoulderRegion = { x: 65, y: 260, width: 90, height: 110 };
-    const rightSleeveShoulderRegion = { x: 745, y: 260, width: 90, height: 110 };
+    // La punta de cada presilla debe mirar hacia el hombro, no hacia el puño.
+    const leftSleeveTabTipRegion = { x: 70, y: 365, width: 40, height: 40 };
+    const rightSleeveTabTipRegion = { x: 790, y: 365, width: 40, height: 40 };
+    const leftSleeveCuffRegion = { x: 65, y: 410, width: 35, height: 35 };
+    const rightSleeveCuffRegion = { x: 800, y: 410, width: 35, height: 35 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
       withoutTrim.data,
       withoutTrim.info.width,
@@ -8543,14 +8543,14 @@ describe("renderDesignImage", () => {
       countPastelPinkPixelsInRegion(
         withSleeveTabs.data,
         withSleeveTabs.info.width,
-        leftSleeveShoulderRegion,
+        leftSleeveCuffRegion,
       ),
     ).toBeLessThan(20);
     expect(
       countPastelPinkPixelsInRegion(
         withSleeveTabs.data,
         withSleeveTabs.info.width,
-        rightSleeveShoulderRegion,
+        rightSleeveCuffRegion,
       ),
     ).toBeLessThan(20);
   }, 20000);
