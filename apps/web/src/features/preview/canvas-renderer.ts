@@ -606,8 +606,8 @@ const LOGO_MARKER_POSITIONS = {
 const SLEEVE_TAB_MARKER_POSITIONS = [
   // Presillas pegadas a la costura lateral de cada manga, antes del puño.
   // La punta se orienta hacia el hombro y se refleja entre ambos lados.
-  { x: 110, y: 405, rotationDegrees: 135 },
-  { x: 790, y: 405, rotationDegrees: -135 },
+  { x: 110, y: 405, rotationDegrees: 0 },
+  { x: 790, y: 405, rotationDegrees: 0 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
