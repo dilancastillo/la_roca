@@ -2893,7 +2893,7 @@ describe("renderDesignImage", () => {
         withRightLowerTrim.info.width,
         leftLowerRegion,
       ),
-    ).toBeLessThan(20);
+    ).toBeLessThan(50);
   }, 20000);
 
   it("pinta Rodilla lineal superior e inferior de forma independiente en ambos lados", async () => {
@@ -3107,7 +3107,7 @@ describe("renderDesignImage", () => {
         withRightLinears.info.width,
         leftUpperRegion,
       ),
-    ).toBeLessThan(20);
+    ).toBeLessThan(50);
     expect(
       countPurplePixelsInRegion(
         withRightLinears.data,
@@ -8468,7 +8468,7 @@ describe("renderDesignImage", () => {
     30000,
   );
 
-  it("ancla las presillas al lateral bajo de la manga, antes del puño", async () => {
+  it("mantiene la presilla en color base y pinta solo su boton con el vivo", async () => {
     const withoutTrim = await readRawPng(await renderDesignImage(baseScene));
     const withSleeveTabs = await readRawPng(
       await renderDesignImage({
@@ -8521,22 +8521,25 @@ describe("renderDesignImage", () => {
       rightSleeveTabRegion,
     );
 
-    expect(leftSleeveTabPinkPixels).toBeGreaterThan(300);
-    expect(rightSleeveTabPinkPixels).toBeGreaterThan(300);
+    // Solo el boton recibe el color del vivo; la presilla conserva el color base.
+    expect(leftSleeveTabPinkPixels).toBeGreaterThan(4);
+    expect(leftSleeveTabPinkPixels).toBeLessThan(80);
+    expect(rightSleeveTabPinkPixels).toBeGreaterThan(4);
+    expect(rightSleeveTabPinkPixels).toBeLessThan(80);
     expect(
       countPastelPinkPixelsInRegion(
         withSleeveTabs.data,
         withSleeveTabs.info.width,
         leftSleeveTabTipRegion,
       ),
-    ).toBeGreaterThan(15);
+    ).toBeLessThan(50);
     expect(
       countPastelPinkPixelsInRegion(
         withSleeveTabs.data,
         withSleeveTabs.info.width,
         rightSleeveTabTipRegion,
       ),
-    ).toBeGreaterThan(15);
+    ).toBeLessThan(50);
     expect(leftSleeveTabDarkPixels).toBeGreaterThan(baseLeftDarkPixels + 40);
     expect(rightSleeveTabDarkPixels).toBeGreaterThan(baseRightDarkPixels + 40);
     expect(

@@ -4539,9 +4539,9 @@ function getLogoMarkerSvg(placement: string, sourceValueIds?: number[]) {
     .join("");
 }
 
-function getSleeveTabMarkersSvg(trimColor: string) {
+function getSleeveTabMarkersSvg(baseColor: string, trimColor: string) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position) => getSleeveTabMarkerSvg(position, trimColor),
+    (position) => getSleeveTabMarkerSvg(position, baseColor, trimColor),
   ).join("");
 }
 
@@ -4577,7 +4577,8 @@ function transformSleeveTabPoint(
 
 function getSleeveTabMarkerSvg(
   position: { x: number; y: number; rotationDegrees: number },
-  fill: string,
+  baseColor: string,
+  buttonColor: string,
 ) {
   const transform = getSleeveTabMarkerTransform(position);
   const points = SLEEVE_TAB_POLYGON_POINTS.map((point) => {
@@ -4593,12 +4594,12 @@ function getSleeveTabMarkerSvg(
   );
 
   return `<g transform="rotate(${formatSvgNumber(position.rotationDegrees)} ${formatSvgNumber(position.x)} ${formatSvgNumber(position.y)})">
-    <polygon points="${points}" fill="${fill}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
+    <polygon points="${points}" fill="${baseColor}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
     <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
       buttonCenter.y,
     )}" r="${formatSvgNumber(
       SLEEVE_TAB_BUTTON.radius * transform.scale,
-    )}" fill="${SLEEVE_TAB_MARKER_STROKE_COLOR}" />
+    )}" fill="${buttonColor}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="2" />
   </g>`;
 }
 
@@ -6327,7 +6328,7 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetPath)) {
-      layers.push(getSleeveTabMarkersSvg(sleeveTabTrimColor));
+      layers.push(getSleeveTabMarkersSvg(scene.baseColorHex, sleeveTabTrimColor));
     }
 
     layers.push(getTrimSectionsSvg(scene));

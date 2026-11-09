@@ -4249,7 +4249,8 @@ function drawLogoMarker(
 
 function drawSleeveTabMarkers(
   context: CanvasRenderingContext2D,
-  trimColor: string,
+  baseColor: string,
+  buttonColor: string,
 ) {
   context.save();
   context.lineJoin = "miter";
@@ -4264,7 +4265,7 @@ function drawSleeveTabMarkers(
 
     context.beginPath();
     drawSleeveTabMarkerPath(context, transform);
-    context.fillStyle = trimColor;
+    context.fillStyle = baseColor;
     context.fill();
     context.strokeStyle = SLEEVE_TAB_MARKER_STROKE_COLOR;
     context.lineWidth = SLEEVE_TAB_MARKER_STROKE_WIDTH;
@@ -4283,8 +4284,11 @@ function drawSleeveTabMarkers(
       0,
       Math.PI * 2,
     );
-    context.fillStyle = SLEEVE_TAB_MARKER_STROKE_COLOR;
+    context.fillStyle = buttonColor;
     context.fill();
+    context.strokeStyle = SLEEVE_TAB_MARKER_STROKE_COLOR;
+    context.lineWidth = 2;
+    context.stroke();
 
     context.restore();
   }
@@ -6284,7 +6288,11 @@ async function composeSingleDesign(
     }
 
     if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetSrc)) {
-      drawSleeveTabMarkers(context, sleeveTabTrimColor);
+      drawSleeveTabMarkers(
+        context,
+        scene.baseColorHex,
+        sleeveTabTrimColor,
+      );
     }
 
     drawTrimSections(context, scene);
