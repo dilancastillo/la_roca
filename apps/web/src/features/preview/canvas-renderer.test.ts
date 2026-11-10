@@ -105,6 +105,18 @@ describe("vivos de mangas originales", () => {
     ]);
   });
 
+  it("conserva las dos guías de manga aun sin SVG de cuello seleccionado", () => {
+    // El editor del catálogo puede abrirse antes de cargar un SVG. Las guías
+    // rosadas no pueden depender de esa selección: el usuario debe poder
+    // calibrarlas desde la silueta base.
+    const [left, right] = getOriginalSleeveTrimShapes("", "");
+
+    expect(left).toBeDefined();
+    expect(right).toBeDefined();
+    expect(left?.points).toHaveLength(4);
+    expect(right?.points).toHaveLength(4);
+  });
+
   it.each([
     ["El Hato", "blouse-model-39-el-hato.svg"],
     ["Cuello Alto", "blouse-model-08.svg"],

@@ -1640,6 +1640,9 @@ main {
 .visual-runtime-preview__sleeve-calibration {
   position: absolute;
   inset: 0;
+  /* Las guías del editor deben pintar por encima de las imágenes del preview;
+     no intervienen en el SVG ni en la versión publicada. */
+  z-index: 4;
   pointer-events: none;
 }
 

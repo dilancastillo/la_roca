@@ -629,6 +629,10 @@ export function VisualCatalogPage() {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [slot, setSlot] = useState<VisualSlot>("neck");
+  // La calibración es una herramienta visual del editor de cuellos. El permiso
+  // de guardar se valida por separado; ocultar la guía por el perfil de sesión
+  // deja al editor sin las mangas rosadas aunque el usuario pueda abrir el modelo.
+  const canCalibrateSleeves = slot === "neck";
   const [layer, setLayer] = useState<VisualLayer>("component");
   const [attributeId, setAttributeId] = useState<number | null>(null);
   const [valueSourceId, setValueSourceId] = useState<number | null>(null);
@@ -1916,7 +1920,7 @@ export function VisualCatalogPage() {
                   </label>
                 ))}
               </div>
-              {isCatalogAdmin && slot === "neck" ? (
+              {canCalibrateSleeves ? (
                 <fieldset className="catalog-sleeve-calibration">
                   <legend>Calibración de vivos de manga</legend>
                   <p>
@@ -2082,7 +2086,7 @@ export function VisualCatalogPage() {
                     aria-hidden="true"
                   />
                 ) : null}
-                {isCatalogAdmin && slot === "neck" ? (
+                {canCalibrateSleeves ? (
                   <div
                     className="visual-runtime-preview__sleeve-calibration"
                     aria-label="Guías de calibración de mangas"
