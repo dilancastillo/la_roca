@@ -4251,17 +4251,26 @@ function drawSleeveTabMarkers(
   context: CanvasRenderingContext2D,
   baseColor: string,
   buttonColor: string,
+  calibration?: PreviewScene["sleeveTabCalibration"],
 ) {
   context.save();
   context.lineJoin = "miter";
 
-  for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
-    const transform = getSleeveTabMarkerTransform(position);
+  for (const [index, position] of SLEEVE_TAB_MARKER_POSITIONS.entries()) {
+    const adjustment = calibration?.[index === 0 ? "left" : "right"];
+    const calibratedPosition = {
+      ...position,
+      x: position.x + (adjustment?.x ?? 0),
+      y: position.y + (adjustment?.y ?? 0),
+      rotationDegrees: position.rotationDegrees + (adjustment?.rotation ?? 0),
+    };
+    const transform = getSleeveTabMarkerTransform(calibratedPosition);
 
     context.save();
-    context.translate(position.x, position.y);
-    context.rotate((position.rotationDegrees * Math.PI) / 180);
-    context.translate(-position.x, -position.y);
+    context.translate(calibratedPosition.x, calibratedPosition.y);
+    context.rotate((calibratedPosition.rotationDegrees * Math.PI) / 180);
+    context.scale(adjustment?.scale ?? 1, adjustment?.scale ?? 1);
+    context.translate(-calibratedPosition.x, -calibratedPosition.y);
 
     context.beginPath();
     drawSleeveTabMarkerPath(context, transform);
@@ -6292,6 +6301,7 @@ async function composeSingleDesign(
         context,
         scene.baseColorHex,
         sleeveTabTrimColor,
+        scene.sleeveTabCalibration,
       );
     }
 

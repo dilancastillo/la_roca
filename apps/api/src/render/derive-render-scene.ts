@@ -58,6 +58,7 @@ export type AutomationRenderScene = {
   /** Perfil estable de manga, independiente del SVG dinámico del editor. */
   sleeveProfileId?: SleeveProfileId;
   sleeveCalibration?: VisualPlacement["sleeveCalibration"];
+  sleeveTabCalibration?: VisualPlacement["sleeveTabCalibration"];
   suppressGarmentBaseOutline?: boolean;
   garmentDetailAssetPath?: string;
   garmentDetailAssetPaths?: string[];
@@ -1357,6 +1358,9 @@ function deriveSingleAutomationRenderScene(
     ...(sleeveProfileId ? { sleeveProfileId } : {}),
     ...(dynamicNeckDefinition?.placement.sleeveCalibration
       ? { sleeveCalibration: dynamicNeckDefinition.placement.sleeveCalibration }
+      : {}),
+    ...(dynamicNeckDefinition?.placement.sleeveTabCalibration
+      ? { sleeveTabCalibration: dynamicNeckDefinition.placement.sleeveTabCalibration }
       : {}),
     ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),

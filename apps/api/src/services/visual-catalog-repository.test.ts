@@ -55,6 +55,10 @@ const mutation: VisualDefinitionMutation = {
       left: { x: -12, y: 5, scaleX: 1, scaleY: 1, rotation: 0 },
       right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
     },
+    sleeveTabCalibration: {
+      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
+      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+    },
   },
   referenceAssetSrc:
     "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
@@ -226,6 +230,13 @@ describe("visual catalog repository", () => {
     ).toEqual({
       left: { x: -12, y: 5, scaleX: 1, scaleY: 1, rotation: 0 },
       right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
+    });
+    expect(
+      (await loadActiveVisualDefinitions(env, 7, [firstApproved.id]))[0]
+        ?.placement?.sleeveTabCalibration,
+    ).toEqual({
+      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
+      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
     });
   });
 

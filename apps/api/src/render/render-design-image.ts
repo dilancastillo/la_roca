@@ -4539,9 +4539,19 @@ function getLogoMarkerSvg(placement: string, sourceValueIds?: number[]) {
     .join("");
 }
 
-function getSleeveTabMarkersSvg(baseColor: string, trimColor: string) {
+function getSleeveTabMarkersSvg(
+  baseColor: string,
+  trimColor: string,
+  calibration?: AutomationRenderScene["sleeveTabCalibration"],
+) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position) => getSleeveTabMarkerSvg(position, baseColor, trimColor),
+    (position, index) =>
+      getSleeveTabMarkerSvg(
+        position,
+        baseColor,
+        trimColor,
+        calibration?.[index === 0 ? "left" : "right"],
+      ),
   ).join("");
 }
 
@@ -4579,8 +4589,15 @@ function getSleeveTabMarkerSvg(
   position: { x: number; y: number; rotationDegrees: number },
   baseColor: string,
   buttonColor: string,
+  calibration?: { x: number; y: number; scale: number; rotation: number },
 ) {
-  const transform = getSleeveTabMarkerTransform(position);
+  const calibratedPosition = {
+    ...position,
+    x: position.x + (calibration?.x ?? 0),
+    y: position.y + (calibration?.y ?? 0),
+    rotationDegrees: position.rotationDegrees + (calibration?.rotation ?? 0),
+  };
+  const transform = getSleeveTabMarkerTransform(calibratedPosition);
   const points = SLEEVE_TAB_POLYGON_POINTS.map((point) => {
     const transformedPoint = transformSleeveTabPoint(point, transform);
 
@@ -4593,7 +4610,7 @@ function getSleeveTabMarkerSvg(
     transform,
   );
 
-  return `<g transform="rotate(${formatSvgNumber(position.rotationDegrees)} ${formatSvgNumber(position.x)} ${formatSvgNumber(position.y)})">
+  return `<g transform="translate(${formatSvgNumber(calibratedPosition.x)} ${formatSvgNumber(calibratedPosition.y)}) rotate(${formatSvgNumber(calibratedPosition.rotationDegrees)}) scale(${formatSvgNumber(calibration?.scale ?? 1)}) translate(${-formatSvgNumber(calibratedPosition.x)} ${-formatSvgNumber(calibratedPosition.y)})">
     <polygon points="${points}" fill="${baseColor}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
     <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
       buttonCenter.y,
@@ -6328,7 +6345,13 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     }
 
     if (sleeveTabTrimColor && isBlouseScene(scene, baseAssetPath)) {
-      layers.push(getSleeveTabMarkersSvg(scene.baseColorHex, sleeveTabTrimColor));
+      layers.push(
+        getSleeveTabMarkersSvg(
+          scene.baseColorHex,
+          sleeveTabTrimColor,
+          scene.sleeveTabCalibration,
+        ),
+      );
     }
 
     layers.push(getTrimSectionsSvg(scene));

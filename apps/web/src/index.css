@@ -1616,9 +1616,25 @@ main {
   background: #f4fbfe;
 }
 
+.catalog-sleeve-tab-calibration {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 12px;
+  border: 1px solid #ec9bbb;
+  border-radius: 8px;
+  background: #fff4f8;
+}
+
 .catalog-sleeve-calibration p {
   margin: 0;
   color: #405866;
+  font-size: 0.84rem;
+}
+
+.catalog-sleeve-tab-calibration p {
+  margin: 0;
+  color: #6e2945;
   font-size: 0.84rem;
 }
 
@@ -1628,11 +1644,26 @@ main {
   gap: 8px;
 }
 
+.catalog-sleeve-tab-calibration__side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .catalog-sleeve-calibration__side strong {
   grid-column: 1 / -1;
 }
 
+.catalog-sleeve-tab-calibration__side strong {
+  grid-column: 1 / -1;
+}
+
 .catalog-sleeve-calibration input[type="range"] {
+  width: 100%;
+  cursor: ew-resize;
+}
+
+.catalog-sleeve-tab-calibration input[type="range"] {
   width: 100%;
   cursor: ew-resize;
 }
@@ -1643,6 +1674,15 @@ main {
   /* Las guías del editor deben pintar por encima de las imágenes del preview;
      no intervienen en el SVG ni en la versión publicada. */
   z-index: 4;
+  pointer-events: none;
+}
+
+/* Capa independiente: las guías rosadas de presilla jamás participan en la
+   geometría ni en los eventos de las mangas. */
+.visual-runtime-preview__sleeve-tab-calibration {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -1685,6 +1725,45 @@ main {
 }
 
 .visual-runtime-preview__sleeve-handle:active {
+  cursor: grabbing;
+}
+
+.visual-runtime-preview__sleeve-tab-handle {
+  position: absolute;
+  z-index: 1;
+  width: 38px;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #e0005a;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.visual-runtime-preview__sleeve-tab-handle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.visual-runtime-preview__sleeve-tab-handle path {
+  fill: color-mix(in srgb, currentColor 48%, transparent);
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.visual-runtime-preview__sleeve-tab-handle circle {
+  fill: #ffffff;
+  stroke: currentColor;
+  stroke-width: 3;
+}
+
+.visual-runtime-preview__sleeve-tab-handle:active {
   cursor: grabbing;
 }
 

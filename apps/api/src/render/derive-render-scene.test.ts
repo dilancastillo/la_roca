@@ -3237,6 +3237,10 @@ describe("deriveAutomationRenderScene", () => {
               left: { x: -12, y: 5, scaleX: 1, scaleY: 1, rotation: 0 },
               right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
             },
+            sleeveTabCalibration: {
+              left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
+              right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+            },
           },
           runtimeSvg:
             '<svg xmlns="http://www.w3.org/2000/svg" data-vc-render-mode="replace-base" viewBox="0 0 1080 1350"><path d="M400 100 L540 300 L680 100" /></svg>',
@@ -3257,6 +3261,10 @@ describe("deriveAutomationRenderScene", () => {
     expect(renderScene.sleeveCalibration).toEqual({
       left: { x: -12, y: 5, scaleX: 1, scaleY: 1, rotation: 0 },
       right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
+    });
+    expect(renderScene.sleeveTabCalibration).toEqual({
+      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
+      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
     });
     expect(renderScene.alignDynamicSleeveTrims).toBeUndefined();
   });

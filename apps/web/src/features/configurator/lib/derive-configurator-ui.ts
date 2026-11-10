@@ -77,6 +77,7 @@ export type PreviewScene = {
   /** Perfil estable de mangas, independiente del SVG dinámico del editor. */
   sleeveProfileId?: SleeveProfileId | undefined;
   sleeveCalibration?: VisualPlacement["sleeveCalibration"] | undefined;
+  sleeveTabCalibration?: VisualPlacement["sleeveTabCalibration"] | undefined;
   suppressGarmentBaseOutline?: boolean | undefined;
   garmentDetailImageSrc?: string | undefined;
   garmentDetailImageSrcs?: string[] | undefined;
@@ -2543,6 +2544,9 @@ function deriveSingleConfiguratorUi(
       ...(sleeveProfileId ? { sleeveProfileId } : {}),
       ...(dynamicNeckDefinition?.placement.sleeveCalibration
         ? { sleeveCalibration: dynamicNeckDefinition.placement.sleeveCalibration }
+        : {}),
+      ...(dynamicNeckDefinition?.placement.sleeveTabCalibration
+        ? { sleeveTabCalibration: dynamicNeckDefinition.placement.sleeveTabCalibration }
         : {}),
       ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
       ...(garmentDetailImageSrc ? { garmentDetailImageSrc } : {}),

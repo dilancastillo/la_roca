@@ -114,6 +114,27 @@ export const visualPlacementSchema = z.object({
       }).default({ x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 }),
     })
     .optional(),
+  /**
+   * Ajuste visual de las presillas de manga. Igual que los vivos de manga,
+   * pertenece a la versión del cuello para que editor, laboratorio y
+   * publicación compartan exactamente la misma geometría.
+   */
+  sleeveTabCalibration: z
+    .object({
+      left: z.object({
+        x: z.number().finite().default(0),
+        y: z.number().finite().default(0),
+        scale: z.number().finite().min(0.5).max(1.75).default(1),
+        rotation: z.number().finite().min(-180).max(180).default(0),
+      }).default({ x: 0, y: 0, scale: 1, rotation: 0 }),
+      right: z.object({
+        x: z.number().finite().default(0),
+        y: z.number().finite().default(0),
+        scale: z.number().finite().min(0.5).max(1.75).default(1),
+        rotation: z.number().finite().min(-180).max(180).default(0),
+      }).default({ x: 0, y: 0, scale: 1, rotation: 0 }),
+    })
+    .optional(),
 });
 export type VisualPlacement = z.infer<typeof visualPlacementSchema>;
 
