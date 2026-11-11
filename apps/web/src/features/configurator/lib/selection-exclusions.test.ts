@@ -163,7 +163,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     });
   });
 
-  it("conserva Sin selección como variante válida de Talla pantalón", () => {
+  it("conserva Sin selección como variante válida de Talla pantalón y usa Ninguno como default", () => {
     const pantsSizeAttribute = {
       id: 31,
       name: "Talla pantalón",
@@ -174,6 +174,12 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
         {
           id: 310,
           name: "SIN SELECCIÓN",
+          attributeId: 31,
+          attributeName: "Talla pantalón",
+        },
+        {
+          id: 312,
+          name: "Ninguno",
           attributeId: 31,
           attributeName: "Talla pantalón",
         },
@@ -190,11 +196,13 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
       attributes: [pantsSizeAttribute, ...session.attributes],
     };
 
+    // SIN SELECCIÓN se conserva cuando viene seleccionado (es variante real de Odoo)
     expect(
       applyFirstOptionDefaults(sessionWithPantsSize, { "31": [310] }),
     ).toMatchObject({ "31": [310] });
+    // Sin selección previa, el default es Ninguno (bloquea guardado hasta que el usuario elija)
     expect(applyFirstOptionDefaults(sessionWithPantsSize, {})).toMatchObject({
-      "31": [310],
+      "31": [312],
     });
   });
 

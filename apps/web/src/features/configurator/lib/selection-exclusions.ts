@@ -261,6 +261,11 @@ export function applyFirstOptionDefaults(
           ...kneeDefaultCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
           ...kneeDefaultCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
         ]
+      : isPantsSizeAttribute(attribute)
+      ? [
+          ...kneeDefaultCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
+          ...kneeDefaultCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
+        ]
       : kneeDefaultCandidateValues;
     const selectedWithoutPlaceholders = new Set(
       Array.from(selected).filter(
