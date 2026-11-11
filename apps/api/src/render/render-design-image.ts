@@ -4509,7 +4509,7 @@ function getBackNeckTrimSvg(
 ) {
   return `
     <g transform="translate(0 ${verticalOffset})">
-      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
     </g>
   `;
 }
