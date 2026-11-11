@@ -1645,7 +1645,10 @@ const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
 const POCKET_TRIM_LINE_WIDTH = 8;
 const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
-const COLORED_TRIM_EXPANSION_RADIUS = 1;
+// Los SVG históricos no comparten el mismo grosor de tinta. Este radio se
+// aplica solo a capas de vivo recoloreadas, nunca al relleno de la prenda.
+const COLORED_TRIM_EXPANSION_RADIUS = 2;
+const COLLAR_TRIM_EXPANSION_RADIUS = 2;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -3639,15 +3642,28 @@ function drawExpandedColoredTrim(
   context: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   colorHex: string,
+  radius = COLORED_TRIM_EXPANSION_RADIUS,
 ) {
   const coloredCanvas = recolorCanvasInk(canvas, colorHex);
-  const radius = COLORED_TRIM_EXPANSION_RADIUS;
 
   for (let y = -radius; y <= radius; y += 1) {
     for (let x = -radius; x <= radius; x += 1) {
       context.drawImage(coloredCanvas, x, y);
     }
   }
+}
+
+function drawExpandedCollarTrim(
+  context: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  colorHex: string,
+) {
+  drawExpandedColoredTrim(
+    context,
+    canvas,
+    colorHex,
+    COLLAR_TRIM_EXPANSION_RADIUS,
+  );
 }
 
 // Los SVG históricos no separan el cuello de la prenda mediante metadata.
@@ -4931,6 +4947,7 @@ function drawBackNeckTrim(
   context.lineJoin = "round";
   context.strokeStyle = trimColor;
   context.lineWidth = 14;
+  context.stroke(path);
   context.restore();
 }
 
@@ -4953,6 +4970,8 @@ async function drawBackNeckTrimFromAsset(
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
     context.save();
     context.translate(0, verticalOffset);
+    // La cogotera está muy cerca del escote frontal. Conservamos su trazo
+    // original para no invadir visualmente el cuello al reforzar los vivos.
     context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
     context.restore();
     return true;
@@ -4967,7 +4986,13 @@ async function drawBackNeckTrimFromAsset(
 
   context.save();
   context.translate(0, verticalOffset);
-  await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
+  await drawCollarTrimFromAsset(
+    context,
+    sourceSrc,
+    trimColor,
+    trimIndexes,
+    false,
+  );
   context.restore();
   return true;
 }
@@ -4977,6 +5002,7 @@ async function drawCollarTrimFromAsset(
   sourceSrc: string | undefined,
   trimColor: string | undefined,
   trimIndexesOverride?: number[],
+  expand = true,
 ) {
   if (!sourceSrc || !trimColor) {
     return;
@@ -4995,7 +5021,11 @@ async function drawCollarTrimFromAsset(
 
   if (overlaySrc && !trimIndexesOverride) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    if (expand) {
+      drawExpandedCollarTrim(context, overlayCanvas, trimColor);
+    } else {
+      context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    }
     return;
   }
 
@@ -5003,7 +5033,11 @@ async function drawCollarTrimFromAsset(
 
   if (trimSrc) {
     const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
-    context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    if (expand) {
+      drawExpandedCollarTrim(context, trimCanvas, trimColor);
+    } else {
+      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+    }
     return;
   }
 
@@ -5032,7 +5066,7 @@ async function drawHighCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawPantsSidePocketTrimFromAsset(
@@ -5229,7 +5263,7 @@ async function drawPantsKneePatchSideFromAsset(
         PANTS_KNEE_PATCH_TRIANGULAR_FLAP_TRIM_SRC_BY_SIDE[side],
         sourceSrc,
       );
-      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+      drawExpandedColoredTrim(context, trimCanvas, trimColor);
     }
 
     return;
@@ -5265,7 +5299,7 @@ async function drawPantsKneePatchSideFromAsset(
         PANTS_KNEE_PATCH_SQUARE_TRIM_SRC_BY_SIDE[side],
         sourceSrc,
       );
-      context.drawImage(recolorCanvasInk(trimCanvas, trimColor), 0, 0);
+      drawExpandedColoredTrim(context, trimCanvas, trimColor);
     }
 
     return;
@@ -5393,7 +5427,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
         PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][side],
         sourceSrc,
       );
-      context.drawImage(recolorCanvasInk(lineCanvas, color), 0, 0);
+      drawExpandedColoredTrim(context, lineCanvas, color);
     }
 
     if (upperRingTrimColor) {
@@ -5401,7 +5435,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
         PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][side],
         sourceSrc,
       );
-      context.drawImage(recolorCanvasInk(ringCanvas, upperRingTrimColor), 0, 0);
+      drawExpandedColoredTrim(context, ringCanvas, upperRingTrimColor);
     }
   }
 }
@@ -5423,7 +5457,7 @@ async function drawInternalCollarTrimFromAsset(
 
   if (overlaySrc) {
     const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-    context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+    drawExpandedCollarTrim(context, overlayCanvas, trimColor);
     return;
   }
 
@@ -5436,7 +5470,13 @@ async function drawInternalCollarTrimFromAsset(
     return;
   }
 
-  await drawCollarTrimFromAsset(context, sourceSrc, trimColor, trimIndexes);
+  await drawCollarTrimFromAsset(
+    context,
+    sourceSrc,
+    trimColor,
+    trimIndexes,
+    false,
+  );
 }
 
 async function drawInnerCollarTrimFromAsset(
@@ -5456,7 +5496,7 @@ async function drawInnerCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawCollarRingsTrimFromAsset(
@@ -5476,7 +5516,7 @@ async function drawCollarRingsTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawDividedCollarTrimFromAsset(
@@ -5499,7 +5539,7 @@ async function drawDividedCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawExternalCollarTrimFromAsset(
@@ -5522,7 +5562,7 @@ async function drawExternalCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawThickInteriorCollarTrimFromAsset(
@@ -5545,7 +5585,7 @@ async function drawThickInteriorCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawLowerCollarTrimFromAsset(
@@ -5565,7 +5605,7 @@ async function drawLowerCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawDefaultExternalCollarLinesFromAsset(
@@ -5586,7 +5626,7 @@ async function drawDefaultExternalCollarLinesFromAsset(
 
   for (const side of ["left", "right"] as const) {
     const overlayCanvas = await createRasterCanvas(overlays[side], sourceSrc);
-    context.drawImage(recolorCanvasInk(overlayCanvas, "#1d1d1b"), 0, 0);
+    drawExpandedCollarTrim(context, overlayCanvas, "#1d1d1b");
   }
 }
 
@@ -5610,7 +5650,7 @@ async function drawCompleteInteriorCollarTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 async function drawFlapTrimFromAsset(
@@ -5629,7 +5669,7 @@ async function drawFlapTrimFromAsset(
   }
 
   const overlayCanvas = await createRasterCanvas(overlaySrc, sourceSrc);
-  context.drawImage(recolorCanvasInk(overlayCanvas, trimColor), 0, 0);
+  drawExpandedCollarTrim(context, overlayCanvas, trimColor);
 }
 
 function getCollarTrimColorForAsset(

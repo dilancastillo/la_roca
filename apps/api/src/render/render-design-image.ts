@@ -1624,7 +1624,10 @@ const POCKET_TRIM_BAND_HEIGHT = 18;
 const POCKET_TRIM_HORIZONTAL_PAD = 8;
 const POCKET_TRIM_LINE_WIDTH = 8;
 const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
-const COLORED_TRIM_EXPANSION_RADIUS = 1;
+// Los vivos históricos llegan como trazos SVG con grosores distintos. Solo
+// expandimos su tinta recoloreada: nunca el relleno ni la silueta de la prenda.
+const COLORED_TRIM_EXPANSION_RADIUS = 2;
+const COLLAR_TRIM_EXPANSION_RADIUS = 2;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -3150,7 +3153,10 @@ async function recolorPngInkBuffer(buffer: Buffer, colorHex: string) {
   return await rgbaToPngBuffer(data, width, height);
 }
 
-async function expandColoredTrimBuffer(buffer: Buffer) {
+async function expandColoredTrimBuffer(
+  buffer: Buffer,
+  radius = COLORED_TRIM_EXPANSION_RADIUS,
+) {
   const metadata = await sharp(buffer).metadata();
   const width = metadata.width;
   const height = metadata.height;
@@ -3159,7 +3165,6 @@ async function expandColoredTrimBuffer(buffer: Buffer) {
     return buffer;
   }
 
-  const radius = COLORED_TRIM_EXPANSION_RADIUS;
   const composites: Array<{ input: Buffer; left: number; top: number }> = [];
   for (let y = -radius; y <= radius; y += 1) {
     for (let x = -radius; x <= radius; x += 1) {
@@ -3179,6 +3184,16 @@ async function expandColoredTrimBuffer(buffer: Buffer) {
     .extract({ left: radius, top: radius, width, height })
     .png()
     .toBuffer();
+}
+
+async function recolorCollarTrimOverlayBuffer(
+  buffer: Buffer,
+  colorHex: string,
+) {
+  return await expandColoredTrimBuffer(
+    await recolorPngInkBuffer(buffer, colorHex),
+    COLLAR_TRIM_EXPANSION_RADIUS,
+  );
 }
 
 async function createLowerPocketOverlayBuffer(assetPath: string) {
@@ -3908,6 +3923,7 @@ async function createCollarTrimOverlayBuffer(
   assetPath: string,
   trimColor: string,
   trimIndexesOverride?: number[],
+  expand = true,
 ) {
   const assetFileName = getAssetFileName(assetPath);
   const overlayPath = collarTrimOverlayByFileName[assetFileName];
@@ -3922,7 +3938,9 @@ async function createCollarTrimOverlayBuffer(
       placementProcessed,
     );
 
-    return await recolorPngInkBuffer(overlayBuffer, trimColor);
+    return expand
+      ? await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor)
+      : await recolorPngInkBuffer(overlayBuffer, trimColor);
   }
 
   const trimIndexes =
@@ -3944,7 +3962,9 @@ async function createCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return expand
+    ? await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor)
+    : await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
 async function createFilledCollarTrimOverlayBuffer(
@@ -3971,6 +3991,7 @@ async function createFilledCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
+  // Esta capa es una franja rellena, no un trazo: no se expande.
   return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
@@ -3997,7 +4018,7 @@ async function createHighCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createInternalCollarTrimOverlayBuffer(
@@ -4022,6 +4043,8 @@ async function createInternalCollarTrimOverlayBuffer(
       placementProcessed,
     );
 
+    // La cogotera está muy cerca del escote frontal. Conservamos su trazo
+    // original para no invadir visualmente el cuello al reforzar los vivos.
     return await recolorPngInkBuffer(overlayBuffer, trimColor);
   }
 
@@ -4038,6 +4061,7 @@ async function createInternalCollarTrimOverlayBuffer(
     assetPath,
     trimColor,
     trimIndexes,
+    false,
   );
 }
 
@@ -4065,7 +4089,7 @@ async function createInnerCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createCollarRingsTrimOverlayBuffer(
@@ -4092,7 +4116,7 @@ async function createCollarRingsTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createDividedCollarTrimOverlayBuffer(
@@ -4120,7 +4144,7 @@ async function createDividedCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createExternalCollarTrimOverlayBuffer(
@@ -4148,7 +4172,7 @@ async function createExternalCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createDefaultExternalCollarLineOverlayBuffers(
@@ -4194,7 +4218,7 @@ async function createThickInteriorCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createLowerCollarTrimOverlayBuffer(
@@ -4221,7 +4245,7 @@ async function createLowerCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createCompleteInteriorCollarTrimOverlayBuffer(
@@ -4251,7 +4275,7 @@ async function createCompleteInteriorCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorPngInkBuffer(overlayBuffer, trimColor);
+  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
 }
 
 async function createFlapTrimOverlayBuffer(
@@ -4301,6 +4325,8 @@ async function createBackNeckTrimOverlayBuffer(
       placementProcessed,
     );
 
+    // La cogotera está muy cerca del escote frontal. Conservamos su trazo
+    // original para no invadir visualmente el cuello al reforzar los vivos.
     return await recolorPngInkBuffer(overlayBuffer, trimColor);
   }
 
@@ -4315,6 +4341,7 @@ async function createBackNeckTrimOverlayBuffer(
     assetPath,
     trimColor,
     trimIndexes,
+    false,
   );
 }
 
@@ -4447,7 +4474,7 @@ function getTrimSectionsSvg(scene: AutomationRenderScene) {
 
       if (key.includes("frente") || key.includes("central")) {
         parts.push(
-          `<line x1="450" y1="205" x2="450" y2="978" stroke="${section.colorHex}" stroke-width="10" stroke-linecap="round" />`,
+          `<line x1="450" y1="205" x2="450" y2="978" stroke="${section.colorHex}" stroke-width="14" stroke-linecap="round" />`,
         );
       }
 
