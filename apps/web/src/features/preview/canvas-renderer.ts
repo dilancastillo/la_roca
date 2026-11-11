@@ -3379,11 +3379,7 @@ function drawTrimSections(
     context.save();
     context.strokeStyle = section.colorHex;
     context.fillStyle = section.colorHex;
-    context.lineWidth = 10;
-    context.lineJoin = "round";
-    context.lineCap = "round";
-
-    if (key.includes("frente") || key.includes("central")) {
+    context.lineWidth = 14;
       context.beginPath();
       context.moveTo(450, 205);
       context.lineTo(450, 978);
@@ -4269,7 +4265,6 @@ function drawSleeveTabMarkers(
     context.save();
     context.translate(calibratedPosition.x, calibratedPosition.y);
     context.rotate((calibratedPosition.rotationDegrees * Math.PI) / 180);
-    context.scale(adjustment?.scale ?? 1, adjustment?.scale ?? 1);
     context.translate(-calibratedPosition.x, -calibratedPosition.y);
 
     context.beginPath();
@@ -4931,8 +4926,7 @@ function drawBackNeckTrim(
   context.lineCap = "round";
   context.lineJoin = "round";
   context.strokeStyle = trimColor;
-  context.lineWidth = 9;
-  context.stroke(path);
+  context.lineWidth = 14;
   context.restore();
 }
 

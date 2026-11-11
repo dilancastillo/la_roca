@@ -4482,7 +4482,7 @@ function getBackNeckTrimSvg(
 ) {
   return `
     <g transform="translate(0 ${verticalOffset})">
-      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
     </g>
   `;
 }
@@ -4589,7 +4589,7 @@ function getSleeveTabMarkerSvg(
   position: { x: number; y: number; rotationDegrees: number },
   baseColor: string,
   buttonColor: string,
-  calibration?: { x: number; y: number; scale: number; rotation: number },
+  calibration?: { x: number; y: number; rotation: number },
 ) {
   const calibratedPosition = {
     ...position,
@@ -4610,7 +4610,7 @@ function getSleeveTabMarkerSvg(
     transform,
   );
 
-  return `<g transform="translate(${formatSvgNumber(calibratedPosition.x)} ${formatSvgNumber(calibratedPosition.y)}) rotate(${formatSvgNumber(calibratedPosition.rotationDegrees)}) scale(${formatSvgNumber(calibration?.scale ?? 1)}) translate(${-formatSvgNumber(calibratedPosition.x)} ${-formatSvgNumber(calibratedPosition.y)})">
+  return `<g transform="translate(${formatSvgNumber(calibratedPosition.x)} ${formatSvgNumber(calibratedPosition.y)}) rotate(${formatSvgNumber(calibratedPosition.rotationDegrees)}) translate(${formatSvgNumber(-calibratedPosition.x)} ${formatSvgNumber(-calibratedPosition.y)})">
     <polygon points="${points}" fill="${baseColor}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
     <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
       buttonCenter.y,
