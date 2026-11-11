@@ -56,8 +56,8 @@ const mutation: VisualDefinitionMutation = {
       right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
     },
     sleeveTabCalibration: {
-      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
-      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+      left: { x: -7, y: 4, rotation: 12 },
+      right: { x: 8, y: -3, rotation: -10 },
     },
   },
   referenceAssetSrc:
@@ -235,8 +235,8 @@ describe("visual catalog repository", () => {
       (await loadActiveVisualDefinitions(env, 7, [firstApproved.id]))[0]
         ?.placement?.sleeveTabCalibration,
     ).toEqual({
-      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
-      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+      left: { x: -7, y: 4, rotation: 12 },
+      right: { x: 8, y: -3, rotation: -10 },
     });
   });
 

@@ -1646,7 +1646,7 @@ main {
 
 .catalog-sleeve-tab-calibration__side {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 

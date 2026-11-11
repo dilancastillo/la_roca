@@ -94,7 +94,11 @@ function defaultSleeveCalibrationSide() {
 }
 
 function defaultSleeveTabCalibrationSide() {
-  return { x: 0, y: 0, scale: 1, rotation: 0 };
+  return { x: 0, y: 0, rotation: 0 };
+}
+
+function normalizeSleeveTabRotation(rotation: number) {
+  return ((rotation % 360) + 360) % 360;
 }
 
 const SLEEVE_TAB_CALIBRATION_ANCHORS = {
@@ -2052,9 +2056,10 @@ export function VisualCatalogPage() {
                 <fieldset className="catalog-sleeve-tab-calibration">
                   <legend>Detalles de la blusa · presillas</legend>
                   <p>
-                    La guía rosada representa la presilla real. Arrástrala con el mouse;
-                    escala y rotación se guardan con este cuello y se aplican igual al publicar.
-                    Estos controles no modifican los vivos de manga.
+                    La guía rosada representa la presilla real y conserva su tamaño original.
+                    Arrástrala con el mouse y ajusta su rotación; la posición y el giro se
+                    guardan con este cuello y se aplican igual al publicar. Estos controles no
+                    modifican los vivos de manga.
                   </p>
                   {(["left", "right"] as const).map((side) => {
                     const label = side === "left" ? "Presilla izquierda" : "Presilla derecha";
@@ -2062,32 +2067,30 @@ export function VisualCatalogPage() {
                     return (
                       <div className="catalog-sleeve-tab-calibration__side" key={side}>
                         <strong>{label}</strong>
-                        {(["scale", "rotation"] as const).map((axis) => (
-                          <label key={axis}>
-                            {axis === "scale" ? "Escala" : "Rotación"} ({axis === "rotation" ? `${value.rotation}°` : value.scale.toFixed(2)})
-                            <input
-                              type="range"
-                              min={axis === "rotation" ? "-180" : "0.5"}
-                              max={axis === "rotation" ? "180" : "1.75"}
-                              step={axis === "rotation" ? "1" : "0.01"}
-                              value={value[axis]}
-                              onChange={(event) => {
-                                const nextValue = Number(event.target.value);
-                                setPlacement((current) => ({
-                                  ...current,
-                                  sleeveTabCalibration: {
-                                    left: current.sleeveTabCalibration?.left ?? defaultSleeveTabCalibrationSide(),
-                                    right: current.sleeveTabCalibration?.right ?? defaultSleeveTabCalibrationSide(),
-                                    [side]: {
-                                      ...(current.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide()),
-                                      [axis]: nextValue,
-                                    },
+                        <label>
+                          Rotación ({normalizeSleeveTabRotation(value.rotation)}°)
+                          <input
+                            type="range"
+                            min="0"
+                            max="359"
+                            step="1"
+                            value={normalizeSleeveTabRotation(value.rotation)}
+                            onChange={(event) => {
+                              const rotation = Number(event.target.value);
+                              setPlacement((current) => ({
+                                ...current,
+                                sleeveTabCalibration: {
+                                  left: current.sleeveTabCalibration?.left ?? defaultSleeveTabCalibrationSide(),
+                                  right: current.sleeveTabCalibration?.right ?? defaultSleeveTabCalibrationSide(),
+                                  [side]: {
+                                    ...(current.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide()),
+                                    rotation,
                                   },
-                                }));
-                              }}
-                            />
-                          </label>
-                        ))}
+                                },
+                              }));
+                            }}
+                          />
+                        </label>
                       </div>
                     );
                   })}
@@ -2275,7 +2278,7 @@ export function VisualCatalogPage() {
                           style={{
                             left: `${((anchor.x + value.x) / 1080) * 100}%`,
                             top: `${((anchor.y + value.y) / 1350) * 100}%`,
-                            transform: `translate(-50%, -50%) rotate(${value.rotation}deg) scale(${value.scale})`,
+                            transform: `translate(-50%, -50%) rotate(${value.rotation}deg)`,
                           }}
                           onPointerDown={(event) => beginSleeveTabCalibrationDrag(event, side)}
                           onPointerMove={moveSleeveTabCalibrationDrag}

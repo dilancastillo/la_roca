@@ -124,15 +124,13 @@ export const visualPlacementSchema = z.object({
       left: z.object({
         x: z.number().finite().default(0),
         y: z.number().finite().default(0),
-        scale: z.number().finite().min(0.5).max(1.75).default(1),
-        rotation: z.number().finite().min(-180).max(180).default(0),
-      }).default({ x: 0, y: 0, scale: 1, rotation: 0 }),
+        rotation: z.number().finite().min(-360).max(360).default(0),
+      }).default({ x: 0, y: 0, rotation: 0 }),
       right: z.object({
         x: z.number().finite().default(0),
         y: z.number().finite().default(0),
-        scale: z.number().finite().min(0.5).max(1.75).default(1),
-        rotation: z.number().finite().min(-180).max(180).default(0),
-      }).default({ x: 0, y: 0, scale: 1, rotation: 0 }),
+        rotation: z.number().finite().min(-360).max(360).default(0),
+      }).default({ x: 0, y: 0, rotation: 0 }),
     })
     .optional(),
 });

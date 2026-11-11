@@ -4427,8 +4427,8 @@ describe("deriveConfiguratorUi", () => {
               right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
             },
             sleeveTabCalibration: {
-              left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
-              right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+              left: { x: -7, y: 4, rotation: 12 },
+              right: { x: 8, y: -3, rotation: -10 },
             },
           },
           runtimeSvg:
@@ -4452,8 +4452,8 @@ describe("deriveConfiguratorUi", () => {
       right: { x: 9, y: -4, scaleX: 1, scaleY: 1, rotation: 0 },
     });
     expect(ui.previewScene.sleeveTabCalibration).toEqual({
-      left: { x: -7, y: 4, scale: 1.1, rotation: 12 },
-      right: { x: 8, y: -3, scale: 0.9, rotation: -10 },
+      left: { x: -7, y: 4, rotation: 12 },
+      right: { x: 8, y: -3, rotation: -10 },
     });
     expect(ui.previewScene.alignDynamicSleeveTrims).toBeUndefined();
   });
