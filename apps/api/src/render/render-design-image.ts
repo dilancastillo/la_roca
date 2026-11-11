@@ -4018,7 +4018,9 @@ async function createHighCollarTrimOverlayBuffer(
     placementProcessed,
   );
 
-  return await recolorCollarTrimOverlayBuffer(overlayBuffer, trimColor);
+  // El cuello alto de EL HATO es un relleno, no un trazo. Expandirlo
+  // invade la abertura frontal. Se recolorea sin expansión.
+  return await recolorPngInkBuffer(overlayBuffer, trimColor);
 }
 
 async function createInternalCollarTrimOverlayBuffer(

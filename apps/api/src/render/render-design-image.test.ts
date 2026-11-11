@@ -5554,8 +5554,8 @@ describe("renderDesignImage", () => {
       countDifferentPixels(withoutTrim.data, withHighCollar.data),
     ).toBeGreaterThan(100);
     expect(highCollarPinkPixels).toBeGreaterThan(250);
-    expect(highCollarInnerOpeningPinkPixels).toBeLessThan(700);
-    expect(highCollarFrontOpeningPinkPixels).toBeLessThan(350);
+    expect(highCollarInnerOpeningPinkPixels).toBeLessThan(200);
+    expect(highCollarFrontOpeningPinkPixels).toBeLessThan(80);
     expect(highCollarLowerVPinkPixels).toBeLessThan(80);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
