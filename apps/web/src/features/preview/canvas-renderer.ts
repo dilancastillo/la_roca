@@ -3380,6 +3380,10 @@ function drawTrimSections(
     context.strokeStyle = section.colorHex;
     context.fillStyle = section.colorHex;
     context.lineWidth = 14;
+    context.lineJoin = "round";
+    context.lineCap = "round";
+
+    if (key.includes("frente") || key.includes("central")) {
       context.beginPath();
       context.moveTo(450, 205);
       context.lineTo(450, 978);
