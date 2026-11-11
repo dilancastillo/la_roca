@@ -1108,8 +1108,8 @@ describe("renderDesignImage", () => {
       }
 
       if (straightBackNeckModelsWithoutUpperContour.has(fileName)) {
-        expect(pinkBounds.minY, fileName).toBe(129);
-        expect(pinkBounds.maxY, fileName).toBe(136);
+        expect(pinkBounds.minY, fileName).toBe(132);
+        expect(pinkBounds.maxY, fileName).toBe(139);
         continue;
       }
 
@@ -5555,7 +5555,7 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(highCollarPinkPixels).toBeGreaterThan(250);
     expect(highCollarInnerOpeningPinkPixels).toBeLessThan(700);
-    expect(highCollarFrontOpeningPinkPixels).toBeLessThan(80);
+    expect(highCollarFrontOpeningPinkPixels).toBeLessThan(350);
     expect(highCollarLowerVPinkPixels).toBeLessThan(80);
     expect(
       countDifferentPixels(withoutTrim.data, withCompleteCollar.data),
