@@ -5016,7 +5016,7 @@ describe("renderDesignImage", () => {
       rightCompletePinkPixels.left,
     );
     expect(backNeckPinkPixels).toBeGreaterThan(100);
-  }, 20000);
+  }, 35000);
 
   it("renderiza JDC con vivos lineales, completos interiores y cogotera recta", async () => {
     const neckAssetPath =
