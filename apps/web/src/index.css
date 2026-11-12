@@ -1731,8 +1731,12 @@ main {
 .visual-runtime-preview__sleeve-tab-handle {
   position: absolute;
   z-index: 1;
-  width: 18px;
-  height: 36px;
+  /* El SVG fuente ocupa 34.17 x 57.55 unidades una vez escalado a la
+     presilla histórica de 52 px dentro del canvas 1080 x 1350. Usar
+     porcentajes mantiene esta guía del mismo tamaño visual que la presilla
+     publicada, incluso cuando el preview se redimensiona. */
+  width: 3.164%;
+  height: 4.263%;
   margin: 0;
   padding: 0;
   border: 0;

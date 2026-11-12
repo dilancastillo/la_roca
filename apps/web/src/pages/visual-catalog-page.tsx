@@ -102,8 +102,10 @@ function normalizeSleeveTabRotation(rotation: number) {
 }
 
 const SLEEVE_TAB_CALIBRATION_ANCHORS = {
-  left: { x: 110, y: 405 },
-  right: { x: 790, y: 405 },
+  // Debe coincidir con SLEEVE_TAB_MARKER_POSITIONS en canvas-renderer y el
+  // render de API: la guía del editor representa la presilla publicada.
+  left: { x: 110, y: 405, rotation: 135 },
+  right: { x: 790, y: 405, rotation: -135 },
 } as const;
 
 const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
@@ -2278,7 +2280,7 @@ export function VisualCatalogPage() {
                           style={{
                             left: `${((anchor.x + value.x) / 1080) * 100}%`,
                             top: `${((anchor.y + value.y) / 1350) * 100}%`,
-                            transform: `translate(-50%, -50%) rotate(${value.rotation}deg)`,
+                            transform: `translate(-50%, -50%) rotate(${anchor.rotation + value.rotation}deg)`,
                           }}
                           onPointerDown={(event) => beginSleeveTabCalibrationDrag(event, side)}
                           onPointerMove={moveSleeveTabCalibrationDrag}

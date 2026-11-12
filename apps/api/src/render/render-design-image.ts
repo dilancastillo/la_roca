@@ -605,7 +605,10 @@ const SLEEVE_TAB_BUTTON = {
   y: 860.7699,
   radius: 4.8615,
 } as const;
-const SLEEVE_TAB_MARKER_HEIGHT = 36;
+// Tamaño histórico del SVG original de presilla. Debe mantenerse igual en el
+// render publicado y en el preview web para que una calibración del catálogo
+// no cambie de escala al guardar.
+const SLEEVE_TAB_MARKER_HEIGHT = 52;
 const SLEEVE_TAB_MARKER_STROKE_WIDTH = 4;
 const SLEEVE_TAB_MARKER_STROKE_COLOR = "#000";
 const AUXILIARY_ADDON_VELCRO_MARK_PATH =

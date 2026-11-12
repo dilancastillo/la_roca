@@ -606,8 +606,10 @@ const LOGO_MARKER_POSITIONS = {
 const SLEEVE_TAB_MARKER_POSITIONS = [
   // Presillas pegadas a la costura lateral de cada manga, antes del puño.
   // La punta se orienta hacia el hombro y se refleja entre ambos lados.
-  { x: 110, y: 405, rotationDegrees: 0 },
-  { x: 790, y: 405, rotationDegrees: 0 },
+  // Deben usar exactamente la misma orientación base que el render de
+  // publicación. La calibración del editor se suma a estos valores.
+  { x: 110, y: 405, rotationDegrees: 135 },
+  { x: 790, y: 405, rotationDegrees: -135 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -629,7 +631,9 @@ const SLEEVE_TAB_BUTTON = {
   y: 860.7699,
   radius: 4.8615,
 } as const;
-const SLEEVE_TAB_MARKER_HEIGHT = 36;
+// Tamaño histórico del SVG original de presilla. Debe coincidir con la API:
+// las coordenadas guardadas por el editor no incluyen un factor de escala.
+const SLEEVE_TAB_MARKER_HEIGHT = 52;
 const SLEEVE_TAB_MARKER_STROKE_WIDTH = 4;
 const SLEEVE_TAB_MARKER_STROKE_COLOR = "#000";
 const AUXILIARY_ADDON_VELCRO_MARK_PATH =
