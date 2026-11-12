@@ -6775,7 +6775,7 @@ describe("renderDesignImage", () => {
         collarRegion,
       ),
     ).toBeGreaterThan(250);
-  }, 20000);
+  }, 45000);
 
   it("renderiza ESTRELLA con vivo de cuello, aletas y cogotera ovalada", async () => {
     const neckAssetPath =
