@@ -8,7 +8,9 @@ import {
   visualDefinitionMutationSchema,
   visualDefinitionSchema,
   visualDefinitionSummarySchema,
+  sleeveTabCalibrationSchema,
   type ActiveVisualDefinition,
+  type SleeveTabCalibration,
   type VisualCatalogAuditEvent,
   type VisualDefinition,
   type VisualDefinitionMutation,
@@ -538,6 +540,45 @@ export async function listVisualDefinitions(env: Partial<AppEnv>) {
   return sortNewestFirst(await store.listMetadata()).map((definition) =>
     visualDefinitionSummarySchema.parse(definition),
   );
+}
+
+/**
+ * Propaga una única calibración de presillas a todos los cuellos históricos.
+ * Se actualiza sólo placement: no se reescriben los SVG, pinturas ni reglas.
+ */
+export async function applySleeveTabCalibrationToAllNeckDefinitions(
+  env: Partial<AppEnv>,
+  rawCalibration: SleeveTabCalibration,
+  actorEmail: string,
+) {
+  const store = getStore(env);
+  const calibration = sleeveTabCalibrationSchema.parse(rawCalibration);
+  const targets = (await store.listMetadata()).filter(
+    (definition) => definition.slot === "neck",
+  );
+  const now = new Date().toISOString();
+
+  // No usar Promise.all: el almacenamiento de archivo persiste la colección
+  // completa y escrituras paralelas podrían pisar otra definición.
+  for (const current of targets) {
+    const next = storedVisualDefinitionSchema.parse({
+      ...current,
+      placement: {
+        ...current.placement,
+        sleeveTabCalibration: calibration,
+      },
+      updatedAt: now,
+    });
+    await store.upsertMetadata(next);
+    await appendAudit(store, current.id, "updated", actorEmail, {
+      reason: "shared_sleeve_tab_calibration",
+    });
+  }
+
+  return {
+    updatedDefinitionCount: targets.length,
+    sleeveTabCalibration: calibration,
+  };
 }
 
 export async function getVisualDefinition(

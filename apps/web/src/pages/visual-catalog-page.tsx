@@ -21,11 +21,13 @@ import {
   type VisualRenderMode,
   type VisualRelease,
   type VisualSlot,
+  type SleeveTabCalibration,
 } from "@repo/shared/schemas/visual-catalog";
 import { logout } from "../features/auth/api";
 import { useAuthSession } from "../features/auth/hooks/use-auth-session";
 import {
   approveVisualDefinition,
+  applySleeveTabCalibrationToAllNeckDefinitions,
   cloneVisualDefinition,
   createVisualDefinition,
   fetchVisualCatalogAudit,
@@ -92,6 +94,20 @@ function boundedCalibration(value: number) {
 function defaultSleeveCalibrationSide() {
   return { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 };
 }
+
+function defaultSleeveTabCalibration(): SleeveTabCalibration {
+  return {
+    left: { x: 0, y: 0, rotation: 0 },
+    right: { x: 0, y: 0, rotation: 0 },
+  };
+}
+
+// Coordenadas de la presilla original, trasladadas al lienzo 1080×1350 del
+// editor. El estado guarda sólo el ajuste que decide el administrador.
+const SLEEVE_TAB_EDITOR_REFERENCE = {
+  left: { x: (133 / 1024) * 1080, y: (489 / 1200) * 1350, rotation: 61 },
+  right: { x: (943 / 1024) * 1080, y: (485 / 1200) * 1350, rotation: 292 },
+} as const;
 
 const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
   neck:
@@ -659,6 +675,13 @@ export function VisualCatalogPage() {
     x: number;
     y: number;
   } | null>(null);
+  const sleeveTabDragRef = useRef<{
+    side: "left" | "right";
+    pointerX: number;
+    pointerY: number;
+    x: number;
+    y: number;
+  } | null>(null);
   // Overlay es el valor seguro: un SVG solo reemplaza la base por decisión
   // explícita del editor, nunca porque un vector sea el más grande.
   const [renderMode, setRenderMode] = useState<VisualRenderMode>("overlay");
@@ -719,6 +742,44 @@ export function VisualCatalogPage() {
 
   const endSleeveCalibrationDrag = () => {
     sleeveCalibrationDragRef.current = null;
+  };
+
+  const beginSleeveTabDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    side: "left" | "right",
+  ) => {
+    const value = placement.sleeveTabCalibration?.[side] ?? { x: 0, y: 0, rotation: 0 };
+    sleeveTabDragRef.current = {
+      side,
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      x: value.x,
+      y: value.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveSleeveTabDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = sleeveTabDragRef.current;
+    if (!drag) return;
+    const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
+    if (!bounds) return;
+    setPlacement((current) => ({
+      ...current,
+      sleeveTabCalibration: {
+        left: current.sleeveTabCalibration?.left ?? { x: 0, y: 0, rotation: 0 },
+        right: current.sleeveTabCalibration?.right ?? { x: 0, y: 0, rotation: 0 },
+        [drag.side]: {
+          ...(current.sleeveTabCalibration?.[drag.side] ?? { x: 0, y: 0, rotation: 0 }),
+          x: boundedCalibration(drag.x + ((event.clientX - drag.pointerX) / bounds.width) * 1024),
+          y: boundedCalibration(drag.y + ((event.clientY - drag.pointerY) / bounds.height) * 1200),
+        },
+      },
+    }));
+  };
+
+  const endSleeveTabDrag = () => {
+    sleeveTabDragRef.current = null;
   };
 
 
@@ -915,6 +976,26 @@ export function VisualCatalogPage() {
       };
     });
   }, [placement.sleeveCalibration, previewReferenceAssetSrc, sleeveGuideProfileSrc, slot]);
+  const sleeveTabGuide = useMemo(() => {
+    if (slot !== "neck") return [];
+
+    const calibration = placement.sleeveTabCalibration ?? defaultSleeveTabCalibration();
+    return (["left", "right"] as const).map((side) => {
+      const reference = SLEEVE_TAB_EDITOR_REFERENCE[side];
+      const adjustment = calibration[side];
+      return {
+        side,
+        // El preview del editor está en 1080×1350; la geometría real de
+        // publicación está en 1024×1200. El ajuste se convierte sólo para
+        // mostrarlo, sin alterar el valor persistido.
+        x: reference.x + (adjustment.x / 1024) * 1080,
+        y: reference.y + (adjustment.y / 1200) * 1350,
+        rotation: reference.rotation + adjustment.rotation,
+        sourceX: Math.round((side === "left" ? 133 : 943) + adjustment.x),
+        sourceY: Math.round((side === "left" ? 489 : 485) + adjustment.y),
+      };
+    });
+  }, [placement.sleeveTabCalibration, slot]);
   const runtimeHighlightSrc = useMemo(() => {
     if (
       !indexedSvg ||
@@ -973,6 +1054,34 @@ export function VisualCatalogPage() {
   async function refreshVersions() {
     const nextDefinitions = await fetchVisualDefinitions();
     setDefinitions(nextDefinitions);
+  }
+
+  async function handleApplySleeveTabsToAllNecks() {
+    clearNotices();
+    setIsBusy(true);
+    try {
+      const sleeveTabCalibration =
+        placement.sleeveTabCalibration ?? defaultSleeveTabCalibration();
+      const result = await applySleeveTabCalibrationToAllNeckDefinitions(
+        sleeveTabCalibration,
+      );
+      setPlacement((current) => ({
+        ...current,
+        sleeveTabCalibration: result.sleeveTabCalibration,
+      }));
+      await refreshVersions();
+      setMessage(
+        `Presillas aplicadas a ${result.updatedDefinitionCount} modelos de cuello. La misma calibración se usará en laboratorio y publicación.`,
+      );
+    } catch (applyError) {
+      setError(
+        applyError instanceof Error
+          ? applyError.message
+          : "No se pudieron aplicar las presillas a los cuellos.",
+      );
+    } finally {
+      setIsBusy(false);
+    }
   }
 
   async function refreshReleases() {
@@ -1985,6 +2094,99 @@ export function VisualCatalogPage() {
                     Restablecer mangas
                   </button>
                   </fieldset>
+                  <fieldset className="catalog-sleeve-tab-calibration">
+                    <legend>Presillas</legend>
+                    <p>
+                      Escoge arriba un cuello de Mujer u Hombre, arrastra cada
+                      presilla sobre la manga y ajusta su giro. El botón especial
+                      replica esta calibración en todos los modelos de cuello.
+                    </p>
+                    {sleeveTabGuide.map((guide) => {
+                      const label =
+                        guide.side === "left"
+                          ? "Presilla izquierda"
+                          : "Presilla derecha";
+                      const value =
+                        placement.sleeveTabCalibration?.[guide.side] ?? {
+                          x: 0,
+                          y: 0,
+                          rotation: 0,
+                        };
+                      return (
+                        <div
+                          className="catalog-sleeve-tab-calibration__side"
+                          key={guide.side}
+                        >
+                          <strong>{label}</strong>
+                          <span className="catalog-sleeve-tab-calibration__coordinates">
+                            Coordenadas: X {guide.sourceX} · Y {guide.sourceY}
+                          </span>
+                          <label>
+                            Rotación ({Math.round(guide.rotation)}°)
+                            <input
+                              type="range"
+                              min="-360"
+                              max="360"
+                              step="1"
+                              value={value.rotation}
+                              onChange={(event) => {
+                                const rotation = Number(event.target.value);
+                                setPlacement((current) => ({
+                                  ...current,
+                                  sleeveTabCalibration: {
+                                    left:
+                                      current.sleeveTabCalibration?.left ?? {
+                                        x: 0,
+                                        y: 0,
+                                        rotation: 0,
+                                      },
+                                    right:
+                                      current.sleeveTabCalibration?.right ?? {
+                                        x: 0,
+                                        y: 0,
+                                        rotation: 0,
+                                      },
+                                    [guide.side]: {
+                                      ...(current.sleeveTabCalibration?.[
+                                        guide.side
+                                      ] ?? { x: 0, y: 0, rotation: 0 }),
+                                      rotation,
+                                    },
+                                  },
+                                }));
+                              }}
+                            />
+                          </label>
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() =>
+                        setPlacement((current) => ({
+                          ...current,
+                          sleeveTabCalibration: defaultSleeveTabCalibration(),
+                        }))
+                      }
+                      disabled={isBusy}
+                    >
+                      Restablecer presillas
+                    </button>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => void handleApplySleeveTabsToAllNecks()}
+                      disabled={isBusy || !isCatalogAdmin}
+                      title={
+                        isCatalogAdmin
+                          ? "Aplicar esta posición a todos los cuellos"
+                          : "Solo una persona administradora puede aplicar la calibración global"
+                      }
+                    >
+                      Aplicar a todos los cuellos
+                    </button>
+                  </fieldset>
                 </details>
               ) : null}
             </div>
@@ -2135,6 +2337,39 @@ export function VisualCatalogPage() {
                         </button>
                       );
                     })}
+                  </div>
+                ) : null}
+                {canCalibrateSleeves ? (
+                  <div
+                    className="visual-runtime-preview__sleeve-tab-calibration"
+                    aria-label="Calibración de presillas"
+                  >
+                    {sleeveTabGuide.map((guide) => (
+                      <button
+                        key={guide.side}
+                        type="button"
+                        className="visual-runtime-preview__sleeve-tab-handle"
+                        style={{
+                          left: `${(guide.x / 1080) * 100}%`,
+                          top: `${(guide.y / 1350) * 100}%`,
+                          transform: `translate(-50%, -50%) rotate(${guide.rotation}deg)`,
+                        }}
+                        onPointerDown={(event) =>
+                          beginSleeveTabDrag(event, guide.side)
+                        }
+                        onPointerMove={moveSleeveTabDrag}
+                        onPointerUp={endSleeveTabDrag}
+                        onPointerCancel={endSleeveTabDrag}
+                        title={`Arrastrar presilla ${
+                          guide.side === "left" ? "izquierda" : "derecha"
+                        }`}
+                      >
+                        <svg viewBox="0 0 34 58" aria-hidden="true">
+                          <path d="M5 4h24v40L17 56 5 44Z" />
+                          <circle cx="17" cy="19" r="4" />
+                        </svg>
+                      </button>
+                    ))}
                   </div>
                 ) : null}
               </div>

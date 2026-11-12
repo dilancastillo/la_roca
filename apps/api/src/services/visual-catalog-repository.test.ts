@@ -7,6 +7,7 @@ import {
   type VisualDefinitionMutation,
 } from "@repo/shared/schemas/visual-catalog";
 import {
+  applySleeveTabCalibrationToAllNeckDefinitions,
   approveVisualDefinition,
   cloneVisualDefinition,
   createVisualDefinition,
@@ -158,6 +159,56 @@ describe("integridad de definiciones visuales", () => {
 });
 
 describe("visual catalog repository", () => {
+  it("propaga la calibración de presillas a definiciones de cuello existentes", async () => {
+    const calibrationDirectory = path.join(
+      process.cwd(),
+      ".visual-catalog-tests",
+      randomUUID(),
+    );
+    const calibrationEnv = {
+      VISUAL_CATALOG_BACKEND: "file",
+      VISUAL_CATALOG_DATA_DIR: calibrationDirectory,
+    };
+
+    try {
+      const first = await createVisualDefinition(
+        calibrationEnv,
+        mutation,
+        actorEmail,
+      );
+      const second = await createVisualDefinition(
+        calibrationEnv,
+        { ...mutation, displayName: "V - DIVIDIDO Hombre" },
+        actorEmail,
+      );
+      for (const definition of [first, second]) {
+        await submitVisualDefinition(calibrationEnv, definition.id, actorEmail);
+        await approveVisualDefinition(calibrationEnv, definition.id, actorEmail);
+      }
+      const sleeveTabCalibration = {
+        left: { x: 25, y: -18, rotation: 45 },
+        right: { x: -14, y: 11, rotation: -30 },
+      };
+
+      const result = await applySleeveTabCalibrationToAllNeckDefinitions(
+        calibrationEnv,
+        sleeveTabCalibration,
+        actorEmail,
+      );
+
+      expect(result.updatedDefinitionCount).toBe(2);
+      expect(result.sleeveTabCalibration).toEqual(sleeveTabCalibration);
+      for (const id of [first.id, second.id]) {
+        expect(
+          (await loadActiveVisualDefinitions(calibrationEnv, 7, [id]))[0]
+            ?.placement.sleeveTabCalibration,
+        ).toEqual(sleeveTabCalibration);
+      }
+    } finally {
+      await rm(calibrationDirectory, { recursive: true, force: true });
+    }
+  });
+
   it("aprueba versiones inmutables y permite resolverlas por release o por pedido", async () => {
     const created = await createVisualDefinition(env, mutation, actorEmail);
     expect(created.status).toBe("draft");

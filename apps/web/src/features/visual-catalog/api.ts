@@ -4,6 +4,8 @@ import {
   visualDefinitionListSchema,
   visualDefinitionMutationSchema,
   visualDefinitionTransitionResultSchema,
+  sleeveTabCalibrationApplyResultSchema,
+  sleeveTabCalibrationApplySchema,
   visualReleaseChecklistMutationSchema,
   visualReleaseCreateSchema,
   visualReleaseAuditListSchema,
@@ -15,6 +17,7 @@ import {
   type VisualDefinitionMutation,
   type VisualReleaseChecklist,
   type VisualReleaseCreate,
+  type SleeveTabCalibration,
 } from "@repo/shared/schemas/visual-catalog";
 import { requestJson } from "../../lib/api-client";
 
@@ -90,6 +93,18 @@ export async function approveVisualDefinition(definitionId: string) {
 
 export async function cloneVisualDefinition(definitionId: string) {
   return await transitionVisualDefinition(definitionId, "clone");
+}
+
+export async function applySleeveTabCalibrationToAllNeckDefinitions(
+  sleeveTabCalibration: SleeveTabCalibration,
+) {
+  const data = await requestJson(`${ADMIN_BASE_PATH}/sleeve-tab-calibration`, {
+    method: "POST",
+    body: JSON.stringify(
+      sleeveTabCalibrationApplySchema.parse({ sleeveTabCalibration }),
+    ),
+  });
+  return sleeveTabCalibrationApplyResultSchema.parse(data);
 }
 
 export async function fetchVisualReleases() {

@@ -13,6 +13,8 @@ import {
   visualDefinitionListSchema,
   visualDefinitionMutationSchema,
   visualDefinitionTransitionResultSchema,
+  sleeveTabCalibrationApplyResultSchema,
+  sleeveTabCalibrationApplySchema,
   visualReleaseAuditListSchema,
   visualReleaseChecklistMutationSchema,
   visualReleaseCreateSchema,
@@ -46,6 +48,7 @@ import {
 } from "./services/get-visual-catalog-products.js";
 import {
   approveVisualDefinition,
+  applySleeveTabCalibrationToAllNeckDefinitions,
   assertVisualCatalogRepositoryReady,
   cloneVisualDefinition,
   createVisualDefinition,
@@ -336,6 +339,27 @@ app.get("/admin/visual-catalog/definitions", async (c) => {
     );
   }
 });
+
+app.post(
+  "/admin/visual-catalog/sleeve-tab-calibration",
+  requireAppAdmin(),
+  zValidator("json", sleeveTabCalibrationApplySchema),
+  async (c) => {
+    try {
+      const result = await applySleeveTabCalibrationToAllNeckDefinitions(
+        getAppEnv(c),
+        c.req.valid("json").sleeveTabCalibration,
+        c.get("user").email,
+      );
+      return c.json(sleeveTabCalibrationApplyResultSchema.parse(result));
+    } catch (error) {
+      return c.json(
+        { error: error instanceof Error ? error.message : "No se pudieron aplicar las presillas." },
+        400,
+      );
+    }
+  },
+);
 
 app.get("/admin/visual-catalog/products", async (c) => {
   try {

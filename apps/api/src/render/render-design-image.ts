@@ -4582,14 +4582,23 @@ function getLogoMarkerSvg(placement: string, sourceValueIds?: number[]) {
 function getSleeveTabMarkersSvg(
   baseColor: string,
   trimColor: string,
+  calibration?: AutomationRenderScene["sleeveTabCalibration"],
 ) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position) =>
-      getSleeveTabMarkerSvg(
+    (originalPosition, index) => {
+      const side = index === 0 ? "left" : "right";
+      const adjustment = calibration?.[side] ?? { x: 0, y: 0, rotation: 0 };
+      const position = {
+        x: originalPosition.x + adjustment.x,
+        y: originalPosition.y + adjustment.y,
+        rotationDegrees: originalPosition.rotationDegrees + adjustment.rotation,
+      };
+      return getSleeveTabMarkerSvg(
         getSleeveTabMarkerCanvasPosition(position),
         baseColor,
         trimColor,
-      ),
+      );
+    },
   ).join("");
 }
 
@@ -6430,6 +6439,7 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
         getSleeveTabMarkersSvg(
           scene.baseColorHex,
           sleeveTabTrimColor,
+          scene.sleeveTabCalibration,
         ),
       );
     }

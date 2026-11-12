@@ -75,6 +75,21 @@ export const visualElementPaintSchema = z.object({
 });
 export type VisualElementPaint = z.infer<typeof visualElementPaintSchema>;
 
+/** Ajuste compartido de las presillas sobre la geometría original del SVG. */
+export const sleeveTabCalibrationSchema = z.object({
+  left: z.object({
+    x: z.number().finite().default(0),
+    y: z.number().finite().default(0),
+    rotation: z.number().finite().min(-360).max(360).default(0),
+  }).default({ x: 0, y: 0, rotation: 0 }),
+  right: z.object({
+    x: z.number().finite().default(0),
+    y: z.number().finite().default(0),
+    rotation: z.number().finite().min(-360).max(360).default(0),
+  }).default({ x: 0, y: 0, rotation: 0 }),
+});
+export type SleeveTabCalibration = z.infer<typeof sleeveTabCalibrationSchema>;
+
 export const visualPlacementSchema = z.object({
   targetWidth: z.number().positive().default(1080),
   targetHeight: z.number().positive().default(1350),
@@ -119,22 +134,22 @@ export const visualPlacementSchema = z.object({
    * pertenece a la versión del cuello para que editor, laboratorio y
    * publicación compartan exactamente la misma geometría.
    */
-  sleeveTabCalibration: z
-    .object({
-      left: z.object({
-        x: z.number().finite().default(0),
-        y: z.number().finite().default(0),
-        rotation: z.number().finite().min(-360).max(360).default(0),
-      }).default({ x: 0, y: 0, rotation: 0 }),
-      right: z.object({
-        x: z.number().finite().default(0),
-        y: z.number().finite().default(0),
-        rotation: z.number().finite().min(-360).max(360).default(0),
-      }).default({ x: 0, y: 0, rotation: 0 }),
-    })
-    .optional(),
+  sleeveTabCalibration: sleeveTabCalibrationSchema.optional(),
 });
 export type VisualPlacement = z.infer<typeof visualPlacementSchema>;
+
+/** Solicitud administrativa para compartir la calibración de presillas. */
+export const sleeveTabCalibrationApplySchema = z.object({
+  sleeveTabCalibration: sleeveTabCalibrationSchema,
+});
+export type SleeveTabCalibrationApply = z.infer<
+  typeof sleeveTabCalibrationApplySchema
+>;
+
+export const sleeveTabCalibrationApplyResultSchema = z.object({
+  updatedDefinitionCount: z.number().int().nonnegative(),
+  sleeveTabCalibration: sleeveTabCalibrationSchema,
+});
 
 export const visualOdooBindingSchema = z.object({
   productTemplateIds: z.array(z.number().int().positive()).min(1),
