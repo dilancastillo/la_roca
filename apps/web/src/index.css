@@ -1669,6 +1669,13 @@ main {
   grid-column: 1 / -1;
 }
 
+.catalog-sleeve-tab-calibration__coordinates {
+  color: #496276;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .catalog-sleeve-calibration input[type="range"] {
   width: 100%;
   cursor: ew-resize;

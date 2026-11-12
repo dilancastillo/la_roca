@@ -2060,9 +2060,15 @@ export function VisualCatalogPage() {
                   {(["left", "right"] as const).map((side) => {
                     const label = side === "left" ? "Presilla izquierda" : "Presilla derecha";
                     const value = placement.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide();
+                    const anchor = SLEEVE_TAB_CALIBRATION_ANCHORS[side];
+                    const canvasX = Math.round(anchor.x + value.x);
+                    const canvasY = Math.round(anchor.y + value.y);
                     return (
                       <div className="catalog-sleeve-tab-calibration__side" key={side}>
                         <strong>{label}</strong>
+                        <output className="catalog-sleeve-tab-calibration__coordinates">
+                          Coordenadas: X {canvasX} · Y {canvasY}
+                        </output>
                         <label>
                           Rotación ({normalizeSleeveTabRotation(value.rotation)}°)
                           <input
