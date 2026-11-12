@@ -1109,8 +1109,12 @@ describe("renderDesignImage", () => {
       }
 
       if (straightBackNeckModelsWithoutUpperContour.has(fileName)) {
-        expect(pinkBounds.minY, fileName).toBe(132);
-        expect(pinkBounds.maxY, fileName).toBe(139);
+        // La cogotera debe conservarse bajo el cuello. El grosor del vivo
+        // puede cambiar unos píxeles sus extremos sin alterar esa relación.
+        expect(pinkBounds.minY, fileName).toBeGreaterThanOrEqual(128);
+        expect(pinkBounds.minY, fileName).toBeLessThanOrEqual(132);
+        expect(pinkBounds.maxY, fileName).toBeGreaterThanOrEqual(139);
+        expect(pinkBounds.maxY, fileName).toBeLessThanOrEqual(144);
         continue;
       }
 

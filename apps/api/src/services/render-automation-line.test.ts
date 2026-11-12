@@ -6,7 +6,7 @@ import { renderAutomationLine } from "./render-automation-line.js";
 const mocks = vi.hoisted(() => ({
   deriveAutomationRenderScene: vi.fn(),
   getConfiguratorSession: vi.fn(),
-  renderDesignImage: vi.fn(),
+  renderDesignImageForAttachment: vi.fn(),
   storeDesignImage: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock("../render/derive-render-scene.js", () => ({
 }));
 
 vi.mock("../render/render-design-image.js", () => ({
-  renderDesignImage: mocks.renderDesignImage,
+  renderDesignImageForAttachment: mocks.renderDesignImageForAttachment,
 }));
 
 vi.mock("./get-configurator-session.js", () => ({
@@ -58,7 +58,7 @@ describe("renderAutomationLine", () => {
     vi.clearAllMocks();
     mocks.getConfiguratorSession.mockResolvedValue(editableSession);
     mocks.deriveAutomationRenderScene.mockReturnValue({ productKind: "blouse" });
-    mocks.renderDesignImage.mockResolvedValue(Buffer.from("png"));
+    mocks.renderDesignImageForAttachment.mockResolvedValue(Buffer.from("png"));
     mocks.storeDesignImage.mockResolvedValue({
       version: 3,
       generatedAt: "2026-05-05T22:50:00.000Z",
@@ -71,7 +71,7 @@ describe("renderAutomationLine", () => {
       triggerWriteDate: "2026-05-05 22:48:00.123456",
     });
 
-    expect(mocks.renderDesignImage).toHaveBeenCalledOnce();
+    expect(mocks.renderDesignImageForAttachment).toHaveBeenCalledOnce();
     expect(mocks.storeDesignImage).toHaveBeenCalledWith(env, {
       saleOrderLineId: 304,
       filename: "sale-line-304-autogen.png",
@@ -99,7 +99,7 @@ describe("renderAutomationLine", () => {
       triggerWriteDate: "2026-05-05 22:49:59.900000",
     });
 
-    expect(mocks.renderDesignImage).not.toHaveBeenCalled();
+    expect(mocks.renderDesignImageForAttachment).not.toHaveBeenCalled();
     expect(mocks.storeDesignImage).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       ok: true,
@@ -123,7 +123,7 @@ describe("renderAutomationLine", () => {
 
     const result = await renderAutomationLine(env, 304);
 
-    expect(mocks.renderDesignImage).not.toHaveBeenCalled();
+    expect(mocks.renderDesignImageForAttachment).not.toHaveBeenCalled();
     expect(mocks.storeDesignImage).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       ok: true,
@@ -147,7 +147,7 @@ describe("renderAutomationLine", () => {
       triggerWriteDate: "2026-05-12 03:20:00.000000",
     });
 
-    expect(mocks.renderDesignImage).not.toHaveBeenCalled();
+    expect(mocks.renderDesignImageForAttachment).not.toHaveBeenCalled();
     expect(mocks.storeDesignImage).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       ok: true,
@@ -172,7 +172,7 @@ describe("renderAutomationLine", () => {
       triggerWriteDate: "2026-05-05 22:53:00.000000",
     });
 
-    expect(mocks.renderDesignImage).toHaveBeenCalledOnce();
+    expect(mocks.renderDesignImageForAttachment).toHaveBeenCalledOnce();
     expect(mocks.storeDesignImage).toHaveBeenCalledOnce();
   });
 });
