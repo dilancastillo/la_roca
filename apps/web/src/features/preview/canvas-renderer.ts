@@ -609,6 +609,10 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 133, y: 489, rotationDegrees: 61 },
   { x: 943, y: 485, rotationDegrees: 292 },
 ] as const;
+// El catálogo calibra la posición horizontal sobre 1024 px; el preview se
+// rasteriza a 900 px. Convertirla evita que la presilla derecha salga del
+// lienzo y mantiene paridad con la imagen publicada.
+const SLEEVE_TAB_CALIBRATION_WIDTH = 1024;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
   y: 827.9972,
@@ -4277,12 +4281,13 @@ function drawSleeveTabMarkers(
   context.lineJoin = "miter";
 
   for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
-    const transform = getSleeveTabMarkerTransform(position);
+    const canvasPosition = getSleeveTabMarkerCanvasPosition(position);
+    const transform = getSleeveTabMarkerTransform(canvasPosition);
 
     context.save();
-    context.translate(position.x, position.y);
-    context.rotate((position.rotationDegrees * Math.PI) / 180);
-    context.translate(-position.x, -position.y);
+    context.translate(canvasPosition.x, canvasPosition.y);
+    context.rotate((canvasPosition.rotationDegrees * Math.PI) / 180);
+    context.translate(-canvasPosition.x, -canvasPosition.y);
 
     context.beginPath();
     drawSleeveTabMarkerPath(context, transform);
@@ -4315,6 +4320,17 @@ function drawSleeveTabMarkers(
   }
 
   context.restore();
+}
+
+function getSleeveTabMarkerCanvasPosition(position: {
+  x: number;
+  y: number;
+  rotationDegrees: number;
+}) {
+  return {
+    ...position,
+    x: (position.x / SLEEVE_TAB_CALIBRATION_WIDTH) * CANVAS_WIDTH,
+  };
 }
 
 function getSleeveTabMarkerTransform(

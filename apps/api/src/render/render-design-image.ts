@@ -585,6 +585,11 @@ const SLEEVE_TAB_MARKER_POSITIONS = [
   { x: 133, y: 489, rotationDegrees: 61 },
   { x: 943, y: 485, rotationDegrees: 292 },
 ] as const;
+// Las coordenadas aprobadas se toman sobre el lienzo de calibración del
+// catálogo (1024 px). El renderer final mide 900 px de ancho, por lo que la
+// posición horizontal debe convertirse antes de dibujar; de lo contrario la
+// presilla derecha (X 943) queda fuera de la imagen publicada.
+const SLEEVE_TAB_CALIBRATION_WIDTH = 1024;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
   y: 827.9972,
@@ -4579,8 +4584,24 @@ function getSleeveTabMarkersSvg(
   trimColor: string,
 ) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position) => getSleeveTabMarkerSvg(position, baseColor, trimColor),
+    (position) =>
+      getSleeveTabMarkerSvg(
+        getSleeveTabMarkerCanvasPosition(position),
+        baseColor,
+        trimColor,
+      ),
   ).join("");
+}
+
+function getSleeveTabMarkerCanvasPosition(position: {
+  x: number;
+  y: number;
+  rotationDegrees: number;
+}) {
+  return {
+    ...position,
+    x: (position.x / SLEEVE_TAB_CALIBRATION_WIDTH) * CANVAS_WIDTH,
+  };
 }
 
 function getSleeveTabMarkerTransform(
