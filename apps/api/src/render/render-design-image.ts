@@ -5484,6 +5484,24 @@ export async function renderDesignImageForAttachment(
   return cropToContent(await renderDesignImage(scene));
 }
 
+/**
+ * Equivalente para el diseño creado en el navegador. El configurador envía ese
+ * PNG como Base64 al guardar; normalizarlo aquí garantiza que el adjunto de
+ * Odoo no conserve el lienzo blanco completo.
+ */
+export async function cropDesignImageBase64ForAttachment(
+  imageBase64: string,
+): Promise<string> {
+  const commaIndex = imageBase64.indexOf(",");
+  const normalizedBase64 =
+    imageBase64.startsWith("data:") && commaIndex >= 0
+      ? imageBase64.slice(commaIndex + 1)
+      : imageBase64;
+
+  const cropped = await cropToContent(Buffer.from(normalizedBase64, "base64"));
+  return cropped.toString("base64");
+}
+
 async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise<Buffer> {
   const layers: string[] = [
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,

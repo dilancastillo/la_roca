@@ -5,6 +5,7 @@ import type { AutomationRenderScene } from "./derive-render-scene.js";
 import {
   applySleeveCalibration,
   alignSpecialSleeveTrimsToVisibleEdge,
+  cropDesignImageBase64ForAttachment,
   getLogoMarkerPositions,
   getOriginalSleeveTrimShapes,
   renderDesignImage,
@@ -9776,6 +9777,24 @@ describe("renderDesignImage", () => {
     expect(info.height).toBeLessThanOrEqual(1200);
 
     // Debe contener contenido real (ancho y alto mínimos razonables)
+    expect(info.width).toBeGreaterThan(400);
+    expect(info.height).toBeGreaterThan(500);
+  });
+
+  it("recorta también el PNG Base64 que llega desde Guardar diseño", async () => {
+    const untrimmed = await renderDesignImage({
+      ...baseScene,
+      garmentAssetPath:
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+      lowerPocketLayout: "none",
+    });
+    const base64 = await cropDesignImageBase64ForAttachment(
+      `data:image/png;base64,${untrimmed.toString("base64")}`,
+    );
+    const { info } = await readRawPng(Buffer.from(base64, "base64"));
+
+    expect(info.width).toBeLessThanOrEqual(900);
+    expect(info.height).toBeLessThanOrEqual(1200);
     expect(info.width).toBeGreaterThan(400);
     expect(info.height).toBeGreaterThan(500);
   });

@@ -12,6 +12,7 @@ import type { OdooEnv } from "../lib/app-env.js";
 import { odooCreate, odooSearchRead, odooWrite } from "../lib/odoo-client.js";
 import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
+import { cropDesignImageBase64ForAttachment } from "../render/render-design-image.js";
 import {
   LOGO_LINE_FIELDS,
   buildDesignImageStoragePayload,
@@ -538,7 +539,9 @@ export async function saveConfiguratorDesign(
   const designImageInput = {
     saleOrderLineId: payload.saleOrderLineId,
     filename: payload.filename,
-    imageBase64: payload.imageBase64,
+    // El preview permanece intacto: este recorte solo se aplica al PNG que se
+    // adjunta a la línea de venta al pulsar Guardar diseño.
+    imageBase64: await cropDesignImageBase64ForAttachment(payload.imageBase64),
     currentVersion: session.status.version,
     attachmentDescription: buildConfiguratorStateDescription({
       selectedValueIds,
