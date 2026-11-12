@@ -8,6 +8,7 @@ import {
   getLogoMarkerPositions,
   getOriginalSleeveTrimShapes,
   renderDesignImage,
+  renderDesignImageForAttachment,
 } from "./render-design-image.js";
 
 const baseScene: AutomationRenderScene = {
@@ -9755,4 +9756,23 @@ describe("renderDesignImage", () => {
     ).toBeGreaterThan(100);
     expect(topBackNeckPinkPixels).toBeGreaterThan(100);
   }, 20000);
+
+  it("recorta los márgenes blancos de la imagen final antes de enviar a Odoo", async () => {
+    const rendered = await renderDesignImageForAttachment({
+      ...baseScene,
+      garmentAssetPath:
+        "assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
+      lowerPocketLayout: "none",
+    });
+    const { info } = await readRawPng(rendered);
+
+    // Nunca crece respecto al canvas original. Algunos SVG de catálogo ya
+    // ocupan el borde horizontal completo; el recorte conserva ese borde.
+    expect(info.width).toBeLessThanOrEqual(900);
+    expect(info.height).toBeLessThanOrEqual(1200);
+
+    // Debe contener contenido real (ancho y alto mínimos razonables)
+    expect(info.width).toBeGreaterThan(400);
+    expect(info.height).toBeGreaterThan(500);
+  });
 });

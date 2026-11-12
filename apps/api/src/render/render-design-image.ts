@@ -603,7 +603,8 @@ const SLEEVE_TAB_POLYGON_POINTS = [
 const SLEEVE_TAB_BUTTON = {
   x: 278.4296,
   y: 860.7699,
-  radius: 4.8615,
+  // Se agranda solo el botón: la silueta y calibración de la presilla no cambian.
+  radius: 6.5,
 } as const;
 // Tamaño histórico del SVG original de presilla. Debe mantenerse igual en el
 // render publicado y en el preview web para que una calibración del catálogo
@@ -1630,7 +1631,9 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 // Los vivos históricos llegan como trazos SVG con grosores distintos. Solo
 // expandimos su tinta recoloreada: nunca el relleno ni la silueta de la prenda.
 const COLORED_TRIM_EXPANSION_RADIUS = 2;
-const COLLAR_TRIM_EXPANSION_RADIUS = 2;
+// Solo amplía trazos lineales de cuello. Los vivos rellenos siguen su ruta
+// específica para no invadir el relleno del modelo.
+const COLLAR_TRIM_EXPANSION_RADIUS = 4;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
@@ -4514,7 +4517,7 @@ function getBackNeckTrimSvg(
 ) {
   return `
     <g transform="translate(0 ${verticalOffset})">
-      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
     </g>
   `;
 }
@@ -5433,8 +5436,8 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
   }
 
   const [blouseBuffer, pantsBuffer] = await Promise.all([
-    renderDesignImage(scene.uniformParts.blouse),
-    renderDesignImage(scene.uniformParts.pants),
+    renderDesignImageUncropped(scene.uniformParts.blouse),
+    renderDesignImageUncropped(scene.uniformParts.pants),
   ]);
   const blouseLayer = await sharp(blouseBuffer)
     .extract({ left: 72, top: 10, width: 756, height: 1180 })
@@ -5447,7 +5450,7 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     .png()
     .toBuffer();
 
-  return await sharp({
+  const compositeBuffer = await sharp({
     create: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
@@ -5461,6 +5464,8 @@ async function createUniformCompositeBuffer(scene: AutomationRenderScene) {
     ])
     .png()
     .toBuffer();
+
+  return compositeBuffer;
 }
 
 export async function renderDesignImage(scene: AutomationRenderScene): Promise<Buffer> {
@@ -5468,6 +5473,18 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
     return await createUniformCompositeBuffer(scene);
   }
 
+  return await renderDesignImageUncropped(scene);
+}
+
+/** Render destinado al adjunto de Odoo: conserva el render general intacto y
+ * recorta únicamente los márgenes blancos antes de codificar el archivo. */
+export async function renderDesignImageForAttachment(
+  scene: AutomationRenderScene,
+): Promise<Buffer> {
+  return cropToContent(await renderDesignImage(scene));
+}
+
+async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise<Buffer> {
   const layers: string[] = [
     `<rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#ffffff" />`,
   ];
@@ -6396,4 +6413,63 @@ export async function renderDesignImage(scene: AutomationRenderScene): Promise<B
   `;
 
   return await sharp(Buffer.from(svg)).png().toBuffer();
+}
+
+/**
+ * Recorta el lienzo final eliminando los márgenes blancos (#ffffff) sobrantes.
+ * Solo afecta la imagen que se adjunta a Odoo; el preview y el editor no pasan
+ * por aquí. Se conserva un margen de 8px alrededor del contenido para evitar
+ * que trazos del borde queden cortados.
+ */
+async function cropToContent(buffer: Buffer): Promise<Buffer> {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width, height } = info;
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let hasContent = false;
+
+  for (let offset = 0; offset < data.length; offset += 4) {
+    const r = data[offset] ?? 255;
+    const g = data[offset + 1] ?? 255;
+    const b = data[offset + 2] ?? 255;
+    const a = data[offset + 3] ?? 0;
+
+    // Ignorar píxeles transparentes o blancos puros
+    if (a === 0 || (r >= 250 && g >= 250 && b >= 250)) {
+      continue;
+    }
+
+    const index = offset / 4;
+    const x = index % width;
+    const y = Math.floor(index / width);
+
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+    hasContent = true;
+  }
+
+  if (!hasContent) {
+    return buffer;
+  }
+
+  const margin = 8;
+  const left = Math.max(0, minX - margin);
+  const top = Math.max(0, minY - margin);
+  const right = Math.min(width - 1, maxX + margin);
+  const bottom = Math.min(height - 1, maxY + margin);
+  const cropWidth = right - left + 1;
+  const cropHeight = bottom - top + 1;
+
+  return await sharp(buffer)
+    .extract({ left, top, width: cropWidth, height: cropHeight })
+    .png()
+    .toBuffer();
 }

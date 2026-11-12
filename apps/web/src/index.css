@@ -1616,26 +1616,37 @@ main {
   background: #f4fbfe;
 }
 
+.catalog-blouse-details {
+  margin: 16px 0 0;
+  border: 1px solid #b8d7e5;
+  border-radius: 8px;
+  background: #f4fbfe;
+}
+
+.catalog-blouse-details > summary {
+  cursor: pointer;
+  padding: 12px;
+  color: #123047;
+  font-weight: 700;
+}
+
+.catalog-blouse-details[open] > summary {
+  border-bottom: 1px solid #d7e6ed;
+}
+
+.catalog-blouse-details .catalog-sleeve-calibration,
+.catalog-blouse-details .catalog-sleeve-tab-calibration {
+  margin: 12px;
+}
+
 .catalog-sleeve-tab-calibration {
   display: grid;
   gap: 10px;
-  margin: 16px 0 0;
+  margin: 0;
   padding: 12px;
-  border: 1px solid #ec9bbb;
+  border: 1px solid #b8d7e5;
   border-radius: 8px;
-  background: #fff4f8;
-}
-
-.catalog-sleeve-calibration p {
-  margin: 0;
-  color: #405866;
-  font-size: 0.84rem;
-}
-
-.catalog-sleeve-tab-calibration p {
-  margin: 0;
-  color: #6e2945;
-  font-size: 0.84rem;
+  background: #f4fbfe;
 }
 
 .catalog-sleeve-calibration__side {

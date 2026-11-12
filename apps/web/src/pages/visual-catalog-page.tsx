@@ -1991,7 +1991,9 @@ export function VisualCatalogPage() {
                 ))}
               </div>
               {canCalibrateSleeves ? (
-                <fieldset className="catalog-sleeve-calibration">
+                <details className="catalog-blouse-details">
+                  <summary>Detalles de blusa</summary>
+                  <fieldset className="catalog-sleeve-calibration">
                   <legend>Calibración de vivos de manga</legend>
                   <p>
                     Arrastra I o D para mover cada vivo. La escala longitudinal alarga
@@ -2052,17 +2054,9 @@ export function VisualCatalogPage() {
                   >
                     Restablecer mangas
                   </button>
-                </fieldset>
-              ) : null}
-              {canCalibrateSleeves ? (
-                <fieldset className="catalog-sleeve-tab-calibration">
-                  <legend>Detalles de la blusa · presillas</legend>
-                  <p>
-                    La guía rosada representa la presilla real y conserva su tamaño original.
-                    Arrástrala con el mouse y ajusta su rotación; la posición y el giro se
-                    guardan con este cuello y se aplican igual al publicar. Estos controles no
-                    modifican los vivos de manga.
-                  </p>
+                  </fieldset>
+                  <fieldset className="catalog-sleeve-tab-calibration">
+                    <legend>Presillas</legend>
                   {(["left", "right"] as const).map((side) => {
                     const label = side === "left" ? "Presilla izquierda" : "Presilla derecha";
                     const value = placement.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide();
@@ -2111,7 +2105,8 @@ export function VisualCatalogPage() {
                   >
                     Restablecer presillas
                   </button>
-                </fieldset>
+                  </fieldset>
+                </details>
               ) : null}
             </div>
 

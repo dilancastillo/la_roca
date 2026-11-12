@@ -1,6 +1,6 @@
 import type { OdooEnv } from "../lib/app-env.js";
 import { deriveAutomationRenderScene } from "../render/derive-render-scene.js";
-import { renderDesignImage } from "../render/render-design-image.js";
+import { renderDesignImageForAttachment } from "../render/render-design-image.js";
 import { getConfiguratorSession } from "./get-configurator-session.js";
 import { DESIGN_IMAGE_FIELD, storeDesignImage } from "./store-design-image.js";
 
@@ -113,7 +113,7 @@ export async function renderAutomationLine(
   }
 
   const scene = deriveAutomationRenderScene(session, session.selectedValueIds);
-  const imageBuffer = await renderDesignImage(scene);
+  const imageBuffer = await renderDesignImageForAttachment(scene);
   const imageBase64 = imageBuffer.toString("base64");
   const nextVersion = session.status.version + 1;
 

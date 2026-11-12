@@ -629,7 +629,8 @@ const SLEEVE_TAB_POLYGON_POINTS = [
 const SLEEVE_TAB_BUTTON = {
   x: 278.4296,
   y: 860.7699,
-  radius: 4.8615,
+  // Debe coincidir con API: se agranda solo el botón, no la presilla.
+  radius: 6.5,
 } as const;
 // Tamaño histórico del SVG original de presilla. Debe coincidir con la API:
 // las coordenadas guardadas por el editor no incluyen un factor de escala.
@@ -1652,7 +1653,9 @@ const POCKET_TRIM_LINE_HORIZONTAL_INSET = 4;
 // Los SVG históricos no comparten el mismo grosor de tinta. Este radio se
 // aplica solo a capas de vivo recoloreadas, nunca al relleno de la prenda.
 const COLORED_TRIM_EXPANSION_RADIUS = 2;
-const COLLAR_TRIM_EXPANSION_RADIUS = 2;
+// Solo amplía trazos lineales de cuello. Los vivos rellenos siguen su ruta
+// específica para no invadir el relleno del modelo.
+const COLLAR_TRIM_EXPANSION_RADIUS = 4;
 
 const collarTrimOverlayByFileName: Record<string, string> = {
   "blouse-model-15-presillas.svg":
