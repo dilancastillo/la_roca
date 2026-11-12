@@ -199,9 +199,14 @@ describe("visual catalog repository", () => {
       expect(result.updatedDefinitionCount).toBe(2);
       expect(result.sleeveTabCalibration).toEqual(sleeveTabCalibration);
       for (const id of [first.id, second.id]) {
+        const [activeDefinition] = await loadActiveVisualDefinitions(
+          calibrationEnv,
+          7,
+          [id],
+        );
+        expect(activeDefinition).toBeDefined();
         expect(
-          (await loadActiveVisualDefinitions(calibrationEnv, 7, [id]))[0]
-            ?.placement.sleeveTabCalibration,
+          activeDefinition?.placement?.sleeveTabCalibration,
         ).toEqual(sleeveTabCalibration);
       }
     } finally {
