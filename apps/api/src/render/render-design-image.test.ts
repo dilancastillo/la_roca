@@ -9798,4 +9798,10 @@ describe("renderDesignImage", () => {
     expect(info.width).toBeGreaterThan(400);
     expect(info.height).toBeGreaterThan(500);
   });
+
+  it("conserva un adjunto Base64 no rasterizable sin bloquear el guardado", async () => {
+    await expect(cropDesignImageBase64ForAttachment("not-an-image")).resolves.toBe(
+      "not-an-image",
+    );
+  });
 });

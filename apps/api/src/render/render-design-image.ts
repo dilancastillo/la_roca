@@ -5498,8 +5498,15 @@ export async function cropDesignImageBase64ForAttachment(
       ? imageBase64.slice(commaIndex + 1)
       : imageBase64;
 
-  const cropped = await cropToContent(Buffer.from(normalizedBase64, "base64"));
-  return cropped.toString("base64");
+  try {
+    const cropped = await cropToContent(Buffer.from(normalizedBase64, "base64"));
+    return cropped.toString("base64");
+  } catch {
+    // La imagen real del configurador siempre es PNG. No obstante, conservar
+    // el valor original evita que un adjunto legado o un mock no-imagen
+    // bloquee el guardado completo de la línea de venta.
+    return normalizedBase64;
+  }
 }
 
 async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise<Buffer> {
