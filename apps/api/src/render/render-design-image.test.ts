@@ -8489,11 +8489,14 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftSleeveTabRegion = { x: 50, y: 350, width: 120, height: 120 };
-    const rightSleeveTabRegion = { x: 730, y: 350, width: 120, height: 120 };
+    // Las presillas quedaron fijadas junto a la costura lateral de cada manga.
+    // Estas regiones corresponden a las coordenadas publicadas (133,489) y
+    // (943,485), no a la ubicación histórica de los puños.
+    const leftSleeveTabRegion = { x: 70, y: 420, width: 130, height: 140 };
+    const rightSleeveTabRegion = { x: 870, y: 415, width: 130, height: 140 };
     // La punta de cada presilla debe mirar hacia el hombro, no hacia el puño.
-    const leftSleeveTabTipRegion = { x: 70, y: 365, width: 40, height: 40 };
-    const rightSleeveTabTipRegion = { x: 790, y: 365, width: 40, height: 40 };
+    const leftSleeveTabTipRegion = { x: 80, y: 455, width: 45, height: 45 };
+    const rightSleeveTabTipRegion = { x: 920, y: 450, width: 45, height: 45 };
     const leftSleeveCuffRegion = { x: 65, y: 410, width: 35, height: 35 };
     const rightSleeveCuffRegion = { x: 800, y: 410, width: 35, height: 35 };
     const baseLeftDarkPixels = countDarkPixelsInRegion(
