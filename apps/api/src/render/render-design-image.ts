@@ -580,10 +580,10 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Presillas pegadas a la costura lateral de cada manga, antes del puño.
-  // La punta se orienta hacia el hombro y se refleja entre ambos lados.
-  { x: 110, y: 405, rotationDegrees: 135 },
-  { x: 790, y: 405, rotationDegrees: -135 },
+  // Posición aprobada para el modelo de blusa. Es fija para que el catálogo,
+  // el preview y la imagen publicada siempre coincidan.
+  { x: 133, y: 489, rotationDegrees: 61 },
+  { x: 943, y: 485, rotationDegrees: 292 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -4577,16 +4577,9 @@ function getLogoMarkerSvg(placement: string, sourceValueIds?: number[]) {
 function getSleeveTabMarkersSvg(
   baseColor: string,
   trimColor: string,
-  calibration?: AutomationRenderScene["sleeveTabCalibration"],
 ) {
   return SLEEVE_TAB_MARKER_POSITIONS.map(
-    (position, index) =>
-      getSleeveTabMarkerSvg(
-        position,
-        baseColor,
-        trimColor,
-        calibration?.[index === 0 ? "left" : "right"],
-      ),
+    (position) => getSleeveTabMarkerSvg(position, baseColor, trimColor),
   ).join("");
 }
 
@@ -4624,15 +4617,8 @@ function getSleeveTabMarkerSvg(
   position: { x: number; y: number; rotationDegrees: number },
   baseColor: string,
   buttonColor: string,
-  calibration?: { x: number; y: number; rotation: number },
 ) {
-  const calibratedPosition = {
-    ...position,
-    x: position.x + (calibration?.x ?? 0),
-    y: position.y + (calibration?.y ?? 0),
-    rotationDegrees: position.rotationDegrees + (calibration?.rotation ?? 0),
-  };
-  const transform = getSleeveTabMarkerTransform(calibratedPosition);
+  const transform = getSleeveTabMarkerTransform(position);
   const points = SLEEVE_TAB_POLYGON_POINTS.map((point) => {
     const transformedPoint = transformSleeveTabPoint(point, transform);
 
@@ -4645,7 +4631,7 @@ function getSleeveTabMarkerSvg(
     transform,
   );
 
-  return `<g transform="translate(${formatSvgNumber(calibratedPosition.x)} ${formatSvgNumber(calibratedPosition.y)}) rotate(${formatSvgNumber(calibratedPosition.rotationDegrees)}) translate(${formatSvgNumber(-calibratedPosition.x)} ${formatSvgNumber(-calibratedPosition.y)})">
+  return `<g transform="translate(${formatSvgNumber(position.x)} ${formatSvgNumber(position.y)}) rotate(${formatSvgNumber(position.rotationDegrees)}) translate(${formatSvgNumber(-position.x)} ${formatSvgNumber(-position.y)})">
     <polygon points="${points}" fill="${baseColor}" stroke="${SLEEVE_TAB_MARKER_STROKE_COLOR}" stroke-width="${SLEEVE_TAB_MARKER_STROKE_WIDTH}" stroke-miterlimit="10" />
     <circle cx="${formatSvgNumber(buttonCenter.x)}" cy="${formatSvgNumber(
       buttonCenter.y,
@@ -6423,7 +6409,6 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
         getSleeveTabMarkersSvg(
           scene.baseColorHex,
           sleeveTabTrimColor,
-          scene.sleeveTabCalibration,
         ),
       );
     }

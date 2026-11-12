@@ -93,21 +93,6 @@ function defaultSleeveCalibrationSide() {
   return { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0 };
 }
 
-function defaultSleeveTabCalibrationSide() {
-  return { x: 0, y: 0, rotation: 0 };
-}
-
-function normalizeSleeveTabRotation(rotation: number) {
-  return ((rotation % 360) + 360) % 360;
-}
-
-const SLEEVE_TAB_CALIBRATION_ANCHORS = {
-  // Debe coincidir con SLEEVE_TAB_MARKER_POSITIONS en canvas-renderer y el
-  // render de API: la guía del editor representa la presilla publicada.
-  left: { x: 110, y: 405, rotation: 135 },
-  right: { x: 790, y: 405, rotation: -135 },
-} as const;
-
 const REFERENCE_ASSET_BY_SLOT: Record<VisualSlot, string> = {
   neck:
     "/assets/catalog/blusa-antifluido-t180/svg-clean/blouse-base-closed-no-collar.svg",
@@ -674,13 +659,6 @@ export function VisualCatalogPage() {
     x: number;
     y: number;
   } | null>(null);
-  const sleeveTabCalibrationDragRef = useRef<{
-    side: "left" | "right";
-    pointerX: number;
-    pointerY: number;
-    x: number;
-    y: number;
-  } | null>(null);
   // Overlay es el valor seguro: un SVG solo reemplaza la base por decisión
   // explícita del editor, nunca porque un vector sea el más grande.
   const [renderMode, setRenderMode] = useState<VisualRenderMode>("overlay");
@@ -741,54 +719,6 @@ export function VisualCatalogPage() {
 
   const endSleeveCalibrationDrag = () => {
     sleeveCalibrationDragRef.current = null;
-  };
-
-  // Las presillas usan su propio estado: no reutilizan ni modifican nunca la
-  // calibración de vivos de manga.
-  const beginSleeveTabCalibrationDrag = (
-    event: ReactPointerEvent<HTMLButtonElement>,
-    side: "left" | "right",
-  ) => {
-    const value = placement.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide();
-    sleeveTabCalibrationDragRef.current = {
-      side,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      x: value.x,
-      y: value.y,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const moveSleeveTabCalibrationDrag = (
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => {
-    const drag = sleeveTabCalibrationDragRef.current;
-    if (!drag) return;
-    const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
-    if (!bounds) return;
-    const x = boundedCalibration(
-      drag.x + ((event.clientX - drag.pointerX) / bounds.width) * 1080,
-    );
-    const y = boundedCalibration(
-      drag.y + ((event.clientY - drag.pointerY) / bounds.height) * 1350,
-    );
-    setPlacement((current) => ({
-      ...current,
-      sleeveTabCalibration: {
-        left: current.sleeveTabCalibration?.left ?? defaultSleeveTabCalibrationSide(),
-        right: current.sleeveTabCalibration?.right ?? defaultSleeveTabCalibrationSide(),
-        [drag.side]: {
-          ...(current.sleeveTabCalibration?.[drag.side] ?? defaultSleeveTabCalibrationSide()),
-          x,
-          y,
-        },
-      },
-    }));
-  };
-
-  const endSleeveTabCalibrationDrag = () => {
-    sleeveTabCalibrationDragRef.current = null;
   };
 
 
@@ -2055,63 +1985,6 @@ export function VisualCatalogPage() {
                     Restablecer mangas
                   </button>
                   </fieldset>
-                  <fieldset className="catalog-sleeve-tab-calibration">
-                    <legend>Presillas</legend>
-                  {(["left", "right"] as const).map((side) => {
-                    const label = side === "left" ? "Presilla izquierda" : "Presilla derecha";
-                    const value = placement.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide();
-                    const anchor = SLEEVE_TAB_CALIBRATION_ANCHORS[side];
-                    const canvasX = Math.round(anchor.x + value.x);
-                    const canvasY = Math.round(anchor.y + value.y);
-                    return (
-                      <div className="catalog-sleeve-tab-calibration__side" key={side}>
-                        <strong>{label}</strong>
-                        <output className="catalog-sleeve-tab-calibration__coordinates">
-                          Coordenadas: X {canvasX} · Y {canvasY}
-                        </output>
-                        <label>
-                          Rotación ({normalizeSleeveTabRotation(value.rotation)}°)
-                          <input
-                            type="range"
-                            min="0"
-                            max="359"
-                            step="1"
-                            value={normalizeSleeveTabRotation(value.rotation)}
-                            onChange={(event) => {
-                              const rotation = Number(event.target.value);
-                              setPlacement((current) => ({
-                                ...current,
-                                sleeveTabCalibration: {
-                                  left: current.sleeveTabCalibration?.left ?? defaultSleeveTabCalibrationSide(),
-                                  right: current.sleeveTabCalibration?.right ?? defaultSleeveTabCalibrationSide(),
-                                  [side]: {
-                                    ...(current.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide()),
-                                    rotation,
-                                  },
-                                },
-                              }));
-                            }}
-                          />
-                        </label>
-                      </div>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() =>
-                      setPlacement((current) => ({
-                        ...current,
-                        sleeveTabCalibration: {
-                          left: defaultSleeveTabCalibrationSide(),
-                          right: defaultSleeveTabCalibrationSide(),
-                        },
-                      }))
-                    }
-                  >
-                    Restablecer presillas
-                  </button>
-                  </fieldset>
                 </details>
               ) : null}
             </div>
@@ -2259,41 +2132,6 @@ export function VisualCatalogPage() {
                           title={`Arrastrar ${isLeft ? "manga izquierda" : "manga derecha"}`}
                         >
                           {isLeft ? "I" : "D"}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-                {canCalibrateSleeves ? (
-                  <div
-                    className="visual-runtime-preview__sleeve-tab-calibration"
-                    aria-label="Guías de calibración de presillas"
-                  >
-                    {(["left", "right"] as const).map((side) => {
-                      const anchor = SLEEVE_TAB_CALIBRATION_ANCHORS[side];
-                      const value = placement.sleeveTabCalibration?.[side] ?? defaultSleeveTabCalibrationSide();
-                      const label = side === "left" ? "presilla izquierda" : "presilla derecha";
-                      return (
-                        <button
-                          key={side}
-                          type="button"
-                          className="visual-runtime-preview__sleeve-tab-handle"
-                          style={{
-                            left: `${((anchor.x + value.x) / 1080) * 100}%`,
-                            top: `${((anchor.y + value.y) / 1350) * 100}%`,
-                            transform: `translate(-50%, -50%) rotate(${anchor.rotation + value.rotation}deg)`,
-                          }}
-                          onPointerDown={(event) => beginSleeveTabCalibrationDrag(event, side)}
-                          onPointerMove={moveSleeveTabCalibrationDrag}
-                          onPointerUp={endSleeveTabCalibrationDrag}
-                          onPointerCancel={endSleeveTabCalibrationDrag}
-                          title={`Arrastrar ${label}`}
-                          aria-label={`Arrastrar ${label}`}
-                        >
-                          <svg viewBox="260 825 38 64" aria-hidden="true">
-                            <path d="M263.7064 835.5366 L264.3546 869.3353 L279.5408 885.818 L293.1529 869.7983 L293.1529 827.9972 L263.7064 833.8698 Z" />
-                            <circle cx="278.4296" cy="860.7699" r="4.8615" />
-                          </svg>
                         </button>
                       );
                     })}

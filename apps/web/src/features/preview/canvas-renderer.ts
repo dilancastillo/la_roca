@@ -604,12 +604,10 @@ const LOGO_MARKER_POSITIONS = {
   leftSleeve: { x: 742, y: 408 },
 } as const;
 const SLEEVE_TAB_MARKER_POSITIONS = [
-  // Presillas pegadas a la costura lateral de cada manga, antes del puño.
-  // La punta se orienta hacia el hombro y se refleja entre ambos lados.
-  // Deben usar exactamente la misma orientación base que el render de
-  // publicación. La calibración del editor se suma a estos valores.
-  { x: 110, y: 405, rotationDegrees: 135 },
-  { x: 790, y: 405, rotationDegrees: -135 },
+  // Posición aprobada para el modelo de blusa. Es fija para que el catálogo,
+  // el preview y la imagen publicada siempre coincidan.
+  { x: 133, y: 489, rotationDegrees: 61 },
+  { x: 943, y: 485, rotationDegrees: 292 },
 ] as const;
 const SLEEVE_TAB_SOURCE_BOUNDS = {
   x: 263.7064,
@@ -4274,25 +4272,17 @@ function drawSleeveTabMarkers(
   context: CanvasRenderingContext2D,
   baseColor: string,
   buttonColor: string,
-  calibration?: PreviewScene["sleeveTabCalibration"],
 ) {
   context.save();
   context.lineJoin = "miter";
 
-  for (const [index, position] of SLEEVE_TAB_MARKER_POSITIONS.entries()) {
-    const adjustment = calibration?.[index === 0 ? "left" : "right"];
-    const calibratedPosition = {
-      ...position,
-      x: position.x + (adjustment?.x ?? 0),
-      y: position.y + (adjustment?.y ?? 0),
-      rotationDegrees: position.rotationDegrees + (adjustment?.rotation ?? 0),
-    };
-    const transform = getSleeveTabMarkerTransform(calibratedPosition);
+  for (const position of SLEEVE_TAB_MARKER_POSITIONS) {
+    const transform = getSleeveTabMarkerTransform(position);
 
     context.save();
-    context.translate(calibratedPosition.x, calibratedPosition.y);
-    context.rotate((calibratedPosition.rotationDegrees * Math.PI) / 180);
-    context.translate(-calibratedPosition.x, -calibratedPosition.y);
+    context.translate(position.x, position.y);
+    context.rotate((position.rotationDegrees * Math.PI) / 180);
+    context.translate(-position.x, -position.y);
 
     context.beginPath();
     drawSleeveTabMarkerPath(context, transform);
@@ -6346,7 +6336,6 @@ async function composeSingleDesign(
         context,
         scene.baseColorHex,
         sleeveTabTrimColor,
-        scene.sleeveTabCalibration,
       );
     }
 
