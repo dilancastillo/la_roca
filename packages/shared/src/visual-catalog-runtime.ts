@@ -588,8 +588,12 @@ function addLinearTrimTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
 ) {
+  // Un SVG puede serializar sus geometrías como `<path />` o como
+  // `<path></path>`. El editor conserva ambos formatos según el archivo de
+  // origen. Limitar esta regla a etiquetas autocerradas hacía que un vivo
+  // lineal blanco perdiera su arista de contraste al volver a abrirlo.
   const geometryElement =
-    /<(path|line|polyline|polygon|rect|circle|ellipse)\b[^>]*stroke:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
+    /<(path|line|polyline|polygon|rect|circle|ellipse)\b[^>]*stroke:__VC_TRIM_STROKE_(\d+)__[^>]*?(?:\/>|>[\s\S]*?<\/\1\s*>)/gi;
 
   return runtimeSvg.replace(
     geometryElement,
@@ -638,8 +642,11 @@ function addLinearTrimPolygonTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
 ) {
+  // Igual que con los trazos, los polígonos angostos pueden llegar con cierre
+  // explícito. Deben conservar el contorno cuando el vivo seleccionado es
+  // blanco, pero los vivos rellenos no entran por esta ruta.
   const texturedPolygon =
-    /<polygon\b[^>]*data-vc-linear-trim-polygon="true"[^>]*fill:__VC_TRIM_STROKE_(\d+)__[^>]*\/>/gi;
+    /<polygon\b[^>]*data-vc-linear-trim-polygon="true"[^>]*fill:__VC_TRIM_STROKE_(\d+)__[^>]*?(?:\/>|>[\s\S]*?<\/polygon\s*>)/gi;
   const texturedSvg = runtimeSvg.replace(
     texturedPolygon,
     (markup, sourceValueId: string) => {

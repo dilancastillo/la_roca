@@ -3898,6 +3898,17 @@ function strokePocketTrimLine(
   context.save();
   context.lineCap = "butt";
   context.lineJoin = "round";
+  // Un vivo blanco sigue siendo blanco, pero sobre una prenda clara necesita
+  // una arista oscura para seguir siendo visible. Esta función se usa solo
+  // para las líneas de vivo de bolsillo, no para el relleno del bolsillo.
+  if (isNearWhiteColor(trimColor)) {
+    context.strokeStyle = "#1f2937";
+    context.lineWidth = POCKET_TRIM_LINE_WIDTH + 4;
+    context.beginPath();
+    context.moveTo(x1, y);
+    context.lineTo(x2, y);
+    context.stroke();
+  }
   context.strokeStyle = trimColor;
   context.lineWidth = POCKET_TRIM_LINE_WIDTH;
   context.beginPath();

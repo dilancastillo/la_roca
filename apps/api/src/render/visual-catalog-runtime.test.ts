@@ -657,7 +657,7 @@ describe("runtime del catalogo visual general", () => {
       },
     };
     definition.runtimeSvg =
-      '<svg><path id="linear" style="display:__VC_VISIBILITY_0__;fill:none;stroke:__VC_TRIM_STROKE_1001__!important;"/><path id="filled" style="display:__VC_VISIBILITY_1__;fill:__VC_TRIM_FILL_1000__!important;"/></svg>';
+      '<svg><path id="linear" style="display:__VC_VISIBILITY_0__;fill:none;stroke:__VC_TRIM_STROKE_1001__!important;"></path><path id="filled" style="display:__VC_VISIBILITY_1__;fill:__VC_TRIM_FILL_1000__!important;"></path></svg>';
 
     const svg = decodeURIComponent(
       materializeVisualDefinitionSvg(
@@ -733,7 +733,7 @@ describe("runtime del catalogo visual general", () => {
       },
     };
     definition.runtimeSvg =
-      '<svg viewBox="0 0 1080 1350"><polygon points="0,0 100,100 95,105 -5,5" style="display:__VC_VISIBILITY_0__;fill:__VC_TRIM_STROKE_1001__!important;"/></svg>';
+      '<svg viewBox="0 0 1080 1350"><polygon points="0,0 100,100 95,105 -5,5" style="display:__VC_VISIBILITY_0__;fill:__VC_TRIM_STROKE_1001__!important;"></polygon></svg>';
 
     const svg = decodeURIComponent(
       materializeVisualDefinitionSvg(definition, "#aabbcc", [

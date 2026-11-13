@@ -5405,8 +5405,12 @@ function getPocketTrimLineSvg(
   trimColor: string,
 ) {
   const pathData = `M${x1} ${y} L${x2} ${y}`;
+  const contrastOutline = isNearWhiteColor(trimColor)
+    ? `<path d="${pathData}" fill="none" stroke="#1f2937" stroke-width="${POCKET_TRIM_LINE_WIDTH + 4}" stroke-linecap="butt" stroke-linejoin="round" />`
+    : "";
 
   return `
+    ${contrastOutline}
     <path d="${pathData}" fill="none" stroke="${trimColor}" stroke-width="${POCKET_TRIM_LINE_WIDTH}" stroke-linecap="butt" stroke-linejoin="round" />
   `;
 }
