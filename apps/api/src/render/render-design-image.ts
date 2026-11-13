@@ -3251,10 +3251,39 @@ async function recolorCollarTrimOverlayBuffer(
     .toBuffer();
 }
 
-// Los cuellos y los vivos lineales de bolsillo comparten la misma semántica:
-// blanco sobre una prenda clara requiere una arista oscura, mientras que los
-// rellenos deben seguir usando recolorPngInkBuffer directamente.
-const recolorLinearTrimOverlayBuffer = recolorCollarTrimOverlayBuffer;
+/**
+ * Los vivos lineales de bolsillo no se ensanchan: su geometría define la
+ * separación entre franjas superior/inferior y cambiarla mezcla secciones
+ * distintas. Cuando el color es blanco se añade solamente una arista fina de
+ * contraste para que siga visible sobre una prenda clara.
+ */
+async function recolorLinearTrimOverlayBuffer(
+  buffer: Buffer,
+  colorHex: string,
+) {
+  const trimBuffer = await recolorPngInkBuffer(buffer, colorHex);
+
+  if (!isNearWhiteColor(colorHex)) {
+    return trimBuffer;
+  }
+
+  const outlineBuffer = await expandColoredTrimBuffer(
+    await recolorPngInkBuffer(buffer, "#1f2937"),
+    1,
+  );
+
+  return await sharp({
+    create: {
+      width: (await sharp(trimBuffer).metadata()).width ?? CANVAS_WIDTH,
+      height: (await sharp(trimBuffer).metadata()).height ?? CANVAS_HEIGHT,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([{ input: outlineBuffer }, { input: trimBuffer }])
+    .png()
+    .toBuffer();
+}
 
 async function createLowerPocketOverlayBuffer(assetPath: string) {
   const detailIndexes =
