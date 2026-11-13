@@ -925,6 +925,40 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("fill:#18a9d3!important;");
   });
 
+  it("trata un vivo blanco marcado como fill en un path abierto como vivo lineal", () => {
+    // Algunos SVG del catálogo histórico marcaron el contorno del cuello y
+    // los bolsillos como trim_fill aunque el path está abierto. Debe entrar
+    // por la ruta lineal para que blanco conserve centro blanco y arista de
+    // contraste, en vez de fundirse con el color base de la blusa.
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("cuello-blanco-lineal", "component", []),
+      slot: "neck",
+      selectedElementIds: ["vivo"],
+      elementPaints: {
+        vivo: {
+          mode: "trim_fill",
+          trimSourceValueId: 635,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg data-vc-render-mode="overlay">
+          <path d="M0 0 L100 100" style="fill:__VC_TRIM_FILL_635__!important;" />
+        </svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#19312e", [
+        { valueId: 635, sourceValueId: 635, colorHex: "#ffffff" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("stroke:#ffffff!important;");
+    expect(svg).toContain("stroke-width:10px!important;");
+    expect(svg).not.toContain("__VC_TRIM_FILL_635__");
+  });
+
   it("conserva el relleno de un SVG legado aunque Corel declare fill:none", () => {
     // Esta es la forma almacenada por los modelos anteriores al cambio de
     // rellenos seguros. Antes se renderizaba como relleno; convertirla en

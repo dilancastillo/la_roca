@@ -258,6 +258,14 @@ function replaceTrimColorTokens(
         const color = getTrimColor(trimSections, Number(sourceValueId));
 
         if (color) {
+          // Los vectores históricos de cuello y bolsillo de blusa llegan a
+          // esta rama después de convertir un fill imposible en stroke. Con
+          // blanco, el grosor de contorno heredado (3px) deja que se vea el
+          // color de la prenda a través del vivo. Reforzamos únicamente ese
+          // trazo blanco; los vivos rellenos siguen usando su fill original.
+          if (property === "stroke" && isNearWhiteColor(color)) {
+            return `${property}:${color}${important ?? ""};stroke-width:${LINEAR_TRIM_MAIN_WIDTH}px!important;stroke-linecap:round!important;stroke-linejoin:round!important;`;
+          }
           return `${property}:${color}${important ?? ""};`;
         }
 
@@ -293,8 +301,14 @@ function normalizeImpossibleLinePaints(runtimeSvg: string) {
   return runtimeSvg.replace(/<line\b[^>]*>/g, (lineMarkup) =>
     lineMarkup.replace(
       /fill:(__VC_(?:BASE_COLOR|TRIM_FILL_\d+)__)(!important)?;?/g,
-      (_declaration, token: string, important: string | undefined) =>
-        `stroke:${token}${important ?? ""};`,
+      (_declaration, token: string, important: string | undefined) => {
+        // Un <line> no admite relleno. Cuando el editor lo marcó por error
+        // como trim_fill, al convertirlo a trazo también debe cambiar de
+        // semántica: así entra por la ruta de vivo lineal (incluido el
+        // contraste de blanco) y no queda como un blanco semitransparente.
+        const strokeToken = token.replace("__VC_TRIM_FILL_", "__VC_TRIM_STROKE_");
+        return `stroke:${strokeToken}${important ?? ""};`;
+      },
     ),
   );
 }
@@ -374,7 +388,11 @@ function normalizeUnfilledTrimAreas(runtimeSvg: string) {
       return isUnfilled || isOpenPathWithTrimFill
         ? markup.replace(
             trimFill[0],
-            `stroke:${trimFill[1]}${trimFill[2] ?? ""};`,
+            // El token original describe cómo se guardó el elemento, no cómo
+            // debe dibujarse. Un área abierta o fill:none es un vivo lineal;
+            // conservar TRIM_FILL la sacaba de addLinearTrimTexture y el
+            // blanco se mezclaba visualmente con el color de la prenda.
+            `stroke:${(trimFill[1] ?? "").replace("__VC_TRIM_FILL_", "__VC_TRIM_STROKE_")}${trimFill[2] ?? ""};`,
           )
         : markup;
     },
