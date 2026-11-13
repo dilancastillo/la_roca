@@ -3647,6 +3647,26 @@ function recolorCanvasInk(canvas: HTMLCanvasElement, colorHex: string) {
   return outputCanvas;
 }
 
+function isNearWhiteColor(colorHex: string) {
+  const compact = colorHex.trim().replace("#", "");
+  const hex =
+    compact.length === 3
+      ? compact
+          .split("")
+          .map((channel) => `${channel}${channel}`)
+          .join("")
+      : compact;
+
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return false;
+  }
+
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  return red >= 240 && green >= 240 && blue >= 240;
+}
+
 function drawExpandedColoredTrim(
   context: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -3667,6 +3687,18 @@ function drawExpandedCollarTrim(
   canvas: HTMLCanvasElement,
   colorHex: string,
 ) {
+  // El blanco conserva su color, pero necesita una arista de contraste para
+  // no fundirse con la silueta clara de la blusa. Esta regla solo se usa para
+  // vivos lineales; los vivos rellenos no pasan por este helper.
+  if (isNearWhiteColor(colorHex)) {
+    drawExpandedColoredTrim(
+      context,
+      canvas,
+      "#1f2937",
+      COLLAR_TRIM_EXPANSION_RADIUS + 1,
+    );
+  }
+
   drawExpandedColoredTrim(
     context,
     canvas,

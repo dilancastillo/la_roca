@@ -3197,14 +3197,58 @@ async function expandColoredTrimBuffer(
     .toBuffer();
 }
 
+function isNearWhiteColor(colorHex: string) {
+  const compact = colorHex.trim().replace("#", "");
+  const hex =
+    compact.length === 3
+      ? compact
+          .split("")
+          .map((channel) => `${channel}${channel}`)
+          .join("")
+      : compact;
+
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return false;
+  }
+
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  return red >= 240 && green >= 240 && blue >= 240;
+}
+
 async function recolorCollarTrimOverlayBuffer(
   buffer: Buffer,
   colorHex: string,
 ) {
-  return await expandColoredTrimBuffer(
+  const trimBuffer = await expandColoredTrimBuffer(
     await recolorPngInkBuffer(buffer, colorHex),
     COLLAR_TRIM_EXPANSION_RADIUS,
   );
+
+  // El blanco no debe adoptar visualmente el color de la blusa. Dibujamos
+  // primero una arista oscura un píxel más amplia y conservamos el blanco en
+  // el centro. Los vivos rellenos no utilizan este helper.
+  if (!isNearWhiteColor(colorHex)) {
+    return trimBuffer;
+  }
+
+  const outlineBuffer = await expandColoredTrimBuffer(
+    await recolorPngInkBuffer(buffer, "#1f2937"),
+    COLLAR_TRIM_EXPANSION_RADIUS + 1,
+  );
+
+  return await sharp({
+    create: {
+      width: (await sharp(trimBuffer).metadata()).width ?? CANVAS_WIDTH,
+      height: (await sharp(trimBuffer).metadata()).height ?? CANVAS_HEIGHT,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([{ input: outlineBuffer }, { input: trimBuffer }])
+    .png()
+    .toBuffer();
 }
 
 async function createLowerPocketOverlayBuffer(assetPath: string) {
