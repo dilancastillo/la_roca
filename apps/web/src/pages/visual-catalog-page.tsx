@@ -34,6 +34,7 @@ import {
   fetchVisualCatalogProducts,
   fetchVisualDefinition,
   fetchVisualDefinitions,
+  fetchSharedSleeveTabCalibration,
   fetchVisualReleaseAudit,
   fetchVisualReleases,
   submitVisualDefinition,
@@ -668,6 +669,8 @@ export function VisualCatalogPage() {
   >({});
   const [placement, setPlacement] =
     useState<VisualPlacement>(DEFAULT_PLACEMENT);
+  const [sharedSleeveTabCalibration, setSharedSleeveTabCalibration] =
+    useState<SleeveTabCalibration | null>(null);
   const sleeveCalibrationDragRef = useRef<{
     side: "left" | "right";
     pointerX: number;
@@ -1069,6 +1072,7 @@ export function VisualCatalogPage() {
         ...current,
         sleeveTabCalibration: result.sleeveTabCalibration,
       }));
+      setSharedSleeveTabCalibration(result.sleeveTabCalibration);
       await refreshVersions();
       setMessage(
         `Presillas aplicadas a ${result.updatedDefinitionCount} modelos de cuello. La misma calibración se usará en laboratorio y publicación.`,
@@ -1133,6 +1137,26 @@ export function VisualCatalogPage() {
       );
     });
   }, [canEditCatalog, isCatalogAdmin]);
+
+  useEffect(() => {
+    if (!isCatalogAdmin) {
+      return;
+    }
+
+    void fetchSharedSleeveTabCalibration()
+      .then((calibration) => {
+        setSharedSleeveTabCalibration(calibration);
+        setPlacement((current) =>
+          current.sleeveTabCalibration
+            ? current
+            : { ...current, sleeveTabCalibration: calibration },
+        );
+      })
+      .catch(() => {
+        // La guía continúa funcionando con su valor por defecto si el catálogo
+        // aún no tiene una calibración histórica.
+      });
+  }, [isCatalogAdmin]);
 
   useEffect(() => {
     if (!isCatalogAdmin) {
@@ -1443,7 +1467,12 @@ export function VisualCatalogPage() {
     setSelectedElementIds([]);
     setHighlightedElementId(null);
     setElementPaints({});
-    setPlacement(DEFAULT_PLACEMENT);
+    setPlacement({
+      ...DEFAULT_PLACEMENT,
+      ...(sharedSleeveTabCalibration
+        ? { sleeveTabCalibration: sharedSleeveTabCalibration }
+        : {}),
+    });
     setRenderMode("overlay");
     setTrimFillCompatibility("modern");
     setDisplayName("");
@@ -1619,7 +1648,14 @@ export function VisualCatalogPage() {
     setSelectedElementIds(definition.selectedElementIds);
     setHighlightedElementId(null);
     setElementPaints(definition.elementPaints);
-    setPlacement(definition.placement);
+    setPlacement({
+      ...definition.placement,
+      ...(definition.slot === "neck" &&
+      !definition.placement.sleeveTabCalibration &&
+      sharedSleeveTabCalibration
+        ? { sleeveTabCalibration: sharedSleeveTabCalibration }
+        : {}),
+    });
     setTrimFillCompatibility(
       usesModernTrimFillSemantics(definition.runtimeSvg) ? "modern" : "legacy",
     );

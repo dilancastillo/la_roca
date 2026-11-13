@@ -13,6 +13,7 @@ import {
   visualDefinitionListSchema,
   visualDefinitionMutationSchema,
   visualDefinitionTransitionResultSchema,
+  sleeveTabCalibrationSchema,
   sleeveTabCalibrationApplyResultSchema,
   sleeveTabCalibrationApplySchema,
   visualReleaseAuditListSchema,
@@ -49,6 +50,7 @@ import {
 import {
   approveVisualDefinition,
   applySleeveTabCalibrationToAllNeckDefinitions,
+  getSharedSleeveTabCalibration,
   assertVisualCatalogRepositoryReady,
   cloneVisualDefinition,
   createVisualDefinition,
@@ -355,6 +357,32 @@ app.post(
     } catch (error) {
       return c.json(
         { error: error instanceof Error ? error.message : "No se pudieron aplicar las presillas." },
+        400,
+      );
+    }
+  },
+);
+
+app.get(
+  "/admin/visual-catalog/sleeve-tab-calibration",
+  requireAppAdmin(),
+  async (c) => {
+    try {
+      return c.json(
+        sleeveTabCalibrationSchema.parse(
+          await getSharedSleeveTabCalibration(getAppEnv(c)),
+        ),
+        200,
+        { "Cache-Control": "private, no-store" },
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "No se pudo consultar la calibración de presillas.",
+        },
         400,
       );
     }

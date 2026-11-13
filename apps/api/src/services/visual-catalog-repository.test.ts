@@ -8,6 +8,7 @@ import {
 } from "@repo/shared/schemas/visual-catalog";
 import {
   applySleeveTabCalibrationToAllNeckDefinitions,
+  getSharedSleeveTabCalibration,
   approveVisualDefinition,
   cloneVisualDefinition,
   createVisualDefinition,
@@ -198,6 +199,9 @@ describe("visual catalog repository", () => {
 
       expect(result.updatedDefinitionCount).toBe(2);
       expect(result.sleeveTabCalibration).toEqual(sleeveTabCalibration);
+      expect(
+        await getSharedSleeveTabCalibration(calibrationEnv),
+      ).toEqual(sleeveTabCalibration);
       for (const id of [first.id, second.id]) {
         const [activeDefinition] = await loadActiveVisualDefinitions(
           calibrationEnv,

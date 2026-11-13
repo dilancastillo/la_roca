@@ -543,6 +543,24 @@ export async function listVisualDefinitions(env: Partial<AppEnv>) {
 }
 
 /**
+ * Devuelve la última calibración compartida de presillas guardada para un
+ * cuello. El editor la usa como punto de partida al recargarse, sin reemplazar
+ * la calibración explícita de la definición que se abra después.
+ */
+export async function getSharedSleeveTabCalibration(env: Partial<AppEnv>) {
+  const store = getStore(env);
+  const source = sortNewestFirst(await store.listMetadata()).find(
+    (definition) =>
+      definition.slot === "neck" &&
+      definition.placement.sleeveTabCalibration !== undefined,
+  );
+
+  return sleeveTabCalibrationSchema.parse(
+    source?.placement.sleeveTabCalibration ?? {},
+  );
+}
+
+/**
  * Propaga una única calibración de presillas a todos los cuellos históricos.
  * Se actualiza sólo placement: no se reescriben los SVG, pinturas ni reglas.
  */

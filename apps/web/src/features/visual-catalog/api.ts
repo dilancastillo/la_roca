@@ -6,6 +6,7 @@ import {
   visualDefinitionTransitionResultSchema,
   sleeveTabCalibrationApplyResultSchema,
   sleeveTabCalibrationApplySchema,
+  sleeveTabCalibrationSchema,
   visualReleaseChecklistMutationSchema,
   visualReleaseCreateSchema,
   visualReleaseAuditListSchema,
@@ -105,6 +106,11 @@ export async function applySleeveTabCalibrationToAllNeckDefinitions(
     ),
   });
   return sleeveTabCalibrationApplyResultSchema.parse(data);
+}
+
+export async function fetchSharedSleeveTabCalibration() {
+  const data = await requestJson(`${ADMIN_BASE_PATH}/sleeve-tab-calibration`);
+  return sleeveTabCalibrationSchema.parse(data);
 }
 
 export async function fetchVisualReleases() {
