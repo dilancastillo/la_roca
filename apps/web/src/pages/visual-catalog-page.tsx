@@ -1607,14 +1607,33 @@ export function VisualCatalogPage() {
       const definition = editingDefinitionId && !mustForkLegacyGenderNeutralDefinition
         ? await updateVisualDefinition(editingDefinitionId, mutation)
         : await createVisualDefinition(mutation);
+      // La posición de las presillas no pertenece a un cuello aislado: es una
+      // regla de construcción de la blusa. Al guardar cualquier cuello con
+      // una calibración se replica inmediatamente a todos los cuellos ya
+      // existentes (Hombre y Mujer), incluidos los que una release consulta
+      // por id. Así "Guardar borrador" no deja una posición local perdida.
+      let propagatedSleeveTabs = false;
+      if (slot === "neck" && placement.sleeveTabCalibration) {
+        const result = await applySleeveTabCalibrationToAllNeckDefinitions(
+          placement.sleeveTabCalibration,
+        );
+        setSharedSleeveTabCalibration(result.sleeveTabCalibration);
+        propagatedSleeveTabs = true;
+      }
       const genderLabel = getDefinitionGenderLabel(definition);
       setEditingDefinitionId(definition.id);
       await refreshVersions();
       setMessage(
         `${mustForkLegacyGenderNeutralDefinition ? "Variante independiente creada" : "Borrador guardado"}: ${definition.displayName}${
           genderLabel ? ` · ${genderLabel}` : ""
-        } v${definition.version}. ` +
-          "Las releases ya creadas conservan su fotografia; aprueba esta version y crea una candidata nueva para probarla en el laboratorio.",
+        } v${definition.version}.${
+          propagatedSleeveTabs
+            ? " Presillas sincronizadas con todos los cuellos."
+            : ""
+        } ` +
+          (propagatedSleeveTabs
+            ? "Al recargar, laboratorio y publicación usarán esta misma posición para cualquier cuello."
+            : "Las releases ya creadas conservan su fotografia; aprueba esta version y crea una candidata nueva para probarla en el laboratorio."),
       );
     } catch (saveError) {
       setError(
