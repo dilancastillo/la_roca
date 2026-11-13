@@ -536,6 +536,28 @@ function normalizeNeckVectorStrokeWidths(runtimeSvg: string) {
 }
 
 const LINEAR_TRIM_MAIN_WIDTH = 10;
+const NEAR_WHITE_LINEAR_TRIM_OUTLINE_COLOR = "#1f2937";
+const NEAR_WHITE_LINEAR_TRIM_OUTLINE_WIDTH = LINEAR_TRIM_MAIN_WIDTH + 4;
+
+function isNearWhiteColor(colorHex: string) {
+  const compact = colorHex.trim().replace("#", "");
+  const hex =
+    compact.length === 3
+      ? compact
+          .split("")
+          .map((channel) => `${channel}${channel}`)
+          .join("")
+      : compact;
+
+  if (!/^[0-9a-f]{6}$/i.test(hex)) {
+    return false;
+  }
+
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  return red >= 240 && green >= 240 && blue >= 240;
+}
 
 function appendInlineSvgStyle(markup: string, declarations: string) {
   const styleAttribute = /\sstyle=("([^"]*)"|'([^']*)')/i;
@@ -593,9 +615,19 @@ function addLinearTrimTexture(
         replaceLinearTrimStrokeToken(cleanMarkup, trimColor),
         `${commonStyle}stroke-width:${LINEAR_TRIM_MAIN_WIDTH}px!important;`,
       );
-      // El vivo lineal conserva el grosor configurado, pero usa exactamente el
-      // color elegido: no agregamos sombra ni un tono derivado.
-      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${main}</g>`;
+      // El blanco sí se conserva como blanco, pero necesita una arista oscura
+      // para no desaparecer sobre una silueta clara. Esta capa solo existe en
+      // vivos lineales: nunca se aplica a vivos rellenos.
+      const outline = isNearWhiteColor(trimColor)
+        ? appendInlineSvgStyle(
+            replaceLinearTrimStrokeToken(
+              cleanMarkup,
+              NEAR_WHITE_LINEAR_TRIM_OUTLINE_COLOR,
+            ),
+            `${commonStyle}stroke-width:${NEAR_WHITE_LINEAR_TRIM_OUTLINE_WIDTH}px!important;`,
+          )
+        : "";
+      return `<g data-vc-linear-trim-texture="cord"${visibilityStyle}>${outline}${main}</g>`;
     },
   );
 }
@@ -632,7 +664,19 @@ function addLinearTrimPolygonTexture(
         ),
         "vector-effect:non-scaling-stroke;stroke-width:7px!important;stroke-linejoin:round!important;",
       );
-      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${main}</g>`;
+      const outline = isNearWhiteColor(trimColor)
+        ? appendInlineSvgStyle(
+            replaceLinearTrimStrokeToken(
+              cleanMarkup.replace(
+                /fill:__VC_TRIM_STROKE_\d+__(?:!important)?;?/g,
+                "fill:none!important;",
+              ),
+              NEAR_WHITE_LINEAR_TRIM_OUTLINE_COLOR,
+            ),
+            "fill:none!important;vector-effect:non-scaling-stroke;stroke-width:11px!important;stroke-linejoin:round!important;",
+          )
+        : "";
+      return `<g data-vc-linear-trim-texture="woven"${visibilityStyle}>${outline}${main}</g>`;
     },
   );
   return texturedSvg;

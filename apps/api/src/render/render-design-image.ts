@@ -3251,6 +3251,11 @@ async function recolorCollarTrimOverlayBuffer(
     .toBuffer();
 }
 
+// Los cuellos y los vivos lineales de bolsillo comparten la misma semántica:
+// blanco sobre una prenda clara requiere una arista oscura, mientras que los
+// rellenos deben seguir usando recolorPngInkBuffer directamente.
+const recolorLinearTrimOverlayBuffer = recolorCollarTrimOverlayBuffer;
+
 async function createLowerPocketOverlayBuffer(assetPath: string) {
   const detailIndexes =
     lowerPocketDetailElementIndexesByFileName[getAssetFileName(assetPath)];
@@ -6251,8 +6256,9 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
             continue;
           }
 
-          const trimColorBuffer = await expandColoredTrimBuffer(
-            await recolorPngInkBuffer(trimOverlayBuffer, trimColor),
+          const trimColorBuffer = await recolorLinearTrimOverlayBuffer(
+            trimOverlayBuffer,
+            trimColor,
           );
 
           layers.push(
@@ -6287,7 +6293,7 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
               ),
             );
           } else {
-            const trimColorBuffer = await recolorPngInkBuffer(
+            const trimColorBuffer = await recolorLinearTrimOverlayBuffer(
               trimOverlayBuffer,
               lowerPocketTrimColor,
             );
@@ -6393,7 +6399,7 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
             continue;
           }
 
-          const trimColorBuffer = await recolorPngInkBuffer(
+          const trimColorBuffer = await recolorLinearTrimOverlayBuffer(
             trimOverlayBuffer,
             trimColor,
           );
@@ -6417,11 +6423,9 @@ async function renderDesignImageUncropped(scene: AutomationRenderScene): Promise
               getAssetFileName(scene.chestPocketAssetPath),
             )
           ) {
-            const trimColorBuffer = await expandColoredTrimBuffer(
-              await recolorPngInkBuffer(
-                trimOverlayBuffer,
-                chestPocketTrimColor,
-              ),
+            const trimColorBuffer = await recolorLinearTrimOverlayBuffer(
+              trimOverlayBuffer,
+              chestPocketTrimColor,
             );
 
             layers.push(

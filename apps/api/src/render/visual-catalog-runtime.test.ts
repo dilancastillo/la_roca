@@ -677,6 +677,47 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("stroke:#654321");
   });
 
+  it("conserva el vivo lineal blanco con una arista de contraste", () => {
+    const definition = makeDefinition(
+      "linear-white-contrast",
+      "component",
+      [],
+    );
+    definition.selectedElementIds = ["linear", "filled"];
+    definition.elementPaints = {
+      linear: {
+        mode: "trim_stroke",
+        trimSourceValueId: 1001,
+        visibilityConditions: [],
+      },
+      filled: {
+        mode: "trim_fill",
+        trimSourceValueId: 1000,
+        visibilityConditions: [],
+      },
+    };
+    definition.runtimeSvg =
+      '<svg><path id="linear" style="display:__VC_VISIBILITY_0__;fill:none;stroke:__VC_TRIM_STROKE_1001__!important;"/><path id="filled" style="display:__VC_VISIBILITY_1__;fill:__VC_TRIM_FILL_1000__!important;"/></svg>';
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(
+        definition,
+        "#dce80a",
+        [
+          { valueId: 501, sourceValueId: 1001, colorHex: "#F0F0F0" },
+          { valueId: 502, sourceValueId: 1000, colorHex: "#F0F0F0" },
+        ],
+        { session, selectedValueIds: session.selectedValueIds },
+      ).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("stroke:#1f2937!important");
+    expect(svg).toContain("stroke:#F0F0F0!important");
+    expect(svg).toContain("stroke-width:14px!important");
+    // El relleno no es un vivo lineal: conserva el blanco sin arista añadida.
+    expect(svg.match(/stroke:#1f2937!important/g)).toHaveLength(1);
+  });
+
   it("texturiza los vivos lineales exportados como poligonos angostos", () => {
     const definition = makeDefinition(
       "878f0d1a-6b95-44c9-b42f-b0b90b9c8466",

@@ -3682,7 +3682,7 @@ function drawExpandedColoredTrim(
   }
 }
 
-function drawExpandedCollarTrim(
+function drawExpandedLinearTrim(
   context: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   colorHex: string,
@@ -3706,6 +3706,11 @@ function drawExpandedCollarTrim(
     COLLAR_TRIM_EXPANSION_RADIUS,
   );
 }
+
+// Alias temporal para los llamadores históricos de cuello. Todos terminan en
+// la misma regla de contraste y así los vivos lineales mantienen paridad con
+// los detalles lineales de bolsillo.
+const drawExpandedCollarTrim = drawExpandedLinearTrim;
 
 // Los SVG históricos no separan el cuello de la prenda mediante metadata.
 // Esta ventana cubre el detalle central superior del cuello, nunca mangas ni
@@ -4166,11 +4171,14 @@ async function drawLowerPocketOverlay(
       }
 
       const trimCanvas = await createRasterCanvas(trimSrc, sourceSrc);
-      drawCanvasInRegions(
-        context,
-        recolorCanvasInk(trimCanvas, trimColor),
-        regions,
-      );
+      const expandedTrimCanvas = document.createElement("canvas");
+      expandedTrimCanvas.width = trimCanvas.width;
+      expandedTrimCanvas.height = trimCanvas.height;
+      const expandedTrimContext = expandedTrimCanvas.getContext("2d");
+      if (expandedTrimContext) {
+        drawExpandedLinearTrim(expandedTrimContext, trimCanvas, trimColor);
+        drawCanvasInRegions(context, expandedTrimCanvas, regions);
+      }
     }
 
     return;
@@ -4197,7 +4205,14 @@ async function drawLowerPocketOverlay(
     return;
   }
 
-  drawCanvasInRegions(context, recolorCanvasInk(trimCanvas, trimColor), regions);
+  const expandedTrimCanvas = document.createElement("canvas");
+  expandedTrimCanvas.width = trimCanvas.width;
+  expandedTrimCanvas.height = trimCanvas.height;
+  const expandedTrimContext = expandedTrimCanvas.getContext("2d");
+  if (expandedTrimContext) {
+    drawExpandedLinearTrim(expandedTrimContext, trimCanvas, trimColor);
+    drawCanvasInRegions(context, expandedTrimCanvas, regions);
+  }
 }
 
 async function drawChestPocketOverlay(
@@ -4237,7 +4252,7 @@ async function drawChestPocketOverlay(
       }
 
       const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
-      drawExpandedColoredTrim(context, trimCanvas, trimColor);
+      drawExpandedLinearTrim(context, trimCanvas, trimColor);
     }
 
     context.restore();
@@ -4261,7 +4276,7 @@ async function drawChestPocketOverlay(
   const trimCanvas = await createRasterCanvas(trimSrc, placementSrc);
 
   if (fullChestPocketTrimOverlayFileNames.has(fileName)) {
-    drawExpandedColoredTrim(context, trimCanvas, trimColor);
+    drawExpandedLinearTrim(context, trimCanvas, trimColor);
     context.restore();
     return;
   }
