@@ -257,6 +257,7 @@ function replaceTrimColorTokens(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
   preserveUnselectedTrimStrokes = false,
+  uniformTrimColor?: string,
 ) {
   return runtimeSvg
     .replace(
@@ -268,7 +269,11 @@ function replaceTrimColorTokens(
         sourceValueId: string,
         important: string | undefined,
       ) => {
-        const color = getTrimColor(trimSections, Number(sourceValueId));
+        const color = getTrimColor(
+          trimSections,
+          Number(sourceValueId),
+          uniformTrimColor,
+        );
 
         if (color) {
           // Los vectores históricos de cuello y bolsillo de blusa llegan a
@@ -300,12 +305,13 @@ function replaceTrimColorTokens(
     .replace(
       /__VC_TRIM_FILL_(\d+)__/g,
       (_token, sourceValueId: string) =>
-        getTrimColor(trimSections, Number(sourceValueId)) ?? "none",
+        getTrimColor(trimSections, Number(sourceValueId), uniformTrimColor) ??
+        "none",
     )
     .replace(
       /__VC_TRIM_STROKE_(\d+)__/g,
       (_token, sourceValueId: string) =>
-        getTrimColor(trimSections, Number(sourceValueId)) ??
+        getTrimColor(trimSections, Number(sourceValueId), uniformTrimColor) ??
         (preserveUnselectedTrimStrokes ? "#111827" : "none"),
     );
 }
@@ -416,6 +422,7 @@ function applyBaseColorToUnselectedSafeTrimFills(
   runtimeSvg: string,
   baseColorHex: string,
   trimSections: VisualRuntimeTrimSection[],
+  uniformTrimColor?: string,
 ) {
   return runtimeSvg.replace(
     /<(path|rect|circle|ellipse|polyline|polygon)\b[^>]*>/gi,
@@ -438,7 +445,11 @@ function applyBaseColorToUnselectedSafeTrimFills(
           sourceValueId: string,
           important: string | undefined,
         ) =>
-          getTrimColor(trimSections, Number(sourceValueId))
+          getTrimColor(
+            trimSections,
+            Number(sourceValueId),
+            uniformTrimColor,
+          )
             ? declaration
             : `fill:${baseColorHex}${important ?? ""};`,
       );
@@ -618,6 +629,7 @@ function replaceLinearTrimStrokeToken(markup: string, stroke: string) {
 function addLinearTrimTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
+  uniformTrimColor?: string,
 ) {
   // Un SVG puede serializar sus geometrías como `<path />` o como
   // `<path></path>`. El editor conserva ambos formatos según el archivo de
@@ -633,7 +645,11 @@ function addLinearTrimTexture(
         return markup;
       }
 
-      const trimColor = getTrimColor(trimSections, Number(sourceValueId));
+      const trimColor = getTrimColor(
+        trimSections,
+        Number(sourceValueId),
+        uniformTrimColor,
+      );
       if (!trimColor) {
         return markup;
       }
@@ -672,6 +688,7 @@ function addLinearTrimTexture(
 function addLinearTrimPolygonTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
+  uniformTrimColor?: string,
 ) {
   // Igual que con los trazos, los polígonos angostos pueden llegar con cierre
   // explícito. Deben conservar el contorno cuando el vivo seleccionado es
@@ -681,7 +698,11 @@ function addLinearTrimPolygonTexture(
   const texturedSvg = runtimeSvg.replace(
     texturedPolygon,
     (markup, sourceValueId: string) => {
-      const trimColor = getTrimColor(trimSections, Number(sourceValueId));
+      const trimColor = getTrimColor(
+        trimSections,
+        Number(sourceValueId),
+        uniformTrimColor,
+      );
       if (!trimColor) {
         return markup;
       }
@@ -795,6 +816,7 @@ function getTrimFamily(
 function getTrimColor(
   trimSections: VisualRuntimeTrimSection[],
   sourceValueId: number,
+  uniformTrimColor?: string,
 ) {
   const exact = trimSections.find(
     (section) =>
@@ -809,10 +831,22 @@ function getTrimColor(
   // interior izquierdo). Ambos pertenecen a la misma sección visual. Sin este
   // puente el token queda sin color y el blanco aparenta transparencia.
   const expectedFamily = getTrimFamily({ valueId: sourceValueId });
-  return expectedFamily
+  const familyColor = expectedFamily
     ? trimSections.find((section) => getTrimFamily(section) === expectedFamily)
         ?.colorHex
     : undefined;
+
+  return familyColor ?? uniformTrimColor;
+}
+
+function getUniformTrimColor(trimSections: VisualRuntimeTrimSection[]) {
+  const colors = new Set(
+    trimSections
+      .map((section) => section.colorHex?.trim().toLowerCase())
+      .filter((color): color is string => Boolean(color)),
+  );
+
+  return colors.size === 1 ? [...colors][0] : undefined;
 }
 
 export function getSelectedVisualDefinitions(
@@ -934,6 +968,11 @@ export function materializeVisualDefinitionSvg(
   const usesModernTrimFills = usesModernTrimFillSemantics(
     definition.runtimeSvg,
   );
+  // Algunos SVG del editor contienen IDs generados por Odoo que no existen en
+  // el catálogo histórico. Si todas las secciones activas comparten un único
+  // color, es seguro usarlo como puente para esos tokens sin identidad. Con
+  // colores distintos se desactiva el fallback para no colorear otra sección.
+  const uniformTrimColor = getUniformTrimColor(trimSections);
   let runtimeSvg = normalizeImpossibleLinePaints(definition.runtimeSvg);
 
   if (usesModernTrimFills) {
@@ -951,6 +990,7 @@ export function materializeVisualDefinitionSvg(
         runtimeSvg,
         baseColorHex,
         trimSections,
+        uniformTrimColor,
       );
     }
   }
@@ -959,8 +999,16 @@ export function materializeVisualDefinitionSvg(
     definition,
     runtimeSvg,
   );
-  runtimeSvg = addLinearTrimPolygonTexture(runtimeSvg, trimSections);
-  runtimeSvg = addLinearTrimTexture(runtimeSvg, trimSections);
+  runtimeSvg = addLinearTrimPolygonTexture(
+    runtimeSvg,
+    trimSections,
+    uniformTrimColor,
+  );
+  runtimeSvg = addLinearTrimTexture(
+    runtimeSvg,
+    trimSections,
+    uniformTrimColor,
+  );
 
   definition.selectedElementIds.forEach((elementId, index) => {
     const conditions =
@@ -986,6 +1034,7 @@ export function materializeVisualDefinitionSvg(
       .replaceAll("__VC_OUTLINE_COLOR__", "#111827"),
     trimSections,
     replacesBaseSilhouette(definition),
+    uniformTrimColor,
   );
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

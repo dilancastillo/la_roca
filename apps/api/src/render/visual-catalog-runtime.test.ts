@@ -1010,6 +1010,47 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("__VC_TRIM_STROKE_419__");
   });
 
+  it("conserva un vivo blanco uniforme cuando el SVG usa un ID dinamico", () => {
+    // Los SVG guardados desde el catálogo pueden conservar IDs nuevos de
+    // Odoo. No están en el mapa histórico, pero si todas las secciones activas
+    // comparten color es seguro resolver ese token sin convertirlo al color
+    // base de la prenda.
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("vivos-blancos-dinamicos", "component", []),
+      slot: "neck",
+      selectedElementIds: ["cuello", "bolsillos"],
+      elementPaints: {
+        cuello: {
+          mode: "trim_stroke",
+          trimSourceValueId: 98001,
+          visibilityConditions: [],
+        },
+        bolsillos: {
+          mode: "trim_fill",
+          trimSourceValueId: 98002,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg data-vc-runtime-format="2">
+          <path d="M0 0 L100 100" style="stroke:__VC_TRIM_STROKE_98001__!important;" />
+          <path data-vc-safe-trim-fill="true" d="M0 0 H100 V100 H0 Z" style="fill:__VC_TRIM_FILL_98002__!important;" />
+        </svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#10a7cf", [
+        { valueId: 1970, sourceValueId: 1970, colorHex: "#ffffff" },
+        { valueId: 2087, sourceValueId: 2087, colorHex: "#ffffff" },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("stroke:#ffffff!important;");
+    expect(svg).toContain("fill:#ffffff!important;");
+    expect(svg).not.toContain("#10a7cf!important");
+  });
+
   it("conserva el relleno de un SVG legado aunque Corel declare fill:none", () => {
     // Esta es la forma almacenada por los modelos anteriores al cambio de
     // rellenos seguros. Antes se renderizaba como relleno; convertirla en
