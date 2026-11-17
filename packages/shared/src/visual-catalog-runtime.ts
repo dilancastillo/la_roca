@@ -5,11 +5,24 @@ import type {
   VisualPlacement,
   VisualSlot,
 } from "./schemas/visual-catalog.js";
+import { getTrimSectionKeyBySourceValueId } from "./configurator-id-rules.js";
 
 export type VisualRuntimeTrimSection = {
   valueId: number;
   sourceValueId?: number | undefined;
   colorHex: string;
+  /** Metadatos semánticos disponibles en sesiones actuales de configurador. */
+  key?: string | undefined;
+  label?: string | undefined;
+  role?:
+    | "backNeck"
+    | "upperNeck"
+    | "lowerNeck"
+    | "chestPocket"
+    | "lowerPockets"
+    | "auxiliaryPocket"
+    | "none"
+    | undefined;
 };
 
 export type MaterializedVisualDefinition = {
@@ -736,15 +749,70 @@ function suppressMisalignedFemaleSleeveLinearTrims(
   );
 }
 
+type TrimFamily =
+  | "upperNeck"
+  | "lowerNeck"
+  | "chestPocket"
+  | "lowerPockets"
+  | "auxiliaryPocket";
+
+function getTrimFamily(
+  section: Pick<
+    VisualRuntimeTrimSection,
+    "sourceValueId" | "valueId" | "key" | "label" | "role"
+  >,
+): TrimFamily | undefined {
+  if (
+    section.role === "upperNeck" ||
+    section.role === "lowerNeck" ||
+    section.role === "chestPocket" ||
+    section.role === "lowerPockets" ||
+    section.role === "auxiliaryPocket"
+  ) {
+    return section.role;
+  }
+
+  const sourceKey = getTrimSectionKeyBySourceValueId(
+    section.sourceValueId ?? section.valueId,
+  );
+  const key = normalize(
+    `${section.key ?? ""} ${section.label ?? ""} ${sourceKey ?? ""}`,
+  );
+
+  if (key.includes("bolsillos inferiores")) return "lowerPockets";
+  if (key.includes("bolsillo auxiliar")) return "auxiliaryPocket";
+  if (key.includes("bolsillo pecho") || key.includes("bolsillo de pecho")) {
+    return "chestPocket";
+  }
+  if (key.includes("cuello bajo") || key.includes("cuello inferior")) {
+    return "lowerNeck";
+  }
+  if (key.includes("cuello") && !key.includes("cogotera")) return "upperNeck";
+
+  return undefined;
+}
+
 function getTrimColor(
   trimSections: VisualRuntimeTrimSection[],
   sourceValueId: number,
 ) {
-  return trimSections.find(
+  const exact = trimSections.find(
     (section) =>
       section.sourceValueId === sourceValueId ||
       section.valueId === sourceValueId,
   )?.colorHex;
+
+  if (exact) return exact;
+
+  // Los SVG guardan a veces el ID genérico (p. ej. 1978, cuello completo),
+  // mientras que el configurador selecciona una parte concreta (p. ej. 1970,
+  // interior izquierdo). Ambos pertenecen a la misma sección visual. Sin este
+  // puente el token queda sin color y el blanco aparenta transparencia.
+  const expectedFamily = getTrimFamily({ valueId: sourceValueId });
+  return expectedFamily
+    ? trimSections.find((section) => getTrimFamily(section) === expectedFamily)
+        ?.colorHex
+    : undefined;
 }
 
 export function getSelectedVisualDefinitions(

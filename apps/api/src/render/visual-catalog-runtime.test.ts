@@ -959,6 +959,57 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("__VC_TRIM_FILL_635__");
   });
 
+  it("aplica vivos a tokens genericos cuando la seccion elegida es especifica", () => {
+    // Los SVG historicos usan el token generico del cuello completo (1978) y
+    // de bolsillos inferiores (419), mientras que el configurador permite
+    // escoger sub-secciones como 1970 y 2087. Ambos pertenecen a la misma
+    // familia visual y deben recibir el color elegido.
+    const definition: ActiveVisualDefinition = {
+      ...makeDefinition("vivos-especificos", "component", []),
+      slot: "neck",
+      selectedElementIds: ["cuello", "bolsillos"],
+      elementPaints: {
+        cuello: {
+          mode: "trim_stroke",
+          trimSourceValueId: 1978,
+          visibilityConditions: [],
+        },
+        bolsillos: {
+          mode: "trim_stroke",
+          trimSourceValueId: 419,
+          visibilityConditions: [],
+        },
+      },
+      runtimeSvg: `
+        <svg data-vc-render-mode="overlay">
+          <path d="M0 0 L100 100" style="stroke:__VC_TRIM_STROKE_1978__!important;" />
+          <path d="M0 20 L100 20" style="stroke:__VC_TRIM_STROKE_419__!important;" />
+        </svg>
+      `,
+    };
+
+    const svg = decodeURIComponent(
+      materializeVisualDefinitionSvg(definition, "#dfe600", [
+        {
+          valueId: 1970,
+          sourceValueId: 1970,
+          key: "cuello v completo interior izquierdo",
+          colorHex: "#ffffff",
+        },
+        {
+          valueId: 2087,
+          sourceValueId: 2087,
+          key: "bolsillos inferiores completa",
+          colorHex: "#ffffff",
+        },
+      ]).split(",")[1] ?? "",
+    );
+
+    expect(svg).toContain("stroke:#ffffff!important;");
+    expect(svg).not.toContain("__VC_TRIM_STROKE_1978__");
+    expect(svg).not.toContain("__VC_TRIM_STROKE_419__");
+  });
+
   it("conserva el relleno de un SVG legado aunque Corel declare fill:none", () => {
     // Esta es la forma almacenada por los modelos anteriores al cambio de
     // rellenos seguros. Antes se renderizaba como relleno; convertirla en
