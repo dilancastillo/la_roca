@@ -2645,7 +2645,7 @@ function buildSvgFromDrawableIndexes(svgText: string, indexes: number[]) {
   );
 }
 
-async function processImageBuffer(renderBuffer: Buffer): Promise<ProcessedImage> {
+async function processImageBuffer(renderBuffer: Buffer, preserveWhite = false): Promise<ProcessedImage> {
   const { data, info } = await sharp(renderBuffer)
     .ensureAlpha()
     .raw()
@@ -2665,7 +2665,7 @@ async function processImageBuffer(renderBuffer: Buffer): Promise<ProcessedImage>
     const alpha = rgba[offset + 3] ?? 0;
     const isWhiteLike = alpha > 0 && red >= 240 && green >= 240 && blue >= 240;
 
-    if (isWhiteLike) {
+    if (isWhiteLike && !preserveWhite) {
       rgba[offset + 3] = 0;
       continue;
     }
@@ -2710,7 +2710,7 @@ async function loadProcessedImage(assetPath: string): Promise<ProcessedImage> {
   const renderBuffer = svgText
     ? Buffer.from(withExplicitSvgDimensions(svgText))
     : fileBuffer;
-  const processed = await processImageBuffer(renderBuffer);
+  const processed = await processImageBuffer(renderBuffer, Boolean(svgText?.includes('data-vc-preserve-white="true"')));
   const sourceViewBox = svgText ? getSvgViewBox(svgText) : undefined;
 
   return {

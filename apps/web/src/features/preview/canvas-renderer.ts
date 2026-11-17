@@ -2909,7 +2909,8 @@ async function getProcessedImage(src: string): Promise<ProcessedImage> {
       const isWhiteLike =
         alpha > 0 && red >= 240 && green >= 240 && blue >= 240;
 
-      if (isWhiteLike) {
+      // Materialized catalog SVGs already have intentional trim colors.
+      if (isWhiteLike && !src.includes(encodeURIComponent('data-vc-preserve-white="true"'))) {
         data[offset + 3] = 0;
         continue;
       }
