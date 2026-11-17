@@ -980,6 +980,14 @@ export function materializeVisualDefinitionSvg(
   const uniformTrimColor = getUniformTrimColor(trimSections);
   let runtimeSvg = normalizeImpossibleLinePaints(definition.runtimeSvg);
 
+  // El blanco literal de los bolsillos históricos es el fondo de la tela.
+  // Resolverlo antes de los tokens conserva los vivos blancos seleccionados.
+  if (definition.slot === "lower_pocket") {
+    runtimeSvg = runtimeSvg
+      .replace(/(\bfill\s*:\s*)(?:#ffffff|#fff|white)(?=\s*[;!}])/gi, `$1${baseColorHex}`)
+      .replace(/(\bfill\s*=\s*["'])(?:#ffffff|#fff|white)(["'])/gi, `$1${baseColorHex}$2`);
+  }
+
   if (usesModernTrimFills) {
     runtimeSvg = normalizeUnfilledTrimAreas(runtimeSvg);
   }

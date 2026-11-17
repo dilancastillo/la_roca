@@ -73,6 +73,19 @@ const session: ConfiguratorSession = {
   warnings: [],
 };
 
+it("conserva tela del bolsillo y vivo blanco como colores independientes", () => {
+  const definition = {
+    ...makeDefinition("pocket-white-background", "component", []),
+    slot: "lower_pocket" as const,
+    runtimeSvg: '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#ffffff" width="80" height="90"/><rect style="fill:__VC_TRIM_FILL_1000__;" width="80" height="10"/></svg>',
+  };
+  const svg = decodeURIComponent(materializeVisualDefinitionSvg(definition, "#ffee77", [
+    { valueId: 500, sourceValueId: 1000, colorHex: "#ffffff", key: "lower_pockets", label: "Bolsillos inferiores" },
+  ]).split(",")[1] ?? "");
+  expect(svg).toContain('fill="#ffee77"');
+  expect(svg).toContain("fill:#ffffff;");
+});
+
 function makeDefinition(
   id: string,
   layer: ActiveVisualDefinition["layer"],
