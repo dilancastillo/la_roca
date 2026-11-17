@@ -683,6 +683,38 @@ function addLinearTrimTexture(
   );
 }
 
+// Envuelve en un <g> con outline oscuro los elementos que ya tienen un trazo
+// near-white resuelto. Opera después de replaceTrimColorTokens para cubrir los
+// vivos históricos (cuello, bolsillos de blusa) que no pasan por
+// addLinearTrimTexture y quedarían invisibles sobre siluetas claras.
+function addNearWhiteTrimOutline(resolvedSvg: string) {
+  const geometryElement =
+    /<(path|line|polyline|polygon|rect|circle|ellipse)\b([^>]*)stroke:(#(?:[0-9a-f]{3}|[0-9a-f]{6}))\b([^>]*)\/>/gi;
+
+  return resolvedSvg.replace(
+    geometryElement,
+    (markup, _tag: string, _before: string, strokeColor: string) => {
+      if (!isNearWhiteColor(strokeColor)) {
+        return markup;
+      }
+      // Ya tiene outline propio (viene de addLinearTrimTexture): no duplicar.
+      if (markup.includes("data-vc-linear-trim-texture")) {
+        return markup;
+      }
+      const commonStyle =
+        "fill:none!important;vector-effect:non-scaling-stroke;stroke-linecap:round!important;stroke-linejoin:round!important;";
+      const outline = appendInlineSvgStyle(
+        markup.replace(
+          /stroke:#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/gi,
+          `stroke:${NEAR_WHITE_LINEAR_TRIM_OUTLINE_COLOR}`,
+        ),
+        `${commonStyle}stroke-width:${NEAR_WHITE_LINEAR_TRIM_OUTLINE_WIDTH}px!important;`,
+      );
+      return `<g data-vc-near-white-outline="true">${outline}${markup}</g>`;
+    },
+  );
+}
+
 // La puntada blanca pertenecía a la textura eliminada; se retira el helper
 // para que el runtime conserve únicamente el vivo poligonal sólido aprobado.
 function addLinearTrimPolygonTexture(
@@ -1037,7 +1069,7 @@ export function materializeVisualDefinitionSvg(
     uniformTrimColor,
   );
 
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(addNearWhiteTrimOutline(svg))}`;
 }
 
 export function materializeSelectedVisualDefinitions(
