@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { activeVisualDefinitionSchema } from "./visual-catalog.js";
+import { activeVisualDefinitionSchema, sleeveTabCalibrationSchema } from "./visual-catalog.js";
 
 export const configuratorValueSchema = z.object({
   id: z.number(),
@@ -67,6 +67,7 @@ export const configuratorSessionSchema = z.object({
   ).optional(),
   warnings: z.array(z.string()).default([]),
   visualDefinitions: z.array(activeVisualDefinitionSchema).optional(),
+  sharedSleeveTabCalibration: sleeveTabCalibrationSchema.optional(),
   visualReleaseId: z.string().uuid().nullable().optional(),
   visualReleaseNumber: z.number().int().positive().nullable().optional(),
 });

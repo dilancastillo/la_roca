@@ -9,7 +9,7 @@ import type { AppEnv, OdooEnv } from "../lib/app-env.js";
 import { odooRead, odooSearchRead } from "../lib/odoo-client.js";
 import { parseVisualDefinitionVersionIds } from "./configurator-state-metadata.js";
 import { LOGO_LINE_FIELDS } from "./store-design-image.js";
-import { loadActiveVisualDefinitions } from "./visual-catalog-repository.js";
+import { loadActiveVisualDefinitions, getSharedSleeveTabCalibration } from "./visual-catalog-repository.js";
 import {
   getOrCreateLineVisualRelease,
   getVisualRelease,
@@ -1082,6 +1082,7 @@ export async function getConfiguratorSession(
     customValuesByValueId,
     exclusions,
     visualDefinitions,
+    sharedSleeveTabCalibration: await getSharedSleeveTabCalibration(env),
     visualReleaseId: visualRelease?.id ?? options.visualReleaseId ?? null,
     visualReleaseNumber: visualRelease?.number ?? null,
     status: {

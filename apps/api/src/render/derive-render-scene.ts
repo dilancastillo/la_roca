@@ -1359,8 +1359,8 @@ function deriveSingleAutomationRenderScene(
     ...(dynamicNeckDefinition?.placement.sleeveCalibration
       ? { sleeveCalibration: dynamicNeckDefinition.placement.sleeveCalibration }
       : {}),
-    ...(dynamicNeckDefinition?.placement.sleeveTabCalibration
-      ? { sleeveTabCalibration: dynamicNeckDefinition.placement.sleeveTabCalibration }
+    ...((session.sharedSleeveTabCalibration ?? dynamicNeckDefinition?.placement.sleeveTabCalibration)
+      ? { sleeveTabCalibration: session.sharedSleeveTabCalibration ?? dynamicNeckDefinition?.placement.sleeveTabCalibration }
       : {}),
     ...(dynamicBaseSilhouette ? { suppressGarmentBaseOutline: true } : {}),
     ...(garmentDetailAssetPath ? { garmentDetailAssetPath } : {}),
