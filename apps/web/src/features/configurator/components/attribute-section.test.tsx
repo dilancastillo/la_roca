@@ -341,3 +341,14 @@ describe("AttributeSection", () => {
     expect(screen.getByText(/ancho de bota debe estar entre 12 y 25/i)).toBeTruthy();
   });
 });
+
+
+it("mantiene visibles los cuellos restringidos por género sin permitir seleccionarlos", () => {
+  const baseProps = createImageProps();
+  render(<AttributeSection {...baseProps} group={{ ...baseProps.group, attributeId: 145, label: "Modelo de cuello" }} disabledValueIds={new Set([2])} expanded />);
+  const option = within(screen.getByRole("list")).getByRole("button", { name: /modelo 2/i });
+  expect(option).toHaveProperty("disabled", true);
+  fireEvent.click(option);
+  expect(baseProps.onSelect).not.toHaveBeenCalled();
+  expect(screen.getByText(/se muestran todos los cuellos/i)).toBeTruthy();
+});

@@ -43,6 +43,8 @@ export function AttributeSection({
   const [optionQuery, setOptionQuery] = useState("");
   const isColorGroup = group.controlType === "color";
   const isImageGroup = group.controlType === "image";
+  const isNeckGroup = isImageGroup && [145, 63].includes(group.attributeId);
+  const showUnavailableOptions = isColorGroup || isNeckGroup;
   const isSearchableGroup = isColorGroup || isImageGroup;
   const normalizedOptionQuery = normalizeSearchTerm(optionQuery);
   const compactOptionQuery = compactSearchTerm(normalizedOptionQuery);
@@ -74,9 +76,9 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          isColorGroup || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+          showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
       ),
-    [disabledValueIds, group.options, selectedValueIdSet, isColorGroup],
+    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions],
   );
   const visibleOptions = useMemo(() => {
     if (!isSearchableGroup || !normalizedOptionQuery) {
@@ -227,8 +229,8 @@ export function AttributeSection({
             </div>
           ) : null}
 
-          {isColorGroup && group.options.some((option) => disabledValueIds.has(option.id)) ? (
-            <p className="attribute-section__hint">Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo.</p>
+          {showUnavailableOptions && group.options.some((option) => disabledValueIds.has(option.id)) ? (
+            <p className="attribute-section__hint">{isNeckGroup ? "Se muestran todos los cuellos. Los deshabilitados no están disponibles con el género o la combinación actual en Odoo." : "Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo."}</p>
           ) : null}
 
           {group.controlType === "image" ? (
@@ -243,6 +245,7 @@ export function AttributeSection({
                     <button
                       key={option.id}
                       type="button"
+                      title={disabledValueIds.has(option.id) && !selected ? `${option.name} — No disponible con el género o la combinación actual en Odoo` : option.name}
                       className={[
                         "image-option-card",
                         selected ? "image-option-card--selected" : "",
