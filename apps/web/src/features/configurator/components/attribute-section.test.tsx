@@ -163,7 +163,7 @@ describe("AttributeSection", () => {
     ).toBeNull();
   });
 
-  it("oculta colores excluidos antes de aplicar la busqueda", () => {
+  it("muestra colores excluidos deshabilitados y permite encontrarlos por búsqueda", () => {
     const baseProps = createColorProps();
     render(
       <AttributeSection
@@ -178,8 +178,13 @@ describe("AttributeSection", () => {
       within(swatchGrid).getByRole("button", { name: /110601 - blanco/i }),
     ).toBeTruthy();
     expect(
-      within(swatchGrid).queryByRole("button", { name: /146305 - azul aruba/i }),
-    ).toBeNull();
+      within(swatchGrid).getByRole("button", { name: /146305 - azul aruba/i }),
+    ).toHaveProperty("disabled", true);
+    fireEvent.click(within(swatchGrid).getByRole("button", { name: /146305 - azul aruba/i }));
+    expect(baseProps.onSelect).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /buscar en color/i }));
+    fireEvent.change(screen.getByLabelText(/buscar codigo o color en color/i), { target: { value: "146305" } });
+    expect(screen.getByRole("button", { name: /146305 - azul aruba/i })).toHaveProperty("disabled", true);
   });
 
   it("oculta opciones excluidas en controles de imagen", () => {

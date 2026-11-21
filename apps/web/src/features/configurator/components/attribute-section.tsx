@@ -74,9 +74,9 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+          isColorGroup || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
       ),
-    [disabledValueIds, group.options, selectedValueIdSet],
+    [disabledValueIds, group.options, selectedValueIdSet, isColorGroup],
   );
   const visibleOptions = useMemo(() => {
     if (!isSearchableGroup || !normalizedOptionQuery) {
@@ -227,6 +227,10 @@ export function AttributeSection({
             </div>
           ) : null}
 
+          {isColorGroup && group.options.some((option) => disabledValueIds.has(option.id)) ? (
+            <p className="attribute-section__hint">Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo.</p>
+          ) : null}
+
           {group.controlType === "image" ? (
             visibleOptions.length > 0 ? (
               <div className="image-option-grid" role="list">
@@ -291,7 +295,7 @@ export function AttributeSection({
                         .join(" ")}
                       aria-pressed={selected}
                       aria-label={option.name}
-                      title={option.name}
+                      title={disabledValueIds.has(option.id) && !selected ? `${option.name} — No disponible con la combinación actual en Odoo` : option.name}
                       disabled={optionDisabled}
                       onClick={() =>
                         group.selectionMode === "multiple"
