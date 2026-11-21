@@ -6714,3 +6714,20 @@ describe("deriveConfiguratorUi", () => {
     ).not.toContain(invisibleZipperAttributeId);
   });
 });
+
+
+describe("cuello AROS histórico", () => {
+  it.each([349, 1171])("resuelve el cuello por PAV estable aunque cambie el nombre (PTAV %s)", (id) => {
+    const historical: ConfiguratorSession = {
+      ...session,
+      attributes: [{
+        id: 145, name: "Modelo de cuello", displayType: "radio",
+        selectionMode: "single", variantMode: "variant",
+        values: [{ id, sourceValueId: 569, name: "Etiqueta editable", attributeId: 145, attributeName: "Modelo de cuello" }],
+      }],
+      selectedValueIds: { "145": [id] },
+    };
+    expect(deriveConfiguratorUi(historical, historical.selectedValueIds).previewScene.neckImageSrc)
+      .toContain("blouse-legacy-aros-neck.svg");
+  });
+});
