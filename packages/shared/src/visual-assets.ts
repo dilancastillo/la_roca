@@ -395,6 +395,9 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     565: blouseModelAsset(8),
     566: blouseModelAsset(7),
     567: BLUSA_MARIPOSA_DIVIDIDO_ASSET,
+    568: `${BLUSA_ASSET_BASE}/blouse-legacy-2018-neck.svg`,
+    570: `${BLUSA_ASSET_BASE}/blouse-legacy-modelo-17-neck.svg`,
+    571: `${BLUSA_ASSET_BASE}/blouse-legacy-modelo-18-neck.svg`,
     569: `${BLUSA_ASSET_BASE}/blouse-legacy-aros-neck.svg`, // AROS histórico, sin bolsillos del SVG original.
     1396: BLUSA_MATRIOSKA_ASSET,
     1397: BLUSA_MARIPOSA_ASSET,
@@ -418,6 +421,9 @@ export const blusaAntifluidoT180VisualCatalog: VisualAssetCatalog = {
     2000: BLUSA_PICOS_ASSET,
   },
   neckModelsByValueName: {
+    "2018": `${BLUSA_ASSET_BASE}/blouse-legacy-2018-neck.svg`,
+    "modelo 17": `${BLUSA_ASSET_BASE}/blouse-legacy-modelo-17-neck.svg`,
+    "modelo 18": `${BLUSA_ASSET_BASE}/blouse-legacy-modelo-18-neck.svg`,
     aros: `${BLUSA_ASSET_BASE}/blouse-legacy-aros-neck.svg`,
     "cuello v": blouseModelAsset(1),
     presillas: BLUSA_PRESILLAS_ASSET,

@@ -6731,3 +6731,17 @@ describe("cuello AROS histórico", () => {
       .toContain("blouse-legacy-aros-neck.svg");
   });
 });
+
+
+describe("cuellos históricos recuperados del catálogo original", () => {
+  it.each([[568, "2018"], [570, "modelo-17"], [571, "modelo-18"]] as const)("dibuja PAV %s sin depender del nombre", (sourceValueId, slug) => {
+    const historical: ConfiguratorSession = {
+      ...session,
+      attributes: [{ id: 145, name: "Modelo de cuello", displayType: "radio", selectionMode: "single", variantMode: "variant",
+        values: [{ id: 9000, sourceValueId, name: "Etiqueta editable", attributeId: 145, attributeName: "Modelo de cuello" }] }],
+      selectedValueIds: { "145": [9000] },
+    };
+    expect(deriveConfiguratorUi(historical, historical.selectedValueIds).previewScene.neckImageSrc)
+      .toContain(`blouse-legacy-${slug}-neck.svg`);
+  });
+});
