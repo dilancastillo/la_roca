@@ -1,3 +1,4 @@
+import { getOdooIdentityProfile, toVisualAttributeId, toVisualSourceValueId, type OdooIdentityProfile } from "../lib/odoo-identity-profile.js";
 import {
   visualCatalogProductListSchema,
   type VisualActivationCondition,
@@ -167,6 +168,7 @@ export function mapVisualCatalogProducts({
   sourceValues,
   attributeLines,
   sharedWarnings = [],
+  identityProfile = "training",
 }: {
   templates: ProductTemplateRecord[];
   ptavs: ProductTemplateAttributeValueRecord[];
@@ -174,6 +176,7 @@ export function mapVisualCatalogProducts({
   sourceValues: ProductAttributeValueRecord[];
   attributeLines: ProductTemplateAttributeLineRecord[];
   sharedWarnings?: string[];
+  identityProfile?: OdooIdentityProfile;
 }): VisualCatalogProduct[] {
   const attributeMap = new Map(
     attributes.map((attribute) => [attribute.id, attribute]),
@@ -310,7 +313,14 @@ export function mapVisualCatalogProducts({
         id: template.id,
         name: template.name,
         family,
-        attributes: productAttributes,
+        attributes: productAttributes.map((attribute) => ({
+          ...attribute,
+          id: toVisualAttributeId(identityProfile, attribute.id),
+          values: attribute.values.map((value) => ({
+            ...value,
+            sourceValueId: toVisualSourceValueId(identityProfile, value.sourceValueId),
+          })),
+        })),
         warnings: [
           ...sharedWarnings,
           ...(productAttributes.length === 0
@@ -401,6 +411,7 @@ async function loadVisualCatalogProducts(env: OdooEnv) {
       sourceValues,
       attributeLines,
       sharedWarnings: warnings,
+      identityProfile: getOdooIdentityProfile(env),
     }),
     refreshedAt: new Date().toISOString(),
   });

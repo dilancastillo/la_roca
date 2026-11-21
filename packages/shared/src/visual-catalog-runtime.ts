@@ -97,13 +97,15 @@ function getSelectedSourceValueIds(
     return new Set<number>();
   }
 
+  const usesLivePtavIds = attribute.values.some((value) => selectedIds.has(value.id));
   return new Set(
     attribute.values
       .filter(
         (value) =>
           selectedIds.has(value.id) ||
+          (!usesLivePtavIds &&
           (value.sourceValueId !== undefined &&
-            selectedIds.has(value.sourceValueId)),
+            selectedIds.has(value.sourceValueId))),
       )
       .map((value) => value.sourceValueId ?? value.id),
   );
@@ -148,12 +150,10 @@ function isBindingSelected(
   const selectedIds =
     selectedValueIds[String(definition.binding.attributeId)] ?? [];
 
-  if (selectedIds.includes(definition.binding.valueId)) {
-    return true;
-  }
-
+  // PTAV IDs can be reused for a different option in another database.
+  // An explicit source binding must win over a coincidentally equal PTAV.
   if (definition.binding.sourceValueId === undefined) {
-    return false;
+    return selectedIds.includes(definition.binding.valueId);
   }
 
   return getSelectedSourceValueIds(

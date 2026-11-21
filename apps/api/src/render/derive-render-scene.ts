@@ -1175,7 +1175,7 @@ function deriveSingleAutomationRenderScene(
   const catalogNeckAssetPath = !hasDynamicNeck
     ? selectedNeckAssetPath
     : undefined;
-  const maleNeckAssetPath = selectedNeck && hasManGenderSelection(session, selectedValueIds)
+  const maleNeckAssetPath = !hasDynamicNeck && selectedNeck && hasManGenderSelection(session, selectedValueIds)
     ? getMenBlouseNeckAssetPath(
         session.graphicManifestKey,
         selectedNeck.sourceValueId,

@@ -1144,3 +1144,16 @@ describe("runtime del catalogo visual general", () => {
     ]);
   });
 });
+
+it("does not activate a different source option just because the historical PTAV collides", () => {
+  const definition=makeDefinition("collision","component",[]);
+  definition.binding.sourceValueId=555;
+  const selected={...session,visualDefinitions:[definition]};
+  expect(getSelectedVisualDefinitions(selected,session.selectedValueIds,"uniforme")).toEqual([]);
+});
+it("prefers live PTAV selection over an unrelated equal source ID", () => {
+  const definition=makeDefinition("source-collision","component",[]);
+  const selected={...session,attributes:session.attributes.map(a=>a.id===63?{...a,values:[...a.values,{...a.values[0]!,id:9999,sourceValueId:334}]}:a),visualDefinitions:[definition]};
+  definition.binding.sourceValueId=334;
+  expect(getSelectedVisualDefinitions(selected,session.selectedValueIds,"uniforme")).toEqual([]);
+});

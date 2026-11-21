@@ -1,3 +1,4 @@
+import { getOdooIdentityProfile, toVisualAttributeId, toVisualSourceValueId, toLivePtavId } from "../lib/odoo-identity-profile.js";
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import {
   getPantsKneePatchModelBySourceValueId,
@@ -687,6 +688,7 @@ export async function getConfiguratorSession(
   saleOrderLineId: number,
   options: GetConfiguratorSessionOptions = {},
 ): Promise<ConfiguratorSession> {
+  const identityProfile = getOdooIdentityProfile(env);
   const shouldLoadCustomValues = options.loadCustomValues ?? true;
   const lines = await odooRead<SaleOrderLineRecord>(
     env,
@@ -852,7 +854,7 @@ export async function getConfiguratorSession(
       return;
     }
 
-    attributeLineOrder.set(attributeId, {
+    attributeLineOrder.set(toVisualAttributeId(identityProfile, attributeId), {
       sequence: typeof line.sequence === "number" ? line.sequence : index,
       index,
     });
@@ -877,8 +879,9 @@ export async function getConfiguratorSession(
   >();
 
   for (const [index, ptav] of ptavs.entries()) {
-    const attributeId = toMany2oneId(ptav.attribute_id, "attribute_id");
-    const attribute = attributeMap.get(attributeId);
+    const odooAttributeId = toMany2oneId(ptav.attribute_id, "attribute_id");
+    const attributeId = toVisualAttributeId(identityProfile, odooAttributeId);
+    const attribute = attributeMap.get(odooAttributeId);
     const productAttributeValueId = toMany2oneId(
       ptav.product_attribute_value_id,
       "product_attribute_value_id",
@@ -892,10 +895,15 @@ export async function getConfiguratorSession(
       valueImage: attributeValue?.image,
     });
 
+    const existingGroup = groupedAttributes.get(attributeId);
+    if (existingGroup && existingGroup.odooAttributeId !== odooAttributeId) {
+      throw new Error(`Conflicto de identidad visual: los atributos Odoo ${existingGroup.odooAttributeId} y ${odooAttributeId} resuelven al mismo atributo ${attributeId}. Revisa el perfil de IDs.`);
+    }
     const group =
-      groupedAttributes.get(attributeId) ??
+      existingGroup ??
       {
         id: attributeId,
+        odooAttributeId,
         name: attribute?.name ?? toMany2oneName(ptav.attribute_id) ?? `Atributo ${attributeId}`,
         displayType: normalizeDisplayType(attribute?.display_type),
         selectionMode:
@@ -908,7 +916,8 @@ export async function getConfiguratorSession(
 
     group.values.push({
       id: ptav.id,
-      sourceValueId: productAttributeValueId,
+      sourceValueId: toVisualSourceValueId(identityProfile, productAttributeValueId),
+      odooSourceValueId: productAttributeValueId,
       name: ptav.name,
       attributeId,
       attributeName: group.name,
@@ -982,7 +991,7 @@ export async function getConfiguratorSession(
         return 1;
       }
 
-      return attributeIds.indexOf(left.id) - attributeIds.indexOf(right.id);
+      return attributeIds.indexOf(left.odooAttributeId ?? left.id) - attributeIds.indexOf(right.odooAttributeId ?? right.id);
     },
   );
 
@@ -1081,7 +1090,15 @@ export async function getConfiguratorSession(
     selectedValueIds: selectedValueIdsWithDefaults,
     customValuesByValueId,
     exclusions,
-    visualDefinitions,
+    visualDefinitions: visualDefinitions.map((definition) => ({
+      ...definition,
+      binding: {
+        ...definition.binding,
+        valueId: definition.binding.sourceValueId === undefined
+          ? toLivePtavId(identityProfile, definition.binding.valueId)
+          : definition.binding.valueId,
+      },
+    })),
     sharedSleeveTabCalibration: await getSharedSleeveTabCalibration(env),
     visualReleaseId: visualRelease?.id ?? options.visualReleaseId ?? null,
     visualReleaseNumber: visualRelease?.number ?? null,

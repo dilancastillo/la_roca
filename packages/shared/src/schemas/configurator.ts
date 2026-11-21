@@ -4,6 +4,7 @@ import { activeVisualDefinitionSchema, sleeveTabCalibrationSchema } from "./visu
 export const configuratorValueSchema = z.object({
   id: z.number(),
   sourceValueId: z.number().optional(),
+  odooSourceValueId: z.number().optional(),
   name: z.string().min(1),
   attributeId: z.number(),
   attributeName: z.string().min(1),
@@ -14,6 +15,7 @@ export const configuratorValueSchema = z.object({
 
 export const configuratorAttributeSchema = z.object({
   id: z.number(),
+  odooAttributeId: z.number().optional(),
   name: z.string().min(1),
   displayType: z.enum([
     "color",

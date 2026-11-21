@@ -7,6 +7,7 @@ export type AppEnv = {
   VERCEL_ENV?: string;
   ODOO_BASE_URL?: string;
   ODOO_DB?: string;
+  ODOO_ID_PROFILE?: string;
   ODOO_API_KEY?: string;
   APP_JWT_SECRET?: string;
   APP_USERS_JSON?: string;
@@ -33,7 +34,7 @@ export type AppEnv = {
 
 export type OdooEnv = Pick<
   AppEnv,
-  "ODOO_BASE_URL" | "ODOO_DB" | "ODOO_API_KEY"
+  "ODOO_BASE_URL" | "ODOO_DB" | "ODOO_API_KEY" | "ODOO_ID_PROFILE"
 >;
 
 export type AuthEnv = Pick<

@@ -88,6 +88,22 @@ describe("saveConfiguratorDesign", () => {
     mocks.odooCreate.mockResolvedValue(778);
   });
 
+  it("writes live production PTAVs, never canonical visual source IDs", async () => {
+    const session: ConfiguratorSession = {
+      ...editableSession, productTemplateId:7,
+      attributes:[
+        {id:145,odooAttributeId:145,name:"Modelo de cuello",displayType:"radio",selectionMode:"single",variantMode:"variant",values:[{id:3072,sourceValueId:1987,odooSourceValueId:2137,name:"CRUZADO",attributeId:145,attributeName:"Modelo de cuello"}]},
+        {id:814,odooAttributeId:809,name:"Color de vivos",displayType:"color",selectionMode:"single",variantMode:"no_variant",values:[{id:3101,sourceValueId:2002,odooSourceValueId:1911,name:"110601 - Blanco",attributeId:814,attributeName:"Color de vivos",colorHex:"#ffffff"}]}
+      ],selectedValueIds:{"145":[3072],"814":[3101]}
+    };
+    mocks.getConfiguratorSession.mockResolvedValue(session);
+    mocks.odooSearchRead.mockResolvedValue([]);
+    mocks.odooWrite.mockResolvedValue(true);
+    await saveConfiguratorDesign(env,{saleOrderLineId:290,filename:"production.png",imageBase64:"png-base64",selectedValueIds:session.selectedValueIds});
+    expect(mocks.odooCreate).toHaveBeenCalledWith(env,"product.product",[expect.objectContaining({product_tmpl_id:7,product_template_attribute_value_ids:[[6,0,[3072]]]})]);
+    expect(mocks.odooWrite).toHaveBeenCalledWith(env,"sale.order.line",[290],expect.objectContaining({product_template_attribute_value_ids:[[6,0,[3072]]],product_no_variant_attribute_value_ids:[[6,0,[3101]]]}));
+  });
+
   it("crea y usa una variante cuando Odoo no tiene una variante fisica exacta", async () => {
     mocks.odooSearchRead.mockResolvedValue([]);
     mocks.odooWrite.mockResolvedValue(true);
