@@ -191,6 +191,8 @@ describe("visual catalog repository", () => {
         right: { x: -14, y: 11, rotation: -30 },
       };
 
+      const before = await listVisualDefinitions(calibrationEnv);
+
       const result = await applySleeveTabCalibrationToAllNeckDefinitions(
         calibrationEnv,
         sleeveTabCalibration,
@@ -198,6 +200,7 @@ describe("visual catalog repository", () => {
       );
 
       expect(result.updatedDefinitionCount).toBe(2);
+      expect(await listVisualDefinitions(calibrationEnv)).toEqual(before);
       expect(result.sleeveTabCalibration).toEqual(sleeveTabCalibration);
       expect(
         await getSharedSleeveTabCalibration(calibrationEnv),

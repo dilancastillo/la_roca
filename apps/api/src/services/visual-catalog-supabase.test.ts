@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listVisualDefinitions } from "./visual-catalog-repository.js";
+import { applySleeveTabCalibrationToAllNeckDefinitions, getSharedSleeveTabCalibration, listVisualDefinitions } from "./visual-catalog-repository.js";
 import { listVisualReleases } from "./visual-release-repository.js";
 
 const env = {
@@ -112,5 +112,33 @@ describe("Supabase visual catalog datetime boundaries", () => {
 
     expect(release?.createdAt).toBe("2026-08-11T19:55:00.123Z");
     expect(release?.updatedAt).toBe("2026-08-11T20:05:00.654Z");
+  });
+});
+
+
+describe("calibración compartida en Supabase", () => {
+  it("escribe solo configuración y la recupera sin alterar definiciones ni releases", async () => {
+    const calibration = {
+      left: { x: 25, y: -18, rotation: 45 },
+      right: { x: -14, y: 11, rotation: 330 },
+    };
+    let saved: unknown;
+    const writes: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "POST") {
+        writes.push(url);
+        saved = JSON.parse(String(init.body));
+        return new Response(null, { status: 204 });
+      }
+      if (url.includes("visual_catalog_settings")) {
+        return Response.json(saved ? [{ value: calibration }] : []);
+      }
+      return Response.json([]);
+    }));
+    await applySleeveTabCalibrationToAllNeckDefinitions(env, calibration, "admin@la-roca.local");
+    expect(writes).toEqual(["https://catalog-test.supabase.co/rest/v1/visual_catalog_settings?on_conflict=id"]);
+    expect(saved).toMatchObject({ id: "sleeve_tabs", value: calibration, updated_by: "admin@la-roca.local" });
+    expect(await getSharedSleeveTabCalibration(env)).toEqual(calibration);
   });
 });

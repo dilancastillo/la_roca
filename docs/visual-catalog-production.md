@@ -47,6 +47,12 @@ Ejecutar en orden, tanto en el proyecto Preview como en Production:
 4. `infra/supabase/migrations/004_visual_catalog_production_hardening.sql`.
 5. `infra/supabase/migrations/005_visual_catalog_release_restore_idempotency.sql`.
 6. `infra/supabase/migrations/006_visual_catalog_publish_component_deltas.sql`.
+7. `infra/supabase/migrations/007_visual_catalog_settings.sql`.
+
+La migración `007` debe ejecutarse antes de desplegar el guardado compartido
+de presillas. Crea una configuración privada con fecha y autor independientes;
+guardar presillas ya no altera las fechas ni versiones de los cuellos. Hasta
+el primer guardado global se conserva la calibración histórica del catálogo.
 
 La migracion `004` agrega:
 

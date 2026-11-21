@@ -31,6 +31,8 @@ const storedVisualDefinitionSchema = visualDefinitionSummarySchema.extend({
 type StoredVisualDefinition = z.infer<typeof storedVisualDefinitionSchema>;
 
 interface VisualCatalogStore {
+  getCalibration(): Promise<SleeveTabCalibration | undefined>;
+  saveCalibration(calibration: SleeveTabCalibration, actorEmail: string): Promise<void>;
   assertReady(): Promise<void>;
   listMetadata(): Promise<StoredVisualDefinition[]>;
   upsertMetadata(definition: StoredVisualDefinition): Promise<void>;
@@ -55,6 +57,19 @@ function safeJsonParse(value: string, fallback: unknown) {
 }
 
 class FileVisualCatalogStore implements VisualCatalogStore {
+  async getCalibration() {
+    try {
+      return sleeveTabCalibrationSchema.parse(JSON.parse(await readFile(path.join(this.baseDirectory, "sleeve-tabs.json"), "utf8")).calibration);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      throw error;
+    }
+  }
+
+  async saveCalibration(calibration: SleeveTabCalibration, actorEmail: string) {
+    await this.ensureDirectories();
+    await writeFile(path.join(this.baseDirectory, "sleeve-tabs.json"), JSON.stringify({ calibration, updatedAt: new Date().toISOString(), actorEmail }), "utf8");
+  }
   private readonly baseDirectory: string;
   private readonly metadataPath: string;
   private readonly auditPath: string;
@@ -194,6 +209,19 @@ type SupabaseAuditRow = {
 };
 
 class SupabaseVisualCatalogStore implements VisualCatalogStore {
+  async getCalibration() {
+    const response = await this.request("/rest/v1/visual_catalog_settings?id=eq.sleeve_tabs&select=value");
+    const rows = await response.json() as { value: unknown }[];
+    return rows[0] ? sleeveTabCalibrationSchema.parse(rows[0].value) : undefined;
+  }
+
+  async saveCalibration(calibration: SleeveTabCalibration, actorEmail: string) {
+    await this.request("/rest/v1/visual_catalog_settings?on_conflict=id", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ id: "sleeve_tabs", value: calibration, updated_at: new Date().toISOString(), updated_by: actorEmail }),
+    });
+  }
   private readonly baseUrl: string;
   private readonly serviceRoleKey: string;
   private readonly bucket: string;
@@ -543,12 +571,13 @@ export async function listVisualDefinitions(env: Partial<AppEnv>) {
 }
 
 /**
- * Devuelve la última calibración compartida de presillas guardada para un
- * cuello. El editor la usa como punto de partida al recargarse, sin reemplazar
- * la calibración explícita de la definición que se abra después.
+ * Lee la configuración compartida. Mientras no se haya guardado por primera
+ * vez, conserva la calibración histórica del catálogo existente.
  */
 export async function getSharedSleeveTabCalibration(env: Partial<AppEnv>) {
   const store = getStore(env);
+  const saved = await store.getCalibration();
+  if (saved) return saved;
   const source = sortNewestFirst(await store.listMetadata()).find(
     (definition) =>
       definition.slot === "neck" &&
@@ -561,8 +590,8 @@ export async function getSharedSleeveTabCalibration(env: Partial<AppEnv>) {
 }
 
 /**
- * Propaga una única calibración de presillas a todos los cuellos históricos.
- * Se actualiza sólo placement: no se reescriben los SVG, pinturas ni reglas.
+ * Guarda la calibración global sin modificar las versiones ni sus fechas.
+ * Los consumidores la aplican al cargar los cuellos, incluso por release.
  */
 export async function applySleeveTabCalibrationToAllNeckDefinitions(
   env: Partial<AppEnv>,
@@ -574,24 +603,7 @@ export async function applySleeveTabCalibrationToAllNeckDefinitions(
   const targets = (await store.listMetadata()).filter(
     (definition) => definition.slot === "neck",
   );
-  const now = new Date().toISOString();
-
-  // No usar Promise.all: el almacenamiento de archivo persiste la colección
-  // completa y escrituras paralelas podrían pisar otra definición.
-  for (const current of targets) {
-    const next = storedVisualDefinitionSchema.parse({
-      ...current,
-      placement: {
-        ...current.placement,
-        sleeveTabCalibration: calibration,
-      },
-      updatedAt: now,
-    });
-    await store.upsertMetadata(next);
-    await appendAudit(store, current.id, "updated", actorEmail, {
-      reason: "shared_sleeve_tab_calibration",
-    });
-  }
+  await store.saveCalibration(calibration, actorEmail);
 
   return {
     updatedDefinitionCount: targets.length,
@@ -868,6 +880,10 @@ export async function loadActiveVisualDefinitions(
     );
   });
 
+  const sharedCalibration = activeMetadata.some((definition) => definition.slot === "neck")
+    ? await getSharedSleeveTabCalibration(env)
+    : undefined;
+
   return await Promise.all(
     activeMetadata.map(async (definition) =>
       activeVisualDefinitionSchema.parse({
@@ -881,7 +897,9 @@ export async function loadActiveVisualDefinitions(
         activationConditions: definition.activationConditions,
         selectedElementIds: definition.selectedElementIds,
         elementPaints: definition.elementPaints,
-        placement: definition.placement,
+        placement: definition.slot === "neck" && sharedCalibration
+          ? { ...definition.placement, sleeveTabCalibration: sharedCalibration }
+          : definition.placement,
         runtimeSvg: await store.getAsset(definition.runtimeAssetKey),
       }),
     ),
