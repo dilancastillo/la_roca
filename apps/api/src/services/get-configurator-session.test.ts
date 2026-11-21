@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildConfiguratorStateDescription } from "./configurator-state-metadata.js";
 import {
   getConfiguratorSession,
+  applyFirstOptionDefaults,
   resolvePinnedVisualDefinitionIds,
   resolveOdooOptionImageSrc,
   resolveSelectedIdsForAttributeValues,
@@ -378,5 +379,27 @@ describe("getConfiguratorSession", () => {
         dataBase64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg",
       },
     ]);
+  });
+});
+
+
+describe("persistencia de bolsillo inferior", () => {
+  const attributes = [{
+    id: 154, name: "Modelo bolsillo inferior", selectionMode: "single",
+    displayType: "radio", variantMode: "no_variant",
+    values: [
+      { id: 1213, name: "SIN SELECCIÓN", attributeId: 154, attributeName: "Modelo bolsillo inferior" },
+      { id: 1214, name: "Ninguno", attributeId: 154, attributeName: "Modelo bolsillo inferior" },
+    ],
+  }] as Parameters<typeof applyFirstOptionDefaults>[0];
+
+  it("conserva Ninguno guardado expresamente en la línea", () => {
+    expect(applyFirstOptionDefaults(attributes, { "154": [1214] }, [], new Set([1214])))
+      .toEqual({ "154": [1214] });
+  });
+
+  it("mantiene la selección inicial pendiente cuando Ninguno solo viene del producto", () => {
+    expect(applyFirstOptionDefaults(attributes, { "154": [1214] }, []))
+      .toEqual({ "154": [1213] });
   });
 });

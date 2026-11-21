@@ -136,10 +136,11 @@ function isExplicitNoneOption(optionName: string) {
   return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
 }
 
-function applyFirstOptionDefaults(
+export function applyFirstOptionDefaults(
   attributes: ConfiguratorSession["attributes"],
   selectedValueIds: Record<string, number[]>,
   exclusions: Array<{ sourceValueId: number; excludedValueId: number }>,
+  savedLineValueIds: Set<number> = new Set(),
 ) {
   const next = Object.fromEntries(
     Object.entries(selectedValueIds).map(([attributeId, valueIds]) => [
@@ -157,7 +158,8 @@ function applyFirstOptionDefaults(
     const hasOnlyLowerPocketNoneSelection =
       isLowerPocketModelAttribute(attribute) &&
       selectedValues.length > 0 &&
-      selectedValues.every((value) => isExplicitNoneOption(value.name));
+      selectedValues.every((value) => isExplicitNoneOption(value.name)) &&
+      !selectedValues.some((value) => savedLineValueIds.has(value.id));
 
     if (
       attribute.selectionMode === "multiple" ||
@@ -1022,6 +1024,7 @@ export async function getConfiguratorSession(
     sortedAttributes,
     selectedValueIds,
     exclusions,
+    lineValueIds,
   );
   const existingLogoAttachments = buildExistingLogoAttachments(
     line,
