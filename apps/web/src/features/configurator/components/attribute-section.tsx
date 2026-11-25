@@ -6,6 +6,7 @@ import {
   isNumericLengthAttributeName,
 } from "@repo/shared/measurement-rules";
 import type { UiAttributeGroup } from "../lib/derive-configurator-ui";
+import { CONFIGURATOR_ATTRIBUTE_IDS } from "@repo/shared/configurator-id-rules";
 
 type Props = {
   group: UiAttributeGroup;
@@ -44,6 +45,7 @@ export function AttributeSection({
   const isColorGroup = group.controlType === "color";
   const isImageGroup = group.controlType === "image";
   const isNeckGroup = isImageGroup && [145, 63].includes(group.attributeId);
+  const isGenderGroup = group.attributeId === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalizeSearchTerm(group.label) === "genero";
   const showUnavailableOptions = isColorGroup || isNeckGroup;
   const isSearchableGroup = isColorGroup || isImageGroup;
   const normalizedOptionQuery = normalizeSearchTerm(optionQuery);
@@ -76,9 +78,9 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+          isGenderGroup || showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
       ),
-    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions],
+    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions, isGenderGroup],
   );
   const visibleOptions = useMemo(() => {
     if (!isSearchableGroup || !normalizedOptionQuery) {
@@ -239,7 +241,7 @@ export function AttributeSection({
                 {visibleOptions.map((option) => {
                   const selected = selectedValueIds.includes(option.id);
                   const optionDisabled =
-                    disabled || (disabledValueIds.has(option.id) && !selected);
+                    disabled || (!isGenderGroup && disabledValueIds.has(option.id) && !selected);
 
                   return (
                     <button
@@ -284,7 +286,7 @@ export function AttributeSection({
                 {visibleOptions.map((option) => {
                   const selected = selectedValueIds.includes(option.id);
                   const optionDisabled =
-                    disabled || (disabledValueIds.has(option.id) && !selected);
+                    disabled || (!isGenderGroup && disabledValueIds.has(option.id) && !selected);
 
                   return (
                     <button
@@ -324,7 +326,7 @@ export function AttributeSection({
               {availableOptions.map((option) => {
                 const selected = selectedValueIds.includes(option.id);
                 const optionDisabled =
-                  disabled || (disabledValueIds.has(option.id) && !selected);
+                  disabled || (!isGenderGroup && disabledValueIds.has(option.id) && !selected);
 
                 return (
                   <button

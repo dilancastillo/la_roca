@@ -2702,6 +2702,11 @@ export function computeDisabledValueIds(
     Object.values(selectedValueIds).flatMap((valueIds) => valueIds),
   );
   const disabled = new Set<number>();
+  // Género is a primary choice. Downstream sizes/models must adapt to a new
+  // gender, rather than trapping the user in the currently selected gender.
+  const genderValueIds = new Set(session.attributes
+    .filter((attribute) => attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalize(attribute.name) === "genero")
+    .flatMap((attribute) => attribute.values.map((value) => value.id)));
 
   for (const rule of session.exclusions) {
     if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
@@ -2731,5 +2736,8 @@ export function computeDisabledValueIds(
     }
   }
 
+  for (const id of genderValueIds) {
+    disabled.delete(id);
+  }
   return disabled;
 }

@@ -17,4 +17,19 @@ describe("Odoo exclusions in both selection directions", () => {
     expect(computeDisabledValueIds(session, { color: [200], material: [100] }).size).toBe(0);
     expect(computeDisabledValueIds(session, {}).size).toBe(0);
   });
+
+  it("keeps both genders available even when the current neck and size exclude the other gender", () => {
+    const genderSession = {
+      attributes: [{ id: 142, name: "Género", values: [{ id: 1151 }, { id: 1152 }] }],
+      exclusions: [
+        { sourceValueId: 1152, excludedValueId: 200 },
+        { sourceValueId: 300, excludedValueId: 1152 },
+        { sourceValueId: 1151, excludedValueId: 400 },
+      ],
+    } as unknown as ConfiguratorSession;
+    const disabled = computeDisabledValueIds(genderSession, { "142": [1151], neck: [200], size: [300] });
+    expect(disabled.has(1151)).toBe(false);
+    expect(disabled.has(1152)).toBe(false);
+    expect(disabled.has(400)).toBe(true);
+  });
 });

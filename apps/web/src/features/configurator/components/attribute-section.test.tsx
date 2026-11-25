@@ -28,6 +28,34 @@ function createProps() {
   };
 }
 
+describe("primary gender choice", () => {
+  afterEach(cleanup);
+  function genderProps() {
+    const props = createProps();
+    return {
+      ...props,
+      group: { ...props.group, attributeId: 142, label: "Género", options: [
+        { id: 1151, name: "Hombre", allowsCustomValue: false },
+        { id: 1152, name: "Mujer", allowsCustomValue: false },
+      ] },
+      selectedValueIds: [1151], selectionLabel: "Hombre", disabledValueIds: new Set([1152]),
+    };
+  }
+  it("shows and enables Mujer despite exclusions from the previously selected male models", () => {
+    const props = genderProps();
+    render(<AttributeSection {...props} expanded />);
+    expect(screen.getByRole("button", { name: "Hombre" }).hasAttribute("disabled")).toBe(false);
+    const woman = screen.getByRole("button", { name: "Mujer" });
+    expect(woman.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(woman);
+    expect(props.onSelect).toHaveBeenCalledWith(1152);
+  });
+  it("still respects a locked read-only form", () => {
+    render(<AttributeSection {...genderProps()} expanded disabled />);
+    expect(screen.getByRole("button", { name: "Mujer" }).hasAttribute("disabled")).toBe(true);
+  });
+});
+
 function createColorProps() {
   return {
     ...createProps(),
