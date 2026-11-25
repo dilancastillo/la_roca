@@ -1,4 +1,5 @@
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import { CONFIGURATOR_ATTRIBUTE_IDS } from "@repo/shared/configurator-id-rules";
 import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
@@ -296,6 +297,21 @@ export function sanitizeSelectedValueIdsForExclusions(
 ) {
   const nextSelectedValueIds = cloneSelectedValueIds(selectedValueIds);
   const valueAttributeMap = buildValueAttributeMap(session);
+
+  // A neck may replace incompatible sizes/details, but never the user's gender.
+  // UI disables such necks; keep the same priority for stale/programmatic input.
+  if (preferredValueId !== undefined && session.attributes.some((attribute) =>
+    isNeckModelAttribute(attribute) && attribute.values.some((value) => value.id === preferredValueId))) {
+    const genderIds = new Set(session.attributes
+      .filter((attribute) => attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalizeText(attribute.name) === "genero")
+      .flatMap((attribute) => nextSelectedValueIds[String(attribute.id)] ?? []));
+    if (session.exclusions.some((rule) =>
+      (rule.sourceValueId === preferredValueId && genderIds.has(rule.excludedValueId)) ||
+      (rule.excludedValueId === preferredValueId && genderIds.has(rule.sourceValueId)))) {
+      removeSelectedValue(nextSelectedValueIds, preferredValueId, valueAttributeMap);
+      preferredValueId = undefined;
+    }
+  }
 
   if (preferredValueId !== undefined) {
     const selected = selectedSet(nextSelectedValueIds);

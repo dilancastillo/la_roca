@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
 import { computeDisabledValueIds } from "./derive-configurator-ui.js";
+import { sanitizeSelectedValueIdsForExclusions } from "./selection-exclusions.js";
 
 describe("Odoo exclusions in both selection directions", () => {
   const session = {
@@ -31,5 +32,41 @@ describe("Odoo exclusions in both selection directions", () => {
     expect(disabled.has(1151)).toBe(false);
     expect(disabled.has(1152)).toBe(false);
     expect(disabled.has(400)).toBe(true);
+  });
+
+  const maleNeckIds = [1156, 1160, 1164, 3072, 3088];
+  const neckSession = {
+    attributes: [
+      { id: 142, name: "Género", values: [{ id: 1151 }, { id: 1152 }] },
+      { id: 145, name: "Modelo de cuello", values: [...maleNeckIds.map((id) => ({ id })), { id: 1199 }] },
+      { id: 146, name: "Talla", values: [{ id: 3121 }] },
+      { id: 999, name: "Detalle", values: [{ id: 9000 }] },
+    ],
+    exclusions: [
+      ...maleNeckIds.map((id) => ({ sourceValueId: 3121, excludedValueId: id })),
+      ...maleNeckIds.map((id) => ({ sourceValueId: id, excludedValueId: 9000 })),
+      { sourceValueId: 1151, excludedValueId: 1199 },
+    ],
+  } as unknown as ConfiguratorSession;
+  it("allows all gender-compatible necks independently of selected size and dependent details", () => {
+    const disabled = computeDisabledValueIds(neckSession, { "142": [1151], "146": [3121], "999": [9000] });
+    for (const id of maleNeckIds) expect(disabled.has(id)).toBe(false);
+    expect(disabled.has(1199)).toBe(true);
+  });
+  it("selecting any compatible neck clears incompatible dependents while preserving gender", () => {
+    for (const id of maleNeckIds) {
+      const result = sanitizeSelectedValueIdsForExclusions(neckSession, {
+        "142": [1151], "145": [id], "146": [3121], "999": [9000],
+      }, id);
+      expect(result["142"]).toEqual([1151]);
+      expect(result["145"]).toEqual([id]);
+      expect(result["146"]).toEqual([]);
+      expect(result["999"]).toEqual([]);
+    }
+  });
+  it("a stale incompatible neck selection cannot silently change the chosen gender", () => {
+    const result = sanitizeSelectedValueIdsForExclusions(neckSession, { "142": [1151], "145": [1199] }, 1199);
+    expect(result["142"]).toEqual([1151]);
+    expect(result["145"]).toEqual([]);
   });
 });

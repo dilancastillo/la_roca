@@ -1137,6 +1137,36 @@ describe("deriveConfiguratorUi", () => {
     expect(ui.previewScene.useMaleBlouseSilhouette).toBe(true);
   });
 
+  it("muestra miniaturas masculinas en Uniforme aunque Odoo conserve imagenes femeninas", () => {
+    const necks = [
+      [1156, 554, "CUELLO V", "blouse-men-model-01-cuello-v.svg"],
+      [1160, 558, "JDC", "blouse-men-model-02-jdc.svg"],
+      [1164, 562, "V - DIVIDIDO", "blouse-men-model-36-v-dividido.svg"],
+      [3072, 1987, "CRUZADO", "blouse-men-model-36-v-dividido.svg"],
+      [3088, 1995, "CUELLO ALTO CON CREMALLERA", "blouse-men-model-34-cuello-alto-cremallera.svg"],
+    ] as const;
+    const uniformSession: ConfiguratorSession = {
+      ...session,
+      productTemplateId: 7,
+      productName: "Uniforme",
+      graphicManifestKey: "uniforme",
+      attributes: [
+        { id: 142, name: "Género", displayType: "radio", selectionMode: "single", variantMode: "variant",
+          values: [{ id: 1151, sourceValueId: 531, name: "Hombre", attributeId: 142, attributeName: "Género" }] },
+        { id: 145, name: "Modelo de cuello", displayType: "image", selectionMode: "single", variantMode: "variant",
+          values: necks.map(([id, sourceValueId, name]) => ({ id, sourceValueId, name, attributeId: 145,
+            attributeName: "Modelo de cuello", optionImageSrc: "/legacy/female-neck.png" })) },
+      ],
+    };
+    const ui = deriveConfiguratorUi(uniformSession, { "142": [1151], "145": [1156] });
+    const options = ui.groups.find((group) => group.attributeId === 145)?.options;
+    for (const [id, , , file] of necks) {
+      expect(options?.find((option) => option.id === id)?.imageSrc).toBe(
+        `/assets/catalog/blusa-antifluido-t180/svg-clean/${file}`,
+      );
+    }
+  });
+
   it("usa la base cerrada solo en la blusa del preview de Uniforme", () => {
     const uniformSession: ConfiguratorSession = {
       ...session,

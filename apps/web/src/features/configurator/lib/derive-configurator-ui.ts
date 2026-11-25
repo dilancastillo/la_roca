@@ -2009,7 +2009,7 @@ function deriveSingleConfiguratorUi(
   );
   const useMaleNeckOptionImages =
     hasManGenderSelection(session, selectedValueIds) &&
-    session.graphicManifestKey.includes("blusa");
+    (session.graphicManifestKey.includes("blusa") || isUniformeSession(session));
   const visibleAttributes = session.attributes.filter(
     (attribute) =>
       !hiddenConditionalAttributeIds.has(attribute.id) &&
@@ -2036,7 +2036,7 @@ function deriveSingleConfiguratorUi(
           catalog &&
           matchesVisualAssetAttributeId(catalog, "neckModel", attribute.id)
             ? getMenBlouseNeckAssetPath(
-                session.graphicManifestKey,
+                isUniformeSession(session) ? "blusa-antifluido-t180" : session.graphicManifestKey,
                 value.sourceValueId,
                 value.name,
               )
@@ -2707,6 +2707,11 @@ export function computeDisabledValueIds(
   const genderValueIds = new Set(session.attributes
     .filter((attribute) => attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalize(attribute.name) === "genero")
     .flatMap((attribute) => attribute.values.map((value) => value.id)));
+  const selectedGenderIds = new Set([...genderValueIds].filter((id) => selected.has(id)));
+  const neckValueIds = new Set(session.attributes
+    .filter((attribute) => [145, 63].includes(attribute.id) ||
+      (normalize(attribute.name).includes("modelo") && normalize(attribute.name).includes("cuello")))
+    .flatMap((attribute) => attribute.values.map((value) => value.id)));
 
   for (const rule of session.exclusions) {
     if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
@@ -2738,6 +2743,17 @@ export function computeDisabledValueIds(
 
   for (const id of genderValueIds) {
     disabled.delete(id);
+  }
+  // Neck model is chosen after gender and before dependent sizes/details.
+  // Selecting a new neck clears incompatible dependent values; those existing
+  // values must not prevent choosing a gender-compatible neck in the first place.
+  for (const id of neckValueIds) {
+    disabled.delete(id);
+    if (session.exclusions.some((rule) =>
+      (rule.sourceValueId === id && selectedGenderIds.has(rule.excludedValueId)) ||
+      (rule.excludedValueId === id && selectedGenderIds.has(rule.sourceValueId)))) {
+      disabled.add(id);
+    }
   }
   return disabled;
 }
