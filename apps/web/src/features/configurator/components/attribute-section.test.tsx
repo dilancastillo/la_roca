@@ -371,12 +371,16 @@ describe("AttributeSection", () => {
 });
 
 
-it("mantiene visibles los cuellos restringidos por género sin permitir seleccionarlos", () => {
+it.each([63, 145])("muestra solo cuellos disponibles para el atributo %s", (attributeId) => {
+  cleanup();
   const baseProps = createImageProps();
-  render(<AttributeSection {...baseProps} group={{ ...baseProps.group, attributeId: 145, label: "Modelo de cuello" }} disabledValueIds={new Set([2])} expanded />);
-  const option = within(screen.getByRole("list")).getByRole("button", { name: /modelo 2/i });
-  expect(option).toHaveProperty("disabled", true);
+  render(<AttributeSection {...baseProps} group={{ ...baseProps.group, attributeId, label: "Modelo de cuello" }} disabledValueIds={new Set([2])} expanded />);
+  const list = within(screen.getByRole("list"));
+  expect(list.queryByRole("button", { name: /modelo 2/i })).toBeNull();
+  const option = list.getByRole("button", { name: /modelo 1/i });
+  expect(option).toHaveProperty("disabled", false);
   fireEvent.click(option);
-  expect(baseProps.onSelect).not.toHaveBeenCalled();
-  expect(screen.getByText(/se muestran todos los cuellos/i)).toBeTruthy();
+  expect(baseProps.onSelect).toHaveBeenCalledWith(1);
+  expect(screen.queryByText(/se muestran todos los cuellos/i)).toBeNull();
+  cleanup();
 });

@@ -46,7 +46,7 @@ export function AttributeSection({
   const isImageGroup = group.controlType === "image";
   const isNeckGroup = isImageGroup && [145, 63].includes(group.attributeId);
   const isGenderGroup = group.attributeId === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalizeSearchTerm(group.label) === "genero";
-  const showUnavailableOptions = isColorGroup || isNeckGroup;
+  const showUnavailableOptions = isColorGroup;
   const isSearchableGroup = isColorGroup || isImageGroup;
   const normalizedOptionQuery = normalizeSearchTerm(optionQuery);
   const compactOptionQuery = compactSearchTerm(normalizedOptionQuery);
@@ -78,9 +78,11 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          isGenderGroup || showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+          isNeckGroup
+            ? !disabledValueIds.has(option.id)
+            : isGenderGroup || showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
       ),
-    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions, isGenderGroup],
+    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions, isGenderGroup, isNeckGroup],
   );
   const visibleOptions = useMemo(() => {
     if (!isSearchableGroup || !normalizedOptionQuery) {
@@ -232,7 +234,7 @@ export function AttributeSection({
           ) : null}
 
           {showUnavailableOptions && group.options.some((option) => disabledValueIds.has(option.id)) ? (
-            <p className="attribute-section__hint">{isNeckGroup ? "Se muestran todos los cuellos. Los deshabilitados no están disponibles con el género o la combinación actual en Odoo." : "Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo."}</p>
+            <p className="attribute-section__hint">Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo.</p>
           ) : null}
 
           {group.controlType === "image" ? (
