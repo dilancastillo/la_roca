@@ -3153,6 +3153,8 @@ describe("renderDesignImage", () => {
   }, 20000);
 
   it("usa el ID de Odoo como fuente de verdad aunque el texto heredado indique el otro lado", async () => {
+    // Inventario verificado: 2171 → 2096 es derecha; 2170 → 2095 es izquierda.
+    // El texto se mantiene deliberadamente contrario para probar prioridad del ID.
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -3168,7 +3170,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9130,
-            sourceValueId: 2095,
+            sourceValueId: 2096,
             key: "rodilla-izquierda-lineal-inferior",
             label: "Rodilla izquierda lineal inferior",
             colorHex: "#a000b0",
@@ -3182,7 +3184,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9131,
-            sourceValueId: 2096,
+            sourceValueId: 2095,
             key: "rodilla-derecha-lineal-inferior",
             label: "Rodilla derecha lineal inferior",
             colorHex: "#a000b0",
@@ -4180,7 +4182,8 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9088,
-            sourceValueId: 2112,
+            // Parche rodilla izquierda vigente; 2112 ahora identifica derecha.
+            sourceValueId: 644,
             key: "parche-rodilla-izquierda",
             label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
