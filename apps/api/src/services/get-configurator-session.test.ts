@@ -97,8 +97,23 @@ describe("resolveSelectedIdsForAttributeValues", () => {
         ],
         new Set([2_000]),
         new Set(),
+        "source",
       ),
     ).toEqual([200]);
+  });
+
+  it("no interpreta un PTAV obsoleto como PAV de otro modelo", () => {
+    expect(resolveSelectedIdsForAttributeValues(
+      [{ id: 100, sourceValueId: 200 }, { id: 300, sourceValueId: 400 }],
+      new Set([200]), new Set([300]),
+    )).toEqual([300]);
+  });
+
+  it("el formato PAV explicito tampoco se confunde con un PTAV homonimo", () => {
+    expect(resolveSelectedIdsForAttributeValues(
+      [{ id: 200, sourceValueId: 400 }, { id: 300, sourceValueId: 200 }],
+      new Set([200]), new Set(), "source",
+    )).toEqual([300]);
   });
 });
 
@@ -226,6 +241,8 @@ describe("getConfiguratorSession", () => {
         return [
           { id: 19001, name: "Verde", html_color: "#96a36f" },
           { id: 19101, name: "Rosa", html_color: "#f4c7cc" },
+          { id: 19102, name: "Amarillo", html_color: "#ffff00" },
+          { id: 19103, name: "Azul", html_color: "#0000ff" },
           { id: 19201, name: "Cogotera" },
           { id: 19301, name: "Si", is_custom: true },
           { id: 19401, name: "Bolsillo de pecho izquierdo" },

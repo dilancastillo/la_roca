@@ -86,6 +86,35 @@ it("conserva tela del bolsillo y vivo blanco como colores independientes", () =>
   expect(svg).toContain("fill:#ffffff;");
 });
 
+it("no reactiva la referencia antigua de una serie cuando cambia su binding", () => {
+  const old = makeDefinition("binding-old", "component", []);
+  const current = {
+    ...makeDefinition("binding-current", "component", []),
+    seriesId: old.seriesId,
+    version: old.version + 1,
+    binding: { ...old.binding, sourceValueId: 9999, valueId: 9999 },
+  };
+  expect(getSelectedVisualDefinitions(
+    { ...session, visualDefinitions: [old, current] },
+    session.selectedValueIds,
+    "uniforme",
+  )).toEqual([]);
+  // A historical saved snapshot containing only v1 still reproduces v1.
+  expect(getSelectedVisualDefinitions(
+    { ...session, visualDefinitions: [old] },
+    session.selectedValueIds,
+    "uniforme",
+  ).map((definition) => definition.id)).toEqual([old.id]);
+  expect(getSelectedVisualDefinitions(
+    { ...session, visualDefinitions: [old, {
+      ...current,
+      binding: { ...old.binding, productTemplateIds: [5] },
+    }] },
+    session.selectedValueIds,
+    "uniforme",
+  )).toEqual([]);
+});
+
 function makeDefinition(
   id: string,
   layer: ActiveVisualDefinition["layer"],
@@ -972,11 +1001,8 @@ describe("runtime del catalogo visual general", () => {
     expect(svg).not.toContain("__VC_TRIM_FILL_635__");
   });
 
-  it("aplica vivos a tokens genericos cuando la seccion elegida es especifica", () => {
-    // Los SVG historicos usan el token generico del cuello completo (1978) y
-    // de bolsillos inferiores (419), mientras que el configurador permite
-    // escoger sub-secciones como 1970 y 2087. Ambos pertenecen a la misma
-    // familia visual y deben recibir el color elegido.
+  it("no extiende una sección específica a tokens genéricos de otra zona", () => {
+    // Compartir familia o color no autoriza pintar una sección no elegida.
     const definition: ActiveVisualDefinition = {
       ...makeDefinition("vivos-especificos", "component", []),
       slot: "neck",
@@ -1018,16 +1044,13 @@ describe("runtime del catalogo visual general", () => {
       ]).split(",")[1] ?? "",
     );
 
-    expect(svg).toContain("stroke:#ffffff!important;");
+    expect(svg).not.toContain("#ffffff");
     expect(svg).not.toContain("__VC_TRIM_STROKE_1978__");
     expect(svg).not.toContain("__VC_TRIM_STROKE_419__");
   });
 
-  it("conserva un vivo blanco uniforme cuando el SVG usa un ID dinamico", () => {
-    // Los SVG guardados desde el catálogo pueden conservar IDs nuevos de
-    // Odoo. No están en el mapa histórico, pero si todas las secciones activas
-    // comparten color es seguro resolver ese token sin convertirlo al color
-    // base de la prenda.
+  it("conserva un vivo blanco con identidad dinámica seleccionada explícitamente", () => {
+    // Los IDs dinámicos son válidos si la selección coincide exactamente.
     const definition: ActiveVisualDefinition = {
       ...makeDefinition("vivos-blancos-dinamicos", "component", []),
       slot: "neck",
@@ -1054,8 +1077,8 @@ describe("runtime del catalogo visual general", () => {
 
     const svg = decodeURIComponent(
       materializeVisualDefinitionSvg(definition, "#10a7cf", [
-        { valueId: 1970, sourceValueId: 1970, colorHex: "#ffffff" },
-        { valueId: 2087, sourceValueId: 2087, colorHex: "#ffffff" },
+        { valueId: 7001, sourceValueId: 98001, colorHex: "#ffffff" },
+        { valueId: 7002, sourceValueId: 98002, colorHex: "#ffffff" },
       ]).split(",")[1] ?? "",
     );
 
@@ -1156,4 +1179,39 @@ it("prefers live PTAV selection over an unrelated equal source ID", () => {
   const selected={...session,attributes:session.attributes.map(a=>a.id===63?{...a,values:[...a.values,{...a.values[0]!,id:9999,sourceValueId:334}]}:a),visualDefinitions:[definition]};
   definition.binding.sourceValueId=334;
   expect(getSelectedVisualDefinitions(selected,session.selectedValueIds,"uniforme")).toEqual([]);
+});
+
+
+describe("aislamiento de vivos reportados en producción", () => {
+  const definition: ActiveVisualDefinition = {
+    ...makeDefinition("zonas-independientes", "component", []),
+    slot: "neck",
+    runtimeSvg: `<svg data-vc-runtime-format="2" data-vc-render-mode="overlay">
+      <path id="cogotera" d="M0 0L100 0" style="stroke:__VC_TRIM_STROKE_628__;"/>
+      <path id="cuello-completo" data-vc-safe-trim-fill="true" d="M0 0H100V40H0Z" style="fill:__VC_TRIM_FILL_1978__;"/>
+      <path id="interno" d="M0 0L20 40" style="stroke:__VC_TRIM_STROKE_631__;"/>
+      <path id="bolsillo" d="M0 50L100 50" style="stroke:__VC_TRIM_STROKE_643__;"/>
+    </svg>`,
+  };
+
+  it.each([631, 643])("seleccionar solamente %i no pinta cogotera ni cuello completo", (sourceValueId) => {
+    const svg = decodeURIComponent(materializeVisualDefinitionSvg(definition, "#e3e600", [
+      { valueId: 9000, sourceValueId, colorHex: "#10a7cf" },
+    ]).split(",")[1] ?? "");
+    const selected = sourceValueId === 631 ? "interno" : "bolsillo";
+    for (const id of ["cogotera", "cuello-completo", "interno", "bolsillo"]) {
+      const element = svg.match(new RegExp(`<path[^>]*id="${id}"[^>]*>`))?.[0];
+      expect(element).toBeDefined();
+      if (id === selected) expect(element).toContain("#10a7cf");
+      else expect(element).not.toContain("#10a7cf");
+    }
+  });
+
+  it("un PTAV que coincide con el PAV de otra zona no sustituye su identidad fuente", () => {
+    const svg = decodeURIComponent(materializeVisualDefinitionSvg(definition, "#e3e600", [
+      { valueId: 628, sourceValueId: 643, colorHex: "#10a7cf" },
+    ]).split(",")[1] ?? "");
+    expect(svg.match(/<path[^>]*id="cogotera"[^>]*>/)?.[0]).not.toContain("#10a7cf");
+    expect(svg.match(/<path[^>]*id="bolsillo"[^>]*>/)?.[0]).toContain("#10a7cf");
+  });
 });

@@ -580,6 +580,7 @@ function mergeChangedDefinitionsIntoSnapshot(
     const current = byId.get(id);
     return !current || !changes.some(
       (change) =>
+        current.seriesId === change.seriesId ||
         hasSameTarget(current, change) ||
         hasOverlappingGenderScopedTarget(current, change),
     );
@@ -685,7 +686,8 @@ export async function createVisualReleaseCandidate(
   const duplicatedTarget = selected.find((definition, index) =>
     selected.some(
       (candidate, candidateIndex) =>
-        candidateIndex !== index && hasSameTarget(definition, candidate),
+        candidateIndex !== index &&
+        (definition.seriesId === candidate.seriesId || hasSameTarget(definition, candidate)),
     ),
   );
   if (duplicatedTarget) {
@@ -799,7 +801,14 @@ export async function restoreVisualRelease(env: Partial<AppEnv>, releaseId: stri
 export async function getActiveVisualRelease(env: Partial<AppEnv>) {
   const store = getStore(env);
   const activeId = await store.getActiveReleaseId();
-  return activeId ? (await store.listReleases()).find((release) => release.id === activeId) ?? null : null;
+  if (!activeId) return null;
+  const active = (await store.listReleases()).find((release) => release.id === activeId);
+  // A broken production pointer must not fall back to the unversioned catalog,
+  // where superseded published definitions can still exist for saved designs.
+  if (!active || active.status !== "active") {
+    throw new Error("La publicacion visual de produccion no existe o no esta activa. Revisa el catalogo antes de continuar.");
+  }
+  return active;
 }
 
 export async function getOrCreateLineVisualRelease(env: Partial<AppEnv>, saleOrderLineId: number) {

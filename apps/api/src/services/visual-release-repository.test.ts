@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { rm } from "node:fs/promises";
+import { rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import type { VisualDefinitionMutation } from "@repo/shared/schemas/visual-catalog";
@@ -14,6 +14,7 @@ import {
 import {
   approveVisualRelease,
   createVisualReleaseCandidate,
+  getActiveVisualRelease,
   getVisualReleaseCandidatePreviewDefinitionIds,
   getOrCreateLineVisualRelease,
   listVisualReleaseScenarios,
@@ -156,6 +157,14 @@ afterAll(async () => {
 });
 
 describe("visual release repository", () => {
+  it("no recupera el catalogo sin version si la publicacion activa ya no existe", async () => {
+    const isolatedDirectory = path.join(dataDirectory, "broken-production-pointer");
+    await mkdir(isolatedDirectory, { recursive: true });
+    await writeFile(path.join(isolatedDirectory, "release-state.json"), JSON.stringify({ activeReleaseId: randomUUID() }));
+    await expect(getActiveVisualRelease({ ...env, VISUAL_CATALOG_DATA_DIR: isolatedDirectory }))
+      .rejects.toThrow("no existe o no esta activa");
+  });
+
   it("publica fotografias completas, fija lineas y permite restaurar", async () => {
     const firstDefinition = await approveDefinition(mutation);
     const firstRelease = await makeActiveRelease("Primera", [firstDefinition.id]);
@@ -646,4 +655,24 @@ describe("visual release repository", () => {
     // Este draft NO está en el release — por eso no aparece en el laboratorio
     expect(candidate.definitionIds).not.toContain(lateDraft.id);
   });
+  it("reemplaza una revision de la misma serie aunque cambie su referencia de Odoo", async () => {
+    const original = await approveDefinition({
+      ...mutation,
+      displayName: "Modelo referencia antigua",
+      binding: { ...mutation.binding, sourceValueId: 9811, valueId: 9811 },
+    });
+    await makeActiveRelease("Serie antes de corregir referencia", [original.id]);
+    const draft = await cloneVisualDefinition(env, original.id, actorEmail);
+    const changed = await updateVisualDefinition(env, draft.id, {
+      ...mutation,
+      displayName: "Modelo referencia corregida",
+      binding: { ...mutation.binding, sourceValueId: 9812, valueId: 9812 },
+    }, actorEmail);
+    await submitVisualDefinition(env, changed.id, actorEmail);
+    const approved = await approveVisualDefinition(env, changed.id, actorEmail);
+    const release = await makeActiveRelease("Serie con referencia corregida", [approved.id]);
+    expect(release.definitionIds).toContain(approved.id);
+    expect(release.definitionIds).not.toContain(original.id);
+  });
+
 });

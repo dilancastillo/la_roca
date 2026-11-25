@@ -59,6 +59,7 @@ type ProductTemplateAttributeValueRecord = {
   is_custom?: boolean;
   image?: string | false;
   excluded_value_ids?: number[];
+  attribute_line_id?: Many2one;
 };
 
 type ProductAttributeRecord = {
@@ -66,6 +67,7 @@ type ProductAttributeRecord = {
   name: string;
   display_type?: string | false;
   create_variant?: string | false;
+  active?: boolean;
 };
 
 function hasSelectionConflict(
@@ -220,6 +222,8 @@ type ProductTemplateAttributeLineRecord = {
   id: number;
   attribute_id: Many2one;
   sequence?: number;
+  active?: boolean;
+  value_ids?: number[];
 };
 
 type ProductAttributeValueRecord = {
@@ -230,6 +234,8 @@ type ProductAttributeValueRecord = {
   display_type?: string | false;
   is_custom?: boolean;
   image?: string | false;
+  active?: boolean;
+  attribute_id?: Many2one;
 };
 
 type ProductAttributeCustomValueRecord = {
@@ -237,6 +243,31 @@ type ProductAttributeCustomValueRecord = {
   custom_product_template_attribute_value_id: Many2one;
   custom_value?: string | false;
 };
+
+export function filterCurrentProductOptions(
+  ptavs: ProductTemplateAttributeValueRecord[],
+  attributes: ProductAttributeRecord[],
+  attributeValues: ProductAttributeValueRecord[],
+  attributeLines: ProductTemplateAttributeLineRecord[],
+) {
+  const attributesById = new Map(attributes.map((entry) => [entry.id, entry]));
+  const valuesById = new Map(attributeValues.map((entry) => [entry.id, entry]));
+  return ptavs.filter((ptav) => {
+    const attributeId = toMany2oneId(ptav.attribute_id, "attribute_id");
+    const valueId = toMany2oneId(ptav.product_attribute_value_id, "product_attribute_value_id");
+    const attribute = attributesById.get(attributeId);
+    const value = valuesById.get(valueId);
+    const lineId = Array.isArray(ptav.attribute_line_id) ? ptav.attribute_line_id[0] : undefined;
+    const attributeLine = attributeLines.find((entry) =>
+      entry.active !== false &&
+      Array.isArray(entry.attribute_id) && entry.attribute_id[0] === attributeId &&
+      (lineId === undefined || entry.id === lineId));
+    return ptav.ptav_active !== false && attribute?.active !== false && !!attribute &&
+      !!value && value.active !== false && !!attributeLine &&
+      (!Array.isArray(value.attribute_id) || value.attribute_id[0] === attributeId) &&
+      (!Array.isArray(attributeLine.value_ids) || attributeLine.value_ids.includes(valueId));
+  });
+}
 
 type DesignAttachmentRecord = {
   id: number;
@@ -256,14 +287,13 @@ export function resolveSelectedIdsForAttributeValues(
   values: Array<{ id: number; sourceValueId?: number | undefined }>,
   lineValueIds: Set<number>,
   productValueIds: Set<number>,
+  idNamespace: "ptav" | "source" = "ptav",
 ) {
   const resolveIds = (selectedIds: Set<number>) => {
-    const ptavIds = values
-      .map((value) => value.id)
-      .filter((valueId) => selectedIds.has(valueId));
-
-    if (ptavIds.length > 0) {
-      return ptavIds;
+    // Odoo's line and variant relation fields contain PTAV IDs. A stale PTAV
+    // can have the same number as an unrelated PAV; never guess its namespace.
+    if (idNamespace === "ptav") {
+      return values.map((value) => value.id).filter((id) => selectedIds.has(id));
     }
 
     return values
@@ -510,6 +540,8 @@ const productTemplateAttributeValueBaseFields = [
   "product_attribute_value_id",
   "product_tmpl_id",
   "ptav_active",
+  "attribute_line_id",
+  "excluded_value_ids",
   "is_custom",
 ];
 
@@ -517,7 +549,6 @@ const productTemplateAttributeValueOptionalFields = [
   "sequence",
   "display_type",
   "image",
-  "excluded_value_ids",
 ];
 
 async function loadProductTemplateAttributeValues(
@@ -552,12 +583,6 @@ async function loadProductTemplateAttributeValues(
 
       optionalFields = optionalFields.filter((field) => field !== missingField);
 
-      if (missingField === "excluded_value_ids") {
-        warnings.push(
-          "Odoo no devolvio el campo excluded_value_ids; las exclusiones no se aplicaron.",
-        );
-      }
-
       if (missingField === "image") {
         warnings.push(
           "Odoo no devolvio imagenes de valores; la barra lateral usara los assets locales disponibles.",
@@ -578,7 +603,7 @@ async function loadProductAttributeValues(
     };
   }
 
-  const baseFields = ["id", "name", "html_color", "is_custom"];
+  const baseFields = ["id", "name", "html_color", "is_custom", "active", "attribute_id"];
   const warnings: string[] = [];
   let optionalFields = ["sequence", "display_type", "image"];
 
@@ -744,8 +769,9 @@ export async function getConfiguratorSession(
     product.display_name ??
     `Producto ${productTemplateId}`;
 
-  const { ptavs, warnings: ptavWarnings } =
+  const { ptavs: loadedPtavs, warnings: ptavWarnings } =
     await loadProductTemplateAttributeValues(env, productTemplateId);
+  let ptavs = loadedPtavs;
 
   if (ptavs.length === 0) {
     throw new Error(
@@ -789,16 +815,16 @@ export async function getConfiguratorSession(
             env,
             "product.attribute",
             attributeIds,
-            ["id", "name", "display_type", "create_variant"],
+            ["id", "name", "display_type", "create_variant", "active"],
           )
         : Promise.resolve([]),
       odooSearchRead<ProductTemplateAttributeLineRecord>(
         env,
         "product.template.attribute.line",
-        [["product_tmpl_id", "=", productTemplateId]],
-        ["id", "attribute_id", "sequence"],
+        [["product_tmpl_id", "=", productTemplateId], ["active", "=", true]],
+        ["id", "attribute_id", "sequence", "active", "value_ids"],
         "sequence, id",
-      ).catch(() => []),
+      ),
       loadProductAttributeValues(env, productAttributeValueIds),
       shouldLoadCustomValues && customAttributeValueIds.length > 0
         ? odooRead<ProductAttributeCustomValueRecord>(
@@ -825,6 +851,12 @@ export async function getConfiguratorSession(
       ],
     ),
   );
+  // PTAVs may survive removal from a product's attribute line. Never expose
+  // those orphaned options, archived values, or their exclusion rules.
+  ptavs = filterCurrentProductOptions(ptavs, attributes, attributeValues, attributeLines);
+  if (ptavs.length === 0) {
+    throw new Error(`El producto template ${productTemplateId} no tiene opciones vigentes`);
+  }
   const attributeLineOrder = new Map<number, { sequence: number; index: number }>();
   const customValuesByValueId: Record<string, string> = {};
   const customValuePtavIds = new Set<number>();
@@ -1008,8 +1040,9 @@ export async function getConfiguratorSession(
       );
   }
 
+  const currentPtavIds = new Set(ptavs.map((ptav) => ptav.id));
   const exclusions = ptavs.flatMap((ptav) => {
-    const excludedIds = normalizeManyIds(ptav.excluded_value_ids);
+    const excludedIds = normalizeManyIds(ptav.excluded_value_ids).filter((id) => currentPtavIds.has(id));
 
     if (excludedIds.length === 0) {
       return [];

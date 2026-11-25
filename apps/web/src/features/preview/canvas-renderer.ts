@@ -1980,7 +1980,7 @@ function getTrimSectionColor(
 }
 
 function getTrimSectionText(section: PreviewScene["trimSections"][number]) {
-  return normalize(`${section.label} ${section.key}`);
+  return normalize(section.key || section.label);
 }
 
 function isPespunteTrimSection(section: PreviewScene["trimSections"][number]) {

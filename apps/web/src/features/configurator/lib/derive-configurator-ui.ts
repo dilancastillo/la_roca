@@ -2707,6 +2707,9 @@ export function computeDisabledValueIds(
     if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
       disabled.add(rule.excludedValueId);
     }
+    if (selected.has(rule.excludedValueId) && !selected.has(rule.sourceValueId)) {
+      disabled.add(rule.sourceValueId);
+    }
   }
 
   // Ninguno es una opción válida en otros atributos, pero no es un color de vivo.

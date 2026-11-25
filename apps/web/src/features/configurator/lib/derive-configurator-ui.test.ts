@@ -6745,3 +6745,34 @@ describe("cuellos históricos recuperados del catálogo original", () => {
       .toContain(`blouse-legacy-${slug}-neck.svg`);
   });
 });
+
+
+describe("lateralidad de vivos de cuello verificada en producción", () => {
+  it.each([
+    [630, "Cuello V lineal externo izquierdo"],
+    [631, "Cuello V lineal interno izquierdo"],
+    [1967, "Cuello V lineal externo derecho"],
+    [1968, "Cuello V lineal interno derecho"],
+    [1969, "Cuello V Completo interior izquierdo"],
+    [1970, "Cuello V Completo interior derecho"],
+    [1975, "Cuello Interior grueso izquierdo"],
+    [1976, "Cuello Interior grueso derecho"],
+  ] as const)("%i conserva solamente el lado de %s", (sourceValueId, name) => {
+    const target: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes.filter(a => ![91, 92, 802, 814, 157].includes(a.id)),
+        { id: 157, name: "Sección de vivo", displayType: "multi", selectionMode: "multiple", variantMode: "no_variant",
+          values: [{ id: 9901, sourceValueId, name, attributeId: 157, attributeName: "Sección de vivo" }] },
+        { id: 814, name: "Color de vivo", displayType: "color", selectionMode: "single", variantMode: "no_variant",
+          values: [{ id: 9902, colorHex: "#10a7cf", name: "Turquesa", attributeId: 814, attributeName: "Color de vivo" }] },
+      ],
+    };
+    const selected = { ...session.selectedValueIds, "63": [2590], "157": [9901], "814": [9902] };
+    const scene = deriveConfiguratorUi(target, selected).previewScene;
+    expect(scene.trimSections).toHaveLength(1);
+    const section = scene.trimSections[0]!;
+    expect(section.key).toBe(name.toLowerCase());
+    expect(section.label).toBe(name);
+  });
+});

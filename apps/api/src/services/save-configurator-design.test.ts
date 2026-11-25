@@ -88,6 +88,28 @@ describe("saveConfiguratorDesign", () => {
     mocks.odooCreate.mockResolvedValue(778);
   });
 
+  it("rejects a newly excluded color combination before writing any Odoo data", async () => {
+    mocks.getConfiguratorSession.mockResolvedValue({
+      ...editableSession,
+      exclusions: [{ sourceValueId: 9001, excludedValueId: 9101 }],
+    });
+    await expect(saveConfiguratorDesign(env, {
+      saleOrderLineId: 290, filename: "excluded.png", imageBase64: "png-base64",
+      selectedValueIds: editableSession.selectedValueIds,
+    })).rejects.toThrow(/viola una exclusion/);
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+  });
+
+  it("rejects a removed option submitted from a stale browser before writing", async () => {
+    await expect(saveConfiguratorDesign(env, {
+      saleOrderLineId: 290, filename: "stale.png", imageBase64: "png-base64",
+      selectedValueIds: { ...editableSession.selectedValueIds, "91": [999999] },
+    })).rejects.toThrow(/no pertenece al atributo/);
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+  });
+
   it("writes live production PTAVs, never canonical visual source IDs", async () => {
     const session: ConfiguratorSession = {
       ...editableSession, productTemplateId:7,

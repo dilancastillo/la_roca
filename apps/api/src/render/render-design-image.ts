@@ -1909,7 +1909,7 @@ function getTrimSectionColor(
 function getTrimSectionText(
   section: AutomationRenderScene["trimSections"][number],
 ) {
-  return normalize(`${section.label} ${section.key}`);
+  return normalize(section.key || section.label);
 }
 
 function isPespunteTrimSection(

@@ -5,7 +5,6 @@ import type {
   VisualPlacement,
   VisualSlot,
 } from "./schemas/visual-catalog.js";
-import { getTrimSectionKeyBySourceValueId } from "./configurator-id-rules.js";
 
 export type VisualRuntimeTrimSection = {
   valueId: number;
@@ -257,7 +256,6 @@ function replaceTrimColorTokens(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
   preserveUnselectedTrimStrokes = false,
-  uniformTrimColor?: string,
 ) {
   return runtimeSvg
     .replace(
@@ -272,7 +270,6 @@ function replaceTrimColorTokens(
         const color = getTrimColor(
           trimSections,
           Number(sourceValueId),
-          uniformTrimColor,
         );
 
         if (color) {
@@ -305,13 +302,13 @@ function replaceTrimColorTokens(
     .replace(
       /__VC_TRIM_FILL_(\d+)__/g,
       (_token, sourceValueId: string) =>
-        getTrimColor(trimSections, Number(sourceValueId), uniformTrimColor) ??
+        getTrimColor(trimSections, Number(sourceValueId)) ??
         "none",
     )
     .replace(
       /__VC_TRIM_STROKE_(\d+)__/g,
       (_token, sourceValueId: string) =>
-        getTrimColor(trimSections, Number(sourceValueId), uniformTrimColor) ??
+        getTrimColor(trimSections, Number(sourceValueId)) ??
         (preserveUnselectedTrimStrokes ? "#111827" : "none"),
     );
 }
@@ -422,7 +419,6 @@ function applyBaseColorToUnselectedSafeTrimFills(
   runtimeSvg: string,
   baseColorHex: string,
   trimSections: VisualRuntimeTrimSection[],
-  uniformTrimColor?: string,
 ) {
   return runtimeSvg.replace(
     /<(path|rect|circle|ellipse|polyline|polygon)\b[^>]*>/gi,
@@ -448,7 +444,6 @@ function applyBaseColorToUnselectedSafeTrimFills(
           getTrimColor(
             trimSections,
             Number(sourceValueId),
-            uniformTrimColor,
           )
             ? declaration
             : `fill:${baseColorHex}${important ?? ""};`,
@@ -629,7 +624,6 @@ function replaceLinearTrimStrokeToken(markup: string, stroke: string) {
 function addLinearTrimTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
-  uniformTrimColor?: string,
 ) {
   // Un SVG puede serializar sus geometrías como `<path />` o como
   // `<path></path>`. El editor conserva ambos formatos según el archivo de
@@ -648,7 +642,6 @@ function addLinearTrimTexture(
       const trimColor = getTrimColor(
         trimSections,
         Number(sourceValueId),
-        uniformTrimColor,
       );
       if (!trimColor) {
         return markup;
@@ -693,7 +686,6 @@ function addLinearTrimTexture(
 function addLinearTrimPolygonTexture(
   runtimeSvg: string,
   trimSections: VisualRuntimeTrimSection[],
-  uniformTrimColor?: string,
 ) {
   // Igual que con los trazos, los polígonos angostos pueden llegar con cierre
   // explícito. Deben conservar el contorno cuando el vivo seleccionado es
@@ -706,7 +698,6 @@ function addLinearTrimPolygonTexture(
       const trimColor = getTrimColor(
         trimSections,
         Number(sourceValueId),
-        uniformTrimColor,
       );
       if (!trimColor) {
         return markup;
@@ -775,83 +766,16 @@ function suppressMisalignedFemaleSleeveLinearTrims(
   );
 }
 
-type TrimFamily =
-  | "upperNeck"
-  | "lowerNeck"
-  | "chestPocket"
-  | "lowerPockets"
-  | "auxiliaryPocket";
-
-function getTrimFamily(
-  section: Pick<
-    VisualRuntimeTrimSection,
-    "sourceValueId" | "valueId" | "key" | "label" | "role"
-  >,
-): TrimFamily | undefined {
-  if (
-    section.role === "upperNeck" ||
-    section.role === "lowerNeck" ||
-    section.role === "chestPocket" ||
-    section.role === "lowerPockets" ||
-    section.role === "auxiliaryPocket"
-  ) {
-    return section.role;
-  }
-
-  const sourceKey = getTrimSectionKeyBySourceValueId(
-    section.sourceValueId ?? section.valueId,
-  );
-  const key = normalize(
-    `${section.key ?? ""} ${section.label ?? ""} ${sourceKey ?? ""}`,
-  );
-
-  if (key.includes("bolsillos inferiores")) return "lowerPockets";
-  if (key.includes("bolsillo auxiliar")) return "auxiliaryPocket";
-  if (key.includes("bolsillo pecho") || key.includes("bolsillo de pecho")) {
-    return "chestPocket";
-  }
-  if (key.includes("cuello bajo") || key.includes("cuello inferior")) {
-    return "lowerNeck";
-  }
-  if (key.includes("cuello") && !key.includes("cogotera")) return "upperNeck";
-
-  return undefined;
-}
-
 function getTrimColor(
   trimSections: VisualRuntimeTrimSection[],
   sourceValueId: number,
-  uniformTrimColor?: string,
 ) {
-  const exact = trimSections.find(
-    (section) =>
-      section.sourceValueId === sourceValueId ||
-      section.valueId === sourceValueId,
+  // A token identifies one selected section, never a whole color family.
+  // Transactional PTAV IDs can collide numerically with other sections' PAV
+  // IDs, so use valueId only when the source identity is unavailable.
+  return trimSections.find(
+    (section) => (section.sourceValueId ?? section.valueId) === sourceValueId,
   )?.colorHex;
-
-  if (exact) return exact;
-
-  // Los SVG guardan a veces el ID genérico (p. ej. 1978, cuello completo),
-  // mientras que el configurador selecciona una parte concreta (p. ej. 1970,
-  // interior izquierdo). Ambos pertenecen a la misma sección visual. Sin este
-  // puente el token queda sin color y el blanco aparenta transparencia.
-  const expectedFamily = getTrimFamily({ valueId: sourceValueId });
-  const familyColor = expectedFamily
-    ? trimSections.find((section) => getTrimFamily(section) === expectedFamily)
-        ?.colorHex
-    : undefined;
-
-  return familyColor ?? uniformTrimColor;
-}
-
-function getUniformTrimColor(trimSections: VisualRuntimeTrimSection[]) {
-  const colors = new Set(
-    trimSections
-      .map((section) => section.colorHex?.trim().toLowerCase())
-      .filter((color): color is string => Boolean(color)),
-  );
-
-  return colors.size === 1 ? [...colors][0] : undefined;
 }
 
 export function getSelectedVisualDefinitions(
@@ -859,40 +783,38 @@ export function getSelectedVisualDefinitions(
   selectedValueIds: Record<string, number[]>,
   manifestKey: string,
 ) {
-  const matchingDefinitions = (session.visualDefinitions ?? []).filter(
-    (definition) =>
-      definition.binding.productTemplateIds.includes(
-        session.productTemplateId,
-      ) &&
-      isSlotSupportedByManifest(definition.slot, manifestKey) &&
-      isBindingSelected(definition, session, selectedValueIds) &&
-      areActivationConditionsSelected(
-        definition.activationConditions,
-        session,
-        selectedValueIds,
-      ),
-  );
+  const applicableDefinitions = session.visualDefinitions ?? [];
 
   // Una serie representa la historia de un mismo componente. Una release puede
   // conservar varias revisiones aprobadas de la misma serie y, tras editar una
   // referencia de Odoo, esas revisiones pueden dejar de tener la misma clave de
-  // activación. No deben dibujarse juntas: dentro de una misma serie, slot y
-  // capa, solo la revisión más reciente puede llegar al renderer.
+  // activación. No deben dibujarse juntas: dentro de una misma serie,
+  // solo la revisión más reciente puede llegar al renderer.
   const newestDefinitionBySeriesLayer = new Map<
     string,
     ActiveVisualDefinition
   >();
-  for (const definition of matchingDefinitions) {
-    const key = `${definition.seriesId}:${definition.slot}:${definition.layer}`;
+  for (const definition of applicableDefinitions) {
+    const key = definition.seriesId;
     const current = newestDefinitionBySeriesLayer.get(key);
     if (!current || isNewerDefinition(definition, current)) {
       newestDefinitionBySeriesLayer.set(key, definition);
     }
   }
 
-  const newestSeriesDefinitions = matchingDefinitions.filter((definition) => {
-    const key = `${definition.seriesId}:${definition.slot}:${definition.layer}`;
-    return newestDefinitionBySeriesLayer.get(key)?.id === definition.id;
+  // Resolve revision identity before activation. Otherwise changing the Odoo
+  // binding in v2 lets v1 reappear whenever its former binding is selected.
+  const newestSeriesDefinitions = applicableDefinitions.filter((definition) => {
+    const key = definition.seriesId;
+    return newestDefinitionBySeriesLayer.get(key)?.id === definition.id &&
+      definition.binding.productTemplateIds.includes(session.productTemplateId) &&
+      isSlotSupportedByManifest(definition.slot, manifestKey) &&
+      isBindingSelected(definition, session, selectedValueIds) &&
+      areActivationConditionsSelected(
+        definition.activationConditions,
+        session,
+        selectedValueIds,
+      );
   });
 
   // Una release puede guardar revisiones históricas del mismo cuello o
@@ -973,11 +895,6 @@ export function materializeVisualDefinitionSvg(
   const usesModernTrimFills = usesModernTrimFillSemantics(
     definition.runtimeSvg,
   );
-  // Algunos SVG del editor contienen IDs generados por Odoo que no existen en
-  // el catálogo histórico. Si todas las secciones activas comparten un único
-  // color, es seguro usarlo como puente para esos tokens sin identidad. Con
-  // colores distintos se desactiva el fallback para no colorear otra sección.
-  const uniformTrimColor = getUniformTrimColor(trimSections);
   let runtimeSvg = normalizeImpossibleLinePaints(definition.runtimeSvg);
 
   // El blanco literal de los bolsillos históricos es el fondo de la tela.
@@ -1003,7 +920,6 @@ export function materializeVisualDefinitionSvg(
         runtimeSvg,
         baseColorHex,
         trimSections,
-        uniformTrimColor,
       );
     }
   }
@@ -1015,12 +931,10 @@ export function materializeVisualDefinitionSvg(
   runtimeSvg = addLinearTrimPolygonTexture(
     runtimeSvg,
     trimSections,
-    uniformTrimColor,
   );
   runtimeSvg = addLinearTrimTexture(
     runtimeSvg,
     trimSections,
-    uniformTrimColor,
   );
 
   definition.selectedElementIds.forEach((elementId, index) => {
@@ -1047,7 +961,6 @@ export function materializeVisualDefinitionSvg(
       .replaceAll("__VC_OUTLINE_COLOR__", "#111827"),
     trimSections,
     replacesBaseSilhouette(definition),
-    uniformTrimColor,
   );
 
   const coloredSvg = svg.replace(/<svg\b/i, '<svg data-vc-preserve-white="true"');

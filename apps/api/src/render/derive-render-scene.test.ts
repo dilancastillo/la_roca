@@ -690,25 +690,25 @@ describe("deriveAutomationRenderScene", () => {
   it("mantiene una identidad lateral única para cada vivo de bolsillo de rodilla", () => {
     expect(
       [
-        [644, "patchRight"], [2112, "patchLeft"],
-        [2092, "ringRight"], [2097, "ringLeft"],
-        [2093, "linearUpperRight"], [2094, "linearUpperLeft"],
-        [2095, "linearLowerRight"], [2096, "linearLowerLeft"],
-        [2104, "zipperRight"], [2105, "zipperLeft"],
-        [2106, "ribeteRight"], [2107, "ribeteLeft"],
-        [2108, "buttonRight"], [2109, "buttonLeft"],
+        [644, "patchLeft"], [2112, "patchRight"],
+        [2092, "ringLeft"], [2097, "ringRight"],
+        [2093, "linearUpperLeft"], [2094, "linearUpperRight"],
+        [2095, "linearLowerLeft"], [2096, "linearLowerRight"],
+        [2104, "zipperLeft"], [2105, "zipperRight"],
+        [2106, "ribeteLeft"], [2107, "ribeteRight"],
+        [2108, "buttonLeft"], [2109, "buttonRight"],
       ].map(([sourceValueId]) => [
         sourceValueId,
         getPantsKneeTrimSectionBySourceValueId(sourceValueId as number),
       ]),
     ).toEqual([
-      [644, "patchRight"], [2112, "patchLeft"],
-      [2092, "ringRight"], [2097, "ringLeft"],
-      [2093, "linearUpperRight"], [2094, "linearUpperLeft"],
-      [2095, "linearLowerRight"], [2096, "linearLowerLeft"],
-      [2104, "zipperRight"], [2105, "zipperLeft"],
-      [2106, "ribeteRight"], [2107, "ribeteLeft"],
-      [2108, "buttonRight"], [2109, "buttonLeft"],
+      [644, "patchLeft"], [2112, "patchRight"],
+      [2092, "ringLeft"], [2097, "ringRight"],
+      [2093, "linearUpperLeft"], [2094, "linearUpperRight"],
+      [2095, "linearLowerLeft"], [2096, "linearLowerRight"],
+      [2104, "zipperLeft"], [2105, "zipperRight"],
+      [2106, "ribeteLeft"], [2107, "ribeteRight"],
+      [2108, "buttonLeft"], [2109, "buttonRight"],
     ]);
   });
 
@@ -4958,5 +4958,36 @@ describe("deriveAutomationRenderScene", () => {
         renamedTrimSession.selectedValueIds,
       ).trimSections[0]?.key,
     ).toBe("bolsillo lateral de pantalon");
+  });
+});
+
+
+describe("lateralidad de vivos de cuello verificada en producción", () => {
+  it.each([
+    [630, "Cuello V lineal externo izquierdo"],
+    [631, "Cuello V lineal interno izquierdo"],
+    [1967, "Cuello V lineal externo derecho"],
+    [1968, "Cuello V lineal interno derecho"],
+    [1969, "Cuello V Completo interior izquierdo"],
+    [1970, "Cuello V Completo interior derecho"],
+    [1975, "Cuello Interior grueso izquierdo"],
+    [1976, "Cuello Interior grueso derecho"],
+  ] as const)("%i conserva solamente el lado de %s", (sourceValueId, name) => {
+    const target: ConfiguratorSession = {
+      ...session,
+      attributes: [
+        ...session.attributes.filter(a => ![91, 92, 802, 814, 157].includes(a.id)),
+        { id: 157, name: "Sección de vivo", displayType: "multi", selectionMode: "multiple", variantMode: "no_variant",
+          values: [{ id: 9901, sourceValueId, name, attributeId: 157, attributeName: "Sección de vivo" }] },
+        { id: 814, name: "Color de vivo", displayType: "color", selectionMode: "single", variantMode: "no_variant",
+          values: [{ id: 9902, colorHex: "#10a7cf", name: "Turquesa", attributeId: 814, attributeName: "Color de vivo" }] },
+      ],
+    };
+    const selected = { ...session.selectedValueIds, "63": [334], "157": [9901], "814": [9902] };
+    const scene = deriveAutomationRenderScene(target, selected);
+    expect(scene.trimSections).toHaveLength(1);
+    const section = scene.trimSections[0]!;
+    expect(section.key).toBe(name.toLowerCase());
+    expect(section.label).toBe(name);
   });
 });
