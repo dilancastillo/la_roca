@@ -2275,8 +2275,8 @@ function deriveSingleConfiguratorUi(
     ? resolveKneePatchType(leftKneePatchType)
     : undefined;
 
-  // Sobrepuesto, velcro y lizo son acabados aprobados únicamente para el
-  // bolsillo rectangular. El filtro se aplica por lado: elegir un modelo a
+  // Sobrepuesto y velcro corresponden al rectangular; lizo también admite
+  // el modelo Ribete. El filtro se aplica por lado: elegir un modelo a
   // la izquierda no altera las alternativas de la rodilla derecha.
   for (const [attribute, model] of [
     [rightKneePatchTypeAttribute, rightKneePatchModelValue],

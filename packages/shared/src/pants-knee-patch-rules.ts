@@ -131,7 +131,8 @@ export function getPantsKneePatchTypeBySourceValueId(
 
 /**
  * Odoo shares the type selector across knee-pocket models, but these finishes
- * are approved only for the rectangular patch. Keeping the rule here makes
+ * are approved for the rectangular patch; the plain finish is also valid
+ * for the ribete model in Odoo. Keeping the rule here makes
  * the web preview and the generated image agree even for old configurations.
  */
 export function isPantsKneePatchTypeAllowedForModel(
@@ -142,7 +143,8 @@ export function isPantsKneePatchTypeAllowedForModel(
     return true;
   }
 
-  return !["overlaid", "velcro", "plain"].includes(type) || model === "square";
+  return !["overlaid", "velcro", "plain"].includes(type) ||
+    model === "square" || (model === "ribete" && type === "plain");
 }
 
 export function getPantsKneeTrimSectionBySourceValueId(

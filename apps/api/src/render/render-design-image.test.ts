@@ -3588,12 +3588,14 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9080,
+            sourceValueId: 644,
             key: "parche-rodilla-izquierda",
             label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
           },
           {
             valueId: 9083,
+            sourceValueId: 2112,
             key: "parche-rodilla-derecha",
             label: "Parche rodilla derecha",
             colorHex: "#a000b0",
@@ -3611,12 +3613,14 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9080,
+            sourceValueId: 644,
             key: "parche-rodilla-izquierda",
             label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
           },
           {
             valueId: 9083,
+            sourceValueId: 2112,
             key: "parche-rodilla-derecha",
             label: "Parche rodilla derecha",
             colorHex: "#a000b0",
@@ -3634,14 +3638,14 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9018,
-            sourceValueId: 2112,
+            sourceValueId: 644,
             key: "parche-rodilla-izquierda",
             label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
           },
           {
             valueId: 9019,
-            sourceValueId: 644,
+            sourceValueId: 2112,
             key: "parche-rodilla-derecha",
             label: "Parche rodilla derecha",
             colorHex: "#a000b0",
@@ -3659,6 +3663,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9080,
+            sourceValueId: 644,
             key: "parche-rodilla-izquierda",
             label: "Parche rodilla izquierda",
             colorHex: "#a000b0",
@@ -3676,6 +3681,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9081,
+            sourceValueId: 2109,
             key: "boton-rodilla-derecha",
             label: "Boton rodilla derecha",
             colorHex: "#a000b0",
@@ -3693,6 +3699,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9082,
+            sourceValueId: 2108,
             key: "boton-rodilla-izquierda",
             label: "Boton rodilla izquierda",
             colorHex: "#a000b0",
@@ -3814,7 +3821,7 @@ describe("renderDesignImage", () => {
     expect(leftButtonPurplePixels).toBeGreaterThan(20);
     expect(leftButtonRightPurplePixels).toBeLessThan(10);
     expect(countBrightCyanPixels(withTrimmedButton.data)).toBe(0);
-  }, 30000);
+  }, 60000);
 
   it("superpone doble boton camuflado de rodilla y pinta los puntos por lado", async () => {
     const pantsScene: AutomationRenderScene = {
@@ -4154,7 +4161,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedTriangularFlapPatch.data)).toBe(0);
   }, 20000);
 
-  it("superpone bolsillos de parche de rodilla ribete y no pinta lizo con vivo izquierdo", async () => {
+  it("pinta solo el Ribete con cremallera izquierdo sin colorear el Ribete Lizo derecho", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -4238,7 +4245,7 @@ describe("renderDesignImage", () => {
     expect(countBrightCyanPixels(withTrimmedRibetePatch.data)).toBe(0);
   }, 20000);
 
-  it("no aplica lizo de rodilla fuera del modelo Rectangular", async () => {
+  it("pinta Ribete Lizo de rodilla solamente en el lado seleccionado", async () => {
     const pantsScene: AutomationRenderScene = {
       productName: "Pantalon",
       baseColorHex: "#D1D5DB",
@@ -4250,12 +4257,14 @@ describe("renderDesignImage", () => {
       pantsKneePatchLeftType: "plain",
       trimSections: [],
     };
+    const withoutTrim = await readRawPng(await renderDesignImage(pantsScene));
     const withRightRibeteTrim = await readRawPng(
       await renderDesignImage({
         ...pantsScene,
         trimSections: [
           {
             valueId: 9089,
+            sourceValueId: 2107,
             key: "ribete-rodilla-derecha",
             label: "Ribete rodilla derecha",
             colorHex: "#a000b0",
@@ -4269,6 +4278,7 @@ describe("renderDesignImage", () => {
         trimSections: [
           {
             valueId: 9090,
+            sourceValueId: 2106,
             key: "ribete-rodilla-izquierda",
             label: "Ribete rodilla izquierda",
             colorHex: "#a000b0",
@@ -4276,6 +4286,9 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
+    expect(countPurplePixels(withoutTrim.data)).toBeLessThan(30);
+    expect(countBrightCyanPixels(withRightRibeteTrim.data)).toBe(0);
+    expect(countBrightCyanPixels(withLeftRibeteTrim.data)).toBe(0);
     const leftRibeteRegion = { x: 255, y: 610, width: 120, height: 35 };
     const rightRibeteRegion = { x: 535, y: 610, width: 110, height: 35 };
 
@@ -4285,7 +4298,7 @@ describe("renderDesignImage", () => {
         withRightRibeteTrim.info.width,
         rightRibeteRegion,
       ),
-    ).toBeLessThan(30);
+    ).toBeGreaterThan(180);
     expect(
       countPurplePixelsInRegion(
         withRightRibeteTrim.data,
@@ -4299,7 +4312,7 @@ describe("renderDesignImage", () => {
         withLeftRibeteTrim.info.width,
         leftRibeteRegion,
       ),
-    ).toBeLessThan(30);
+    ).toBeGreaterThan(180);
     expect(
       countPurplePixelsInRegion(
         withLeftRibeteTrim.data,

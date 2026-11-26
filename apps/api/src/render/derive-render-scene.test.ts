@@ -3037,7 +3037,7 @@ describe("deriveAutomationRenderScene", () => {
     );
 
     expect(scene.pantsKneePatchRightModel).toBe("ribete");
-    expect(scene.pantsKneePatchRightType).toBeUndefined();
+    expect(scene.pantsKneePatchRightType).toBe("plain");
     expect(scene.pantsKneePatchLeftModel).toBe("ribete");
     expect(scene.pantsKneePatchLeftType).toBe("zipper");
     expect(scene.trimSections).toContainEqual({
