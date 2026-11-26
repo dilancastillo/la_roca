@@ -39,10 +39,10 @@ export type PantsKneeTrimSection =
 
 /** Stable Odoo product.attribute IDs shared by Pantalon and Uniforme. */
 export const PANTS_KNEE_PATCH_ATTRIBUTE_IDS = {
-  rightModel: 169,
-  rightType: 170,
-  leftModel: 171,
-  leftType: 172,
+  rightModel: 171,
+  rightType: 172,
+  leftModel: 169,
+  leftType: 170,
 } as const;
 
 const PANTS_KNEE_PATCH_MODEL_BY_SOURCE_VALUE_ID = new Map<

@@ -282,41 +282,41 @@ describe("sanitizePantsKneePatchTypeSelections", () => {
     const kneeSession = {
       attributes: [
         {
-          id: 169, name: "Modelo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          id: 171, name: "Modelo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
           values: [
-            { id: 7600, sourceValueId: 760, name: "Rectangular", attributeId: 169, attributeName: "Modelo rodilla derecha" },
+            { id: 7600, sourceValueId: 760, name: "Rectangular", attributeId: 171, attributeName: "Modelo rodilla derecha" },
           ],
         },
         {
-          id: 170, name: "Tipo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          id: 172, name: "Tipo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
           values: [
-            { id: 7660, sourceValueId: 766, name: "Velcro", attributeId: 170, attributeName: "Tipo rodilla derecha" },
-            { id: 7650, sourceValueId: 765, name: "Liso", attributeId: 170, attributeName: "Tipo rodilla derecha" },
+            { id: 7660, sourceValueId: 766, name: "Velcro", attributeId: 172, attributeName: "Tipo rodilla derecha" },
+            { id: 7650, sourceValueId: 765, name: "Liso", attributeId: 172, attributeName: "Tipo rodilla derecha" },
           ],
         },
       ],
       exclusions: [],
     } as unknown as ConfiguratorSession;
 
-    expect(applyFirstOptionDefaults(kneeSession, { "169": [7600] }))
-      .toMatchObject({ "170": [7650] });
+    expect(applyFirstOptionDefaults(kneeSession, { "171": [7600] }))
+      .toMatchObject({ "172": [7650] });
   });
 
   it("conserva velcro para rectangular y lo limpia al cambiar a camuflado", () => {
     const kneeSession = {
       attributes: [
         {
-          id: 169, name: "Modelo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          id: 171, name: "Modelo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
           values: [
-            { id: 7600, sourceValueId: 760, name: "Rectangular", attributeId: 169, attributeName: "Modelo rodilla derecha" },
-            { id: 19330, sourceValueId: 1933, name: "Camuflado", attributeId: 169, attributeName: "Modelo rodilla derecha" },
+            { id: 7600, sourceValueId: 760, name: "Rectangular", attributeId: 171, attributeName: "Modelo rodilla derecha" },
+            { id: 19330, sourceValueId: 1933, name: "Camuflado", attributeId: 171, attributeName: "Modelo rodilla derecha" },
           ],
         },
         {
-          id: 170, name: "Tipo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
+          id: 172, name: "Tipo rodilla derecha", displayType: "radio", selectionMode: "single", variantMode: "no_variant",
           values: [
-            { id: 7660, sourceValueId: 766, name: "Velcro", attributeId: 170, attributeName: "Tipo rodilla derecha" },
-            { id: 19370, sourceValueId: 1937, name: "Broche", attributeId: 170, attributeName: "Tipo rodilla derecha" },
+            { id: 7660, sourceValueId: 766, name: "Velcro", attributeId: 172, attributeName: "Tipo rodilla derecha" },
+            { id: 19370, sourceValueId: 1937, name: "Broche", attributeId: 172, attributeName: "Tipo rodilla derecha" },
           ],
         },
       ],
@@ -324,10 +324,10 @@ describe("sanitizePantsKneePatchTypeSelections", () => {
     } as unknown as ConfiguratorSession;
 
     expect(sanitizePantsKneePatchTypeSelections(kneeSession, {
-      "169": [7600], "170": [7660],
-    })).toMatchObject({ "170": [7660] });
+      "171": [7600], "172": [7660],
+    })).toMatchObject({ "172": [7660] });
     expect(sanitizePantsKneePatchTypeSelections(kneeSession, {
-      "169": [19330], "170": [7660],
-    })).toMatchObject({ "170": [] });
+      "171": [19330], "172": [7660],
+    })).toMatchObject({ "172": [] });
   });
 });

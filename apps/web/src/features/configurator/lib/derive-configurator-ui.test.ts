@@ -5748,8 +5748,8 @@ describe("deriveConfiguratorUi", () => {
   });
 
   it("oculta el tipo de rodilla cuando su modelo es No aplica", () => {
-    const rightKneeModelAttributeId = 169;
-    const rightKneeTypeAttributeId = 170;
+    const rightKneeModelAttributeId = 171;
+    const rightKneeTypeAttributeId = 172;
     const sessionWithKneeDependency: ConfiguratorSession = {
       ...pantalonSession,
       attributes: [
@@ -6409,7 +6409,7 @@ describe("deriveConfiguratorUi", () => {
       graphicManifestKey: "uniforme",
       attributes: [
         {
-          id: 169,
+          id: 171,
           name: "Patch derecho renovado",
           displayType: "radio",
           selectionMode: "single",
@@ -6419,13 +6419,13 @@ describe("deriveConfiguratorUi", () => {
               id: 9100,
               sourceValueId: 760,
               name: "Opcion renombrada",
-              attributeId: 169,
+              attributeId: 171,
               attributeName: "Patch derecho renovado",
             },
           ],
         },
         {
-          id: 170,
+          id: 172,
           name: "Acabado derecho renovado",
           displayType: "radio",
           selectionMode: "single",
@@ -6435,13 +6435,13 @@ describe("deriveConfiguratorUi", () => {
               id: 9101,
               sourceValueId: 1942,
               name: "Opcion renombrada",
-              attributeId: 170,
+              attributeId: 172,
               attributeName: "Acabado derecho renovado",
             },
           ],
         },
         {
-          id: 171,
+          id: 169,
           name: "Patch izquierdo renovado",
           displayType: "radio",
           selectionMode: "single",
@@ -6451,13 +6451,13 @@ describe("deriveConfiguratorUi", () => {
               id: 9102,
               sourceValueId: 1934,
               name: "Opcion renombrada",
-              attributeId: 171,
+              attributeId: 169,
               attributeName: "Patch izquierdo renovado",
             },
           ],
         },
         {
-          id: 172,
+          id: 170,
           name: "Acabado izquierdo renovado",
           displayType: "radio",
           selectionMode: "single",
@@ -6467,7 +6467,7 @@ describe("deriveConfiguratorUi", () => {
               id: 9103,
               sourceValueId: 1946,
               name: "Opcion renombrada",
-              attributeId: 172,
+              attributeId: 170,
               attributeName: "Acabado izquierdo renovado",
             },
           ],
@@ -6513,10 +6513,10 @@ describe("deriveConfiguratorUi", () => {
         },
       ],
       selectedValueIds: {
-        "169": [9100],
-        "170": [9101],
-        "171": [9102],
-        "172": [9103],
+        "171": [9100],
+        "172": [9101],
+        "169": [9102],
+        "170": [9103],
         "157": [9104, 9105],
         "814": [9106],
       },
