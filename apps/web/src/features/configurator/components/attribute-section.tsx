@@ -44,9 +44,7 @@ export function AttributeSection({
   const [optionQuery, setOptionQuery] = useState("");
   const isColorGroup = group.controlType === "color";
   const isImageGroup = group.controlType === "image";
-  const isNeckGroup = isImageGroup && [145, 63].includes(group.attributeId);
   const isGenderGroup = group.attributeId === CONFIGURATOR_ATTRIBUTE_IDS.gender || normalizeSearchTerm(group.label) === "genero";
-  const showUnavailableOptions = isColorGroup;
   const isSearchableGroup = isColorGroup || isImageGroup;
   const normalizedOptionQuery = normalizeSearchTerm(optionQuery);
   const compactOptionQuery = compactSearchTerm(normalizedOptionQuery);
@@ -78,11 +76,9 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          isNeckGroup
-            ? !disabledValueIds.has(option.id)
-            : isGenderGroup || showUnavailableOptions || selectedValueIdSet.has(option.id) || !disabledValueIds.has(option.id),
+          isGenderGroup || !disabledValueIds.has(option.id),
       ),
-    [disabledValueIds, group.options, selectedValueIdSet, showUnavailableOptions, isGenderGroup, isNeckGroup],
+    [disabledValueIds, group.options, isGenderGroup],
   );
   const visibleOptions = useMemo(() => {
     if (!isSearchableGroup || !normalizedOptionQuery) {
@@ -231,10 +227,6 @@ export function AttributeSection({
                 {visibleOptions.length}/{availableOptions.length}
               </span>
             </div>
-          ) : null}
-
-          {showUnavailableOptions && group.options.some((option) => disabledValueIds.has(option.id)) ? (
-            <p className="attribute-section__hint">Se muestran todos los colores. Los deshabilitados no están disponibles con la combinación actual en Odoo.</p>
           ) : null}
 
           {group.controlType === "image" ? (

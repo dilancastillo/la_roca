@@ -2712,6 +2712,12 @@ export function computeDisabledValueIds(
     .filter((attribute) => [145, 63].includes(attribute.id) ||
       (normalize(attribute.name).includes("modelo") && normalize(attribute.name).includes("cuello")))
     .flatMap((attribute) => attribute.values.map((value) => value.id)));
+  const sizeValueIds = new Set(session.attributes
+    .filter((attribute) => attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.blouseSize || attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.pantsSize || normalize(attribute.name).includes("talla"))
+    .flatMap((attribute) => attribute.values.map((value) => value.id)));
+  const selectedSizeUpstreamIds = new Set(session.attributes
+    .filter((attribute) => attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.gender || attribute.id === CONFIGURATOR_ATTRIBUTE_IDS.material || normalize(attribute.name) === "color")
+    .flatMap((attribute) => attribute.values.filter((value) => selected.has(value.id)).map((value) => value.id)));
 
   for (const rule of session.exclusions) {
     if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
@@ -2744,7 +2750,18 @@ export function computeDisabledValueIds(
   for (const id of genderValueIds) {
     disabled.delete(id);
   }
-  // Neck model is chosen after gender and before dependent sizes/details.
+  // Training flow chooses sizes before neck. An unselected/old neck may
+  // invalidate a size combination, but must not hide every real size and
+  // force the user to choose the neck first. Preserve upstream restrictions.
+  for (const id of sizeValueIds) {
+    disabled.delete(id);
+    if (session.exclusions.some((rule) =>
+      (rule.sourceValueId === id && selectedSizeUpstreamIds.has(rule.excludedValueId)) ||
+      (rule.excludedValueId === id && selectedSizeUpstreamIds.has(rule.sourceValueId)))) {
+      disabled.add(id);
+    }
+  }
+  // Neck availability follows gender; changing it reconciles sizes/details.
   // Selecting a new neck clears incompatible dependent values; those existing
   // values must not prevent choosing a gender-compatible neck in the first place.
   for (const id of neckValueIds) {

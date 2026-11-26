@@ -79,20 +79,25 @@ const session = {
 } as ConfiguratorSession;
 
 describe("sanitizeSelectedValueIdsForExclusions", () => {
-  it("asigna la primera opcion compatible a los atributos simples vacios", () => {
+  it("no rellena IDs comerciales con etiquetas modificadas", () => {
+    const renamedSession = { ...session, attributes: [798, 143, 163, 145, 154, 160, 161, 162, 63, 70].map((id) => ({
+      ...session.attributes[0]!, id, name: "Etiqueta modificada",
+      values: [{ ...session.attributes[0]!.values[0]!, id: id * 100, attributeId: id, attributeName: "Etiqueta modificada" }],
+    })) };
+    expect(applyFirstOptionDefaults(renamedSession, {})).toEqual({});
+  });
+  it("no inventa un modelo de bolsillo inferior pendiente", () => {
     expect(
       applyFirstOptionDefaults(session, {
         "10": [101],
       }),
     ).toEqual({
       "10": [101],
-      // La primera opcion de bolsillo entra en conflicto con Modelo 1; toma
-      // la siguiente sin reemplazar la seleccion existente.
-      "20": [202],
+      "30": [301],
     });
   });
 
-  it("elige Ninguno cuando el género invalida el cuello anterior", () => {
+  it("deja pendiente el cuello cuando el género invalida el anterior", () => {
     const sessionWithEmptyNeck: ConfiguratorSession = {
       ...session,
       attributes: [
@@ -118,16 +123,14 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
       ],
     };
 
-    expect(applyFirstOptionDefaults(sessionWithEmptyNeck, {})).toMatchObject({
-      "10": [103],
-    });
+    expect(applyFirstOptionDefaults(sessionWithEmptyNeck, {})["10"]).toBeUndefined();
 
     // Odoo puede dejar seleccionado el valor placeholder en vez de una lista
     // vacía al recalcular exclusiones después de cambiar el género.
     expect(
       applyFirstOptionDefaults(sessionWithEmptyNeck, { "10": [100] }),
     ).toMatchObject({
-      "10": [103],
+      "10": [100],
     });
   });
 
@@ -154,16 +157,14 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     };
 
     expect(
-      applyFirstOptionDefaults(sessionWithPlaceholderPocket, { "20": [200] }),
+      applyFirstOptionDefaults(sessionWithPlaceholderPocket, { "10": [101], "20": [200] }),
     ).toMatchObject({
-      // Modelo 1 queda excluido por el cuello que se selecciona también por
-      // defecto; el siguiente valor compatible demuestra que nunca persiste
-      // el placeholder.
+      // La opción de pecho es auxiliar; respeta el cuello elegido por el asesor.
       "20": [202],
     });
   });
 
-  it("conserva Sin selección como variante válida de Talla pantalón y usa Ninguno como default", () => {
+  it("conserva una talla explícita y deja pendiente una talla ausente", () => {
     const pantsSizeAttribute = {
       id: 31,
       name: "Talla pantalón",
@@ -200,10 +201,7 @@ describe("sanitizeSelectedValueIdsForExclusions", () => {
     expect(
       applyFirstOptionDefaults(sessionWithPantsSize, { "31": [310] }),
     ).toMatchObject({ "31": [310] });
-    // Sin selección previa, el default es Ninguno (bloquea guardado hasta que el usuario elija)
-    expect(applyFirstOptionDefaults(sessionWithPantsSize, {})).toMatchObject({
-      "31": [312],
-    });
+    expect(applyFirstOptionDefaults(sessionWithPantsSize, {})["31"]).toBeUndefined();
   });
 
   it("inicia Sin selección, pero conserva Ninguno elegido en Modelo bolsillo inferior", () => {

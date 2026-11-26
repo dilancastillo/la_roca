@@ -1,5 +1,6 @@
 import { getOdooIdentityProfile, toVisualAttributeId, toVisualSourceValueId, toLivePtavId } from "../lib/odoo-identity-profile.js";
 import type { ConfiguratorSession } from "@repo/shared/schemas/configurator";
+import { CONFIGURATOR_ATTRIBUTE_IDS } from "@repo/shared/configurator-id-rules";
 import {
   getPantsKneePatchModelBySourceValueId,
   getPantsKneePatchTypeBySourceValueId,
@@ -126,7 +127,8 @@ function isLowerPocketModelAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
   const name = normalizeText(attribute.name);
-  return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
+  return [CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketModel, 70].includes(attribute.id) ||
+    (name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior"));
 }
 
 function isLowerPocketUnselectedOption(optionName: string) {
@@ -136,6 +138,17 @@ function isLowerPocketUnselectedOption(optionName: string) {
 function isExplicitNoneOption(optionName: string) {
   const name = normalizeText(optionName);
   return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
+}
+
+function requiresAdvisorSelection(attribute: ConfiguratorSession["attributes"][number]) {
+  const name = normalizeText(attribute.name);
+  const ids: number[] = [CONFIGURATOR_ATTRIBUTE_IDS.baseColor, CONFIGURATOR_ATTRIBUTE_IDS.blouseSize, CONFIGURATOR_ATTRIBUTE_IDS.pantsSize, CONFIGURATOR_ATTRIBUTE_IDS.neckModel, CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketModel, CONFIGURATOR_ATTRIBUTE_IDS.bootType, CONFIGURATOR_ATTRIBUTE_IDS.bootLength, CONFIGURATOR_ATTRIBUTE_IDS.bootWidth, 63, 70];
+  return ids.includes(attribute.id) || name === "color" ||
+    (name.includes("color") && !name.includes("vivo") && !name.includes("texto")) ||
+    name.includes("talla") ||
+    (name.includes("modelo") && name.includes("cuello")) ||
+    isLowerPocketModelAttribute(attribute) ||
+    name === "tipo bota" || name === "largo bota" || name === "ancho bota";
 }
 
 export function applyFirstOptionDefaults(
@@ -167,6 +180,20 @@ export function applyFirstOptionDefaults(
       attribute.selectionMode === "multiple" ||
       ((next[key]?.length ?? 0) > 0 && !hasOnlyLowerPocketNoneSelection)
     ) {
+      continue;
+    }
+
+    // Missing commercial choices are pending work, not permission to select
+    // the first compatible real color, size or model on the advisor's behalf.
+    // Keep an explicit lower-pocket placeholder when the product's generic
+    // None has not actually been saved by the advisor.
+    if (requiresAdvisorSelection(attribute)) {
+      if (hasOnlyLowerPocketNoneSelection) {
+        const placeholder = attribute.values.find((value) =>
+          isLowerPocketUnselectedOption(value.name),
+        );
+        next[key] = placeholder ? [placeholder.id] : [];
+      }
       continue;
     }
 

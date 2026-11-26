@@ -69,4 +69,33 @@ describe("Odoo exclusions in both selection directions", () => {
     expect(result["142"]).toEqual([1151]);
     expect(result["145"]).toEqual([]);
   });
+
+  it("keeps real sizes available before the neck is selected, respecting gender, material and color", () => {
+    const sizeSession = {
+      attributes: [
+        { id: 142, name: "Género", values: [{ id: 1151 }] },
+        { id: 141, name: "Material", values: [{ id: 973 }] },
+        { id: 798, name: "Color", values: [{ id: 2138 }] },
+        { id: 143, name: "Talla de blusa", values: [{ id: 992 }, { id: 993 }, { id: 994 }, { id: 995 }] },
+        { id: 145, name: "Modelo de cuello", values: [{ id: 3119 }] },
+        { id: 163, name: "Talla pantalon", values: [{ id: 1236 }] },
+      ],
+      exclusions: [
+        { sourceValueId: 3119, excludedValueId: 992 },
+        { sourceValueId: 1151, excludedValueId: 993 },
+        { sourceValueId: 994, excludedValueId: 973 },
+        { sourceValueId: 2138, excludedValueId: 995 },
+        { sourceValueId: 3119, excludedValueId: 1236 },
+      ],
+    } as unknown as ConfiguratorSession;
+    const selected = { "142": [1151], "141": [973], "798": [2138], "145": [3119] };
+    const disabled = computeDisabledValueIds(sizeSession, selected);
+    expect(disabled.has(992)).toBe(false);
+    expect(disabled.has(1236)).toBe(false);
+    for (const id of [993, 994, 995]) expect(disabled.has(id)).toBe(true);
+    const next = sanitizeSelectedValueIdsForExclusions(sizeSession, { ...selected, "143": [992] }, 992);
+    expect(next["143"]).toEqual([992]);
+    expect(next["145"]).toEqual([]);
+    expect(next["142"]).toEqual([1151]);
+  });
 });

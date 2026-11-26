@@ -156,9 +156,10 @@ function isLowerPocketModelUnselectedGroup(
   const label = normalizeText(group.label);
 
   if (
+    ![CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketModel, 70].includes(group.attributeId) && (
     !label.includes("modelo") ||
     !label.includes("bolsillo") ||
-    !label.includes("inferior")
+    !label.includes("inferior"))
   ) {
     return false;
   }
@@ -174,7 +175,8 @@ function isLowerPocketModelUnselectedGroup(
 function requiresConcreteSelection(group: UiAttributeGroup) {
   const label = normalizeText(group.label);
 
-  return label.includes("color") || label.includes("talla");
+  return ([CONFIGURATOR_ATTRIBUTE_IDS.baseColor, CONFIGURATOR_ATTRIBUTE_IDS.blouseSize, CONFIGURATOR_ATTRIBUTE_IDS.pantsSize] as number[]).includes(group.attributeId) ||
+    label.includes("color") || label.includes("talla");
 }
 
 function hasNoneSelection(
@@ -198,12 +200,15 @@ function isGroupComplete(
   selectedValueIds: Record<string, number[]>,
 ) {
   const selectedIds = selectedValueIds[String(group.attributeId)] ?? [];
+  const validSelectedIds = selectedIds.filter((id) =>
+    group.options.some((option) => option.id === id),
+  );
 
   return (
     isOptionalMultipleSelectionGroup(group) ||
-    (selectedIds.length > 0 &&
-      !isLowerPocketModelUnselectedGroup(group, selectedIds) &&
-      !hasNoneSelection(group, selectedIds))
+    (validSelectedIds.length > 0 &&
+      !isLowerPocketModelUnselectedGroup(group, validSelectedIds) &&
+      !hasNoneSelection(group, validSelectedIds))
   );
 }
 
@@ -1555,9 +1560,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
                   className="primary-button"
                   disabled={
                     isSaving ||
-                    isReadOnly ||
-                    (!catalogPreview &&
-                      currentPreview?.renderKey !== previewSceneKey)
+                    isReadOnly
                   }
                 >
                   {isSaving
@@ -1566,9 +1569,7 @@ export function ConfiguratorPage({ catalogPreview = false }: ConfiguratorPagePro
                       ? "Solo lectura"
                       : catalogPreview
                         ? "Guardar escenario de prueba"
-                        : currentPreview?.renderKey === previewSceneKey
-                          ? "Guardar diseno"
-                          : "Preparando imagen..."}
+                        : "Guardar diseno"}
                 </button>
 
                 {saveMessage ? (

@@ -5,6 +5,25 @@ import {
 } from "./configurator-page";
 
 describe("validación antes de guardar", () => {
+  it("solicita color, tallas y modelos antes de las medidas sin inventar selecciones", () => {
+    const groups = ["Color", "Talla de blusa", "Talla pantalón", "Modelo de cuello", "Modelo bolsillo inferior", "Tipo bota", "Largo bota", "Ancho bota"]
+      .map((label, index) => ({
+        attributeId: index + 1, label, controlType: "chips" as const, selectionMode: "single" as const,
+        options: [{ id: 100 + index, name: "Elegido" }],
+      }));
+    const selected: Record<string, number[]> = {};
+    for (const group of groups) {
+      expect(getMissingRequiredSelectionGroups(groups, selected)[0]?.label).toBe(group.label);
+      selected[String(group.attributeId)] = [group.options[0]!.id];
+    }
+    expect(getMissingRequiredSelectionGroups(groups, selected)).toEqual([]);
+  });
+
+  it("no considera completado un grupo con un ID que ya no existe en sus opciones", () => {
+    const group = { attributeId: 1, label: "Talla de blusa", controlType: "chips" as const, selectionMode: "single" as const, options: [{ id: 10, name: "M" }] };
+    expect(getMissingRequiredSelectionGroups([group], { "1": [999] })).toEqual([group]);
+  });
+
   const neckGroup = {
     attributeId: 63,
     label: "Modelo de cuello",

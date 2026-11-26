@@ -360,7 +360,9 @@ describe("getConfiguratorSession", () => {
 
     expect(session.productTemplateId).toBe(7);
     expect(session.selectedValueIds).toEqual({
-      "90": [9001],
+      // Odoo has no current color on this line. Do not recover an attachment's
+      // former color or silently choose the first available catalogue color.
+      "90": [],
       "91": [9102],
       "92": [],
       "93": [9301],
@@ -418,5 +420,31 @@ describe("persistencia de bolsillo inferior", () => {
   it("mantiene la selección inicial pendiente cuando Ninguno solo viene del producto", () => {
     expect(applyFirstOptionDefaults(attributes, { "154": [1214] }, []))
       .toEqual({ "154": [1213] });
+  });
+});
+
+describe("elecciones comerciales pendientes", () => {
+  const attributes = ["Color", "Talla de blusa", "Talla pantalón", "Modelo de cuello", "Modelo bolsillo inferior", "Tipo bota", "Largo bota", "Ancho bota"]
+    .map((name, index) => ({
+      id: index + 1, name, selectionMode: "single", displayType: "radio", variantMode: "no_variant",
+      values: [{ id: 100 + index, name: "Primera opcion real", attributeId: index + 1, attributeName: name }],
+    })) as Parameters<typeof applyFirstOptionDefaults>[0];
+
+  it("no escoge automaticamente colores, tallas, modelos ni medidas ausentes", () => {
+    expect(applyFirstOptionDefaults(attributes, {}, [])).toEqual({});
+  });
+
+  it("reconoce los IDs comerciales aunque Odoo cambie sus etiquetas", () => {
+    const renamed = [798, 143, 163, 145, 154, 160, 161, 162, 63, 70].map((id) => ({
+      ...attributes[0]!, id, name: "Etiqueta modificada",
+      values: [{ ...attributes[0]!.values[0]!, id: id * 100, attributeId: id, attributeName: "Etiqueta modificada" }],
+    }));
+    expect(applyFirstOptionDefaults(renamed, {}, [])).toEqual({});
+  });
+
+  it("conserva las elecciones reales que ya estaban guardadas", () => {
+    const saved = Object.fromEntries(attributes.map((attribute) => [String(attribute.id), [attribute.values[0]!.id]]));
+    expect(applyFirstOptionDefaults(attributes, saved, [], new Set(Object.values(saved).flat())))
+      .toEqual(saved);
   });
 });

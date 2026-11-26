@@ -88,16 +88,22 @@ function isLowerPocketModelAttribute(
   attribute: ConfiguratorSession["attributes"][number],
 ) {
   const name = normalizeText(attribute.name);
-  return name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior");
+  return [CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketModel, 70].includes(attribute.id) ||
+    (name.includes("modelo") && name.includes("bolsillo") && name.includes("inferior"));
 }
 
 function isUnselectedOption(optionName: string) {
   return normalizeText(optionName) === "sin seleccion";
 }
 
-function isExplicitNoneOption(optionName: string) {
-  const name = normalizeText(optionName);
-  return name === "ninguno" || name === "ninguna" || name.includes("no aplica");
+function requiresAdvisorSelection(attribute: ConfiguratorSession["attributes"][number]) {
+  const name = normalizeText(attribute.name);
+  const ids: number[] = [CONFIGURATOR_ATTRIBUTE_IDS.baseColor, CONFIGURATOR_ATTRIBUTE_IDS.blouseSize, CONFIGURATOR_ATTRIBUTE_IDS.pantsSize, CONFIGURATOR_ATTRIBUTE_IDS.neckModel, CONFIGURATOR_ATTRIBUTE_IDS.lowerPocketModel, CONFIGURATOR_ATTRIBUTE_IDS.bootType, CONFIGURATOR_ATTRIBUTE_IDS.bootLength, CONFIGURATOR_ATTRIBUTE_IDS.bootWidth, 63, 70];
+  return ids.includes(attribute.id) || name === "color" ||
+    (name.includes("color") && !name.includes("vivo") && !name.includes("texto")) ||
+    name.includes("talla") || isNeckModelAttribute(attribute) ||
+    isLowerPocketModelAttribute(attribute) ||
+    name === "tipo bota" || name === "largo bota" || name === "ancho bota";
 }
 
 function isPlaceholderOption(
@@ -179,10 +185,9 @@ export function sanitizePantsKneePatchTypeSelections(
 
 /**
  * Odoo puede entregar atributos simples sin valor cuando la línea todavía no
- * ha materializado una variante. Para que el configurador nunca quede
- * bloqueado, se elige la primera opción compatible en el orden recibido de
- * Odoo. Los campos múltiples siguen vacíos: logos y secciones de vivo son
- * decisiones opcionales, no valores por defecto.
+ * ha materializado una variante. Los valores auxiliares pueden recibir una
+ * opción compatible, pero colores, tallas, modelos y medidas pendientes
+ * deben seguir pendientes hasta que el asesor los seleccione.
  */
 export function applyFirstOptionDefaults(
   session: ConfiguratorSession,
@@ -208,6 +213,14 @@ export function applyFirstOptionDefaults(
       selectedValueIds.length > 0 &&
       !hasOnlyPlaceholderSelection
     ) {
+      continue;
+    }
+
+    if (requiresAdvisorSelection(attribute)) {
+      if (isLowerPocketModelAttribute(attribute)) {
+        const placeholder = attribute.values.find((value) => isUnselectedOption(value.name));
+        if (placeholder) nextSelectedValueIds[key] = [placeholder.id];
+      }
       continue;
     }
 
@@ -239,10 +252,6 @@ export function applyFirstOptionDefaults(
           ),
         )
       : trimColorCandidateValues;
-    // Al cambiar Mujer → Hombre Odoo puede excluir el cuello femenino y
-    // dejar el atributo vacío. Para cuello, "Ninguno" es la alternativa
-    // segura y explícita: evita que el render reutilice un detalle residual
-    // mientras el usuario decide un cuello compatible con Hombre.
     const kneeDefaultCandidateValues = isKneePatchTypeAttribute(attribute.id)
       ? [
           ...compatibleCandidateValues.filter(
@@ -257,17 +266,7 @@ export function applyFirstOptionDefaults(
           ),
         ]
       : compatibleCandidateValues;
-    const defaultCandidateValues = isNeckModelAttribute(attribute)
-      ? [
-          ...kneeDefaultCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
-          ...kneeDefaultCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
-        ]
-      : isPantsSizeAttribute(attribute)
-      ? [
-          ...kneeDefaultCandidateValues.filter((value) => isExplicitNoneOption(value.name)),
-          ...kneeDefaultCandidateValues.filter((value) => !isExplicitNoneOption(value.name)),
-        ]
-      : kneeDefaultCandidateValues;
+    const defaultCandidateValues = kneeDefaultCandidateValues;
     const selectedWithoutPlaceholders = new Set(
       Array.from(selected).filter(
         (valueId) => !selectedValueIds.includes(valueId),

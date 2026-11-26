@@ -209,6 +209,24 @@ describe("saveConfiguratorDesign", () => {
     expect(mocks.odooWrite).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "Color", "Talla de blusa", "Talla pantalón", "Modelo de cuello",
+    "Modelo bolsillo inferior", "Tipo bota", "Largo bota", "Ancho bota",
+  ])("rechaza una decisión obligatoria ausente (%s) antes de escribir en Odoo", async (name) => {
+    const required = { id: 999, name, displayType: "option", selectionMode: "single", variantMode: "no_variant",
+      values: [{ id: 99901, name: "Opción válida", attributeId: 999, attributeName: name }] } as const;
+    mocks.getConfiguratorSession.mockResolvedValue({
+      ...editableSession,
+      attributes: [...editableSession.attributes, { ...required, values: [...required.values] }],
+    });
+    await expect(saveConfiguratorDesign(env, {
+      saleOrderLineId: 290, filename: "sale-line-290-design.png", imageBase64: "png-base64",
+      selectedValueIds: editableSession.selectedValueIds,
+    })).rejects.toThrow(`Falta seleccionar "${name}"`);
+    expect(mocks.odooWrite).not.toHaveBeenCalled();
+    expect(mocks.odooCreate).not.toHaveBeenCalled();
+  });
+
   it("rechaza Ninguno en color y talla al guardar", async () => {
     const sessionWithPendingColorAndSize: ConfiguratorSession = {
       ...editableSession,
