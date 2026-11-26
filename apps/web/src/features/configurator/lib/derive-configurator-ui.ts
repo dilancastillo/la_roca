@@ -1511,6 +1511,8 @@ function getHiddenLowerPocketDependentAttributeIds(
       (value.sourceValueId !== undefined &&
         noneValueIds.has(value.sourceValueId)) ||
       normalizedName === "ninguno" ||
+      normalizedName === "sin seleccion" ||
+      normalizedName === "seleccione" ||
       normalizedName.includes("sin bolsillo")
     );
   });
@@ -2702,6 +2704,18 @@ export function computeDisabledValueIds(
     Object.values(selectedValueIds).flatMap((valueIds) => valueIds),
   );
   const disabled = new Set<number>();
+  const valueOwners = new Map(session.attributes.flatMap((attribute, index) =>
+    attribute.values.map((value) => [value.id, { index, selectionMode: attribute.selectionMode }] as const)));
+  const isBlockedByEarlierChoice = (candidateId: number, selectedId: number) => {
+    const candidate = valueOwners.get(candidateId);
+    const blocker = valueOwners.get(selectedId);
+    // Unknown metadata keeps conservative symmetric exclusions. Known product
+    // attributes follow Odoo's flow order: changing a parent reconciles its
+    // dependent children, so a child default must never hide the parent.
+    if (!candidate || !blocker) return true;
+    if (candidate.index === blocker.index) return candidate.selectionMode !== "single";
+    return blocker.index < candidate.index;
+  };
   // Género is a primary choice. Downstream sizes/models must adapt to a new
   // gender, rather than trapping the user in the currently selected gender.
   const genderValueIds = new Set(session.attributes
@@ -2720,10 +2734,10 @@ export function computeDisabledValueIds(
     .flatMap((attribute) => attribute.values.filter((value) => selected.has(value.id)).map((value) => value.id)));
 
   for (const rule of session.exclusions) {
-    if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId)) {
+    if (selected.has(rule.sourceValueId) && !selected.has(rule.excludedValueId) && isBlockedByEarlierChoice(rule.excludedValueId, rule.sourceValueId)) {
       disabled.add(rule.excludedValueId);
     }
-    if (selected.has(rule.excludedValueId) && !selected.has(rule.sourceValueId)) {
+    if (selected.has(rule.excludedValueId) && !selected.has(rule.sourceValueId) && isBlockedByEarlierChoice(rule.sourceValueId, rule.excludedValueId)) {
       disabled.add(rule.sourceValueId);
     }
   }

@@ -5684,6 +5684,18 @@ describe("deriveConfiguratorUi", () => {
       [String(lowerPocketZipperAttributeId)]: [12402],
       [String(auxiliaryPocketTypeAttributeId)]: [12403],
     };
+    const lowerPocketAttribute = sessionWithLowerPocketDependencies.attributes.find((attribute) => attribute.id === 70)!;
+    sessionWithLowerPocketDependencies.attributes = sessionWithLowerPocketDependencies.attributes.map((attribute) => attribute.id === 70 ? {
+      ...attribute, values: [...attribute.values, {
+        id: 3312, sourceValueId: 3312, name: "SIN SELECCIÓN",
+        attributeId: 70, attributeName: lowerPocketAttribute.name,
+      }],
+    } : attribute);
+    const uiWithPendingModel = deriveConfiguratorUi(sessionWithLowerPocketDependencies, {
+      ...selectedWithNone, "70": [3312],
+    });
+    expect(uiWithPendingModel.groups.map((group) => group.attributeId)).not.toContain(lowerPocketZipperAttributeId);
+    expect(uiWithPendingModel.groups.map((group) => group.attributeId)).not.toContain(auxiliaryPocketTypeAttributeId);
     const selectedWithModel = {
       ...selectedWithNone,
       "70": [2578],

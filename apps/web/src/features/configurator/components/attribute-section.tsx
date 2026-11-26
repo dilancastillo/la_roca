@@ -68,7 +68,8 @@ export function AttributeSection({
     () =>
       group.options.filter(
         (option) =>
-          option.allowsCustomValue && selectedValueIdSet.has(option.id),
+          option.allowsCustomValue && selectedValueIdSet.has(option.id) &&
+          !["sin seleccion", "sin seleccionar", "ninguno", "ninguna", "no aplica"].includes(normalizeSearchTerm(option.name)),
       ),
     [group.options, selectedValueIdSet],
   );

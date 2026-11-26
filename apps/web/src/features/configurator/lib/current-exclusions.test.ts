@@ -98,4 +98,37 @@ describe("Odoo exclusions in both selection directions", () => {
     expect(next["145"]).toEqual([]);
     expect(next["142"]).toEqual([1151]);
   });
+
+  it("a dependent Sin bolsillos selection cannot hide its parent models", () => {
+    const flow = {
+      attributes: [
+        { id: 154, name: "Modelo bolsillo inferior", selectionMode: "single", values: [{ id: 1202 }, { id: 1203 }, { id: 1204 }] },
+        { id: 155, name: "Tipo bolsillo inferior", selectionMode: "single", values: [{ id: 1300 }, { id: 1301 }] },
+      ],
+      exclusions: [
+        { sourceValueId: 1300, excludedValueId: 1202 },
+        { sourceValueId: 1203, excludedValueId: 1300 },
+        { sourceValueId: 1204, excludedValueId: 1301 },
+      ],
+    } as unknown as ConfiguratorSession;
+    const disabled = computeDisabledValueIds(flow, { "155": [1300] });
+    for (const id of [1202, 1203, 1204]) expect(disabled.has(id)).toBe(false);
+    expect(computeDisabledValueIds(flow, { "154": [1202] }).has(1300)).toBe(true);
+    expect(computeDisabledValueIds(flow, { "154": [1204] }).has(1301)).toBe(true);
+    expect(sanitizeSelectedValueIdsForExclusions(flow, { "154": [1202], "155": [1300] }, 1202))
+      .toEqual({ "154": [1202], "155": [] });
+  });
+
+  it("single-choice alternatives remain reachable, while multi-choice conflicts remain blocked", () => {
+    const flow = {
+      attributes: [
+        { id: 154, name: "Modelo", selectionMode: "single", values: [{ id: 100 }, { id: 200 }] },
+        { id: 157, name: "Vivos", selectionMode: "multiple", values: [{ id: 300 }, { id: 400 }] },
+      ],
+      exclusions: [{ sourceValueId: 100, excludedValueId: 200 }, { sourceValueId: 300, excludedValueId: 400 }],
+    } as unknown as ConfiguratorSession;
+    const disabled = computeDisabledValueIds(flow, { "154": [100], "157": [300] });
+    expect(disabled.has(200)).toBe(false);
+    expect(disabled.has(400)).toBe(true);
+  });
 });

@@ -111,4 +111,45 @@ describe("flujo real de guardar una línea nueva", () => {
     expect(await screen.findByText("La imagen aun se esta actualizando. Espera a que el preview quede en Listo y vuelve a guardar.")).toBeTruthy();
     expect(mocks.save).not.toHaveBeenCalled();
   });
+
+  it("permite elegir talla y bolsillo real antes de resolver el detalle dependiente Sin bolsillos", async () => {
+    const session = mocks.session!;
+    const pocket = session.attributes.find((a) => a.id === 154)!;
+    pocket.values = [
+      { id: 3312, sourceValueId: 3312, name: "Sin selección", attributeId: 154, attributeName: pocket.name },
+      { id: 1214, sourceValueId: 1214, name: "Ninguno", attributeId: 154, attributeName: pocket.name },
+      { id: 1202, sourceValueId: 594, name: "RECTANGULAR", attributeId: 154, attributeName: pocket.name },
+    ];
+    session.attributes.splice(session.attributes.indexOf(pocket) + 1, 0, {
+      ...attribute(815, "¿Bolsillos inferiores con cremallera?", ["No", "Si"]),
+    }, { ...attribute(155, "Opciones de cremallera", ["Sin bolsillos", "Cremallera central"]),
+      values: [
+        { id: 1224, sourceValueId: 1224, name: "Sin bolsillos", attributeId: 155, attributeName: "Opciones de cremallera" },
+        { id: 1225, sourceValueId: 1225, name: "Cremallera central", attributeId: 155, attributeName: "Opciones de cremallera" },
+      ],
+    });
+    session.selectedValueIds = { "142": [14200], "141": [14100], "798": [79800], "143": [14300], "163": [16301], "145": [14500], "155": [1224], "815": [81500] };
+    session.exclusions = [
+      { sourceValueId: 1224, excludedValueId: 1202 },
+      { sourceValueId: 14500, excludedValueId: 14301 },
+      { sourceValueId: 14301, excludedValueId: 14500 },
+    ];
+    openPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Guardar diseno" }));
+    expect(await screen.findByText('Selecciona un valor para "Talla de blusa" antes de guardar.')).toBeTruthy();
+    const blouseSize = await screen.findByRole("button", { name: "M sin tallar" });
+    expect(blouseSize.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(blouseSize);
+    fireEvent.click(screen.getByRole("button", { name: "Guardar diseno" }));
+    expect(await screen.findByText('Selecciona un valor para "Modelo de cuello" antes de guardar.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: /CUELLO V/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar diseno" }));
+    expect(await screen.findByText('Selecciona un valor para "Modelo bolsillo inferior" antes de guardar.')).toBeTruthy();
+    const realPocket = await screen.findByRole("button", { name: /RECTANGULAR/ });
+    expect(realPocket.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(realPocket);
+    fireEvent.click(screen.getByRole("button", { name: "Guardar diseno" }));
+    expect(await screen.findByText('Selecciona un valor para "Tipo bota" antes de guardar.')).toBeTruthy();
+    expect(mocks.save).not.toHaveBeenCalled();
+  }, 15000);
 });

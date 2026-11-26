@@ -309,6 +309,13 @@ describe("AttributeSection", () => {
     expect(baseProps.onCustomValueChange).toHaveBeenCalledWith(11, "NUEVO TEXTO");
   });
 
+  it.each(["SIN SELECCIÓN", "Sin seleccionar", "Ninguno", "No aplica"])("no muestra texto personalizado para el placeholder %s", (name) => {
+    const props = createProps();
+    render(<AttributeSection {...props} group={{ ...props.group, label: "Modelo bolsillo inferior", options: [{ id: 1213, name, allowsCustomValue: true }] }} selectedValueIds={[1213]} selectionLabel={name} expanded />);
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByText(/valor personalizado para/i)).toBeNull();
+  });
+
   it("marca como obligatorio el valor personalizado pendiente", () => {
     const baseProps = {
       ...createProps(),
