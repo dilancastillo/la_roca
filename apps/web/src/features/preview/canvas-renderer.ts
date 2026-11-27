@@ -5357,7 +5357,7 @@ async function drawPantsKneePatchSideFromAsset(
 
   if (type === "velcro") {
     const velcroMarkCanvas = await createRasterCanvas(
-      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_SRC_BY_SIDE[side],
+      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_SRC_BY_SIDE[side].replace("pants-knee-patch-", "pants-knee-patch-square-"),
       sourceSrc,
     );
     context.drawImage(velcroMarkCanvas, 0, 0);
@@ -5366,7 +5366,7 @@ async function drawPantsKneePatchSideFromAsset(
 
   if (type === "overlaid") {
     const lowerLineCanvas = await createRasterCanvas(
-      PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP.full.lower[side],
+      PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP.full.lower[side].replace("pants-knee-patch-", "pants-knee-patch-square-"),
       sourceSrc,
     );
     context.drawImage(lowerLineCanvas, 0, 0);
@@ -5506,7 +5506,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
       }
 
       const lineCanvas = await createRasterCanvas(
-        PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][imageSide],
+        model === "square" ? PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][imageSide].replace("pants-knee-patch-", "pants-knee-patch-square-") : PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][imageSide],
         sourceSrc,
       );
       drawExpandedColoredTrim(context, lineCanvas, color);
@@ -5514,7 +5514,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
 
     if (upperRingTrimColor) {
       const ringCanvas = await createRasterCanvas(
-        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][imageSide],
+        model === "square" ? PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][imageSide].replace("pants-knee-patch-", "pants-knee-patch-square-") : PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][imageSide],
         sourceSrc,
       );
       drawExpandedColoredTrim(context, ringCanvas, upperRingTrimColor);

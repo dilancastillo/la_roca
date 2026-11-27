@@ -3630,7 +3630,7 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   if (type === "velcro") {
     const velcroMarkBuffer = await createGarmentDetailAssetOverlayBuffer(
-      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE[side],
+      PANTS_KNEE_PATCH_CAMOUFLAGE_SNAP_ASSET_BY_SIDE[side].replace("pants-knee-patch-", "pants-knee-patch-square-"),
       placementAssetPath,
     );
 
@@ -3643,7 +3643,7 @@ async function createPantsKneePatchSideOverlayBuffers(
 
   if (type === "overlaid") {
     const lowerLineOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-      PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP.full.lower[side],
+      PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP.full.lower[side].replace("pants-knee-patch-", "pants-knee-patch-square-"),
       placementAssetPath,
     );
 
@@ -3794,7 +3794,7 @@ async function createPantsKneePatchOverlayBuffers(
       }
 
       const lineOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][imageSide],
+        model === "square" ? PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][imageSide].replace("pants-knee-patch-", "pants-knee-patch-square-") : PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][imageSide],
         placementAssetPath,
       );
 
@@ -3805,7 +3805,7 @@ async function createPantsKneePatchOverlayBuffers(
 
     if (upperRingTrimColor) {
       const ringOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][imageSide],
+        model === "square" ? PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][imageSide].replace("pants-knee-patch-", "pants-knee-patch-square-") : PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][imageSide],
         placementAssetPath,
       );
 

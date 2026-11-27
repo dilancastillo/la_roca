@@ -2617,8 +2617,8 @@ describe("renderDesignImage", () => {
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
-    const leftZipperRegion = { x: 585, y: 535, width: 105, height: 35 };
-    const rightZipperRegion = { x: 215, y: 535, width: 105, height: 35 };
+    const leftZipperRegion = { x: 545, y: 535, width: 105, height: 35 };
+    const rightZipperRegion = { x: 255, y: 535, width: 105, height: 35 };
     const zipperRegions = [leftZipperRegion, rightZipperRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
@@ -3279,8 +3279,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftRingRegion = { x: 598, y: 520, width: 60, height: 35 };
-    const rightRingRegion = { x: 255, y: 520, width: 60, height: 35 };
+    const leftRingRegion = { x: 558, y: 520, width: 60, height: 35 };
+    const rightRingRegion = { x: 295, y: 520, width: 60, height: 35 };
 
     expect(
       countPurplePixelsInRegion(
@@ -3466,8 +3466,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftVerticalZipperRegion = { x: 640, y: 535, width: 40, height: 95 };
-    const rightVerticalZipperRegion = { x: 220, y: 535, width: 40, height: 95 };
+    const leftVerticalZipperRegion = { x: 560, y: 535, width: 80, height: 95 };
+    const rightVerticalZipperRegion = { x: 260, y: 535, width: 80, height: 95 };
     const verticalZipperRegions = [
       leftVerticalZipperRegion,
       rightVerticalZipperRegion,
