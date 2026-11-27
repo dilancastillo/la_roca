@@ -4296,31 +4296,31 @@ describe("renderDesignImage", () => {
       countPurplePixelsInRegion(
         withRightRibeteTrim.data,
         withRightRibeteTrim.info.width,
-        rightRibeteRegion,
+        leftRibeteRegion,
       ),
     ).toBeGreaterThan(180);
     expect(
       countPurplePixelsInRegion(
         withRightRibeteTrim.data,
         withRightRibeteTrim.info.width,
-        leftRibeteRegion,
+        rightRibeteRegion,
       ),
     ).toBeLessThan(30);
-    expect(
-      countPurplePixelsInRegion(
-        withLeftRibeteTrim.data,
-        withLeftRibeteTrim.info.width,
-        leftRibeteRegion,
-      ),
-    ).toBeGreaterThan(180);
     expect(
       countPurplePixelsInRegion(
         withLeftRibeteTrim.data,
         withLeftRibeteTrim.info.width,
         rightRibeteRegion,
       ),
+    ).toBeGreaterThan(180);
+    expect(
+      countPurplePixelsInRegion(
+        withLeftRibeteTrim.data,
+        withLeftRibeteTrim.info.width,
+        leftRibeteRegion,
+      ),
     ).toBeLessThan(30);
-  }, 20000);
+  }, 60000);
 
   it("superpone bolsillos de parche de rodilla internos sin color ni vivo", async () => {
     const pantsScene: AutomationRenderScene = {

@@ -5436,7 +5436,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
   await drawPantsKneePatchSideFromAsset(
     context,
     sourceSrc,
-    "right",
+    "left",
     scene.pantsKneePatchRightModel,
     scene.pantsKneePatchRightType,
     rightTrimColor,
@@ -5447,7 +5447,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
   await drawPantsKneePatchSideFromAsset(
     context,
     sourceSrc,
-    "left",
+    "right",
     scene.pantsKneePatchLeftModel,
     scene.pantsKneePatchLeftType,
     leftTrimColor,
@@ -5457,6 +5457,8 @@ async function drawPantsKneePatchOverlaysFromAsset(
   );
 
   for (const side of ["right", "left"] as const) {
+    // Front view: the wearer faces the viewer.
+    const imageSide = side === "right" ? "left" : "right";
     const model =
       side === "right"
         ? scene.pantsKneePatchRightModel
@@ -5504,7 +5506,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
       }
 
       const lineCanvas = await createRasterCanvas(
-        PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][side],
+        PANTS_KNEE_PATCH_LINEAR_TRIM_SRC_BY_GROUP[group][position][imageSide],
         sourceSrc,
       );
       drawExpandedColoredTrim(context, lineCanvas, color);
@@ -5512,7 +5514,7 @@ async function drawPantsKneePatchOverlaysFromAsset(
 
     if (upperRingTrimColor) {
       const ringCanvas = await createRasterCanvas(
-        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][side],
+        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_SRC_BY_GROUP[group][imageSide],
         sourceSrc,
       );
       drawExpandedColoredTrim(context, ringCanvas, upperRingTrimColor);

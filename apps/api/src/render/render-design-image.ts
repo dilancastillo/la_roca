@@ -3723,7 +3723,7 @@ async function createPantsKneePatchOverlayBuffers(
 ) {
   const rightBuffers = await createPantsKneePatchSideOverlayBuffers(
     placementAssetPath,
-    "right",
+    "left",
     scene.pantsKneePatchRightModel,
     scene.pantsKneePatchRightType,
     rightTrimColor,
@@ -3733,7 +3733,7 @@ async function createPantsKneePatchOverlayBuffers(
   );
   const leftBuffers = await createPantsKneePatchSideOverlayBuffers(
     placementAssetPath,
-    "left",
+    "right",
     scene.pantsKneePatchLeftModel,
     scene.pantsKneePatchLeftType,
     leftTrimColor,
@@ -3745,6 +3745,8 @@ async function createPantsKneePatchOverlayBuffers(
   const buffers = [...rightBuffers, ...leftBuffers];
 
   for (const side of ["right", "left"] as const) {
+    // Front view: the wearer faces the viewer.
+    const imageSide = side === "right" ? "left" : "right";
     const model =
       side === "right"
         ? scene.pantsKneePatchRightModel
@@ -3792,7 +3794,7 @@ async function createPantsKneePatchOverlayBuffers(
       }
 
       const lineOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][side],
+        PANTS_KNEE_PATCH_LINEAR_TRIM_ASSET_BY_GROUP[group][position][imageSide],
         placementAssetPath,
       );
 
@@ -3803,7 +3805,7 @@ async function createPantsKneePatchOverlayBuffers(
 
     if (upperRingTrimColor) {
       const ringOverlayBuffer = await createGarmentDetailAssetOverlayBuffer(
-        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][side],
+        PANTS_KNEE_PATCH_LINEAR_UPPER_RING_ASSET_BY_GROUP[group][imageSide],
         placementAssetPath,
       );
 
