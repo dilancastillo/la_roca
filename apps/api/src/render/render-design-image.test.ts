@@ -200,8 +200,8 @@ describe("velcro de rodilla rectangular", () => {
     const left = await readRawPng(
       await renderDesignImage({ ...scene, pantsKneePatchLeftType: "velcro" }),
     );
-    const leftRegion = { x: 220, y: 530, width: 130, height: 130 };
-    const rightRegion = { x: 550, y: 530, width: 130, height: 130 };
+    const leftRegion = { x: 550, y: 530, width: 130, height: 130 };
+    const rightRegion = { x: 220, y: 530, width: 130, height: 130 };
 
     expect(
       countDifferentPixelsInRegion(
@@ -2617,8 +2617,8 @@ describe("renderDesignImage", () => {
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
-    const leftZipperRegion = { x: 215, y: 535, width: 105, height: 35 };
-    const rightZipperRegion = { x: 585, y: 535, width: 105, height: 35 };
+    const leftZipperRegion = { x: 585, y: 535, width: 105, height: 35 };
+    const rightZipperRegion = { x: 215, y: 535, width: 105, height: 35 };
     const zipperRegions = [leftZipperRegion, rightZipperRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
@@ -2858,8 +2858,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
-    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const leftLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
     const baseLeftLowerInk = countDarkPixelsInRegion(
       withoutOverlaid.data,
       withoutOverlaid.info.width,
@@ -3088,10 +3088,10 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftUpperRegion = { x: 205, y: 522, width: 145, height: 10 };
-    const rightUpperRegion = { x: 548, y: 522, width: 145, height: 10 };
-    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
-    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const leftUpperRegion = { x: 548, y: 522, width: 145, height: 10 };
+    const rightUpperRegion = { x: 205, y: 522, width: 145, height: 10 };
+    const leftLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
 
     expect(
       countPurplePixelsInRegion(
@@ -3192,8 +3192,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
-    const rightLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const leftLowerRegion = { x: 548, y: 534, width: 145, height: 10 };
+    const rightLowerRegion = { x: 205, y: 534, width: 145, height: 10 };
 
     expect(
       countPurplePixelsInRegion(
@@ -3279,8 +3279,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftRingRegion = { x: 255, y: 520, width: 60, height: 35 };
-    const rightRingRegion = { x: 598, y: 520, width: 60, height: 35 };
+    const leftRingRegion = { x: 598, y: 520, width: 60, height: 35 };
+    const rightRingRegion = { x: 255, y: 520, width: 60, height: 35 };
 
     expect(
       countPurplePixelsInRegion(
@@ -3368,9 +3368,9 @@ describe("renderDesignImage", () => {
         pantsKneePatchLeftType: "zipper",
       }),
     );
-    const internalRegion = { x: 555, y: 535, width: 135, height: 30 };
-    const plainRibeteRegion = { x: 245, y: 605, width: 130, height: 30 };
-    const zipperRibeteRegion = { x: 235, y: 605, width: 150, height: 30 };
+    const internalRegion = { x: 215, y: 535, width: 135, height: 30 };
+    const plainRibeteRegion = { x: 535, y: 605, width: 130, height: 30 };
+    const zipperRibeteRegion = { x: 525, y: 605, width: 150, height: 30 };
 
     expect(
       countPurplePixelsInRegion(
@@ -3466,8 +3466,8 @@ describe("renderDesignImage", () => {
         ],
       }),
     );
-    const leftVerticalZipperRegion = { x: 220, y: 535, width: 40, height: 95 };
-    const rightVerticalZipperRegion = { x: 640, y: 535, width: 40, height: 95 };
+    const leftVerticalZipperRegion = { x: 640, y: 535, width: 40, height: 95 };
+    const rightVerticalZipperRegion = { x: 220, y: 535, width: 40, height: 95 };
     const verticalZipperRegions = [
       leftVerticalZipperRegion,
       rightVerticalZipperRegion,
@@ -3711,10 +3711,10 @@ describe("renderDesignImage", () => {
       { x: 195, y: 520, width: 145, height: 125 },
       { x: 560, y: 520, width: 145, height: 125 },
     ];
-    const leftFlapRegion = { x: 210, y: 535, width: 130, height: 30 };
-    const rightFlapRegion = { x: 560, y: 535, width: 140, height: 30 };
-    const leftButtonRegion = { x: 263, y: 530, width: 40, height: 28 };
-    const rightButtonRegion = { x: 610, y: 530, width: 28, height: 28 };
+    const leftFlapRegion = { x: 560, y: 535, width: 140, height: 30 };
+    const rightFlapRegion = { x: 210, y: 535, width: 130, height: 30 };
+    const leftButtonRegion = { x: 610, y: 530, width: 28, height: 28 };
+    const rightButtonRegion = { x: 263, y: 530, width: 40, height: 28 };
     const flapRegions = [leftFlapRegion, rightFlapRegion];
     const basePatchInk = patchRegions.reduce(
       (total, region) =>
@@ -4202,8 +4202,8 @@ describe("renderDesignImage", () => {
       { x: 255, y: 610, width: 120, height: 35 },
       { x: 535, y: 610, width: 110, height: 35 },
     ];
-    const plainRegion = { x: 535, y: 610, width: 110, height: 35 };
-    const zipperRegion = { x: 255, y: 610, width: 120, height: 35 };
+    const plainRegion = { x: 255, y: 610, width: 120, height: 35 };
+    const zipperRegion = { x: 535, y: 610, width: 110, height: 35 };
     const baseRibeteInk = ribeteRegions.reduce(
       (total, region) =>
         total +
